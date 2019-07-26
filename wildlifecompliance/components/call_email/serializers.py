@@ -16,7 +16,7 @@ from wildlifecompliance.components.call_email.models import (
     MapLayer,
     #ComplianceWorkflowLogEntry,
     CasePriority,
-    InspectionType,
+    # InspectionType,
     )
 from wildlifecompliance.components.main.models import get_related_items
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
@@ -218,10 +218,10 @@ class CasePrioritySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class InspectionTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = InspectionType
-        fields = '__all__'
+# class InspectionTypeSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = InspectionType
+#         fields = '__all__'
 
 
 class SaveCallEmailSerializer(serializers.ModelSerializer):

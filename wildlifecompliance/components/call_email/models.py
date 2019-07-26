@@ -12,6 +12,7 @@ from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document, get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
+from wildlifecompliance.components.inspection.models import InspectionType
 
 logger = logging.getLogger(__name__)
 
@@ -160,16 +161,16 @@ class CasePriority(models.Model):
         return self.description
 
 
-class InspectionType(models.Model):
-    description = models.CharField(max_length=255, null=True, blank=True)
+# class InspectionType(models.Model):
+#     description = models.CharField(max_length=255, null=True, blank=True)
 
-    class Meta:
-        app_label = 'wildlifecompliance'
-        verbose_name = 'CM_InspectionType'
-        verbose_name_plural = 'CM_InspectionTypes'
+#     class Meta:
+#         app_label = 'wildlifecompliance'
+#         verbose_name = 'CM_InspectionType'
+#         verbose_name_plural = 'CM_InspectionTypes'
 
-    def __str__(self):
-        return self.description
+#     def __str__(self):
+#         return self.description
 
 
 class CallEmail(RevisionedMixin):

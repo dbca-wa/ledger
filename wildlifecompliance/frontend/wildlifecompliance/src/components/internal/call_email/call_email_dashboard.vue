@@ -127,17 +127,14 @@
                         {
                             data: "number",
                             searchable: false,
-                            //orderable: true,
                         },
                         {
                             data: "status.name",
                             searchable: false,
-                            orderable: false,
                         },
                         {
                             data: "classification",
                             searchable: false,
-                            //orderable: false,
                             mRender: function (data, type, full) {
                                 if (data) {
                                     return data.name;
@@ -149,7 +146,6 @@
                         {
                             data: "lodged_on",
                             searchable: false,
-                            //orderable: false,
                             mRender: function (data, type, full) {
                                 return data != '' && data != null ? moment(data).format(vm.dateFormat) : '';
                             }
@@ -157,7 +153,7 @@
                         
                         {
                             data: "caller",
-                            searchable: false,
+                            searchable: false
                         },
                         {
                             data: "assigned_to",
@@ -171,26 +167,10 @@
                                 }
                             }
                         },
-                        // {
-                        //     mRender: function (data, type, full) {
-                        //         return `<a href="/internal/call_email/${full.id}">View</a>`
-                        //     }
-                        // }
                         {
-                        // Actions
-                            //width: "10%",
-                            //mRender: function(data,type,full) {
-                              //  let links = '';
-                                //    links += full.user_is_assignee ? 
-                                  //      `<a href="/internal/call_email/${full.id}">Process</a>` :
-                                    //    `<a href="/internal/call_email/${full.id}">View</a>`;
-                                //return links;
-                            //},
-                            //orderable: false,
-                            //searchable: false
                             data: "user_action",
                             searchable: false,
-                            orderable: false,
+                            orderable: false
                         }
                     ],
                 },

@@ -1,10 +1,10 @@
 <template lang="html">
-    <div id="CallWorkflow">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large force>
+    <div id="InspectionWorkflow">
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Create new Inspection" large force>
           <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                        <div v-if="regionVisibility" class="form-group">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
@@ -18,7 +18,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="regionVisibility" class="form-group">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
@@ -32,7 +32,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="regionVisibility" class="form-group">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Allocate to</label>
@@ -47,7 +47,7 @@
                           </div>
                         </div>
 
-                        <div v-if="workflow_type === 'allocate_for_inspection'" class="form-group">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Inspection Type</label>
@@ -62,7 +62,7 @@
                           </div>
                         </div>
 
-                        <div v-if="workflow_type === 'allocate_for_case'" class="form-group">
+                        <!--div v-if="workflow_type === 'allocate_for_case'" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Priority</label>
@@ -83,15 +83,14 @@
                               <label>Referred To</label>
                             </div>
                             <div class="col-sm-9">
-                                <!--select multiple class="form-control" v-model="referrers_selected"-->
-                                <select style="width:100%" class="form-control input-sm" multiple ref="referrerList">
-                                    <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
-                                        {{ option.name }} 
-                                    </option>
+                              <select multiple class="form-control" v-model="referrers_selected">
+                                <option  v-for="option in referrers" :value="option.id" v-bind:key="option.id">
+                                  {{ option.name }} 
+                                </option>
                               </select>
                             </div>
                           </div>
-                        </div>
+                        </div-->
 
                         <div class="form-group">
                           <div class="row">
@@ -99,8 +98,7 @@
                                   <label class="control-label pull-left" for="details">Details</label>
                               </div>
             			      <div class="col-sm-6">
-			                	  <textarea v-if="workflow_type === 'close'" class="form-control" placeholder="add details" id="details" v-model="advice_details"/>
-                                  <textarea v-else class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
+                                  <textarea class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
                               </div>
                           </div>
                         </div>
@@ -171,11 +169,9 @@ import modal from '@vue-utils/bootstrap-modal.vue';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import filefield from '@/components/common/compliance_file.vue';
-require("select2/dist/css/select2.min.css");
-require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 
 export default {
-    name: "CallEmailWorking",
+    name: "InspectionWorking",
     data: function() {
       return {
             officers: [],
@@ -189,7 +185,7 @@ export default {
             inspectionTypes: [],
             externalOrganisations: [],
             referrers: [],
-            referrersSelected: [],
+            referrers_selected: [],
             //group_permission: '',
             workflowDetails: '',
             errorResponse: "",
@@ -201,12 +197,13 @@ export default {
             advice_details: "",
             allocatedGroup: [],
             allocated_group_id: null,
-            files: [
-                    {
-                        'file': null,
-                        'name': ''
-                    }
-                ]
+            documentActionUrl: '',
+            // files: [
+            //         {
+            //             'file': null,
+            //             'name': ''
+            //         }
+            //     ]
       }
     },
     components: {
@@ -220,16 +217,16 @@ export default {
           },
       },
     computed: {
-      ...mapGetters('callemailStore', {
-        call_email: "call_email",
+      ...mapGetters('inspectionStore', {
+        inspection: "inspection",
       }),
-      documentActionUrl: function() {
-          return helpers.add_endpoint_join(
-          api_endpoints.call_email,
-          this.call_email.id + "/process_comms_log_document/"
-          )
-      },
-      regionVisibility: function() {
+      // documentActionUrl: function() {
+      //     return helpers.add_endpoint_join(
+      //     api_endpoints.inspection,
+      //     this.inspection.id + "/process_comms_log_document/"
+      //     )
+      // },
+      /*regionVisibility: function() {
         if (!(this.workflow_type === 'forward_to_wildlife_protection_branch' || 
           this.workflow_type === 'close')
         ) {
@@ -268,6 +265,7 @@ export default {
               return "Close complaint";
         }
       },
+      */
       regionDistrictId: function() {
           if (this.district_id || this.region_id) {
               return this.district_id ? this.district_id : this.region_id;
@@ -282,8 +280,8 @@ export default {
       }
     },
     methods: {
-      ...mapActions('callemailStore', {
-          saveCallEmail: 'saveCallEmail'
+      ...mapActions('inspectionStore', {
+          saveInspection: 'saveInspection'
       }),
       loadAllocatedGroup: async function() {
           let url = helpers.add_endpoint_join(
@@ -292,7 +290,7 @@ export default {
               );
           let returned = await Vue.http.post(
               url,
-              { 'group_permission': this.groupPermission
+              { 'group_permission': 'officer'
               });
           return returned;
       },
@@ -326,7 +324,7 @@ export default {
           console.log("updateAllocatedGroup");
           this.errorResponse = "";
           //this.allocatedGrouplength = 0;
-          
+          /*
           if (this.workflow_type === 'forward_to_wildlife_protection_branch') {
               for (let record of this.regionDistricts) {
                   if (record.district === 'KENSINGTON') {
@@ -335,7 +333,8 @@ export default {
                   }
               }
           }
-          if (this.groupPermission && this.regionDistrictId) {
+          */
+          if (this.regionDistrictId) {
               let allocatedGroupResponse = await this.loadAllocatedGroup();
               if (allocatedGroupResponse.ok) {
                   console.log(allocatedGroupResponse.body.allocated_group);
@@ -358,8 +357,9 @@ export default {
       ok: async function () {
           const response = await this.sendData();
           console.log(response);
-          if (response === 'ok') {
+          if (response.ok) {
               this.close();
+              this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
           }
       },
       cancel: async function() {
@@ -370,50 +370,54 @@ export default {
       close: function () {
           let vm = this;
           this.isModalOpen = false;
-          let file_length = vm.files.length;
-          this.files = [];
-          for (var i = 0; i < file_length;i++){
-              vm.$nextTick(() => {
-                  $('.file-row-'+i).remove();
-              });
-          }
-          this.attachAnother();
+          // let file_length = vm.files.length;
+          // this.files = [];
+          // for (var i = 0; i < file_length;i++){
+          //     vm.$nextTick(() => {
+          //         $('.file-row-'+i).remove();
+          //     });
+          // }
+          // this.attachAnother();
       },
-      sendData: async function(){        
-          let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
+      sendData: async function() {
+          //let post_url = '/api/inspection/'
+          let post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
           let payload = new FormData(this.form);
-          payload.append('call_email_id', this.call_email.id);
           payload.append('details', this.workflowDetails);
           if (this.$refs.comms_log_file.commsLogId) {
               payload.append('comms_log_id', this.$refs.comms_log_file.commsLogId)
           }
 
-          payload.append('workflow_type', this.workflow_type);
-          payload.append('email_subject', this.modalTitle);
-          payload.append('referrers_selected', this.referrersSelected);
-          payload.append('district_id', this.district_id);
-          payload.append('assigned_to_id', this.assigned_to_id);
-          payload.append('inspection_type_id', this.inspection_type_id);
-          payload.append('case_priority_id', this.case_priority_id);
-          payload.append('region_id', this.region_id);
-          payload.append('allocated_group_id', this.allocated_group_id);
-
-          let callEmailRes = await this.saveCallEmail({ route: false, crud: 'save', 'internal': true });
-          console.log(callEmailRes);
-          if (callEmailRes.ok) {
-              try {
-                  let res = await Vue.http.post(post_url, payload);
-                  if (res.ok) {    
-                      this.$router.push({ name: 'internal-call-email-dash' });
-                  }
-              } catch(err) {
-                  this.errorResponse = err.statusText;
-              } 
-          } else {
-              this.errorResponse = callEmailRes.statusText;
+          //payload.append('email_subject', this.modalTitle);
+          if (this.district_id) {
+              payload.append('district_id', this.district_id);
           }
+          if (this.assigned_to_id) {
+              payload.append('assigned_to_id', this.assigned_to_id);
+              //payload.append('inspection_team_lead_id', this.assigned_to_id);
+          }
+          if (this.inspection_type_id) {
+              payload.append('inspection_type_id', this.inspection_type_id);
+          }
+          if (this.region_id) {
+              payload.append('region_id', this.region_id);
+          }
+          if (this.allocated_group_id) {
+              payload.append('allocated_group_id', this.allocated_group_id);
+          }
+
+          try {
+              let res = await Vue.http.post(post_url, payload);
+              console.log(res);
+              if (res.ok) {
+                return res
+              }
+          } catch(err) {
+                  this.errorResponse = err.statusText;
+              }
+          
       },
-      
+      /*
       uploadFile(target,file_obj){
           let vm = this;
           let _file = null;
@@ -444,9 +448,19 @@ export default {
               'name': ''
           })
       },
+      */
       
     },
     created: async function() {
+
+        // create inspection and get id
+        let returned_inspection = await Vue.http.post(api_endpoints.inspection);
+        this.inspection.id = returned_inspection.body.id;
+    
+        this.documentActionUrl = helpers.add_endpoint_join(
+            api_endpoints.inspection,
+            this.inspection.id + "/create_modal_process_comms_log_document/"
+            )
         
         //await this.$parent.updateAssignedToId('blank');
         // regions
@@ -485,7 +499,7 @@ export default {
 
         // inspection_types
         let returned_inspection_types = await cache_helper.getSetCacheList(
-            'CallEmail_InspectionTypes', 
+            'InspectionTypes',
             api_endpoints.inspection_types
             );
         Object.assign(this.inspectionTypes, returned_inspection_types);
@@ -505,29 +519,9 @@ export default {
               id: "", 
               name: "",
             });
-        // add call_email vuex region_id and district_id to local component
-        this.district_id = this.call_email.district_id;
-        this.region_id = this.call_email.region_id;
-        this.updateDistricts();
     },
     mounted: function() {
         this.form = document.forms.forwardForm;
-        
-        // Initialise select2 for region
-        let vm = this;
-        $(vm.$refs.referrerList).select2({
-            "theme": "bootstrap",
-            allowClear: true,
-            placeholder:"Select Referrer"
-                    }).
-        on("select2:select",function (e) {
-                            var selected = $(e.currentTarget);
-                            vm.referrersSelected = selected.val();
-                        }).
-        on("select2:unselect",function (e) {
-                            var selected = $(e.currentTarget);
-                            vm.referrersSelected = selected.val();
-                        });
       
     }
 };

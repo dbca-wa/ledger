@@ -140,7 +140,10 @@ def get_related_items(self, **kwargs):
         if f.is_relation and f.related_model.__name__ in approved_related_item_models:
             if f.is_relation and f.one_to_many:
 
-                field_objects = f.related_model.objects.filter(call_email_id=self.id)
+                if self._meta.model_name == 'callemail':
+                    field_objects = f.related_model.objects.filter(call_email_id=self.id)
+                elif self._meta.model_name == 'inspection':
+                    field_objects = f.related_model.objects.filter(inspection_id=self.id)
                 for field_object in field_objects:
                     return_list.append(
                         {   'model_name': f.related_model.__name__,
