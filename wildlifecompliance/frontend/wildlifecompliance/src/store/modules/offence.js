@@ -12,6 +12,7 @@ export const offenceStore = {
         offence: {
             id: null,
             call_email_id: null,
+            inspection_id: null,
             identifier: '',
             status: 'draft',
             offenders: [],
@@ -70,6 +71,9 @@ export const offenceStore = {
         updateCallEmailId(state, id) {
             state.offence.call_email_id = id;
         },
+        updateInspectionId(state, id) {
+            state.offence.inspection_id = id;
+        },
         updateOffence(state, offence) {
             Vue.set(state, 'offence', offence);
         },
@@ -78,6 +82,7 @@ export const offenceStore = {
             let offence = {
                 id: null,
                 call_email_id: null,
+                inspection_id: null,
                 identifier: '',
                 status: 'draft',
                 offenders: [],
@@ -191,6 +196,9 @@ export const offenceStore = {
         },
         setCallEmailId({ commit, }, id){
             commit("updateCallEmailId", id);
+        },
+        setInspectionId({ commit, }, id){
+            commit("updateInspectionId", id);
         },
     },
 };

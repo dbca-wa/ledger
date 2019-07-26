@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from ledger.accounts.models import RevisionedMixin, EmailUser, Organisation
 from wildlifecompliance.components.call_email.models import Location, CallEmail
+from wildlifecompliance.components.inspection.models import Inspection
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.users.models import RegionDistrict
 
@@ -51,6 +52,12 @@ class Offence(RevisionedMixin):
         null=True,
         blank=True,
         related_name='offence_call_eamil',
+    )
+    inspection = models.ForeignKey(
+        Inspection,
+        null=True,
+        blank=True,
+        related_name='offence_inspection',
     )
     occurrence_from_to = models.BooleanField(default=False)
     occurrence_date_from = models.DateField(null=True, blank=True)

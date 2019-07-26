@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from wildlifecompliance.components.main.api import process_generic_document
 
 from wildlifecompliance.components.call_email.models import CallEmail, CallEmailUserAction
+from wildlifecompliance.components.inspection.models import Inspection, InspectionUserAction
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
     SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer
@@ -90,11 +91,15 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                     if remediation_action.is_valid(raise_exception=True):
                         remediation_action.save()
 
-                # Log action
-                if request_data['call_email_id']:
-                    call_email = CallEmail.objects.get(id=request_data['call_email_id'])
+                # Log CallEmail action
+                if request_data.get('call_email_id'):
+                    call_email = CallEmail.objects.get(id=request_data.get('call_email_id'))
                     call_email.log_user_action(CallEmailUserAction.ACTION_SANCTION_OUTCOME.format(call_email.number), request)
 
+                # Log Inspection action
+                if request_data.get('inspection_id'):
+                    inspection = Inspection.objects.get(id=request_data.get('inspection_id'))
+                    inspection.log_user_action(InspectionUserAction.ACTION_SANCTION_OUTCOME.format(inspection.number), request)
                 # Return
                 return HttpResponse(res_json, content_type='application/json')
 

@@ -132,7 +132,7 @@ def update_compliance_doc_filename(instance, filename):
 
 class SanctionOutcomeDocument(Document):
     sanction_outcome = models.ForeignKey(SanctionOutcome, related_name='documents')
-    _file = models.FileField(upload_to=update_compliance_doc_filename)
+    _file = models.FileField(max_length=255, upload_to=update_compliance_doc_filename)
 
     class Meta:
         app_label = 'wildlifecompliance'

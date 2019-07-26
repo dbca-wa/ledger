@@ -5,7 +5,7 @@ from django.contrib.gis.db import models
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models import Max
 from django.utils.encoding import python_2_unicode_compatible
-from ledger.accounts.models import EmailUser, RevisionedMixin
+from ledger.accounts.models import EmailUser, RevisionedMixin, Organisation
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.organisations.models import Organisation
@@ -20,25 +20,82 @@ def update_inspection_comms_log_filename(instance, filename):
         instance.log_entry.inspection.id, instance.id, filename)
 
 
-#class InspectionType(models.Model):
- #   description = models.CharField(max_length=255, null=True, blank=True)
+class InspectionType(models.Model):
+   description = models.CharField(max_length=255, null=True, blank=True)
 
-  #  class Meta:
-   #     app_label = 'wildlifecompliance'
-    #    verbose_name = 'CM_InspectionType'
-     #   verbose_name_plural = 'CM_InspectionTypes'
+   class Meta:
+       app_label = 'wildlifecompliance'
+       verbose_name = 'CM_InspectionType'
+       verbose_name_plural = 'CM_InspectionTypes'
 
-   # def __str__(self):
-    #    return self.description
+   def __str__(self):
+       return self.description
 
 
 class Inspection(RevisionedMixin):
+    PARTY_CHOICES = (
+            ('individual', 'individual'),
+            ('organisation', 'organisation')
+            )
+    STATUS_CHOICES = (
+            ('open', 'Open'),
+            ('endorsement', 'Awaiting Endorsement'),
+            ('sanction_outcome', 'Awaiting Sanction Outcomes'),
+            ('closed', 'Closed')
+            )
+
     title = models.CharField(max_length=200, blank=True, null=True)
+    status = models.CharField(
+            max_length=100,
+            choices=STATUS_CHOICES,
+            default='open'
+            )
+
     details = models.TextField(blank=True, null=True)
     number = models.CharField(max_length=50, blank=True, null=True)
     planned_for_date = models.DateField(null=True)
-    planned_for_time = models.CharField(max_length=20, blank=True, null=True)
-    
+    planned_for_time = models.TimeField(blank=True, null=True)
+    party_inspected = models.CharField(
+            max_length=30,
+            choices=PARTY_CHOICES,
+            default='individual'
+            )
+    individual_inspected = models.ForeignKey(
+        EmailUser, 
+        related_name='individual_inspected',
+        null=True
+        )
+    organisation_inspected = models.ForeignKey(
+        Organisation, 
+        related_name='organisation_inspected',
+        null=True
+        )
+    assigned_to = models.ForeignKey(
+        EmailUser, 
+        related_name='inspection_assigned_to',
+        null=True
+        )
+    allocated_group = models.ForeignKey(
+        CompliancePermissionGroup,
+        related_name='inspection_allocated_group', 
+        null=True
+        )
+    inspection_team = models.ManyToManyField(
+        EmailUser,
+        related_name='inspection_team',
+        blank=True
+        )
+    inspection_team_lead = models.ForeignKey(
+        EmailUser,
+        related_name='inspection_team_lead',
+        null=True
+    )
+    inspection_type = models.ForeignKey(
+            InspectionType,
+            related_name='inspection_type',
+            null=True
+            )
+
     class Meta:
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_Inspection'
@@ -47,6 +104,12 @@ class Inspection(RevisionedMixin):
     def __str__(self):
         return 'ID: {0}, Type: {1}, Title: {2}' \
             .format(self.id, self.title, self.title)
+
+    def clean(self):
+        if self.individual_inspected and self.organisation_inspected:
+            raise ValidationError('An inspection must target an individual or organisation, not both')
+
+        super(Inspection, self).clean()
     
     # Prefix "IN" char to Inspection number.
     def save(self, *args, **kwargs):
@@ -65,7 +128,7 @@ class InspectionCommsLogDocument(Document):
     log_entry = models.ForeignKey(
         'InspectionCommsLogEntry',
         related_name='documents')
-    _file = models.FileField(upload_to=update_inspection_comms_log_filename)
+    _file = models.FileField(max_length=255, upload_to=update_inspection_comms_log_filename)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -80,6 +143,8 @@ class InspectionCommsLogEntry(CommunicationsLogEntry):
 
 class InspectionUserAction(UserAction):
     ACTION_SAVE_INSPECTION_ = "Save Inspection {}"
+    ACTION_OFFENCE = "Create Offence {}"
+    ACTION_SANCTION_OUTCOME = "Create Sanction Outcome {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

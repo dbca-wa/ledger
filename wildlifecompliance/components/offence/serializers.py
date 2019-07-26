@@ -55,6 +55,7 @@ class OffenceSerializer(serializers.ModelSerializer):
             'identifier',
             'status',
             'call_email',
+            'inspection_id',
             'occurrence_from_to',
             'occurrence_date_from',
             'occurrence_time_from',
@@ -76,6 +77,7 @@ class OffenceSerializer(serializers.ModelSerializer):
 class SaveOffenceSerializer(serializers.ModelSerializer):
     location_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
     call_email_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    inspection_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = Offence
@@ -85,6 +87,7 @@ class SaveOffenceSerializer(serializers.ModelSerializer):
             'status',
             'location_id',
             'call_email_id',
+            'inspection_id',
             'occurrence_from_to',
             'occurrence_date_from',
             'occurrence_time_from',

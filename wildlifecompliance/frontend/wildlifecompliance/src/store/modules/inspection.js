@@ -30,6 +30,20 @@ export const inspectionStore = {
         updatePlannedForTime(state, time) {
             Vue.set(state.inspection, 'planned_for_time', time);
         },
+        updatePartyInspected(state, data) {
+            if (data.data_type === 'individual') {
+                Vue.set(state.inspection, 'individual_inspected_id', data.id);
+                if (state.inspection.organisation_inspected_id) {
+                    state.inspection.organisation_inspected_id = null;
+                }
+            }
+            if (data.data_type === 'organisation') {
+                Vue.set(state.inspection, 'organisation_inspected_id', data.id);
+                if (state.inspection.individual_inspected_id) {
+                    state.inspection.individual_inspected_id = null;
+                }
+            }
+        },
         
     },
     actions: {
@@ -40,6 +54,24 @@ export const inspectionStore = {
                     helpers.add_endpoint_json(
                         api_endpoints.inspection, 
                         inspection_id)
+                    );
+
+                /* Set Inspection object */
+                await dispatch("setInspection", returnedInspection.body);
+
+            } catch (err) {
+                console.log(err);
+            }
+        },
+        async modifyInspectionTeam({ dispatch, state}, { user_id, action }) {
+            console.log("modifyInspectionTeam");
+            try {
+                const returnedInspection = await Vue.http.post(
+                    helpers.add_endpoint_join(
+                        api_endpoints.inspection,
+                        state.inspection.id + '/modify_inspection_team/',
+                    ),
+                    { user_id, action }
                     );
 
                 /* Set Inspection object */
@@ -116,6 +148,9 @@ export const inspectionStore = {
         },
         setPlannedForTime({ commit }, time ) {
             commit("updatePlannedForTime", time);
+        },
+        setPartyInspected({ commit, }, data) {
+            commit("updatePartyInspected", data);
         },
     },
 };
