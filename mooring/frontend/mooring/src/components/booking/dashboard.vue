@@ -222,7 +222,6 @@ export default {
                 processing:true,
                 searchDelay: 800,
                 ajax: {
-                    "async": false,
                     "url": api_endpoints.bookings,
                     "dataSrc": 'results',
                     data :function (d) {

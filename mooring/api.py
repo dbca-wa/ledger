@@ -585,7 +585,7 @@ def current_booking(request, *args, **kwargs):
     response_data['result'] = 'success'
     response_data['message'] = ''
     ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-    response_data['current_booking'] = get_current_booking(ongoing_booking)
+    response_data['current_booking'] = get_current_booking(ongoing_booking, request)
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 
@@ -607,6 +607,7 @@ def delete_booking(request, *args, **kwargs):
     response_data = {}
     response_data['result'] = 'success'
     response_data['message'] = ''
+    payments_officer_group = request.user.groups.filter(name__in=['Payments Officers']).exists()
     nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
     booking = None
     booking_item = request.POST['booking_item']
@@ -617,6 +618,8 @@ def delete_booking(request, *args, **kwargs):
             ms_booking = MooringsiteBooking.objects.get(id=booking_item,booking=booking)
             msb = datetime.strptime(str(ms_booking.from_dt.strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
             if msb > nowtime:
+                  ms_booking.delete()
+            elif payments_officer_group is True:
                   ms_booking.delete()
             else:
                  if msb.date() == nowtime.date():
@@ -1889,7 +1892,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items():
         # fetch availability map
 
-        cb = get_current_booking(ongoing_booking)
+        cb = get_current_booking(ongoing_booking, request)
         current_booking = cb['current_booking']
         total_price = cb['total_price']
 
@@ -3082,7 +3085,25 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk_list['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                     bk_list['guests'] = booking.guests
                     bk_list['admissions'] = { 'id' :booking.admission_payment.id, 'amount': booking.admission_payment.totalCost } if booking.admission_payment else None
-                    bk_list['vessel_details'] = { 'vessel_beam': booking.details['vessel_beam'], 'vessel_weight': booking.details['vessel_weight'], 'vessel_size': booking.details['vessel_size'], 'vessel_draft': booking.details['vessel_draft'], } 
+
+                    vessel_beam = 0
+                    vessel_weight = 0
+                    vessel_size = 0
+                    vessel_draft = 0
+
+                    if 'vessel_beam' in booking.details:
+                         vessel_beam = booking.details['vessel_beam']
+                    if 'vessel_weight' in booking.details:
+                         vessel_weight = booking.details['vessel_weight']
+                    if 'vessel_size' in booking.details:
+                         vessel_size = booking.details['vessel_size']
+                    if 'vessel_draft' in booking.details:
+                         vessel_draft = booking.details['vessel_draft']
+
+
+
+ 
+                    bk_list['vessel_details'] = { 'vessel_beam': vessel_beam, 'vessel_weight': vessel_weight, 'vessel_size': vessel_size, 'vessel_draft': vessel_draft, } 
 
                     #bk_list['campsite_names'] = booking.campsite_name_list
                     bk_list['regos'] = [{'vessel':''}] 
@@ -4285,7 +4306,7 @@ class AdmissionsKeyFromURLView(views.APIView):
 
 
 
-def get_current_booking(ongoing_booking): 
+def get_current_booking(ongoing_booking, request): 
      #ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
      timer = None
      expiry = None
@@ -4293,6 +4314,7 @@ def get_current_booking(ongoing_booking):
          #expiry_time = ongoing_booking.expiry_time
          timer = (ongoing_booking.expiry_time-timezone.now()).seconds if ongoing_booking else -1
          expiry = ongoing_booking.expiry_time.isoformat() if ongoing_booking else ''
+     payments_officer_group = request.user.groups.filter(name__in=['Payments Officers']).exists()
 
      ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
      cb = {'current_booking':[], 'total_price': '0.00'}
@@ -4321,7 +4343,9 @@ def get_current_booking(ongoing_booking):
                  else:
                      row['past_booking'] = True              
               else:
-                  row['past_booking'] = True 
+                  row['past_booking'] = True
+              if payments_officer_group is True: 
+                  row['past_booking'] = False
 #           row['item'] = ms.campsite.name
          total_price = str(Decimal(total_price) +Decimal(ms.amount))
          current_booking.append(row)
