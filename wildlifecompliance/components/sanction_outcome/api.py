@@ -71,11 +71,18 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 request_data['allocated_group_id'] = group.id
 
                 # Save sanction outcome (offence, offender, alleged_offences)
-                serializer = SaveSanctionOutcomeSerializer(data=request_data)
+                if request_data['id']:
+                    instance = SanctionOutcome.objects.get(id=request_data['id'])
+                    serializer = SaveSanctionOutcomeSerializer(instance, data=request_data, partial=True)
+                else:
+                    serializer = SaveSanctionOutcomeSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 saved_obj = serializer.save()
 
-                # Save sanction outcome document, and link to the sanction outcome
+                if request_data.get('set_sequence'):
+                    # Only when requested, we generate a new lodgement number
+                    saved_obj.set_sequence()
+                    saved_obj.save()
 
                 # Save remediation action, and link to the sanction outcome
                 for dict in request_data['remediation_actions']:

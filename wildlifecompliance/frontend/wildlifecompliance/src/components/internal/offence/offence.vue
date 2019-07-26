@@ -790,7 +790,6 @@ export default {
   mounted: function() {
     let vm = this;
     vm.$nextTick(() => {
-      console.log('mounted offence');
       vm.addEventListeners();
     });
   }

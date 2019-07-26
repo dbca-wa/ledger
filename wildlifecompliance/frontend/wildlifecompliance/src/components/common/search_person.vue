@@ -1,6 +1,6 @@
 <template lang="html">
     <div class="">
-        <input :id="elementId" :class="classNames" :readonly="!isEditable" />
+        <input :id="elemId" :class="classNames" :readonly="!isEditable" />
     </div>
 </template>
 
@@ -17,12 +17,13 @@ export default {
         vm.awesomplete_obj = null;
 
         return {
-
+            elemId: 'create_new_person_' + vm._uid,
         }
     },
     props: {
+        // This prop is not used any more.  Instead elemId in the data is used.
         elementId: {
-            required: true
+            required: false
         },
         classNames: {
             required: false
@@ -43,10 +44,10 @@ export default {
     },
     methods: {
         clearInput: function(){
-            document.getElementById(this.elementId).value = "";
+            document.getElementById(this.elemId).value = "";
         },
         setInput: function(offender_str){
-            document.getElementById(this.elementId).value = offender_str;
+            document.getElementById(this.elemId).value = offender_str;
         },
         markMatchedText(original_text, input) {
             let ret_text = original_text.replace(new RegExp(input, "gi"), function( a, b) {
@@ -57,7 +58,7 @@ export default {
         initAwesomplete: function() {
             let vm = this;
 
-            let element_search = document.getElementById(vm.elementId);
+            let element_search = document.getElementById(vm.elemId);
             vm.awesomplete_obj = new Awesomplete(element_search, {
                 maxItems: vm.maxItems,
                 sort: false,

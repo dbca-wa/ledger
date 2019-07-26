@@ -127,7 +127,7 @@ def process_generic_document(request, instance, document_type=None, *args, **kwa
 
                 document._file = path
                 document.save()
-                instance.save()
+                instance.save() # This may not be needed because 'instance' is read but not assigned with any values here...
 
             # HTTP Response varies by action and instance type
             if comms_instance and action == 'cancel' and deleted:
