@@ -70,7 +70,7 @@
                                         <select class="form-control" v-on:change="offenceSelected($event)" v-bind:value="sanction_outcome.current_offence.id">
                                             <option value=""></option>
                                             <option v-for="option in options_for_offences" v-bind:value="option.id" v-bind:key="option.id">
-                                                {{ option.id + ': ' + option.status + ', ' + option.identifier }} 
+                                                {{ option.identifier }} 
                                             </option>
                                         </select>
                                     </div>
