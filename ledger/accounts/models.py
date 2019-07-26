@@ -270,6 +270,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                            verbose_name="date of birth", help_text='')
     phone_number = models.CharField(max_length=50, null=True, blank=True,
                                     verbose_name="phone number", help_text='')
+    position_title = models.CharField(max_length=50, null=True, blank=True,
+                                    verbose_name="position title", help_text='')
     mobile_number = models.CharField(max_length=50, null=True, blank=True,
                                      verbose_name="mobile number", help_text='')
     fax_number = models.CharField(max_length=50, null=True, blank=True,
