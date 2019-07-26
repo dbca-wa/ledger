@@ -39,7 +39,16 @@
                                 </select>
                             </div>
                         </div>
-                        <div v-if="is_external" class="col-md-3">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="">Submitter</label>
+                                <select class="form-control" v-model="filterProposalSubmitter">
+                                    <option value="All">All</option>
+                                    <option v-for="s in proposal_submitters" :value="s.email">{{s.search_term}}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div v-if="is_external" class="col-md-6">
                             <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Application</router-link>
                         </div>
                     </div>
@@ -62,7 +71,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <!-- <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Submitter</label>
                                 <select class="form-control" v-model="filterProposalSubmitter">
@@ -70,7 +79,7 @@
                                     <option v-for="s in proposal_submitters" :value="s.email">{{s.search_term}}</option>
                                 </select>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
