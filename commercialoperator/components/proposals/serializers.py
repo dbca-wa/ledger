@@ -219,6 +219,7 @@ class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
     insurance_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     accreditations = ProposalAccreditationSerializer(many=True, read_only=True)
     preferred_licence_period = serializers.CharField(allow_blank=True, allow_null=True)
+    proposed_end_date = serializers.DateField(format="%d/%m/%Y",read_only=True)
 
     class Meta:
         model = ProposalOtherDetails
@@ -235,7 +236,8 @@ class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
                 'credit_fees',
                 'credit_docket_books',
                 'docket_books_number',
-                'mooring'
+                'mooring',
+                'proposed_end_date',
                 )
     # def get_accreditation_type(self,obj):
     #     return obj.get_accreditation_type_display()

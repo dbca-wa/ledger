@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 import os
 import datetime
+from dateutil.relativedelta import relativedelta
 from django.db import models,transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
@@ -1796,11 +1797,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.schema = ptype.schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
+                proposal.proposed_issuance_approval= None
                 try:
                     ProposalOtherDetails.objects.get(proposal=proposal)                    
                 except ProposalOtherDetails.DoesNotExist:
                     ProposalOtherDetails.objects.create(proposal=proposal)
                 # Create a log entry for the proposal
+                proposal.other_details.nominated_start_date=self.approval.expiry_date+ datetime.timedelta(days=1)
+                proposal.other_details.save()
                 self.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
                 applicant_field=getattr(self, self.applicant_field)
@@ -1937,6 +1941,26 @@ class ProposalOtherDetails(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+
+    @property
+    def proposed_end_date(self):
+        end_date=None
+        if self.preferred_licence_period and self.nominated_start_date:
+            if self.preferred_licence_period=='2_months':
+                end_date=self.nominated_start_date + relativedelta(months=+2) - relativedelta(days=1)
+            if self.preferred_licence_period=='1_year':
+                end_date=self.nominated_start_date + relativedelta(months=+12)- relativedelta(days=1)
+            if self.preferred_licence_period=='3_year':
+                end_date=self.nominated_start_date + relativedelta(months=+36)- relativedelta(days=1)
+            if self.preferred_licence_period=='5_year':
+                end_date=self.nominated_start_date + relativedelta(months=+60)- relativedelta(days=1)
+            if self.preferred_licence_period=='7_year':
+                end_date=self.nominated_start_date + relativedelta(months=+84)- relativedelta(days=1)
+            if self.preferred_licence_period=='10_year':
+                end_date=self.nominated_start_date + relativedelta(months=+120)- relativedelta(days=1)
+        return end_date
+    
+
 
 
 class ProposalAccreditation(models.Model):
