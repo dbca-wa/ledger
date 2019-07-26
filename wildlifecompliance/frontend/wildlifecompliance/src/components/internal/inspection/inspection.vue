@@ -47,6 +47,57 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        Action 
+                    </div>
+                    <div class="panel-body panel-collapse">
+                        
+                        <!--div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                          <div class="col-sm-12">
+                                <a ref="save" @click="save()" class="btn btn-primary btn-block">
+                                  Save
+                                </a>
+                          </div>
+                        </div-->
+
+                        <div  class="row action-button">
+                          <div class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
+                                  Send to Manager
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div class="row action-button">
+                          <div class="col-sm-12">
+                                <a @click="offence()" class="btn btn-primary btn-block">
+                                  Offence
+                                </a>
+                          </div>
+                        </div>
+
+                        <div  class="row action-button">
+                          <div class="col-sm-12">
+                                <a @click="sanction_outcome()" class="btn btn-primary btn-block">
+                                  Sanction Outcome
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div  class="row action-button">
+                          <div class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
+                                  Close
+                                </a>
+                          </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
 
             
           </div>
@@ -130,7 +181,18 @@
                             
                             <div class="col-sm-12 form-group"><div class="row">
                                 <div class="col-sm-8">
-                                    <SearchPerson :isEditable="!readonlyForm" classNames="form-control" elementId="search-person" :search_type="inspection.party_inspected" @person-selected="personSelected"/>
+                                    <SearchPerson :isEditable="!readonlyForm" classNames="form-control" elementId="search-person" :search_type="inspection.party_inspected" @person-selected="personSelected"ref="search_person"/>
+                                </div>
+                                <!--div class="col-sm-1">
+                                    <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
+                                </div-->
+                                <div class="col-sm-2">
+                                    <input type="button" class="btn btn-primary" value="Create New Person" @click.prevent="createNewPersonClicked()" />
+                                </div>
+                            </div></div>
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-12">
+                                  <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
                             </div></div>
                           </FormSection>
@@ -191,14 +253,20 @@
                             </div>
                         </div>
         </div>          
-        
+        <!--div v-if="workflow_type">
+          <InspectionWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
+        </div-->
+        <Offence ref="offence" />
+        <div v-if="sanctionOutcomeInitialised">
+            <SanctionOutcome ref="sanction_outcome"/>
+        </div>
     </div>
 </template>
 <script>
 import Vue from "vue";
 import FormSection from "@/components/forms/section_toggle.vue";
 import SearchPerson from "@/components/common/search_person.vue";
-
+import CreateNewPerson from "@common-components/create_new_person.vue";
 import CommsLogs from "@common-components/comms_logs.vue";
 import datatable from '@vue-utils/datatable.vue'
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
@@ -207,6 +275,8 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import moment from 'moment';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
+import Offence from '../offence/offence_inspection';
+import SanctionOutcome from '../sanction_outcome/sanction_outcome';
 
 export default {
   name: "ViewInspection",
@@ -283,6 +353,8 @@ export default {
       loading: [],
       inspectionTypes: [],
       teamMemberSelected: null,
+      displayCreateNewPerson: false,
+      newPersonBeingCreated: false,
       //party_inspected: '',
       
       //callemailTab: "callemailTab" + this._uid,
@@ -299,6 +371,7 @@ export default {
         this.$route.params.inspection_id + "/action_log"
       ),
       workflowBindId: '',
+      sanctionOutcomeInitialised: false,
     };
   },
   components: {
@@ -306,9 +379,12 @@ export default {
     FormSection,
     datatable,
     SearchPerson,
+    CreateNewPerson,
+    Offence,
+    SanctionOutcome,
   },
   watch: {
-      call_email: {
+      inspection: {
           handler: function (){
               this.constructRelatedItemsTable();
           },
@@ -342,7 +418,39 @@ export default {
       setInspection: 'setInspection', 
       setPlannedForTime: 'setPlannedForTime',
       modifyInspectionTeam: 'modifyInspectionTeam',
+      setPartyInspected: 'setPartyInspected',
     }),
+    newPersonCreated: function(obj) {
+        console.log(obj);
+        if(obj.person){
+            this.setPartyInspected({data_type: 'individual', id: obj.person.id});
+
+        // Set fullname and DOB into the input box
+        let full_name = [obj.person.first_name, obj.person.last_name].filter(Boolean).join(" ");
+        let dob = obj.person.dob ? "DOB:" + obj.person.dob : "DOB: ---";
+        let value = [full_name, dob].filter(Boolean).join(", ");
+        this.$refs.search_person.setInput(value);
+      } else if (obj.err) {
+        console.log(err);
+      } else {
+        // Should not reach here
+      }
+    },
+    sanction_outcome(){
+      console.log('sanction_outcome');
+      this.sanctionOutcomeInitialised = true;
+      this.$nextTick(() => {
+          this.$refs.sanction_outcome.isModalOpen = true;
+      });
+    },
+    offence(){
+      this.offenceInitialised = true;
+      this.$refs.offence.isModalOpen = true;
+    },
+    createNewPersonClicked: function() {
+      this.newPersonBeingCreated = true;
+      this.displayCreateNewPerson = !this.displayCreateNewPerson;
+    },
     addTeamMember: async function() {
         await this.modifyInspectionTeam({
             user_id: this.teamMemberSelected, 
@@ -366,7 +474,8 @@ export default {
         this.$refs.inspection_team_table.vmDataTable.ajax.reload()
     },
     personSelected: function(para) {
-        console.log(para)
+        console.log(para);
+        this.setPartyInspected(para);
     },
     updateWorkflowBindId: function() {
         let timeNow = Date.now()
@@ -383,17 +492,17 @@ export default {
         
         vm.$refs.related_items_table.vmDataTable.clear().draw();
 
-        if(vm.call_email.related_items){
-          for(let i = 0; i<vm.call_email.related_items.length; i++){
-            let already_exists = vm.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(vm.call_email.related_items[i].id);
+        if(vm.inspection.related_items){
+          for(let i = 0; i<vm.inspection.related_items.length; i++){
+            let already_exists = vm.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(vm.inspection.related_items[i].id);
 
             if (!already_exists){
                 vm.$refs.related_items_table.vmDataTable.row.add(
                     {
-                        'identifier': vm.call_email.related_items[i].identifier,
-                        'descriptor': vm.call_email.related_items[i].descriptor,
-                        'model_name': vm.call_email.related_items[i].model_name,
-                        'Action': vm.call_email.related_items[i],
+                        'identifier': vm.inspection.related_items[i].identifier,
+                        'descriptor': vm.inspection.related_items[i].descriptor,
+                        'model_name': vm.inspection.related_items[i].model_name,
+                        'Action': vm.inspection.related_items[i],
                     }
                 ).draw();
             }
@@ -512,7 +621,21 @@ export default {
     //if (this.$route.params.inspection_id) {
       //await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
     //}
-    
+
+      // Set Individual or Organisation in search field
+      if (this.inspection.individual_inspected) {
+          let value = [
+              this.inspection.individual_inspected.full_name, 
+              this.inspection.individual_inspected.dob].
+              filter(Boolean).join(", ");
+          this.$refs.search_person.setInput(value);
+      } else if (this.inspection.organisation_inspected) {
+          let value = [
+              this.inspection.organisation_inspected.name,
+              this.inspection.organisation_inspected.abn].
+              filter(Boolean).join(", ");
+          this.$refs.search_person.setInput(value);
+      }
   },
   mounted: function() {
       let vm = this;

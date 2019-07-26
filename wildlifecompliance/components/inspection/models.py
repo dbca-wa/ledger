@@ -5,7 +5,7 @@ from django.contrib.gis.db import models
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models import Max
 from django.utils.encoding import python_2_unicode_compatible
-from ledger.accounts.models import EmailUser, RevisionedMixin
+from ledger.accounts.models import EmailUser, RevisionedMixin, Organisation
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.organisations.models import Organisation
@@ -60,6 +60,16 @@ class Inspection(RevisionedMixin):
             choices=PARTY_CHOICES,
             default='individual'
             )
+    individual_inspected = models.ForeignKey(
+        EmailUser, 
+        related_name='individual_inspected',
+        null=True
+        )
+    organisation_inspected = models.ForeignKey(
+        Organisation, 
+        related_name='organisation_inspected',
+        null=True
+        )
     assigned_to = models.ForeignKey(
         EmailUser, 
         related_name='inspection_assigned_to',
@@ -94,6 +104,12 @@ class Inspection(RevisionedMixin):
     def __str__(self):
         return 'ID: {0}, Type: {1}, Title: {2}' \
             .format(self.id, self.title, self.title)
+
+    def clean(self):
+        if self.individual_inspected and self.organisation_inspected:
+            raise ValidationError('An inspection must target an individual or organisation, not both')
+
+        super(Inspection, self).clean()
     
     # Prefix "IN" char to Inspection number.
     def save(self, *args, **kwargs):
@@ -127,6 +143,8 @@ class InspectionCommsLogEntry(CommunicationsLogEntry):
 
 class InspectionUserAction(UserAction):
     ACTION_SAVE_INSPECTION_ = "Save Inspection {}"
+    ACTION_OFFENCE = "Create Offence {}"
+    ACTION_SANCTION_OUTCOME = "Create Sanction Outcome {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

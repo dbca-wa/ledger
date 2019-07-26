@@ -3,7 +3,7 @@ import traceback
 from rest_framework.fields import CharField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometryField
 
-from ledger.accounts.models import EmailUser, Address
+from ledger.accounts.models import EmailUser, Address, Organisation
 from wildlifecompliance.components.inspection.models import (
     Inspection,
     InspectionUserAction,
@@ -31,6 +31,37 @@ class InspectionTypeSerializer(serializers.ModelSerializer):
    class Meta:
        model = InspectionType
        fields = '__all__'
+
+
+class OrganisationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Organisation
+        fields = (
+            'id',
+            'abn',
+            'name',
+        )
+        read_only_fields = ()
+
+
+class IndividualSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'full_name',
+            'email',
+            'dob'
+        )
+
+    def get_full_name(self, obj):
+        if obj.first_name:
+            return obj.first_name + ' ' + obj.last_name
+        else:
+            return obj.last_name
 
 
 class EmailUserSerializer(serializers.ModelSerializer):
@@ -81,7 +112,10 @@ class InspectionSerializer(serializers.ModelSerializer):
     user_is_assignee = serializers.SerializerMethodField()
     status = CustomChoiceField(read_only=True)
     inspection_team = EmailUserSerializer(many=True, read_only=True)
+    individual_inspected = IndividualSerializer()
+    organisation_inspected = OrganisationSerializer()
     #inspection_type = InspectionTypeSerializer()
+    related_items = serializers.SerializerMethodField()
 
     class Meta:
         model = Inspection
@@ -102,11 +136,19 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'user_is_assignee',
                 'inspection_type_id',
                 'inspection_team',
-                'inspection_team_lead_id'
+                'inspection_team_lead_id',
+                'individual_inspected',
+                'organisation_inspected',
+                'individual_inspected_id',
+                'organisation_inspected_id',
+                'related_items',
                 )
         read_only_fields = (
                 'id',
                 )
+
+    def get_related_items(self, obj):
+        return get_related_items(obj)
 
     def get_user_in_group(self, obj):
         user_id = self.context.get('request', {}).user.id
@@ -160,6 +202,10 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     inspection_type_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
+    individual_inspected_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+    organisation_inspected_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
     
     class Meta:
         model = Inspection
@@ -172,7 +218,9 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
                 'party_inspected',
                 'assigned_to_id',
                 'allocated_group_id',
-                'inspection_type_id'
+                'inspection_type_id',
+                'individual_inspected_id',
+                'organisation_inspected_id'
                 )
         read_only_fields = (
                 'id',
@@ -214,6 +262,7 @@ class InspectionDatatableSerializer(serializers.ModelSerializer):
     inspection_type = InspectionTypeSerializer()
     planned_for = serializers.SerializerMethodField()
     status = CustomChoiceField(read_only=True)
+    inspection_team_lead = EmailUserSerializer()
     
     class Meta:
         model = Inspection
@@ -223,12 +272,9 @@ class InspectionDatatableSerializer(serializers.ModelSerializer):
                 'inspection_type',
                 'status',
                 'planned_for',
+                'inspection_team_lead',
                 'user_action',
                 )
-
-    # def get_user_action(self, obj):
-    #     process_url = '<a href=/internal/inspection/' + str(obj.id) + '>Process</a>'
-    #     return process_url
 
     def get_user_action(self, obj):
         user_id = self.context.get('request', {}).user.id

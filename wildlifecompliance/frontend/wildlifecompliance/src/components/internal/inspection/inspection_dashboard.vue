@@ -56,7 +56,7 @@
         </div>
         </FormSection>
         <div v-if="inspectionInitialised">
-            <CreateInspectionModal ref="add_inspection"  />
+            <CreateInspectionModal ref="add_inspection"  v-bind:key="createInspectionBindId"/>
         </div>
 
     </div>
@@ -95,6 +95,7 @@
                 
                 dateFormat: 'DD/MM/YYYY',
                 inspectionInitialised: false,
+                createInspectionBindId: '',
                 // datepickerOptions: {
                 //     format: 'DD/MM/YYYY',
                 //     showClear: true,
@@ -167,6 +168,18 @@
                             orderable: true
                         },
                         {
+                            data: 'inspection_team_lead',
+                            searchable: false,
+                            orderable: true,
+                            mRender: function (data, type, full) {
+                                if (data) {
+                                    return data.full_name;
+                                } else {
+                                    return '';
+                                }
+                            }
+                        },
+                        {
                             data: 'user_action',
                             searchable: false,
                             orderable: false
@@ -179,6 +192,7 @@
                     'Inspection Type',
                     'Status',
                     'Planned for',
+                    'Team Lead',
                     'Action',
                 ],
             }
@@ -244,12 +258,16 @@
                 saveInspection: "saveInspection",
             }),
             createInspection: function() {
+                this.setCreateInspectionBindId()
                 this.inspectionInitialised = true;
                 this.$nextTick(() => {
                     this.$refs.add_inspection.isModalOpen = true;
                 });
             },
-            
+            setCreateInspectionBindId: function() {
+                let timeNow = Date.now()
+                this.createInspectionBindId = 'inspection' + timeNow.toString();
+            },
             createInspectionUrl: async function () {
                 const newInspectionId = await this.saveInspection({ route: false, crud: 'create'});
                 

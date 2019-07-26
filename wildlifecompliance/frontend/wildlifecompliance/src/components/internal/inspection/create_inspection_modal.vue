@@ -1,5 +1,5 @@
 <template lang="html">
-    <div id="CallWorkflow">
+    <div id="InspectionWorkflow">
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Create new Inspection" large force>
           <div class="container-fluid">
             <div class="row">
@@ -394,6 +394,7 @@ export default {
           }
           if (this.assigned_to_id) {
               payload.append('assigned_to_id', this.assigned_to_id);
+              //payload.append('inspection_team_lead_id', this.assigned_to_id);
           }
           if (this.inspection_type_id) {
               payload.append('inspection_type_id', this.inspection_type_id);
@@ -452,7 +453,7 @@ export default {
     },
     created: async function() {
 
-        // create sanction outcome and get id
+        // create inspection and get id
         let returned_inspection = await Vue.http.post(api_endpoints.inspection);
         this.inspection.id = returned_inspection.body.id;
     
