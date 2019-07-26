@@ -221,6 +221,9 @@ export default {
             formData.append('_file', this.uploadFile(e));
             formData.append('csrfmiddlewaretoken', this.csrf_token);
 
+            console.log('documentActionUrl');
+            console.log(this.documentActionUrl);
+
             Vue.http.post(this.documentActionUrl, formData)
                 .then(res=>{
                     this.documents = res.body.filedata;
