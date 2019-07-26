@@ -110,7 +110,7 @@
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
             			        <div class="col-sm-9">
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" />
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :createDocumentActionUrl="createDocumentActionUrl"  />
                                 </div>
                             </div>
                         </div>
@@ -223,12 +223,6 @@ export default {
       ...mapGetters('callemailStore', {
         call_email: "call_email",
       }),
-      documentActionUrl: function() {
-          return helpers.add_endpoint_join(
-          api_endpoints.call_email,
-          this.call_email.id + "/process_comms_log_document/"
-          )
-      },
       regionVisibility: function() {
         if (!(this.workflow_type === 'forward_to_wildlife_protection_branch' || 
           this.workflow_type === 'close')
@@ -444,7 +438,12 @@ export default {
               'name': ''
           })
       },
-      
+      createDocumentActionUrl: function() {
+          return helpers.add_endpoint_join(
+          api_endpoints.call_email,
+          this.call_email.id + "/process_comms_log_document/"
+          )
+      },
     },
     created: async function() {
         
