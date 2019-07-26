@@ -102,12 +102,46 @@ class MooringAvailability2Selector(TemplateView):
 
     def get(self, request, *args, **kwargs):
         # if page is called with ratis_id, inject the ground_id
+        num_adults = request.POST.get('num_adult', 0)
+        num_children = request.POST.get('num_children', 0)
+        num_infants = request.POST.get('num_infant',0)
+        vessel_size = request.GET.get('vessel_size', 0)
+        vessel_draft = request.GET.get('vessel_draft', 0)
+        vessel_beam = request.GET.get('vessel_beam', 0)
+        vessel_weight = request.GET.get('vessel_weight', 0)
+        vessel_rego = request.GET.get('vessel_rego', 0)
+    
+        booking_period_start = datetime.strptime(request.GET['arrival'], "%Y/%m/%d").date()
+        booking_period_finish = datetime.strptime(request.GET['departure'], "%Y/%m/%d").date()
+
         context = {}
         ratis_id = request.GET.get('mooring_site_id', None)
         if ratis_id:
             cg = MooringArea.objects.filter(ratis_id=ratis_id)
             if cg.exists():
                 context['ground_id'] = cg.first().id
+
+        booking = None
+        if 'ps_booking' in request.session:
+            pass
+        else:
+            details = {
+               'num_adults' : num_adults,
+               'num_children' : num_children,
+               'num_infants' : num_infants,
+               'vessel_size' : vessel_size,
+               'vessel_draft': vessel_draft,
+               'vessel_beam' : vessel_beam,
+               'vessel_weight' : vessel_weight,
+               'vessel_rego' : vessel_rego,
+            }
+#            mooring_site = Mooringsite.objects.get(id=ratis_id)
+            mooringarea = MooringArea.objects.get(id=request.GET.get('site_id', None))
+            booking = Booking.objects.create(mooringarea=mooringarea,booking_type=3,expiry_time=timezone.now()+timedelta(seconds=settings.BOOKING_TIMEOUT),details=details,arrival=booking_period_start,departure=booking_period_finish)
+            request.session['ps_booking'] = booking.id
+            request.session.modified = True
+    
+
         return render(request, self.template_name, context)
 
 class AvailabilityAdmin(TemplateView):

@@ -49,7 +49,7 @@
                                 </div>
                               </div>
                               <div class="form-group">
-                                 <button type="button" class="btn btn-primary" @click.prevent="secondLevelSearch()"> Search</button>
+                                 <button type="button" class="btn btn-primary" v-on:change="secondLevelSearch()" iiiiiclick.prevent="secondLevelSearch()"> Search</button>
                               </div>
                           </form>
                       </div>

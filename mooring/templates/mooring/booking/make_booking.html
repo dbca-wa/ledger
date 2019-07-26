@@ -590,9 +590,12 @@
                                         <label>Details:</label>
                                         <textarea v-model="overrideDetail" name="overrideDetail" id='overrideDetail' style="width:100%;resize:none;" class='form-control'></textarea>
                                     </div>
+                                    <p class="text-muted" style='color: red; font-weight:bold;'>
+                                        Note, this reason will show on the customer invoice.
+                                    </p>
                                 </div>
                             {% endif %}
-                            <p class="text-muted">
+                            <p class="text-muted" >
                                 Payments will be recorded against the booking once the booking is completed and the payment is received.
                             </p>
                         </div>

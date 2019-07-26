@@ -3082,6 +3082,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk_list['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
                     bk_list['guests'] = booking.guests
                     bk_list['admissions'] = { 'id' :booking.admission_payment.id, 'amount': booking.admission_payment.totalCost } if booking.admission_payment else None
+                    bk_list['vessel_details'] = { 'vessel_beam': booking.details['vessel_beam'], 'vessel_weight': booking.details['vessel_weight'], 'vessel_size': booking.details['vessel_size'], 'vessel_draft': booking.details['vessel_draft'], } 
 
                     #bk_list['campsite_names'] = booking.campsite_name_list
                     bk_list['regos'] = [{'vessel':''}] 
