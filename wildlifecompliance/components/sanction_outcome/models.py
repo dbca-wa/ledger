@@ -2,17 +2,23 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from ledger.accounts.models import EmailUser
+from wildlifecompliance.components.main import get_next_value
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.offence.models import Offence, Offender, SectionRegulation
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 
 class SanctionOutcome(models.Model):
+    TYPE_INFRINGEMENT_NOTICE = 'infringement_notice'
+    TYPE_CAUTION_NOTICE = 'caution_notice'
+    TYPE_LETTER_OF_ADVICE = 'letter_of_advice'
+    TYPE_REMEDIATION_NOTICE = 'remediation_notice'
+
     TYPE_CHOICES = (
-        ('infringement_notice', 'Infringement Notice'),
-        ('caution_notice', 'Caution Notice'),
-        ('letter_of_advice', 'Letter of Advice'),
-        ('remediation_notice', 'Remediation Notice'),
+        (TYPE_INFRINGEMENT_NOTICE, 'Infringement Notice'),
+        (TYPE_CAUTION_NOTICE, 'Caution Notice'),
+        (TYPE_LETTER_OF_ADVICE, 'Letter of Advice'),
+        (TYPE_REMEDIATION_NOTICE, 'Remediation Notice'),
     )
 
     type = models.CharField(max_length=30, choices=TYPE_CHOICES, blank=True,)
@@ -23,6 +29,7 @@ class SanctionOutcome(models.Model):
     district = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_district', null=True,)
 
     identifier = models.CharField(max_length=50, blank=True,)
+    lodgement_number = models.CharField(max_length=50, blank=True,)
     offence = models.ForeignKey(Offence, related_name='sanction_outcome_offence', null=True, on_delete=models.SET_NULL,)
     offender = models.ForeignKey(Offender, related_name='sanction_outcome_offender', null=True, on_delete=models.SET_NULL,)
     alleged_offences = models.ManyToManyField(SectionRegulation, blank=True, related_name='sanction_outcome_alleged_offences')
@@ -56,10 +63,38 @@ class SanctionOutcome(models.Model):
                 raise ValidationError('Alleged offence must be registered under the selected offence.')
 
         # make issued_on_papaer true whenever the type is letter_of_advice
-        if self.type == 'letter_of_advice':
+        if self.type == self.TYPE_LETTER_OF_ADVICE:
             self.issued_on_paper = True
 
         super(SanctionOutcome, self).clean()
+
+    @property
+    def prefix_lodgement_nubmer(self):
+        prefix_lodgement = ''
+        if self.type == self.TYPE_INFRINGEMENT_NOTICE:
+            prefix_lodgement = 'IF'
+        elif self.type == self.TYPE_LETTER_OF_ADVICE:
+            prefix_lodgement = 'LA'
+        elif self.type == self.TYPE_CAUTION_NOTICE:
+            prefix_lodgement = 'CN'
+        elif self.type == self.TYPE_REMEDIATION_NOTICE:
+            prefix_lodgement = 'RN'
+
+        return prefix_lodgement
+
+    def set_sequence(self):
+        """
+        This function generates new lodgement number without gaps between numbers
+        """
+        if not self.lodgement_number and self.prefix_lodgement_nubmer:
+            new_lodgement_number_int = get_next_value(self.prefix_lodgement_nubmer)
+            self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(new_lodgement_number_int)
+
+    def delete(self):
+        if self.lodgement_number:
+            raise ValidationError('Sanction outcome saved in the database with the logement number cannot be deleted.')
+
+        super(SanctionOutcome, self).delete()
 
     class Meta:
         app_label = 'wildlifecompliance'

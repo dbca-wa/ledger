@@ -120,7 +120,6 @@
                                   <input class="col-sm-1" id="issued_on_paper_yes" type="radio" v-model="sanction_outcome.issued_on_paper" :value="true" />
                                   <label class="col-sm-1 radio-button-label" for="issued_on_paper_yes">Yes</label>
                                   <input class="col-sm-1" id="issued_on_paper_no" type="radio" v-model="sanction_outcome.issued_on_paper" :value="false" />
-                                  
                                   <label class="col-sm-1 radio-button-label" for="issued_on_paper_no">No</label>
                                 </div>
                             </div></div>
@@ -130,7 +129,7 @@
                                     <label class="control-label pull-left">Paper ID</label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <input type="text" class="form-control" name="paper_id" placeholder="" v-model="sanction_outcome.paper_id" /> 
+                                    <input type="text" class="form-control" name="paper_id" placeholder="" v-model="sanction_outcome.paper_id" :disabled="!sanction_outcome.issued_on_paper" /> 
                                 </div>
                             </div></div>
 
@@ -138,8 +137,10 @@
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left">Paper notice</label>
                                 </div>
-                                <div v-if="documentActionUrl" class="col-sm-7">
-                                    <filefield ref="sanction_outcome_file" name="sanction-outcome-file" :isRepeatable="true" />
+                                <div id="paper_id_notice">
+                                    <div v-if="documentActionUrl" class="col-sm-7">
+                                        <filefield ref="sanction_outcome_file" name="sanction-outcome-file" :isRepeatable="true" :disabled="!sanction_outcome.issued_on_paper"/>
+                                    </div>
                                 </div>
                             </div></div>
 
@@ -249,6 +250,7 @@ import { mapGetters, mapActions } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import utils from "../utils";
 import $ from "jquery";
+import "jquery-ui/ui/widgets/draggable.js";
 import "bootstrap/dist/css/bootstrap.css";
 import "awesomplete/awesomplete.css";
 
@@ -268,6 +270,7 @@ export default {
       regions: [], // this is the list of options
       availableDistricts: [], // this is generated from the regionDistricts[] above
       documentActionUrl: null,
+      elem_paper_id_notice: null,
 
       // This is the object to be sent to the server when saving
       sanction_outcome: {
@@ -281,7 +284,6 @@ export default {
         current_offender: {}, // Store an offender to be saved as an attribute of the sanction outcome
         issued_on_paper: false,
         paper_id: "",
-        // document: null,
         description: "",
         date_of_issue: null,
         time_of_issue: null,
@@ -322,11 +324,18 @@ export default {
           {
             data: "Include",
             mRender: function(data, type, row) {
-              return (
-                '<input type="checkbox" class="alleged_offence_include" value="' +
-                data +
-                '" checked="checked"></input>'
-              );
+              let ret_line = null;
+
+              if (vm.sanction_outcome.type == 'infringement_notice'){
+                ret_line = '<input type="radio" name="infringement_radio_button" class="alleged_offence_include" value="' + data + '"></input>';
+              } else if (vm.sanction_outcome.type == '' || vm.sanction_outcome.type == null) {
+                // Should not reach here
+                ret_line = '';
+              } else {
+                ret_line = '<input type="checkbox" class="alleged_offence_include" value="' + data + '" checked="checked"></input>';
+              }
+
+              return ret_line;
             }
           }
         ]
@@ -364,6 +373,12 @@ export default {
     filefield,
   },
   watch: {
+    current_type: {
+      handler: function(){
+        let vm = this;
+        vm.sanction_outcome.current_offence = {};
+      }
+    },
     isModalOpen: {
       handler: function() {
         if (this.isModalOpen) {
@@ -376,10 +391,13 @@ export default {
     issued_on_paper: {
       handler: function(){
         let vm = this;
-        console.log('issued_on_paper')
         if (!vm.sanction_outcome.issued_on_paper) {
           vm.sanction_outcome.date_of_issue = null;
           vm.sanction_outcome.time_of_issue = null;
+
+          vm.elem_paper_id_notice.slideUp(500);
+        } else {
+          vm.elem_paper_id_notice.slideDown(500);
         }
       }
     },
@@ -398,11 +416,11 @@ export default {
         this.currentRegionIdChanged();
       }
     },
-    current_district_id: {
-      handler: function() {
-        this.currentDistrictIdChanged();
-      }
-    }
+    // current_district_id: {
+    //   handler: function() {
+    //     this.currentDistrictIdChanged();
+    //   }
+    // }
   },
   computed: {
     ...mapGetters("callemailStore", {
@@ -423,8 +441,8 @@ export default {
     current_region_id: function() {
       return this.sanction_outcome.region_id;
     },
-    current_district_id: function() {
-      return this.sanction_outcome.district_id;
+    current_type: function() {
+      return this.sanction_outcome.type;
     },
     modalTitle: function() {
       return "Identify Sanction Outcome";
@@ -480,6 +498,12 @@ export default {
         await this.$refs.sanction_outcome_file.cancel();
         this.close();
     },
+    makeModalsDraggable: function(){
+      this.elem_modal = $('.modal > .modal-dialog');
+      for (let i=0; i<this.elem_modal.length; i++){
+        $(this.elem_modal[i]).draggable();
+      }
+    },
     close: function() {
         this.$parent.sanctionOutcomeInitialised = false;
         this.isModalOpen = false;
@@ -513,12 +537,6 @@ export default {
       console.log('currentRegionIdChanged');
       this.updateDistricts();
     },
-    currentDistrictIdChanged: function() {},
-    // loadAllocatedGroup: async function() {
-    //     let url = helpers.add_endpoint_join(api_endpoints.region_district, this.regionDistrictId + '/get_group_id_by_region_district/');
-    //     let returned = await Vue.http.post(url, { 'group_permission': 'manager' });
-    //     return returned;
-    // },
     addRemediationActionClicked: function() {
       let vm = this;
       if (vm.current_remediation_action) {
@@ -732,6 +750,9 @@ export default {
 
         payload.call_email_id = vm.call_email ? vm.call_email.id : null;
 
+        // Set set_sequence to generate lodgement number at the backend
+        payload.set_sequence = true;
+        console.log(payload);
         const savedObj = await Vue.http.post(fetchUrl, payload);
         await swal("Saved", "The record has been saved", "success");
       } catch (err) {
@@ -752,7 +773,6 @@ export default {
       this.$refs.tbl_remediation_actions.vmDataTable.rows().remove().draw(); // Clear the table anyway
     },
     currentOffenceChanged: function() {
-      console.log("currentOffenceChanged");
       let vm = this;
 
       vm.sanction_outcome.current_offender = {};
@@ -762,26 +782,15 @@ export default {
 
       // Construct the datatable of the alleged offences
       vm.clearTableAllegedOffence();
-      if (
-        vm.sanction_outcome.current_offence &&
-        vm.sanction_outcome.current_offence.alleged_offences
-      ) {
-        for (
-          let j = 0;
-          j < vm.sanction_outcome.current_offence.alleged_offences.length;
-          j++
-        ) {
+      if (vm.sanction_outcome.current_offence && vm.sanction_outcome.current_offence.alleged_offences) {
+        for (let j = 0; j < vm.sanction_outcome.current_offence.alleged_offences.length; j++) {
           vm.$refs.tbl_alleged_offence.vmDataTable.row
             .add({
               id: vm.sanction_outcome.current_offence.alleged_offences[j].id,
               Act: vm.sanction_outcome.current_offence.alleged_offences[j].act,
-              "Section/Regulation":
-                vm.sanction_outcome.current_offence.alleged_offences[j].name,
-              "Alleged Offence":
-                vm.sanction_outcome.current_offence.alleged_offences[j]
-                  .offence_text,
-              Include:
-                vm.sanction_outcome.current_offence.alleged_offences[j].id
+              "Section/Regulation": vm.sanction_outcome.current_offence.alleged_offences[j].name,
+              "Alleged Offence": vm.sanction_outcome.current_offence.alleged_offences[j].offence_text,
+              Include: vm.sanction_outcome.current_offence.alleged_offences[j].id
             })
             .draw();
         }
@@ -840,6 +849,8 @@ export default {
     this.$nextTick(() => {
       console.log("mounted sanction");
       this.addEventListeners();
+      this.elem_paper_id_notice = $('#paper_id_notice');
+      this.makeModalsDraggable();
     });
   }
 };
