@@ -840,7 +840,7 @@ export default {
       console.log("mounted sanction");
       this.addEventListeners();
       this.elem_paper_id_notice = $('#paper_id_notice');
-      // this.makeModalsDraggable();
+      this.makeModalsDraggable();
     });
   }
 };
