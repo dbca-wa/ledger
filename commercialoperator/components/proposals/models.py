@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import json
 import os
 import datetime
+import string
+from dateutil.relativedelta import relativedelta
 from django.db import models,transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
@@ -14,12 +16,14 @@ from django.contrib.sites.models import Site
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
+from ledger.accounts.models import OrganisationAddress
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.models import Invoice
 #from ledger.accounts.models import EmailUser
 from ledger.licence.models import  Licence
+from ledger.address.models import Country
 from commercialoperator import exceptions
-from commercialoperator.components.organisations.models import Organisation
+from commercialoperator.components.organisations.models import Organisation, OrganisationContact, UserDelegation
 from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
@@ -858,18 +862,21 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             if p.park.park_type=='land':
                 for a in p.activities.all():
                     park_activities.append(a.activity_name)
+                selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
             if p.park.park_type=='marine':
+                zone_activities=[]
                 for z in p.zones.all():
                     for a in z.park_activities.all():
-                        park_activities.append(a.activity_name)
-            selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
+                        zone_activities.append(a.activity_name)
+                    selected_parks_activities.append({'park': '{} - {}'.format(p.park.name, z.zone.name), 'activities': park_activities})
         for t in self.trails.all():
             #trails.append(t.trail.name)
-            trail_activities=[]
+            #trail_activities=[]
             for s in t.sections.all():
+                trail_activities=[]
                 for ts in s.trail_activities.all():
                   trail_activities.append(ts.activity_name)
-            selected_parks_activities.append({'park': t.trail.name, 'activities': trail_activities})
+                selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
         return selected_parks_activities
 
     def __assessor_group(self):
@@ -1793,11 +1800,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.schema = ptype.schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
+                proposal.proposed_issuance_approval= None
                 try:
-                    ProposalOtherDetails.objects.get(proposal=proposal)                    
+                    ProposalOtherDetails.objects.get(proposal=proposal)
                 except ProposalOtherDetails.DoesNotExist:
                     ProposalOtherDetails.objects.create(proposal=proposal)
                 # Create a log entry for the proposal
+                proposal.other_details.nominated_start_date=self.approval.expiry_date+ datetime.timedelta(days=1)
+                proposal.other_details.save()
                 self.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
                 applicant_field=getattr(self, self.applicant_field)
@@ -1831,7 +1841,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 try:
-                    ProposalOtherDetails.objects.get(proposal=proposal)                    
+                    ProposalOtherDetails.objects.get(proposal=proposal)
                 except ProposalOtherDetails.DoesNotExist:
                     ProposalOtherDetails.objects.create(proposal=proposal)
                 #copy all the requirements from the previous proposal
@@ -1934,6 +1944,26 @@ class ProposalOtherDetails(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+
+    @property
+    def proposed_end_date(self):
+        end_date=None
+        if self.preferred_licence_period and self.nominated_start_date:
+            if self.preferred_licence_period=='2_months':
+                end_date=self.nominated_start_date + relativedelta(months=+2) - relativedelta(days=1)
+            if self.preferred_licence_period=='1_year':
+                end_date=self.nominated_start_date + relativedelta(months=+12)- relativedelta(days=1)
+            if self.preferred_licence_period=='3_year':
+                end_date=self.nominated_start_date + relativedelta(months=+36)- relativedelta(days=1)
+            if self.preferred_licence_period=='5_year':
+                end_date=self.nominated_start_date + relativedelta(months=+60)- relativedelta(days=1)
+            if self.preferred_licence_period=='7_year':
+                end_date=self.nominated_start_date + relativedelta(months=+84)- relativedelta(days=1)
+            if self.preferred_licence_period=='10_year':
+                end_date=self.nominated_start_date + relativedelta(months=+120)- relativedelta(days=1)
+        return end_date
+
+
 
 
 class ProposalAccreditation(models.Model):
@@ -3332,7 +3362,7 @@ def duplicate_tclass(p):
     print ('new proposal',p)
 
     for park in original_proposal.parks.all():
-        
+
         original_park=copy.deepcopy(park)
         park.id=None
         park.proposal=p
@@ -3355,7 +3385,7 @@ def duplicate_tclass(p):
             zone.id=None
             zone.proposal_park=park
             zone.save()
-            print('new zone',zone)          
+            print('new zone',zone)
             for acz in original_zone.park_activities.all():
                 acz.id=None
                 acz.park_zone=zone
@@ -3363,11 +3393,11 @@ def duplicate_tclass(p):
                 print('new zone activity', acz, zone)
 
     for trail in original_proposal.trails.all():
-        original_trail=copy.deepcopy(trail)     
+        original_trail=copy.deepcopy(trail)
         trail.id=None
         trail.proposal=p
         trail.save()
-        
+
         for section in original_trail.sections.all():
             original_section=copy.deepcopy(section)
             section.id=None
@@ -3379,7 +3409,7 @@ def duplicate_tclass(p):
                 act.trail_section=section
                 act.save()
                 print('new trail activity', act, section)
-            
+
     try:
         other_details=ProposalOtherDetails.objects.get(proposal=original_proposal)
         new_accreditations=[]
@@ -3611,8 +3641,242 @@ def create_migration_data(filename, verify=False):
                 else:
                     approval=migrate_approval(data)
                 print approval
+    except Exception, e:
+        print e
+
+
+def create_organisation(data, count, debug=False):
+
+    #import ipdb; ipdb.set_trace()
+    #print 'Data: {}'.format(data)
+    #user = None
+    try:
+        user, created = EmailUser.objects.get_or_create(
+            email__icontains=data['email1'],
+            defaults={
+                'first_name': data['first_name'],
+                'last_name': data['last_name'],
+                'phone_number': data['phone_number1'],
+                'mobile_number': data['mobile_number'],
+            },
+        )
+    except Exception, e:
+        print data['email1']
+        import ipdb; ipdb.set_trace()
+
+    if debug:
+        print 'User: {}'.format(user)
+
+
+    abn_existing = []
+    abn_new = []
+    process = True
+    try:
+        ledger_organisation.objects.get(abn=data['abn'])
+        abn_existing.append(data['abn'])
+        print '{}, Existing ABN: {}'.format(count, data['abn'])
+        process = False
+    except Exception, e:
+        print '{}, Add ABN: {}'.format(count, data['abn'])
+        #import ipdb; ipdb.set_trace()
+
+    if process:
+        try:
+            #print 'Country: {}'.format(data['country'])
+            country=Country.objects.get(printable_name__icontains=data['country'])
+            oa, created = OrganisationAddress.objects.get_or_create(
+                line1=data['address_line1'],
+                locality=data['suburb'],
+                postcode=data['postcode'] if data['postcode'] else '0000',
+                defaults={
+                    'line2': data['address_line2'],
+                    'line3': data['address_line3'],
+                    'state': data['state'],
+                    'country': country.code,
+                }
+            )
+        except:
+            print 'Country 2: {}'.format(data['country'])
+            import ipdb; ipdb.set_trace()
+            raise
+        if debug:
+            print 'Org Address: {}'.format(oa)
+
+        try:
+            lo, created = ledger_organisation.objects.get_or_create(
+                abn=data['abn'],
+                defaults={
+                    'name': data['licencee'],
+                    'postal_address': oa,
+                    'billing_address': oa,
+                    'trading_name': data['trading_name']
+                }
+            )
+            if created:
+                abn_new.append(data['abn'])
+            else:
+                print '******** ERROR ********* abn already exists {}'.format(data['abn'])
+
+        except Exception, e:
+            print 'ABN: {}'.format(data['abn'])
+            import ipdb; ipdb.set_trace()
+            raise
+
+        if debug:
+            print 'Ledger Org: {}'.format(lo)
+
+        #import ipdb; ipdb.set_trace()
+        try:
+            org, created = Organisation.objects.get_or_create(organisation=lo)
+        except Exception, e:
+            print 'Org: {}'.format(org)
+            import ipdb; ipdb.set_trace()
+            raise
+
+        if debug:
+            print 'Organisation: {}'.format(org)
+
+        try:
+            delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
+        except Exception, e:
+            print 'Delegate Creation Failed: {}'.format(user)
+            import ipdb; ipdb.set_trace()
+            raise
+
+        if debug:
+            print 'Delegate: {}'.format(delegate)
+
+        try:
+            oc, created = OrganisationContact.objects.get_or_create(
+                organisation=org,
+                email=user.email,
+                defaults={
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'phone_number': user.phone_number,
+                    'mobile_number': user.mobile_number if data['mobile_number'] else '',
+                    'user_status': 'active',
+                    'user_role': 'organisation_admin',
+                    'is_admin': True
+                }
+            )
+        except Exception, e:
+            print 'Org Contact: {}'.format(user)
+            import ipdb; ipdb.set_trace()
+            raise
+
+        if debug:
+            print 'Org Contact: {}'.format(oc)
+
+        #return abn_new, abn_existing
+
+    return abn_new, abn_existing
+
+def create_organisation_data(filename, verify=False):
+    def get_start_date(data, row):
+        try:
+            expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date() # '05-Feb-89'
+        except Exception, e:
+            data.update({'start_date': None})
+            data.update({'issue_date': None})
+            data.update({'expiry_date': None})
+            #logger.error('Expiry Date: {}'.format(data['expiry_date']))
+            #logger.error('Data: {}'.format(data))
+            #raise
+            return
+
+        term = data['term'].split() # '3 YEAR'
+
+        #import ipdb; ipdb.set_trace()
+        if 'YEAR' in term[1]:
+            start_date = expiry_date - relativedelta(years=int(term[0]))
+        if 'MONTH' in term[1]:
+            start_date = expiry_date - relativedelta(months=int(term[0]))
+        else:
+            start_date = datetime.date.today()
+
+        data.update({'start_date': start_date})
+        data.update({'issue_date': start_date})
+        data.update({'expiry_date': expiry_date})
+
+    data={}
+    abn_existing = []
+    abn_new = []
+    count = 1
+    try:
+        '''
+        Example csv
+            address, town/city, state (WA), postcode, org_name, abn, trading_name, first_name, last_name, email, phone_number
+            123 Something Road, Perth, WA, 6100, Import Test Org 3, 615503, DDD_03, john, Doe_1, john.doe_1@dbca.wa.gov.au, 08 555 5555
+
+            File No:Licence No:Expiry Date:Term:Trading Name:Licensee:ABN:Title:First Name:Surname:Other Contact:Address 1:Address 2:Address 3:Suburb:State:Country:Post:Telephone1:Telephone2:Mobile:Insurance Expiry:Survey Cert:Name:SPV:ATAP Expiry:Eco Cert Expiry:Vessels:Vehicles:Email1:Email2:Email3:Email4
+            2018/001899-1:HQ70324:28-Feb-21:3 YEAR:4 U We Do:4 U We Do Pty Ltd::MR:Petrus:Grobler::Po Box 2483:::ESPERANCE:WA:AUSTRALIA:6450:458021841:::23-Jun-18::::30-Jun-18::0:7:groblerp@gmail.com:::
+        To test:
+            from commercialoperator.components.proposals.models import create_organisation_data
+            create_migration_data('commercialoperator/utils/csv/orgs.csv')
+        '''
+        with open(filename) as csvfile:
+            reader = csv.reader(csvfile, delimiter=str(':'))
+            header = next(reader) # skip header
+            for row in reader:
+                #import ipdb; ipdb.set_trace()
+                data.update({'file_no': row[0].translate(None, string.whitespace)})
+                data.update({'licence_no': row[1].translate(None, string.whitespace)})
+                data.update({'expiry_date': row[2].strip()})
+                data.update({'term': row[3].strip()})
+
+                get_start_date(data, row)
+
+                data.update({'trading_name': row[4].strip()})
+                data.update({'licencee': row[5].strip()})
+                data.update({'abn': row[6].translate(None, string.whitespace)})
+                data.update({'title': row[7].strip()})
+                data.update({'first_name': row[8].strip().capitalize()})
+                data.update({'last_name': row[9].strip().capitalize()})
+                data.update({'other_contact': row[10].strip()})
+                data.update({'address_line1': row[11].strip()})
+                data.update({'address_line2': row[12].strip()})
+                data.update({'address_line3': row[13].strip()})
+                data.update({'suburb': row[14].strip().capitalize()})
+                data.update({'state': row[15].strip()})
+
+                country = ' '.join([i.lower().capitalize() for i in row[16].strip().split()])
+                if country == 'A':
+                    country = 'Australia'
+                data.update({'country': country})
+
+                data.update({'postcode': row[17].translate(None, string.whitespace)})
+                data.update({'phone_number1': row[18].translate(None, b' -()')})
+                data.update({'phone_number2': row[19].translate(None, b' -()')})
+                data.update({'mobile_number': row[20].translate(None, b' -()')})
+
+                data.update({'email1': row[29].strip()})
+                data.update({'email2': row[30].strip()})
+                data.update({'email3': row[31].strip()})
+                data.update({'email4': row[32].strip()})
+                #import ipdb; ipdb.set_trace()
+
+                #print data
+
+                new, existing = create_organisation(data, count)
+                count += 1
+                abn_new = new + abn_new
+                abn_existing = existing + abn_existing
+                #if data['expiry_date']:
+                #    organisation=create_organisation(data)
+                #else:
+                #    logger.warn('No Expiry Date: {}'.format(data))
+                #print organisation
+
+        print 'New: {}, Existing: {}'.format(len(abn_new), len(abn_existing))
+        print 'New: {}'.format(abn_new)
+        print 'Existing: {}'.format(abn_existing)
+
+
     except:
+        logger.info('Main {}'.format(data))
         raise
+
 
 
 

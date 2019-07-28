@@ -34,7 +34,7 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="due_date" style="width: 70%;">
-                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" v-model="approval.expiry_date" :disabled="is_amendment">
+                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" ref="expiry_date" v-model="approval.expiry_date" :disabled="is_amendment">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>

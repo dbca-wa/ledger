@@ -18,6 +18,7 @@ from commercialoperator.components.organisations.utils import (
                                 can_relink,
                                 is_last_admin,
                             )
+from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
 
@@ -263,6 +264,18 @@ class OrganisationCommsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganisationLogEntry
         fields = '__all__'
+
+class OrganisationLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = OrganisationLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
 
 class OrganisationUnlinkUserSerializer(serializers.Serializer):
     user = serializers.IntegerField()

@@ -54,6 +54,11 @@ def send_application_fee_invoice_tclass_email_notification(request, proposal, in
 #        _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
 #    except:
 #        _log_org_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    if proposal.org_applicant:
+        _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+    
 
 def send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients):
     email = ApplicationFeeConfirmationTClassSendNotificationEmail()
@@ -71,6 +76,10 @@ def send_application_fee_confirmation_tclass_email_notification(request, proposa
     msg = email.send(recipients, attachments=[attachment], context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
+    if proposal.org_applicant:
+        _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
 
 def send_invoice_tclass_email_notification(request, booking, invoice, recipients):
     email = InvoiceTClassSendNotificationEmail()
@@ -89,7 +98,10 @@ def send_invoice_tclass_email_notification(request, booking, invoice, recipients
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, booking.proposal, sender=sender)
     #_log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
-
+    if booking.proposal.org_applicant:
+        _log_org_email(msg, booking.proposal.org_applicant, booking.proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, booking.proposal.submitter, booking.proposal.submitter, sender=sender)
 
 def send_confirmation_tclass_email_notification(request, booking, invoice, recipients):
     email = ConfirmationTClassSendNotificationEmail()
@@ -109,7 +121,10 @@ def send_confirmation_tclass_email_notification(request, booking, invoice, recip
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, booking.proposal, sender=sender)
     #_log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
-
+    if booking.proposal.org_applicant:
+        _log_org_email(msg, booking.proposal.org_applicant, booking.proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, booking.proposal.submitter, booking.proposal.submitter, sender=sender)
 
 def send_proposal_approval_email_notification(proposal,request):
     email = ProposalApprovalSendNotificationEmail()
@@ -134,7 +149,12 @@ def send_proposal_approval_email_notification(proposal,request):
     msg = email.send(proposal.submitter.email, bcc= all_ccs, attachments=attachment, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
-    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+    #_log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+    if proposal.org_applicant:
+        _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+
 
 
 def _log_proposal_email(email_message, proposal, sender=None):
@@ -227,5 +247,51 @@ def _log_org_email(email_message, organisation, customer ,sender=None):
     }
 
     email_entry = OrganisationLogEntry.objects.create(**kwargs)
+
+    return email_entry
+
+def _log_user_email(email_message, emailuser, customer ,sender=None):
+    from ledger.accounts.models import EmailUserLogEntry
+    if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
+        # TODO this will log the plain text body, should we log the html instead
+        text = email_message.body
+        subject = email_message.subject
+        fromm = smart_text(sender) if sender else smart_text(email_message.from_email)
+        # the to email is normally a list
+        if isinstance(email_message.to, list):
+            to = ','.join(email_message.to)
+        else:
+            to = smart_text(email_message.to)
+        # we log the cc and bcc in the same cc field of the log entry as a ',' comma separated string
+        all_ccs = []
+        if email_message.cc:
+            all_ccs += list(email_message.cc)
+        if email_message.bcc:
+            all_ccs += list(email_message.bcc)
+        all_ccs = ','.join(all_ccs)
+
+    else:
+        text = smart_text(email_message)
+        subject = ''
+        to = customer
+        fromm = smart_text(sender) if sender else SYSTEM_NAME
+        all_ccs = ''
+
+    customer = customer
+
+    staff = sender
+
+    kwargs = {
+        'subject': subject,
+        'text': text,
+        'emailuser': emailuser,
+        'customer': customer,
+        'staff': staff,
+        'to': to,
+        'fromm': fromm,
+        'cc': all_ccs
+    }
+
+    email_entry = EmailUserLogEntry.objects.create(**kwargs)
 
     return email_entry

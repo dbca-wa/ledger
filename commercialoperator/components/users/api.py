@@ -36,6 +36,8 @@ from commercialoperator.components.users.serializers import   (
                                                 PersonalSerializer,
                                                 ContactSerializer,
                                                 EmailUserActionSerializer,
+                                                EmailUserCommsSerializer,
+                                                EmailUserLogEntrySerializer
                                             )
 from commercialoperator.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -186,6 +188,55 @@ class UserViewSet(viewsets.ModelViewSet):
             qs = instance.action_logs.all()
             serializer = EmailUserActionSerializer(qs, many=True)
             return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+    @detail_route(methods=['GET',])
+    def comms_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.comms_logs.all()
+            serializer = EmailUserCommsSerializer(qs,many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def add_comms_log(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request.data['emailuser'] = u'{}'.format(instance.id)
+                request.data['staff'] = u'{}'.format(request.user.id)
+                serializer = EmailUserLogEntrySerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+                # Save the files
+                for f in request.FILES:
+                    #import ipdb; ipdb.set_trace()
+                    document = comms.documents.create()
+                    document.name = str(request.FILES[f])
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+
+                return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
