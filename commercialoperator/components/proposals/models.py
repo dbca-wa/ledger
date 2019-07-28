@@ -862,18 +862,21 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             if p.park.park_type=='land':
                 for a in p.activities.all():
                     park_activities.append(a.activity_name)
+                selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
             if p.park.park_type=='marine':
+                zone_activities=[]
                 for z in p.zones.all():
                     for a in z.park_activities.all():
-                        park_activities.append(a.activity_name)
-            selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
+                        zone_activities.append(a.activity_name)
+                    selected_parks_activities.append({'park': '{} - {}'.format(p.park.name, z.zone.name), 'activities': park_activities})
         for t in self.trails.all():
             #trails.append(t.trail.name)
-            trail_activities=[]
+            #trail_activities=[]
             for s in t.sections.all():
+                trail_activities=[]
                 for ts in s.trail_activities.all():
                   trail_activities.append(ts.activity_name)
-            selected_parks_activities.append({'park': t.trail.name, 'activities': trail_activities})
+                selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
         return selected_parks_activities
 
     def __assessor_group(self):
@@ -1797,11 +1800,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.schema = ptype.schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
+                proposal.proposed_issuance_approval= None
                 try:
                     ProposalOtherDetails.objects.get(proposal=proposal)
                 except ProposalOtherDetails.DoesNotExist:
                     ProposalOtherDetails.objects.create(proposal=proposal)
                 # Create a log entry for the proposal
+                proposal.other_details.nominated_start_date=self.approval.expiry_date+ datetime.timedelta(days=1)
+                proposal.other_details.save()
                 self.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
                 applicant_field=getattr(self, self.applicant_field)
@@ -1938,6 +1944,26 @@ class ProposalOtherDetails(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+
+    @property
+    def proposed_end_date(self):
+        end_date=None
+        if self.preferred_licence_period and self.nominated_start_date:
+            if self.preferred_licence_period=='2_months':
+                end_date=self.nominated_start_date + relativedelta(months=+2) - relativedelta(days=1)
+            if self.preferred_licence_period=='1_year':
+                end_date=self.nominated_start_date + relativedelta(months=+12)- relativedelta(days=1)
+            if self.preferred_licence_period=='3_year':
+                end_date=self.nominated_start_date + relativedelta(months=+36)- relativedelta(days=1)
+            if self.preferred_licence_period=='5_year':
+                end_date=self.nominated_start_date + relativedelta(months=+60)- relativedelta(days=1)
+            if self.preferred_licence_period=='7_year':
+                end_date=self.nominated_start_date + relativedelta(months=+84)- relativedelta(days=1)
+            if self.preferred_licence_period=='10_year':
+                end_date=self.nominated_start_date + relativedelta(months=+120)- relativedelta(days=1)
+        return end_date
+
+
 
 
 class ProposalAccreditation(models.Model):

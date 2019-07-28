@@ -568,6 +568,10 @@ export default {
             },
             eventListeners:function (){
                 let vm=this;
+
+                var date= new Date()
+                var today= new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
                 $(vm.$refs.accreditation_expiry).datetimepicker(vm.datepickerOptions);
                 $(vm.$refs.accreditation_expiry).on('dp.change', function(e){
                     if ($(vm.$refs.accreditation_expiry).data('DateTimePicker').date()) {
@@ -581,6 +585,9 @@ export default {
                  });
                 //Nominated start date listener
                 $(vm.$refs.nominated_start_date).datetimepicker(vm.datepickerOptions);
+                //Set minimum date on datetimepicker so that nominated
+                //start date cannot be selected prior to today
+                $(vm.$refs.nominated_start_date).data("DateTimePicker").minDate(today);
                 $(vm.$refs.nominated_start_date).on('dp.change', function(e){
                     if ($(vm.$refs.nominated_start_date).data('DateTimePicker').date()) {
                         
@@ -593,9 +600,11 @@ export default {
                  });
                 //Insurance expiry date listener
                 $(vm.$refs.insurance_expiry).datetimepicker(vm.datepickerOptions);
+                //Set minimum date on datetimepicker so that
+                //insurance expiry date cannot be selected prior to today
+                $(vm.$refs.insurance_expiry).data("DateTimePicker").minDate(today);
                 $(vm.$refs.insurance_expiry).on('dp.change', function(e){
-                    if ($(vm.$refs.insurance_expiry).data('DateTimePicker').date()) {
-                        
+                    if ($(vm.$refs.insurance_expiry).data('DateTimePicker').date()) {                       
 
                         vm.proposal.other_details.insurance_expiry =  e.date.format('DD/MM/YYYY');
                     }

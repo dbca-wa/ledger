@@ -656,6 +656,14 @@ export default {
         },
         proposedApproval: function(){
             this.$refs.proposed_approval.approval = this.proposal.proposed_issuance_approval != null ? helpers.copyObject(this.proposal.proposed_issuance_approval) : {};
+            if((this.proposal.proposed_issuance_approval==null || this.proposal.proposed_issuance_approval.expiry_date==null) && this.proposal.other_details.proposed_end_date!=null){
+                // this.$refs.proposed_approval.expiry_date=this.proposal.other_details.proposed_end_date;
+                var test_approval={
+                    'start_date': this.proposal.other_details.nominated_start_date,
+                    'expiry_date': this.proposal.other_details.proposed_end_date
+                };
+                this.$refs.proposed_approval.approval= helpers.copyObject(test_approval);
+            }
             this.$refs.proposed_approval.isModalOpen = true;
         },
         issueProposal:function(){
