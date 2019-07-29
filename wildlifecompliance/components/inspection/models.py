@@ -55,6 +55,7 @@ class Inspection(RevisionedMixin):
     number = models.CharField(max_length=50, blank=True, null=True)
     planned_for_date = models.DateField(null=True)
     planned_for_time = models.TimeField(blank=True, null=True)
+    inform_party_being_inspected = models.BooleanField(default=False)
     party_inspected = models.CharField(
             max_length=30,
             choices=PARTY_CHOICES,

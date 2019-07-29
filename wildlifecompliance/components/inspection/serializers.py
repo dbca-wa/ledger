@@ -42,7 +42,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'abn',
             'name',
         )
-        read_only_fields = ()
+        # read_only_fields = ()
 
 
 class IndividualSerializer(serializers.ModelSerializer):
@@ -113,7 +113,7 @@ class InspectionSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     inspection_team = EmailUserSerializer(many=True, read_only=True)
     individual_inspected = IndividualSerializer()
-    organisation_inspected = OrganisationSerializer()
+    organisation_inspected = OrganisationSerializer(read_only=True)
     #inspection_type = InspectionTypeSerializer()
     related_items = serializers.SerializerMethodField()
 
@@ -142,6 +142,7 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'individual_inspected_id',
                 'organisation_inspected_id',
                 'related_items',
+                'inform_party_being_inspected',
                 )
         read_only_fields = (
                 'id',
@@ -220,7 +221,8 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
                 'allocated_group_id',
                 'inspection_type_id',
                 'individual_inspected_id',
-                'organisation_inspected_id'
+                'organisation_inspected_id',
+                'inform_party_being_inspected',
                 )
         read_only_fields = (
                 'id',
