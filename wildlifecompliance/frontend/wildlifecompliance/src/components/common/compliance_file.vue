@@ -152,12 +152,11 @@ export default {
             }
             formData.append('input_name', this.name);
             formData.append('csrfmiddlewaretoken', this.csrf_token);
-            if (!this.documentActionUrl) {
-                this.documentActionUrl = await this.createDocumentActionUrl()
+            if (this.documentActionUrl) {
+                let res = await Vue.http.post(this.documentActionUrl, formData)
+                this.documents = res.body.filedata;
+                this.commsLogId = res.body.comms_instance_id;
             }
-            let res = await Vue.http.post(this.documentActionUrl, formData)
-            this.documents = res.body.filedata;
-            this.commsLogId = res.body.comms_instance_id;
             //console.log(vm.documents);
             this.show_spinner = false;
 
@@ -173,12 +172,11 @@ export default {
             }
             formData.append('document_id', file.id);
             formData.append('csrfmiddlewaretoken', this.csrf_token);
-            if (!this.documentActionUrl) {
-                this.documentActionUrl = await this.createDocumentActionUrl()
+            if (this.documentActionUrl) {
+                let res = await Vue.http.post(this.documentActionUrl, formData)
+                this.documents = this.get_documents()
+                this.commsLogId = res.body.comms_instance_id;
             }
-            let res = await Vue.http.post(this.documentActionUrl, formData)
-            this.documents = this.get_documents()
-            this.commsLogId = res.body.comms_instance_id;
             //vm.documents = res.body;
             this.show_spinner = false;
 

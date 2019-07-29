@@ -823,15 +823,6 @@ export default {
     console.log("In created");
     let vm = this;
 
-    // create sanction outcome and get id
-    //let returned_sanction_outcome = await Vue.http.post(api_endpoints.sanction_outcome);
-    //this.sanction_outcome.id = returned_sanction_outcome.body.id;
-    
-    //this.documentActionUrl = helpers.add_endpoint_join(
-      //      api_endpoints.sanction_outcome,
-        //    this.sanction_outcome.id + "/process_default_document/"
-          //  )
-
     // Load all the types for the sanction outcome
     let options_for_types = await cache_helper.getSetCacheList(
       "SanctionOutcome_Types",
@@ -895,3 +886,4 @@ export default {
   border: 1px solid lightgray;
 }
 </style>
+
