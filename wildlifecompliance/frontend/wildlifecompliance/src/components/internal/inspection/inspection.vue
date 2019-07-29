@@ -63,7 +63,7 @@
                         </div-->
 
                         <div  class="row action-button">
-                          <div class="col-sm-12">
+                          <div v-if="!readonlyForm" class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                   Send to Manager
                                 </a>
@@ -71,7 +71,7 @@
                         </div>
                         
                         <div class="row action-button">
-                          <div class="col-sm-12">
+                          <div v-if="!readonlyForm" class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
@@ -79,7 +79,7 @@
                         </div>
 
                         <div  class="row action-button">
-                          <div class="col-sm-12">
+                          <div v-if="!readonlyForm" class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
@@ -87,7 +87,7 @@
                         </div>
                         
                         <div  class="row action-button">
-                          <div class="col-sm-12">
+                          <div v-if="!readonlyForm" class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                   Close
                                 </a>
@@ -194,6 +194,11 @@
                                 <div class="col-sm-12">
                                   <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
+                            </div></div>
+                            <div class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-4" for="inspection_inform">Inform party being inspected</label>
+                              <input type="checkbox" id="inspection_inform" v-model="inspection.inform_party_being_inspected">
+                              
                             </div></div>
                           </FormSection>
                           <FormSection :formCollapse="false" label="Inspection Team" Index="1">

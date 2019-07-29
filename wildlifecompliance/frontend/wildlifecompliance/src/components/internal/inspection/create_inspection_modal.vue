@@ -253,8 +253,12 @@ export default {
           this.isModalOpen = false;
       },
       sendData: async function() {
-          //let post_url = '/api/inspection/'
-          let post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
+          let post_url = '';
+          if (this.inspection && this.inspection.id) {
+              post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
+          } else {
+                post_url = '/api/inspection/'
+          }
           let payload = new FormData(this.form);
           payload.append('details', this.workflowDetails);
           if (this.$refs.comms_log_file.commsLogId) {
