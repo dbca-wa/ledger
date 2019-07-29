@@ -197,7 +197,7 @@
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
                               <label class="col-sm-4" for="inspection_inform">Inform party being inspected</label>
-                              <input type="checkbox" id="inspection_inform" v-model="inform_party_being_inspected">
+                              <input type="checkbox" id="inspection_inform" v-model="inspection.inform_party_being_inspected">
                               
                             </div></div>
                           </FormSection>

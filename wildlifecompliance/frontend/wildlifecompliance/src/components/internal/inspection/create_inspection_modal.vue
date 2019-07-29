@@ -253,10 +253,11 @@ export default {
           this.isModalOpen = false;
       },
       sendData: async function() {
-          if (!this.inspection.id) {
-            let post_url = '/api/inspection/'
+          let post_url = '';
+          if (this.inspection && this.inspection.id) {
+              post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
           } else {
-              let post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
+                post_url = '/api/inspection/'
           }
           let payload = new FormData(this.form);
           payload.append('details', this.workflowDetails);
