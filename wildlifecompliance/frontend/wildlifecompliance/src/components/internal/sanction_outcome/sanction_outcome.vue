@@ -138,8 +138,8 @@
                                     <label class="control-label pull-left">Paper notice</label>
                                 </div>
                                 <div id="paper_id_notice">
-                                    <div v-if="documentActionUrl" class="col-sm-7">
-                                        <filefield ref="sanction_outcome_file" name="sanction-outcome-file" :isRepeatable="true" :documentActionUrl="documentActionUrl" :disabled="!sanction_outcome.issued_on_paper"/>
+                                    <div v-if="sanction_outcome.issued_on_paper" class="col-sm-7">
+                                        <filefield ref="sanction_outcome_file" name="sanction-outcome-file" :createDocumentActionUrl="createDocumentActionUrl" :isRepeatable="true" :disabled="!sanction_outcome.issued_on_paper"/>
                                     </div>
                                 </div>
                             </div></div>
@@ -807,20 +807,21 @@ export default {
         console.log(res.body);
         vm.options_for_offences = res.body;
       });
-    }
-  },
+    },
+    createDocumentActionUrl: async function() {
+        // create sanction outcome and get id
+        let returned_sanction_outcome = await Vue.http.post(api_endpoints.sanction_outcome);
+        this.sanction_outcome.id = returned_sanction_outcome.body.id;
+        
+        return helpers.add_endpoint_join(
+                api_endpoints.sanction_outcome,
+                this.sanction_outcome.id + "/process_default_document/"
+                )
+      },
+    },
   created: async function() {
     console.log("In created");
     let vm = this;
-
-    // create sanction outcome and get id
-    let returned_sanction_outcome = await Vue.http.post(api_endpoints.sanction_outcome);
-    this.sanction_outcome.id = returned_sanction_outcome.body.id;
-    
-    this.documentActionUrl = helpers.add_endpoint_join(
-            api_endpoints.sanction_outcome,
-            this.sanction_outcome.id + "/process_default_document/"
-            )
 
     // Load all the types for the sanction outcome
     let options_for_types = await cache_helper.getSetCacheList(
@@ -885,3 +886,4 @@ export default {
   border: 1px solid lightgray;
 }
 </style>
+
