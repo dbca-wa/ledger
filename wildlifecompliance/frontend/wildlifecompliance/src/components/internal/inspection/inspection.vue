@@ -226,6 +226,24 @@
             
                           
                         </div>  
+                        <div :id="cTab" class="tab-pane fade in">
+                            <FormSection :formCollapse="false" label="Checklist">
+                                <div class="col-sm-12 form-group"><div class="row">
+                                    <div class="col-sm-12">
+                                        Checklist
+                                    </div>
+                                </div></div>
+                            </FormSection>
+                        </div>
+                        <div :id="oTab" class="tab-pane fade in">
+                            <FormSection :formCollapse="false" label="Outcomes">
+                                <div class="col-sm-12 form-group"><div class="row">
+                                    <div class="col-sm-12">
+                                        Outcomes
+                                    </div>
+                                </div></div>
+                            </FormSection>
+                        </div>
                         <div :id="rTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
@@ -284,6 +302,8 @@ export default {
     return {
       iTab: 'iTab'+this._uid,
       rTab: 'rTab'+this._uid,
+      oTab: 'oTab'+this._uid,
+      cTab: 'cTab'+this._uid,
       dtHeadersRelatedItems: [
           'Number',
           'Type',
