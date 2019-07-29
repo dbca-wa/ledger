@@ -4,7 +4,6 @@ from ledger.settings_base import *
 ROOT_URLCONF = 'commercialoperator.urls'
 SITE_ID = 1
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
-SUPERVISOR_STOP_CMD = env('SUPERVISOR_STOP_CMD')
 SYSTEM_MAINTENANCE_WARNING = env('SYSTEM_MAINTENANCE_WARNING', 24) # hours
 DISABLE_EMAIL = env('DISABLE_EMAIL', False)
 PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S557')
@@ -111,6 +110,7 @@ DEP_NAME_SHORT = env('DEP_NAME_SHORT','DBCA')
 SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + SITE_DOMAIN)
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', 'no-reply@' + SITE_DOMAIN)
 TENURE_SECTION = env('TENURE_SECTION', None)
+COLS_ADMIN_GROUP = env('COLS_ADMIN_GROUP', 'COLS Admin')
 
 # for ORACLE Job Notification - override settings_base.py
 EMAIL_FROM = DEFAULT_FROM_EMAIL
