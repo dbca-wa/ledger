@@ -30,6 +30,7 @@ class Offence(RevisionedMixin):
         ('open', 'Open'),
         ('closing', 'Closing'),
         ('closed', 'Closed'),
+        ('discarded', 'Discarded'),
     )
 
     identifier = models.CharField(
@@ -81,7 +82,7 @@ class Offence(RevisionedMixin):
 
     def save(self, *args, **kwargs):
         super(Offence, self).save(*args, **kwargs)
-        if self.lodgement_number is None:
+        if not self.lodgement_number:
             self.lodgement_number = 'OF{0:06d}'.format(self.pk)
             self.save()
 
