@@ -70,7 +70,7 @@
                                         <select class="form-control" v-on:change="offenceSelected($event)" v-bind:value="sanction_outcome.current_offence.id">
                                             <option value=""></option>
                                             <option v-for="option in options_for_offences" v-bind:value="option.id" v-bind:key="option.id">
-                                                {{ option.id + ': ' + option.status + ', ' + option.identifier }} 
+                                                {{ option.identifier }} 
                                             </option>
                                         </select>
                                     </div>
@@ -751,7 +751,7 @@ export default {
         payload.call_email_id = vm.call_email ? vm.call_email.id : null;
 
         // Set set_sequence to generate lodgement number at the backend
-        payload.set_sequence = true;
+        // payload.set_sequence = true;
         console.log(payload);
         const savedObj = await Vue.http.post(fetchUrl, payload);
         await swal("Saved", "The record has been saved", "success");
