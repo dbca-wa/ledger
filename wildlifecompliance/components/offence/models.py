@@ -30,6 +30,7 @@ class Offence(RevisionedMixin):
         ('open', 'Open'),
         ('closing', 'Closing'),
         ('closed', 'Closed'),
+        ('discarded', 'Discarded'),
     )
 
     identifier = models.CharField(
@@ -59,6 +60,7 @@ class Offence(RevisionedMixin):
         blank=True,
         related_name='offence_inspection',
     )
+    lodgement_number = models.CharField(max_length=50, blank=True,)
     occurrence_from_to = models.BooleanField(default=False)
     occurrence_date_from = models.DateField(null=True, blank=True)
     occurrence_time_from = models.TimeField(null=True, blank=True)
@@ -77,7 +79,13 @@ class Offence(RevisionedMixin):
 
     def __str__(self):
         return 'ID: {}, Status: {}, Identifier: {}'.format(self.id, self.status, self.identifier)
-    
+
+    def save(self, *args, **kwargs):
+        super(Offence, self).save(*args, **kwargs)
+        if not self.lodgement_number:
+            self.lodgement_number = 'OF{0:06d}'.format(self.pk)
+            self.save()
+
     @property
     def get_related_items_identifier(self):
         return '{}'.format(self.identifier)

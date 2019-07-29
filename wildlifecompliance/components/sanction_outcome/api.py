@@ -71,7 +71,7 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 request_data['allocated_group_id'] = group.id
 
                 # Save sanction outcome (offence, offender, alleged_offences)
-                if request_data['id']:
+                if hasattr(request_data, 'id') and request_data['id']:
                     instance = SanctionOutcome.objects.get(id=request_data['id'])
                     serializer = SaveSanctionOutcomeSerializer(instance, data=request_data, partial=True)
                 else:
@@ -79,10 +79,10 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 saved_obj = serializer.save()
 
-                if request_data.get('set_sequence'):
-                    # Only when requested, we generate a new lodgement number
-                    saved_obj.set_sequence()
-                    saved_obj.save()
+                # if request_data.get('set_sequence'):
+                #     # Only when requested, we generate a new lodgement number
+                #     saved_obj.set_sequence()
+                #     saved_obj.save()
 
                 # Save remediation action, and link to the sanction outcome
                 for dict in request_data['remediation_actions']:
