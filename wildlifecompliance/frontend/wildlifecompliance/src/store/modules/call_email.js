@@ -32,9 +32,11 @@ export const callemailStore = {
             report_type: {
                 id: null,
             },
-            allocated_group: {
-                members: [],
-            },
+            //allocated_group: {
+              //  members: [],
+            //},
+            allocated_group: [],
+            volunteer_list: [],
         },
         classification_types: [],
         report_types: [],
@@ -128,7 +130,13 @@ export const callemailStore = {
                 state.call_email.occurrence_date_from = moment(state.call_email.occurrence_date_from, 'YYYY-MM-DD').format('DD/MM/YYYY');
             }
             if (state.call_email.occurrence_date_to) {
-                state.call_email.occurrence_date_tp = moment(state.call_email.occurrence_date_to, 'YYYY-MM-DD').format('DD/MM/YYYY');
+                state.call_email.occurrence_date_to = moment(state.call_email.occurrence_date_to, 'YYYY-MM-DD').format('DD/MM/YYYY');
+            }
+            if (state.call_email.date_of_call) {
+                state.call_email.date_of_call = moment(state.call_email.date_of_call, 'YYYY-MM-DD').format('DD/MM/YYYY');
+            }
+            if (!state.call_email.volunteer_id) {
+                state.call_email.volunteer_id = state.call_email.current_user_id;
             }
         },
         updateSchema(state, schema) {
@@ -243,6 +251,9 @@ export const callemailStore = {
         updateOccurrenceTimeEnd(state, time) {
             Vue.set(state.call_email, 'occurrence_time_end', time);
         },
+        updateTimeOfCall(state, time) {
+            Vue.set(state.call_email, 'time_of_call', time);
+        },
     },
     actions: {
         async loadCallEmail({ dispatch, }, { call_email_id }) {
@@ -318,6 +329,11 @@ export const callemailStore = {
                     payload.occurrence_date_to = moment(payload.occurrence_date_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
                 } else if (payload.occurrence_date_to === '') {
                     payload.occurrence_date_to = null;
+                }
+                if (payload.date_of_call) {
+                    payload.date_of_call = moment(payload.date_of_call, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                } else if (payload.date_of_call === '') {
+                    payload.date_of_call = null;
                 }
                 if (crud == 'duplicate') {
                     payload.id = null;
@@ -449,6 +465,9 @@ export const callemailStore = {
         },
         setOccurrenceTimeEnd({ commit }, time ) {
             commit("updateOccurrenceTimeEnd", time);
+        },
+        setTimeOfCall({ commit }, time ) {
+            commit("updateTimeOfCall", time);
         },
     },
 };

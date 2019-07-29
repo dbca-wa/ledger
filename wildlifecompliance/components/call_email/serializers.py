@@ -29,6 +29,10 @@ from django.core.exceptions import ValidationError
 from wildlifecompliance.components.main.fields import CustomChoiceField
 
 from wildlifecompliance.components.users.serializers import UserAddressSerializer
+from wildlifecompliance.components.users.models import (
+        CompliancePermissionGroup
+)
+from django.contrib.auth.models import Permission, ContentType
 
 
 class SaveEmailUserSerializer(serializers.ModelSerializer):
@@ -255,6 +259,8 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     inspection_type_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
+    volunteer_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = CallEmail
@@ -285,6 +291,8 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'occurrence_time_start',
             'occurrence_date_to',
             'occurrence_time_end',
+            'date_of_call',
+            'time_of_call',
             'advice_given',
             'advice_details',
             'email_user',
@@ -293,6 +301,7 @@ class SaveCallEmailSerializer(serializers.ModelSerializer):
             'district_id',
             'case_priority_id',
             'inspection_type_id',
+            'volunteer_id',
         )
         read_only_fields = (
             'id', 
@@ -369,7 +378,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
     can_user_edit_form = serializers.SerializerMethodField()
     can_user_search_person = serializers.SerializerMethodField()
     user_is_volunteer = serializers.SerializerMethodField()
-
+    volunteer_list = serializers.SerializerMethodField()
+    current_user_id = serializers.SerializerMethodField()
 
     class Meta:
         model = CallEmail
@@ -400,6 +410,8 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'occurrence_time_start',
             'occurrence_date_to',
             'occurrence_time_end',
+            'date_of_call',
+            'time_of_call',
             'referrer',
             # 'referrer_id',
             'advice_given',
@@ -417,10 +429,16 @@ class CallEmailSerializer(serializers.ModelSerializer):
             'can_user_edit_form',
             'can_user_search_person',
             'user_is_volunteer',
+            'volunteer_list',
+            'volunteer_id',
+            'current_user_id',
         )
         read_only_fields = (
             'id', 
             )
+
+    def get_current_user_id(self, obj):
+        return self.context.get('request', {}).user.id
 
     def get_user_in_group(self, obj):
         user_id = self.context.get('request', {}).user.id
@@ -514,6 +532,26 @@ class CallEmailSerializer(serializers.ModelSerializer):
         # return false if 'volunteer' is not a permission of any group the user belongs to
         return False
 
+    def get_volunteer_list(self, obj):
+        volunteer_list = [{
+            'email': '',
+            'first_name': '',
+            'full_name': '',
+            'id': None,
+            'last_name': '',
+            'title': '',
+            }]
+        compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup") 
+        # user = EmailUser.objects.get(id=self.context.get('request', {}).user.id)
+        permission = Permission.objects.filter(codename='volunteer').filter(content_type_id=compliance_content_type.id).first()
+        group = CompliancePermissionGroup.objects.filter(permissions=permission).first()
+        
+        returned_volunteer_list = CompliancePermissionGroupMembersSerializer(instance=group)
+        for member in returned_volunteer_list.data['members']:
+            volunteer_list.append(member)
+
+        return volunteer_list
+
 
 class CallEmailDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
@@ -539,6 +577,7 @@ class CallEmailDatatableSerializer(serializers.ModelSerializer):
             'assigned_to_id',
             'user_action',
             'user_is_volunteer',
+            'volunteer_id',
 
         )
         read_only_fields = (
