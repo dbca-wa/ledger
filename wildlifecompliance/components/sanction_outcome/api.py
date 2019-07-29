@@ -71,7 +71,7 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 request_data['allocated_group_id'] = group.id
 
                 # Save sanction outcome (offence, offender, alleged_offences)
-                if request_data['id']:
+                if hasattr(request_data, 'id') and request_data['id']:
                     instance = SanctionOutcome.objects.get(id=request_data['id'])
                     serializer = SaveSanctionOutcomeSerializer(instance, data=request_data, partial=True)
                 else:
