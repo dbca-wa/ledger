@@ -9,6 +9,13 @@ from wildlifecompliance.components.users.models import RegionDistrict, Complianc
 
 
 class SanctionOutcome(models.Model):
+    STATUS_CHOICES = (
+        ('draft', 'Draft'),
+        ('open', 'Open'),
+        ('closed', 'Closed'),
+        ('discarded', 'Discarded'),
+    )
+
     TYPE_INFRINGEMENT_NOTICE = 'infringement_notice'
     TYPE_CAUTION_NOTICE = 'caution_notice'
     TYPE_LETTER_OF_ADVICE = 'letter_of_advice'
@@ -82,13 +89,13 @@ class SanctionOutcome(models.Model):
 
         return prefix_lodgement
 
-    def set_sequence(self):
-        """
-        This function generates new lodgement number without gaps between numbers
-        """
-        if not self.lodgement_number and self.prefix_lodgement_nubmer:
-            new_lodgement_number_int = get_next_value(self.prefix_lodgement_nubmer)
-            self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(new_lodgement_number_int)
+    # def set_sequence(self):
+    #     """
+    #     This function generates new lodgement number without gaps between numbers
+    #     """
+    #     if not self.lodgement_number and self.prefix_lodgement_nubmer:
+    #         new_lodgement_number_int = get_next_value(self.prefix_lodgement_nubmer)
+    #         self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(new_lodgement_number_int)
 
     def delete(self):
         if self.lodgement_number:
@@ -100,6 +107,12 @@ class SanctionOutcome(models.Model):
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_SanctionOutcome'
         verbose_name_plural = 'CM_SanctionOutcomes'
+
+    def save(self, *args, **kwargs):
+        super(SanctionOutcome, self).save(*args, **kwargs)
+        if not self.lodgement_number:
+            self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(self.pk)
+            self.save()
 
     def __str__(self):
         return 'Type : {}, Identifier: {}'.format(self.type, self.identifier)
