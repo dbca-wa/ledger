@@ -858,8 +858,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def update_assigned_to_id(self, request, *args, **kwargs):
-        print("update assigned to")
-        print(request.data)
         try:
             instance = self.get_object()
             serializer = None

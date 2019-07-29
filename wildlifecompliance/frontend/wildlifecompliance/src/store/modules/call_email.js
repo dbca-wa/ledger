@@ -32,9 +32,11 @@ export const callemailStore = {
             report_type: {
                 id: null,
             },
-            allocated_group: {
-                members: [],
-            },
+            //allocated_group: {
+              //  members: [],
+            //},
+            allocated_group: [],
+            volunteer_list: [],
         },
         classification_types: [],
         report_types: [],
@@ -132,6 +134,9 @@ export const callemailStore = {
             }
             if (state.call_email.date_of_call) {
                 state.call_email.date_of_call = moment(state.call_email.date_of_call, 'YYYY-MM-DD').format('DD/MM/YYYY');
+            }
+            if (!state.call_email.volunteer_id) {
+                state.call_email.volunteer_id = state.call_email.current_user_id;
             }
         },
         updateSchema(state, schema) {

@@ -207,6 +207,11 @@ class CallEmail(RevisionedMixin):
         related_name='callemail_assigned_to',
         null=True
     )
+    volunteer = models.ForeignKey(
+        EmailUser, 
+        related_name='callemail_volunteer',
+        null=True
+    )
     anonymous_call = models.BooleanField(default=False)
     caller_wishes_to_remain_anonymous = models.BooleanField(default=False)
     occurrence_from_to = models.BooleanField(default=False)

@@ -203,8 +203,8 @@
             
                           <FormSection :formCollapse="true" label="Details" Index="2">
                             <div class="col-sm-12 form-group"><div class="row">
-                                <label class="col-sm-3">Date of call</label>
-                                <div class="col-sm-3">
+                                <label class="col-sm-2">Date of call</label>
+                                <div class="col-sm-4">
                                     <div class="input-group date" ref="dateOfCallPicker">
                                         <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.date_of_call" />
                                         <span class="input-group-addon">
@@ -222,6 +222,16 @@
                                     </div>
                                 </div>
                             </div></div>
+                            <div class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-3">Volunteer</label>
+                            <div class="col-sm-9">
+                              <select :disabled="readonlyForm" class="form-control" v-model="call_email.volunteer_id">
+                                <option  v-for="option in call_email.volunteer_list" :value="option.id" v-bind:key="option.id">
+                                  {{ option.full_name }} 
+                                </option>
+                              </select>
+                            </div>
+                            </div></div>
             
                             <div class="col-sm-12 form-group"><div class="row">
                               <label class="col-sm-4">Use occurrence from/to</label>
@@ -233,7 +243,7 @@
             
                             <div class="col-sm-12 form-group"><div class="row">
                                 <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
-                                <div class="col-sm-3">
+                                <div class="col-sm-4">
                                     <div class="input-group date" ref="occurrenceDateFromPicker">
                                         <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_from" />
                                         <span class="input-group-addon">
@@ -242,7 +252,7 @@
                                     </div>
                                 </div>
                                 <div v-show="call_email.occurrence_from_to">
-                                    <div class="col-sm-3">
+                                    <div class="col-sm-4">
                                         <div class="input-group date" ref="occurrenceDateToPicker">
                                             <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_to" />
                                             <span class="input-group-addon">
