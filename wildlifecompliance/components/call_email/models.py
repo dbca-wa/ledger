@@ -216,6 +216,8 @@ class CallEmail(RevisionedMixin):
     occurrence_date_to = models.DateField(null=True)
     occurrence_time_to = models.CharField(max_length=20, blank=True, null=True)
     occurrence_time_end = models.TimeField(blank=True, null=True)
+    date_of_call = models.DateField(null=True)
+    time_of_call = models.TimeField(blank=True, null=True)
     report_type = models.ForeignKey(
         ReportType,
         null=True,

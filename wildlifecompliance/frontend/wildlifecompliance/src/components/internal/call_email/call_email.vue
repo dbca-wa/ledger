@@ -202,6 +202,26 @@
                           </FormSection>
             
                           <FormSection :formCollapse="true" label="Details" Index="2">
+                            <div class="col-sm-12 form-group"><div class="row">
+                                <label class="col-sm-3">Date of call</label>
+                                <div class="col-sm-3">
+                                    <div class="input-group date" ref="dateOfCallPicker">
+                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.date_of_call" />
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <label class="col-sm-3">Time of call</label>
+                                <div class="col-sm-3">
+                                    <div class="input-group date" id="timeOfCallPicker">
+                                      <input :disabled="readonlyForm" type="text" class="form-control" placeholder="HH:MM" v-model="call_email.time_of_call"/>
+                                      <span class="input-group-addon">
+                                          <span class="glyphicon glyphicon-calendar"></span>
+                                      </span>
+                                    </div>
+                                </div>
+                            </div></div>
             
                             <div class="col-sm-12 form-group"><div class="row">
                               <label class="col-sm-4">Use occurrence from/to</label>
@@ -490,6 +510,7 @@ export default {
       setAllocatedGroupList: 'setAllocatedGroupList',
       setOccurrenceTimeStart: 'setOccurrenceTimeStart',
       setOccurrenceTimeEnd: 'setOccurrenceTimeEnd',
+      setTimeOfCall: 'setTimeOfCall',
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -609,6 +630,8 @@ export default {
       let el_fr_time = $(vm.$refs.occurrenceTimeFromPicker);
       let el_to_date = $(vm.$refs.occurrenceDateToPicker);
       let el_to_time = $(vm.$refs.occurrenceTimeToPicker);
+      let el_date_of_call = $(vm.$refs.dateOfCallPicker);
+      let el_time_of_call = $(vm.$refs.timeOfCallPicker);
 
       // "From" field
       el_fr_date.datetimepicker({
@@ -651,6 +674,27 @@ export default {
           vm.call_email.occurrence_time_to = e.date.format("LT");
         } else if (el_to_time.data("date") === "") {
           vm.call_email.occurrence_time_to = "";
+        }
+      });
+      // Date/Time of call
+      el_date_of_call.datetimepicker({
+        format: "DD/MM/YYYY",
+        maxDate: "now",
+        showClear: true
+      });
+      el_date_of_call.on("dp.change", function(e) {
+        if (el_date_of_call.data("DateTimePicker").date()) {
+          vm.call_email.date_of_call = e.date.format("DD/MM/YYYY");
+        } else if (el_date_of_call.data("date") === "") {
+          vm.call_email.date_of_call = "";
+        }
+      });
+      el_time_of_call.datetimepicker({ format: "LT", showClear: true });
+      el_time_of_call.on("dp.change", function(e) {
+        if (el_time_of_call.data("DateTimePicker").date()) {
+          vm.call_email.time_of_call = e.date.format("LT");
+        } else if (el_time_of_call.data("date") === "") {
+          vm.call_email.time_of_call = "";
         }
       });
     },
@@ -746,6 +790,12 @@ export default {
       });
       $('#occurrenceTimeEndPicker').on('dp.change', function(e) {
           vm.setOccurrenceTimeEnd(e.date.format('LT'));
+      }); 
+      $('#timeOfCallPicker').datetimepicker({
+              format: 'LT'
+          });
+      $('#timeOfCallPicker').on('dp.change', function(e) {
+          vm.setTimeOfCall(e.date.format('LT'));
       }); 
       // Initialise select2 for referrer
       $(vm.$refs.referrerList).select2({
