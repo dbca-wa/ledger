@@ -543,11 +543,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 if not instance:
                     instance = self.get_object()
-                #else:
-                 #   w = instance.comms_logs.first()
-                  #  print("instance passed to worflow")
-                   # print(instance.comms_logs.count())
-                    #print(w.id)
 
                 comms_log_id = request.data.get('comms_log_id')
                 if comms_log_id and comms_log_id is not 'null':
