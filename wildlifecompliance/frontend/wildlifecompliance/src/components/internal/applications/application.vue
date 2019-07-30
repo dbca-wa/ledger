@@ -643,7 +643,6 @@ import ProposedLicence from './proposed_issuance.vue'
 import IssueLicence from './application_issuance.vue'
 import LicenceScreen from './application_licence.vue'
 import CommsLogs from '@common-utils/comms_logs.vue'
-import MoreReferrals from '@common-utils/more_referrals.vue'
 import ResponsiveDatatablesHelper from "@/utils/responsive_datatable_helper.js"
 import {
     api_endpoints,
@@ -670,7 +669,6 @@ export default {
             "application": null,
             "original_application": null,
             "loading": [],
-            selected_referral: '',
             selected_assessment_tab:null,
             selected_assessment_id:null,
             selected_activity_type_tab_id:null,
@@ -733,7 +731,6 @@ export default {
             comms_add_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/add_comms_log'),
             logs_url: helpers.add_endpoint_json(api_endpoints.applications,vm.$route.params.application_id+'/action_log'),
             panelClickersInitialised: false,
-            sendingReferral: false,
         }
     },
     components: {
@@ -747,8 +744,7 @@ export default {
         ProposedLicence,
         IssueLicence,
         LicenceScreen,
-        CommsLogs,
-        MoreReferrals
+        CommsLogs
     },
     filters: {
         formatDate: function(data){
@@ -909,10 +905,10 @@ export default {
         },
         canLimitedAction: function(){
             if (this.application.processing_status == 'With Approver'){
-                return this.application && (this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Referral' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_approver || this.application.assigned_approver == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
+                return this.application && (this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_approver || this.application.assigned_approver == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
             }
             else{
-                return this.application && (this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Referral' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_officer || this.application.assigned_officer == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
+                return this.application && (this.application.processing_status == 'With Assessor' || this.application.processing_status == 'With Assessor (Conditions)') && !this.isFinalised && !this.application.can_user_edit && (this.application.current_assessor.id == this.application.assigned_officer || this.application.assigned_officer == null ) && this.application.assessor_mode.assessor_can_assess? true : false;
             }
         },
         canSeeSubmission: function(){
@@ -1560,113 +1556,9 @@ export default {
         initialiseSelects: function(){
             let vm = this;
             if (!vm.initialisedSelects){
-                $(vm.$refs.department_users).select2({
-                    "theme": "bootstrap",
-                    allowClear: true,
-                    placeholder:"Select Referral"
-                }).
-                on("select2:select",function (e) {
-                    var selected = $(e.currentTarget);
-                    vm.selected_referral = selected.val();
-                }).
-                on("select2:unselect",function (e) {
-                    var selected = $(e.currentTarget);
-                    vm.selected_referral = '' 
-                });
                 vm.initialiseAssignedOfficerSelect();
                 vm.initialisedSelects = true;
             }
-        },
-        sendReferral: function(){
-            let vm = this;
-            let data = {'email':vm.selected_referral};
-            vm.sendingReferral = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.applications,(vm.application.id+'/assesor_send_referral')),JSON.stringify(data),{
-                emulateJSON:true
-            }).then((response) => {
-                vm.sendingReferral = false;
-                vm.original_application = helpers.copyObject(response.body);
-                vm.application = response.body;
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                swal(
-                    'Referral Sent',
-                    'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
-                    'success'
-                )
-                $(vm.$refs.department_users).val(null).trigger("change");
-                vm.selected_referral = '';
-            }, (error) => {
-                console.log(error);
-                swal(
-                    'Referral Error',
-                    helpers.apiVueResourceError(error),
-                    'error'
-                )
-                vm.sendingReferral = false;
-            });
-        },
-        remindReferral:function(r){
-            let vm = this;
-            
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/remind')).then(response => {
-                vm.original_application = helpers.copyObject(response.body);
-                vm.application = response.body;
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                swal(
-                    'Referral Reminder',
-                    'A reminder has been sent to '+r.referral,
-                    'success'
-                )
-            },
-            error => {
-                swal(
-                    'Application Error',
-                    helpers.apiVueResourceError(error),
-                    'error'
-                )
-            });
-        },
-        resendReferral:function(r){
-            let vm = this;
-            
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/resend')).then(response => {
-                vm.original_application = helpers.copyObject(response.body);
-                vm.application = response.body;
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                swal(
-                    'Referral Resent',
-                    'The referral has been resent to '+r.referral,
-                    'success'
-                )
-            },
-            error => {
-                swal(
-                    'Application Error',
-                    helpers.apiVueResourceError(error),
-                    'error'
-                )
-            });
-        },
-        recallReferral:function(r){
-            let vm = this;
-            
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/recall')).then(response => {
-                vm.original_application = helpers.copyObject(response.body);
-                vm.application = response.body;
-                vm.application.org_applicant.address = vm.application.org_applicant.address != null ? vm.application.org_applicant.address : {};
-                swal(
-                    'Referral Recall',
-                    'The referall has been recalled from '+r.referral,
-                    'success'
-                )
-            },
-            error => {
-                swal(
-                    'Application Error',
-                    helpers.apiVueResourceError(error),
-                    'error'
-                )
-            });
         },
     },
     mounted: function() {

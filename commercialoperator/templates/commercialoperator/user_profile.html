@@ -1,0 +1,192 @@
+{% extends "commercialoperator/base.html" %}
+
+{% block extra_css %}
+{{ super }}
+    <style media="screen">
+        h3.panel-title{
+            font-weight: bold;
+            font-size: 25px;
+            padding:20px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container" id="userInfo">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="well well-sm">
+                    <p>
+                        We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
+                        (personal details, address details, contact details, and weather you are managing approvals for an organisation).
+                        Once completed, click Continue to start using the system.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Personal Details <small>Provide your personal details</small>
+                        <a href="#pdbody" data-toggle="collapse" data-parent="#userInfo" expanded="true" aria-controls="pdbody">
+                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse in" id="pdbody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">Given name(s)</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="first_name" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Surname</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="last_name" placeholder="">
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Address Details <small>Provide your address details</small>
+                        <a href="#adbody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" aria-controls="adbody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" id="adbody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">Street</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="street" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Town/Suburb</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="surburb" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">State</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="state" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">Postcode</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="postcode" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Country</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="country" placeholder="">
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Contact Details <small>Provide your contact details</small>
+                        <a href="#cdbody" data-toggle="collapse" data-parent="#userInfo" expanded="true" aria-controls="cdbody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" id="cdbody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label">Phone (work)</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="phone" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Mobile</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="mobile" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Email</label>
+                            <div class="col-sm-10">
+                                <input type="email" class="form-control" name="email" placeholder="">
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing approvals</small>
+                        <a href="#orgbody" data-toggle="collapse" data-parent="#userInfo" expanded="true" aria-controls="orgbody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" id="orgbody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-6 control-label">Do you manage approvals on behalf of an organisation?</label>
+                            <div class="col-sm-6">
+                                <label class="radio-inline">
+                                  <input type="radio" name="behalf_of_org"  value="Yes"> Yes
+                                </label>
+                                <label class="radio-inline">
+                                  <input type="radio" name="behalf_of_org" value="No" > No
+                                </label>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >Organisation</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="organisation" placeholder="">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="abn" placeholder="">
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+{% block custom_js %}
+    {{ super }}
+    <script type="text/javascript">
+        $('a[data-toggle="collapse"]').on('click', function () {
+            var chev = $(this).children()[0];
+            window.setTimeout(function () {
+                $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
+            },100);
+        });
+    </script>
+{% endblock %}

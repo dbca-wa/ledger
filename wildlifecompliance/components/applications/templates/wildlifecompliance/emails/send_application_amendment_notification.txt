@@ -4,18 +4,15 @@
     Your application {{ application.lodgement_number }} has been reviewed and requires an amendment before further assessment.
 
     {% if reason %}
-        <p>
-            <span>Amendment Reason: {{ reason }}</span>
-        </p>
+        Amendment Reason: {{ reason }}
     {% endif %}
 
     {% if amendment_details %}
-        <p><span> Amendment details: <br> {{ amendment_details }}</span></p>
+        Amendment details: {{ amendment_details }}
     {% endif %}
-    <p>
-    You can access this Application using the following link:
-    </p>
-    {{url}}
 
+    Link: {{url}}
+
+    Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
 
 {%  endblock %}

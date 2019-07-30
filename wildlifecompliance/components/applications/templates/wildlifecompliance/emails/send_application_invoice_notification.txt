@@ -4,10 +4,11 @@
         Your payment for your application has been received.
         A copy of your invoice is attached to this email.
 
-        Application : {{ application.id }}
+        Application: {{ application.id }}
 
         Link: {{ url }}
 
         Invoice: {{ invoice_url }}
 
+        Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
 {%  endblock %}

@@ -1,0 +1,14 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+        You have been made a consultant to the following organisation:
+
+        Organisation: {{ organisation.name }}
+
+        ABN: {{ organisation.abn }}
+
+        You were linked to this organisation by {{ linked_by.get_full_name }} ({{linked_by.email}}).
+    
+        You can now make applications on behalf of and manage this organisation.
+
+{%  endblock %}

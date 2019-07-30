@@ -1,0 +1,12 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+    {% if reminder %}
+        <p>This is a reminder for a referral for Application <strong>{{proposal.lodgement_number}}</strong> that has been sent to you:</p>
+    {% else %}
+        <p>A referral for Application <strong>A{{proposal.id}}</strong> has been sent to you:</p>
+        <p>Comments: {{comments}}</p>
+    {% endif %}
+    <p>You can access this referral using the following link:</p>
+    <a href="{{url}}">Access Referral</a>
+{%  endblock %}

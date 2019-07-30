@@ -374,15 +374,27 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         basket.strategy = selector.strategy(user=owner)
         basket.custom_ledger = True
         # Check if there are products to be added to the cart and if they are valid products
+        ledger_custom_product_list = env('LEDGER_CUSTOM_PRODUCT_LIST', None)
         defaults = ('ledger_description','quantity','price_incl_tax','oracle_code')
+
         UPDATE_PAYMENT_ALLOCATION = env('UPDATE_PAYMENT_ALLOCATION', False)
         if UPDATE_PAYMENT_ALLOCATION is True:
-             defaults = ('ledger_description','quantity','price_incl_tax','oracle_code','line_status') 
+             defaults = ('ledger_description','quantity','price_incl_tax','oracle_code','line_status')
+
+        if ledger_custom_product_list:
+                defaults = ledger_custom_product_list 
 
         for p in product_list:
             if not all(d in p for d in defaults):
                 raise ValidationError('Please make sure that the product format is valid')
-            p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
+            if ledger_custom_product_list:
+                 if 'price_excl_tax' in ledger_custom_product_list:
+                     # dont calculate tax as this should be included in the product list
+                     pass
+                 else:
+                     p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
+            else:
+                 p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
         # Save the basket
         basket.save()
         # Add the valid products to the basket

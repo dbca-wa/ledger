@@ -7,10 +7,10 @@ from django.core.cache import cache
 def in_dbca_domain(user):
     domain = user.email.split('@')[1]
     if domain in settings.DEPT_DOMAINS:
-        if not user.is_staff:
-            # hack to reset department user to is_staff==True, if the user logged in externally (external departmentUser login defaults to is_staff=False)
-            user.is_staff = True
-            user.save()
+#        if not user.is_staff:
+#            # hack to reset department user to is_staff==True, if the user logged in externally (external departmentUser login defaults to is_staff=False)
+#            user.is_staff = True
+#            user.save()
         return True
     return False
 
