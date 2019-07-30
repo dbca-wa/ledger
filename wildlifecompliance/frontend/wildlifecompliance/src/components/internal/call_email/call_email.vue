@@ -119,7 +119,8 @@
                         </div> -->
                         <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
                           <div class="col-sm-12">
-                                <a ref="allocateForInspection" @click="addWorkflow('allocate_for_inspection')" class="btn btn-primary btn-block" >
+                                <!--a ref="allocateForInspection" @click="addWorkflow('allocate_for_inspection')" class="btn btn-primary btn-block"-->
+                                <a ref="allocateForInspection" @click="inspection()" class="btn btn-primary btn-block" >
                                   Allocate for Inspection
                                 </a>
                           </div>
@@ -363,6 +364,7 @@
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome"/>
         </div>
+        <Inspection ref="inspection" />
     </div>
 </template>
 <script>
@@ -384,6 +386,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
+import Inspection from '../inspection/create_inspection_modal';
 
 export default {
   name: "ViewCallEmail",
@@ -450,6 +453,7 @@ export default {
       workflowBindId: '',
       sanctionOutcomeInitialised: false,
       offenceInitialised: false,
+      inspectionInitialised: false,
     };
   },
   components: {
@@ -461,6 +465,7 @@ export default {
     Offence,
     datatable,
     SanctionOutcome,
+    Inspection,
   },
   watch: {
       call_email: {
@@ -578,6 +583,10 @@ export default {
     offence(){
       this.offenceInitialised = true;
       this.$refs.offence.isModalOpen = true;
+    },
+    inspection() {
+      this.inspectionInitialised = true;
+      this.$refs.inspection.isModalOpen = true;
     },
     save: async function () {
         if (this.call_email.id) {

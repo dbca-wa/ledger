@@ -30,6 +30,18 @@ class Sequence(models.Model):
             repr(self.name), repr(self.last))
 
 
+class InspectionType(models.Model):
+   description = models.CharField(max_length=255, null=True, blank=True)
+
+   class Meta:
+       app_label = 'wildlifecompliance'
+       verbose_name = 'CM_InspectionType'
+       verbose_name_plural = 'CM_InspectionTypes'
+
+   def __str__(self):
+       return self.description
+
+
 @python_2_unicode_compatible
 class Region(models.Model):
     name = models.CharField(max_length=200, blank=False, unique=True)

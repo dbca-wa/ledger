@@ -209,7 +209,7 @@
             // Status choices
             let returned_status_choices = await cache_helper.getSetCacheList(
                 'Inspection_StatusChoices', 
-                '/api/call_email/status_choices'
+                '/api/inspection/status_choices'
                 );
             
             Object.assign(this.statusChoices, returned_status_choices);
@@ -217,7 +217,7 @@
 
             // inspection_types
             let returned_inspection_types = await cache_helper.getSetCacheList(
-                'CallEmail_InspectionTypes', 
+                'Inspection_InspectionTypes', 
                 api_endpoints.inspection_types
                 );
             Object.assign(this.inspectionTypes, returned_inspection_types);

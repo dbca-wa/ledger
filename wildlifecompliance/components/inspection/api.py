@@ -338,6 +338,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def modify_inspection_team(self, request, instance=None, workflow=False, user_id=None, *args, **kwargs):
+        print("modify..")
+        print(request.data)
+        print(instance.id)
         try:
             with transaction.atomic():
                 if not instance:
@@ -594,7 +597,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 instance.save()
 
                 if instance.assigned_to_id:
-                    instance = self.modify_inspection_team(request, workflow=True, user_id=instance.assigned_to_id)
+                    instance = self.modify_inspection_team(request, instance, workflow=True, user_id=instance.assigned_to_id)
 
                 # send email
                 email_data = send_inspection_forward_email(

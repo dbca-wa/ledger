@@ -240,7 +240,9 @@ export default {
           console.log(response);
           if (response.ok) {
               this.close();
-              this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
+              if (this.$parent.$refs.inspection_table) {
+                  this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
+              }
           }
       },
       cancel: async function() {
@@ -263,6 +265,9 @@ export default {
           payload.append('details', this.workflowDetails);
           if (this.$refs.comms_log_file.commsLogId) {
               payload.append('comms_log_id', this.$refs.comms_log_file.commsLogId)
+          }
+          if (this.$parent.call_email) {
+              payload.append('call_email_id', this.$parent.call_email.id)
           }
 
           //payload.append('email_subject', this.modalTitle);

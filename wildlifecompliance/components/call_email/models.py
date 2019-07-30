@@ -12,7 +12,7 @@ from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document, get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
-from wildlifecompliance.components.inspection.models import InspectionType
+from wildlifecompliance.components.main.models import InspectionType
 
 logger = logging.getLogger(__name__)
 

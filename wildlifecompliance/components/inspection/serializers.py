@@ -8,6 +8,8 @@ from wildlifecompliance.components.inspection.models import (
     Inspection,
     InspectionUserAction,
     InspectionCommsLogEntry,
+    )
+from wildlifecompliance.components.main.models import (
     InspectionType,
     )
 from wildlifecompliance.components.main.models import get_related_items
@@ -147,6 +149,7 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'organisation_inspected_id',
                 'related_items',
                 'inform_party_being_inspected',
+                'call_email_id',
                 )
         read_only_fields = (
                 'id',
@@ -211,6 +214,8 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     organisation_inspected_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
+    call_email_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
     
     class Meta:
         model = Inspection
@@ -227,6 +232,7 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
                 'individual_inspected_id',
                 'organisation_inspected_id',
                 'inform_party_being_inspected',
+                'call_email_id',
                 )
         read_only_fields = (
                 'id',
