@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
+from django.conf import settings
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -31,12 +32,10 @@ from commercialoperator.utils import search_keys, search_multiple_keys
 
 
 def update_approval_doc_filename(instance, filename):
-    #return 'approvals/{}/documents/{}'.format(instance.approval.id,filename)
-    return 'proposals/{}/approvals/{}'.format(instance.approval.current_proposal.id,filename)
+    return '{}/proposals/{}/approvals/{}'.format(settings.MEDIA_APP_DIR, instance.approval.current_proposal.id,filename)
 
 def update_approval_comms_log_filename(instance, filename):
-    #return 'approvals/{}/communications/{}/{}'.format(instance.log_entry.approval.id,instance.id,filename)
-    return 'proposals/{}/approvals/communications/{}'.format(instance.log_entry.approval.current_proposal.id,filename)
+    return '{}/proposals/{}/approvals/communications/{}'.format(settings.MEDIA_APP_DIR, instance.log_entry.approval.current_proposal.id,filename)
 
 
 class ApprovalDocument(Document):

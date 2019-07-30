@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
+from django.conf import settings
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -42,30 +43,25 @@ logger = logging.getLogger(__name__)
 
 
 def update_proposal_doc_filename(instance, filename):
-    return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
+    return '{}/proposals/{}/documents/{}'.format(settings.MEDIA_APP_DIR, instance.proposal.id,filename)
 
 def update_onhold_doc_filename(instance, filename):
-    #return 'proposals/{}/on_hold/{}'.format(instance.proposal.id,filename)
-    return 'proposals/{}/on_hold/{}'.format(instance.proposal.id,filename)
+    return '{}/proposals/{}/on_hold/{}'.format(settings.MEDIA_APP_DIR, instance.proposal.id,filename)
 
 def update_qaofficer_doc_filename(instance, filename):
-    return 'proposals/{}/qaofficer/{}'.format(instance.proposal.id,filename)
+    return '{}/proposals/{}/qaofficer/{}'.format(settings.MEDIA_APP_DIR, instance.proposal.id,filename)
 
 def update_referral_doc_filename(instance, filename):
-    #return 'proposals/{}/referral/{}/documents/{}'.format(instance.referral.proposal.id,instance.referral.id,filename)
-    return 'proposals/{}/referral/{}'.format(instance.referral.proposal.id,filename)
+    return '{}/proposals/{}/referral/{}'.format(settings.MEDIA_APP_DIR, instance.referral.proposal.id,filename)
 
 def update_proposal_required_doc_filename(instance, filename):
-    #return 'proposals/{}/required_documents/{}/{}'.format(instance.proposal.id,instance.required_doc.id,filename)
-    return 'proposals/{}/required_documents/{}'.format(instance.proposal.id,filename)
+    return '{}/proposals/{}/required_documents/{}'.format(settings.MEDIA_APP_DIR, instance.proposal.id,filename)
 
 def update_requirement_doc_filename(instance, filename):
-    #return 'proposals/{}/requirement_documents/{}/{}'.format(instance.requirement.proposal.id, instance.requirement.id,filename)
-    return 'proposals/{}/requirement_documents/{}'.format(instance.requirement.proposal.id,filename)
+    return '{}/proposals/{}/requirement_documents/{}'.format(settings.MEDIA_APP_DIR, instance.requirement.proposal.id,filename)
 
 def update_proposal_comms_log_filename(instance, filename):
-    #return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
-    return 'proposals/{}/communications/{}'.format(instance.log_entry.proposal.id,filename)
+    return '{}/proposals/{}/communications/{}'.format(settings.MEDIA_APP_DIR, instance.log_entry.proposal.id,filename)
 
 def application_type_choicelist():
     try:
@@ -1860,8 +1856,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                     for requirement_document in RequirementDocument.objects.filter(requirement=requirement.copied_from):
                         requirement_document.requirement = requirement
                         requirement_document.id = None
-                        #requirement_document._file.name = u'proposals/{}/requirement_documents/{}/{}'.format(proposal.id, requirement.id, requirement_document.name)
-                        requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
+                        requirement_document._file.name = u'{}/proposals/{}/requirement_documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, requirement_document.name)
                         requirement_document.can_delete = True
                         requirement_document.save()
                             # Create a log entry for the proposal
@@ -3155,34 +3150,34 @@ def clone_proposal_with_status_reset(proposal):
 
 def clone_documents(proposal, original_proposal, media_prefix):
     for proposal_document in ProposalDocument.objects.filter(proposal_id=proposal.id):
-        proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
+        proposal_document._file.name = u'{}/proposals/{}/documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, proposal_document.name)
         proposal_document.can_delete = True
         proposal_document.save()
 
     for proposal_required_document in ProposalRequiredDocument.objects.filter(proposal_id=proposal.id):
-        proposal_required_document._file.name = u'proposals/{}/required_documents/{}'.format(proposal.id, proposal_required_document.name)
+        proposal_required_document._file.name = u'{}/proposals/{}/required_documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, proposal_required_document.name)
         proposal_required_document.can_delete = True
         proposal_required_document.save()
 
     for referral in proposal.referrals.all():
         for referral_document in ReferralDocument.objects.filter(referral=referral):
-            referral_document._file.name = u'proposals/{}/referral/{}'.format(proposal.id, referral_document.name)
+            referral_document._file.name = u'{}/proposals/{}/referral/{}'.format(settings.MEDIA_APP_DIR, proposal.id, referral_document.name)
             referral_document.can_delete = True
             referral_document.save()
 
     for qa_officer_document in QAOfficerDocument.objects.filter(proposal_id=proposal.id):
-        qa_officer_document._file.name = u'proposals/{}/qaofficer/{}'.format(proposal.id, qa_officer_document.name)
+        qa_officer_document._file.name = u'{}/proposals/{}/qaofficer/{}'.format(settings.MEDIA_APP_DIR, proposal.id, qa_officer_document.name)
         qa_officer_document.can_delete = True
         qa_officer_document.save()
 
     for onhold_document in OnHoldDocument.objects.filter(proposal_id=proposal.id):
-        onhold_document._file.name = u'proposals/{}/on_hold/{}'.format(proposal.id, onhold_document.name)
+        onhold_document._file.name = u'{}/proposals/{}/on_hold/{}'.format(settings.MEDIA_APP_DIR, proposal.id, onhold_document.name)
         onhold_document.can_delete = True
         onhold_document.save()
 
     for requirement in proposal.requirements.all():
         for requirement_document in RequirementDocument.objects.filter(requirement=requirement):
-            requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
+            requirement_document._file.name = u'{}/proposals/{}/requirement_documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, requirement_document.name)
             requirement_document.can_delete = True
             requirement_document.save()
 
@@ -3191,77 +3186,29 @@ def clone_documents(proposal, original_proposal, media_prefix):
         log_entry_document.can_delete = True
         log_entry_document.save()
 
-#    for log_entry in proposal.comms_logs.all():
-#        for log_entry_document in ProposalLogDocument.objects.filter(log_entry=log_entry):
-#            #log_entry_document.requirement = log_entry
-#            #log_entry_document.id = None
-#            #log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
-#            log_entry_document._file.name = u'proposals/{}/communications/{}'.format(proposal.id, log_entry_document.name)
-#            log_entry_document.can_delete = True
-#            log_entry_document.save()
-
     # copy documents on file system and reset can_delete flag
-    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_prefix, original_proposal.id, proposal.id), shell=True)
+    media_dir = '{}/{}'.format(media_prefix, settings.MEDIA_APP_DIR)
+    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_dir, original_proposal.id, proposal.id), shell=True)
 
 
 def _clone_documents(proposal, original_proposal, media_prefix):
     for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal.id):
         proposal_document.proposal = proposal
         proposal_document.id = None
-        proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
+        proposal_document._file.name = u'{}/proposals/{}/documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, proposal_document.name)
         proposal_document.can_delete = True
         proposal_document.save()
 
     for proposal_required_document in ProposalRequiredDocument.objects.filter(proposal=original_proposal.id):
         proposal_required_document.proposal = proposal
         proposal_required_document.id = None
-        proposal_required_document._file.name = u'proposals/{}/required_documents/{}'.format(proposal.id, proposal_required_document.name)
+        proposal_required_document._file.name = u'{}/proposals/{}/required_documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, proposal_required_document.name)
         proposal_required_document.can_delete = True
         proposal_required_document.save()
 
-    # for referral in proposal.referrals.all():
-    #     for referral_document in ReferralDocument.objects.filter(referral=referral):
-    #         referral_document.referral = referral
-    #         referral_document.id = None
-    #         #referral_document._file.name = u'proposals/{}/referral/{}/documents/{}'.format(proposal.id, referral.id, referral_document.name)
-    #         referral_document._file.name = u'proposals/{}/referral/{}'.format(proposal.id, referral_document.name)
-    #         referral_document.can_delete = True
-    #         referral_document.save()
-
-    # for qa_officer_document in QAOfficerDocument.objects.filter(proposal=original_proposal.id):
-    #     qa_officer_document.proposal = proposal
-    #     qa_officer_document.id = None
-    #     qa_officer_document._file.name = u'proposals/{}/qaofficer/{}'.format(proposal.id, qa_officer_document.name)
-    #     qa_officer_document.can_delete = True
-    #     qa_officer_document.save()
-
-    # for onhold_document in OnHoldDocument.objects.filter(proposal=original_proposal.id):
-    #     onhold_document.proposal = proposal
-    #     onhold_document.id = None
-    #     onhold_document._file.name = u'proposals/{}/on_hold/{}'.format(proposal.id, onhold_document.name)
-    #     onhold_document.can_delete = True
-    #     onhold_document.save()
-
-    # for requirement in proposal.requirements.all():
-    #     for requirement_document in RequirementDocument.objects.filter(requirement=requirement):
-    #         requirement_document.requirement = requirement
-    #         requirement_document.id = None
-    #         #requirement_document._file.name = u'proposals/{}/requirement_documents/{}/{}'.format(proposal.id, requirement.id, requirement_document.name)
-    #         requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
-    #         requirement_document.can_delete = True
-    #         requirement_document.save()
-
-    # for log_entry in proposal.comms_logs.all():
-    #     for log_entry_document in ProposalLogDocument.objects.filter(log_entry=log_entry):
-    #         log_entry_document.requirement = log_entry
-    #         log_entry_document.id = None
-    #         #log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
-    #         log_entry_document._file.name = u'proposals/{}/communications/{}'.format(proposal.id, log_entry_document.name)
-    #         log_entry_document.can_delete = True
-    #         log_entry_document.save()
-
     # copy documents on file system and reset can_delete flag
-    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_prefix, original_proposal.id, proposal.id), shell=True)
+    media_dir = '{}/{}'.format(media_prefix, settings.MEDIA_APP_DIR)
+    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_dir, original_proposal.id, proposal.id), shell=True)
 
 def duplicate_object(self):
     """
@@ -3646,7 +3593,7 @@ def create_migration_data(filename, verify=False, app_type='T Class'):
         data.update({'start_date': start_date})
         data.update({'issue_date': start_date})
         data.update({'expiry_date': expiry_date})
-        
+
         return data
 
 
@@ -3698,7 +3645,7 @@ def create_migration_data(filename, verify=False, app_type='T Class'):
                             approval=migrate_approval(data, not_found)
                         #print data
                         print '{} - {}'.format(approval, data['submitter'])
-                        print 
+                        print
                 else:
                     no_expiry.append(data['submitter'])
 
