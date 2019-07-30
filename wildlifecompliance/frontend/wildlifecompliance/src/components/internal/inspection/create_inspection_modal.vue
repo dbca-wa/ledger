@@ -290,8 +290,7 @@ export default {
                 return res
               }
           } catch(err) {
-                console.error(err)  
-                this.errorResponse = err.statusText;
+                  this.errorResponse = err.statusText;
               }
           
       },
