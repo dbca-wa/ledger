@@ -242,8 +242,31 @@ export default {
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
-                            return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            var result = '';
+                            var popTemplate = '';
+                            if(!full.migrated){
+                            // return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            result= `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            }
+                            else if(full.migrated){
+                               var icon = "<i class='fa fa-file-pdf-o' style='color:green'></i>"
+                               var message= 'This is a migrated licence';
+                               popTemplate = _.template('<a href="#" ' +
+                                            'role="button" ' +
+                                            'data-toggle="popover" ' +
+                                            'data-trigger="hover" ' +
+                                            'data-placement="top auto"' +
+                                            'data-html="true" ' +
+                                            'data-content="<%= text %>" ' +
+                                            '><%= tick %></a>');
+                                    result += popTemplate({
+                                        text: message,
+                                        tick: icon
+                                    });
+                            }
+                            return result;
                         },
+                        'createdCell': helpers.dtPopoverCellFn,
                         name: 'licence_document__name'
                     },
                     {
@@ -307,6 +330,7 @@ export default {
                         orderable: false,
                         name: ''
                     },
+                    {data: "migrated", visible: false},
                     
                 ],
                 processing: true,
