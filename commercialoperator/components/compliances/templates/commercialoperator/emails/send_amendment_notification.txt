@@ -1,0 +1,21 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Compliance with requirements{{ compliance.reference }} has been reviewed and requires an amendment before approval.
+
+    {% if reason %}
+        <p>
+            <span>Amendment Reason: {{ reason }}</span>
+        </p>
+    {% endif %}
+
+    {% if amendment_request_text %}
+        <p><span> Amendment details: <br> {{ amendment_request_text }}</span></p>
+    {% endif %}
+    <p>
+    You can access this Compliance using the following link:
+    </p>
+    {{url}}
+
+
+{%  endblock %}

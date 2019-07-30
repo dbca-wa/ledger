@@ -2,19 +2,19 @@
 
 {%  block content %}
     {% if linked_by.email != user.email %}
-        Your have been made company User to:
+        You have been made a user to the following organisation:
 
-        Organisation : {{ organisation.name }}
+        Organisation: {{ organisation.name }}
 
-        ABN : {{ organisation.abn}}
+        ABN: {{ organisation.abn }}
 
         You were linked to this organisation by {{ linked_by.get_full_name }}({{linked_by.email}}).
     {% else %}
-        Your have made yourself Company User to:
+        You have linked yourself as a user to the following organisation:
 
-        Organisation : {{ organisation.name }}
+        Organisation: {{ organisation.name }}
 
-        ABN : {{ organisation.abn}}
+        ABN: {{ organisation.abn }}
     {% endif %}
     You can now make applications on behalf of this organisation.
 

@@ -9,7 +9,8 @@ from ledger.payments.api import (
                 CashViewSet,
                 BpayFileList,
                 ReportCreateView,
-                RegionViewSet
+                RegionViewSet,
+                ReportCreateAllocatedView
                 )
 
 from ledger.payments.bpay.dashboard.app import application as bpay
@@ -29,6 +30,7 @@ router.register(r'^regions', RegionViewSet)
 
 api_patterns = [
     url(r'api/bpoint/payment$', BpointPaymentCreateView.as_view(), name='bpoint-payment'),
+    url(r'api/report-allocated$', ReportCreateAllocatedView.as_view(),name='ledger-report-allocated'),
     url(r'api/report$', ReportCreateView.as_view(),name='ledger-report'),
     url(r'api/', include(router.urls)),
 ]

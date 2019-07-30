@@ -1,0 +1,8 @@
+{%  extends 'wildlifecompliance/emails/base_email.html' %}
+
+{%  block content %}
+    <p>The following organisation access request has been declined:</p>
+    <p><strong>Access request No: {{ request.id }}</strong></p>
+    <p><strong>Organisation: {{ request.name }}</strong></p>
+    <p><strong>ABN: {{ request.abn }}</strong></p>
+{%  endblock %}

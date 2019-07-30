@@ -24,7 +24,6 @@ from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, Region, UserAction, Document
 from wildlifecompliance.components.main.utils import get_department_user
 from wildlifecompliance.components.applications.email import (
-    send_referral_email_notification,
     send_application_submitter_email_notification,
     send_application_submit_email_notification,
     send_application_amendment_notification,
@@ -44,15 +43,6 @@ def update_application_doc_filename(instance, filename):
 
 def update_application_comms_log_filename(instance, filename):
     return 'wildlifecompliance/applications/{}/communications/{}/{}'.format(instance.log_entry.application.id,instance.id,filename)
-
-class ApplicationType(models.Model):
-    schema = JSONField()
-    activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
-    site = models.OneToOneField(Site, default='1')
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
 
 class TaggedApplicationAssessorGroupRegions(TaggedItemBase):
     content_object = models.ForeignKey("ApplicationAssessorGroup")
@@ -78,6 +68,8 @@ class ApplicationGroupType(models.Model):
     members = models.ManyToManyField(EmailUser,blank=True)
     class Meta:
         app_label = 'wildlifecompliance'
+        verbose_name = 'Licence activity group'
+        verbose_name_plural = 'Licence activity groups'
 
     def __str__(self):
         group = '{} - {}, {} ({} members)'.format(self.get_type_display(), self.licence_class, self.licence_activity_type, self.members.count())
@@ -135,7 +127,7 @@ class ApplicationAssessorGroup(models.Model):
 
     @property
     def current_applications(self):
-        assessable_states = ['with_assessor','with_referral','with_assessor_conditions']
+        assessable_states = ['with_assessor','with_assessor_conditions']
         return Application.objects.filter(processing_status__in=assessable_states)
 
 class TaggedApplicationApproverGroupRegions(TaggedItemBase):
@@ -226,7 +218,6 @@ class Application(RevisionedMixin):
     PROCESSING_STATUS_CHOICES = (PROCESSING_STATUS_DRAFT,
                                  ('with_officer', 'With Officer'),
                                  ('with_assessor', 'With Assessor'),
-                                 ('with_referral', 'With Referral'),
                                  ('with_assessor_conditions', 'With Assessor (Conditions)'),
                                  ('with_approver', 'With Approver'),
                                  ('renewal', 'Renewal'),
@@ -434,9 +425,6 @@ class Application(RevisionedMixin):
                 latest_invoice = Invoice.objects.get(reference=self.invoices.latest('id').invoice_reference)
                 return latest_invoice.payment_status
 
-    @property
-    def latest_referrals(self):
-        return self.referrals.all()[:2]
 
     @property
     def regions_list(self):
@@ -507,7 +495,7 @@ class Application(RevisionedMixin):
         return missing_fields
 
     def can_assess(self,user):
-        if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_conditions':
+        if self.processing_status == 'with_assessor'  or self.processing_status == 'with_assessor_conditions':
             return self.__assessor_group() in user.applicationassessorgroup_set.all()
         elif self.processing_status == 'with_approver':
             return self.__approver_group() in user.applicationapprovergroup_set.all()
@@ -662,58 +650,6 @@ class Application(RevisionedMixin):
             else:
                 self.submitter.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
 
-    # def send_to_assessor(self,request):
-    #         self.processing_status = 'with_assessor'
-    #         self.save()
-    #         # Create a log entry for the application
-    #         self.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
-    #         # Create a log entry for the organisation
-    #         self.applicant.log_user_action(ApplicationUserAction.ACTION_ACCEPT_CHARACTER.format(self.id),request)
-
-
-    def send_referral(self,request,referral_email):
-        with transaction.atomic():
-            try:
-                if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral':
-                    self.processing_status = 'with_referral'
-                    self.save()
-                    referral = None
-
-                    # Check if the user is in ledger
-                    try:
-                        user = EmailUser.objects.get(email__icontains=referral_email)
-                    except EmailUser.DoesNotExist:
-                        # Validate if it is a deparment user
-                        department_user = get_department_user(referral_email)
-                        if not department_user:
-                            raise ValidationError('The user you want to send the referral to is not a member of the department')
-                        # Check if the user is in ledger or create
-
-                        user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
-                        if created:
-                            user.first_name = department_user['given_name']
-                            user.last_name = department_user['surname']
-                            user.save()
-                    try:
-                        Referral.objects.get(referral=user,application=self)
-                        raise ValidationError('A referral has already been sent to this user')
-                    except Referral.DoesNotExist:
-                        # Create Referral
-                        referral = Referral.objects.create(
-                            application = self,
-                            referral=user,
-                            sent_by=request.user
-                        )
-                    # Create a log entry for the application
-                    self.log_user_action(ApplicationUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
-                    # Create a log entry for the organisation
-                    self.applicant.log_user_action(ApplicationUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
-                    # send email
-                    send_referral_email_notification(referral,request)
-                else:
-                    raise exceptions.ApplicationReferralCannotBeSent()
-            except:
-                raise
 
     def assign_officer(self,request,officer):
         with transaction.atomic():
@@ -1419,12 +1355,7 @@ class ApplicationUserAction(UserAction):
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
     ACTION_PROPOSED_LICENCE = "Application {} has been proposed for licence"
     ACTION_PROPOSED_DECLINE = "Application {} has been proposed for decline"
-    # Referrals
-    ACTION_SEND_REFERRAL_TO = "Send referral {} for application {} to {}"
-    ACTION_RESEND_REFERRAL_TO = "Resend referral {} for application {} to {}"
-    ACTION_REMIND_REFERRAL = "Send reminder for referral {} for application {} to {}"
-    RECALL_REFERRAL = "Referral {} for application {} has been recalled"
-    CONCLUDE_REFERRAL = "Referral {} for application {} has been concluded by {}"
+    
 
 
     class Meta:
@@ -1442,157 +1373,6 @@ class ApplicationUserAction(UserAction):
     application = models.ForeignKey(Application, related_name='action_logs')
 
 
-class Referral(models.Model):
-    SENT_CHOICES = (
-        (1,'Sent From Assessor'),
-        (2,'Sent From Referral')
-    )
-    PROCESSING_STATUS_CHOICES = (
-                                 ('with_referral', 'Awaiting'),
-                                 ('recalled', 'Recalled'),
-                                 ('completed', 'Completed'),
-                                 )
-    lodged_on = models.DateTimeField(auto_now_add=True)
-    application = models.ForeignKey(Application,related_name='referrals')
-    sent_by = models.ForeignKey(EmailUser,related_name='wildlifecompliance_assessor_referrals')
-    referral = models.ForeignKey(EmailUser,null=True,blank=True,related_name='wildlifecompliance_referalls')
-    linked = models.BooleanField(default=False)
-    sent_from = models.SmallIntegerField(choices=SENT_CHOICES,default=SENT_CHOICES[0][0])
-    processing_status = models.CharField('Processing Status', max_length=30, choices=PROCESSING_STATUS_CHOICES,
-                                         default=PROCESSING_STATUS_CHOICES[0][0])
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-        ordering = ('-lodged_on',)
-
-    def __str__(self):
-        return 'Application {} - Referral {}'.format(self.application.id,self.id)
-
-    # Methods
-
-    def recall(self,request):
-        with transaction.atomic():
-            if not self.application.can_assess(request.user):
-                raise exceptions.ApplicationNotAuthorized()
-            self.processing_status = 'recalled'
-            self.save()
-            # TODO Log application action
-            self.application.log_user_action(ApplicationUserAction.RECALL_REFERRAL.format(self.id,self.application.id),request)
-            # TODO log organisation action
-            self.application.applicant.log_user_action(ApplicationUserAction.RECALL_REFERRAL.format(self.id,self.application.id),request)
-
-    def remind(self,request):
-        with transaction.atomic():
-            if not self.application.can_assess(request.user):
-                raise exceptions.ApplicationNotAuthorized()
-            # Create a log entry for the application
-            self.application.log_user_action(ApplicationUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.application.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
-            # Create a log entry for the organisation
-            self.application.applicant.log_user_action(ApplicationUserAction.ACTION_REMIND_REFERRAL.format(self.id,self.application.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
-            # send email
-            send_referral_email_notification(self,request,reminder=True)
-
-    def resend(self,request):
-        with transaction.atomic():
-            if not self.application.can_assess(request.user):
-                raise exceptions.ApplicationNotAuthorized()
-            self.processing_status = 'with_referral'
-            self.application.processing_status = 'with_referral'
-            self.application.save()
-            self.sent_from = 1
-            self.save()
-            # Create a log entry for the application
-            self.application.log_user_action(ApplicationUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.application.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
-            # Create a log entry for the organisation
-            self.application.applicant.log_user_action(ApplicationUserAction.ACTION_RESEND_REFERRAL_TO.format(self.id,self.application.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
-            # send email
-            send_referral_email_notification(self,request)
-
-    def complete(self,request):
-        with transaction.atomic():
-            try:
-                if request.user != self.referral:
-                    raise exceptions.ReferralNotAuthorized()
-                self.processing_status = 'completed'
-                self.save()
-                # TODO Log application action
-                self.application.log_user_action(ApplicationUserAction.CONCLUDE_REFERRAL.format(self.id,self.application.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
-                # TODO log organisation action
-                self.application.applicant.log_user_action(ApplicationUserAction.CONCLUDE_REFERRAL.format(self.id,self.application.id,'{}({})'.format(self.referral.get_full_name(),self.referral.email)),request)
-            except:
-                raise
-
-    def send_referral(self,request,referral_email):
-        with transaction.atomic():
-            try:
-                if self.application.processing_status == 'with_referral':
-                    if request.user != self.referral:
-                        raise exceptions.ReferralNotAuthorized()
-                    if self.sent_from != 1:
-                        raise exceptions.ReferralCanNotSend()
-                    self.application.processing_status = 'with_referral'
-                    self.application.save()
-                    referral = None
-                    # Check if the user is in ledger
-                    try:
-                        user = EmailUser.objects.get(email__icontains=referral_email)
-                    except EmailUser.DoesNotExist:
-                        # Validate if it is a deparment user
-                        department_user = get_department_user(referral_email)
-                        if not department_user:
-                            raise ValidationError('The user you want to send the referral to is not a member of the department')
-                        # Check if the user is in ledger or create
-
-                        user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
-                        if created:
-                            user.first_name = department_user['given_name']
-                            user.last_name = department_user['surname']
-                            user.save()
-                    try:
-                        Referral.objects.get(referral=user,application=self.application)
-                        raise ValidationError('A referral has already been sent to this user')
-                    except Referral.DoesNotExist:
-                        # Create Referral
-                        referral = Referral.objects.create(
-                            application = self.application,
-                            referral=user,
-                            sent_by=request.user,
-                            sent_from=2
-                        )
-                    # Create a log entry for the application
-                    self.application.log_user_action(ApplicationUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
-                    # Create a log entry for the organisation
-                    self.application.applicant.log_user_action(ApplicationUserAction.ACTION_SEND_REFERRAL_TO.format(referral.id,self.id,'{}({})'.format(user.get_full_name(),user.email)),request)
-                    # send email
-                    send_referral_email_notification(referral,request)
-                else:
-                    raise exceptions.ApplicationReferralCannotBeSent()
-            except:
-                raise
-
-    # Properties
-    @property
-    def region(self):
-        return self.application.region
-
-    @property
-    def activity(self):
-        return self.application.activity
-
-    @property
-    def title(self):
-        return self.application.title
-
-    @property
-    def applicant(self):
-        return self.application.applicant.name
-
-    @property
-    def can_be_processed(self):
-        return self.processing_status == 'with_referral'
-
-    def can_assess_referral(self,user):
-        return self.processing_status == 'with_referral'
 
 class ExcelApplication(models.Model):
     application = models.ForeignKey(Application, related_name='excel_applications')

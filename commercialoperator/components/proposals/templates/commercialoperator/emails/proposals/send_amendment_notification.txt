@@ -1,0 +1,21 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Application {{ proposal.lodgement_number }} has been reviewed and requires an amendment before further assessment.
+
+    {% if reason %}
+        <p>
+            <span>Amendment Reason: {{ reason }}</span>
+        </p>
+    {% endif %}
+
+    {% if amendment_request_text %}
+        <p><span> Amendment details: <br> {{ amendment_request_text }}</span></p>
+    {% endif %}
+    <p>
+    You can access this Application using the following link:
+    </p>
+    {{url}}
+
+
+{%  endblock %}

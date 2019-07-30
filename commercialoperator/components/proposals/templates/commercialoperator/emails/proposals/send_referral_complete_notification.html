@@ -1,0 +1,8 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+        <p>A referral for Application <strong>{{proposal.lodgement_number}}</strong> has been completed ({{completed_by}}):</p>
+        <p>Referral Comments: {{referral_comments}}</p>
+    <p>You can access this Application using the following link:</p>
+    <a href="{{url}}">Access Application</a>
+{%  endblock %}

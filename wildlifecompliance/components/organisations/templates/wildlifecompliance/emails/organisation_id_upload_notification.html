@@ -1,10 +1,10 @@
 {%  extends 'wildlifecompliance/emails/base_email.html' %}
 
 {%  block content %}
-    <p>Identification details for an Organisation you are linked to has been uploaded.</p>
-    <p><strong>Organisation : {{ organisation.name }}</strong></p>
-    <p><strong>ABN : {{ organisation.abn }}</strong></p>
-    <p><strong>Address : {{ organisation.postal_address.line1 }}, {{ organisation.postal_address.locality }},
+    <p>Identification for the following organisation you are linked to has been uploaded.</p>
+    <p><strong>Organisation: {{ organisation.name }}</strong></p>
+    <p><strong>ABN: {{ organisation.abn }}</strong></p>
+    <p><strong>Address: {{ organisation.postal_address.line1 }}, {{ organisation.postal_address.locality }},
         {{ organisation.postal_address.state }}, {{ organisation.postal_address.postcode}},
         {{ organisation.postal_address.country}} </strong></p>
 {%  endblock %}

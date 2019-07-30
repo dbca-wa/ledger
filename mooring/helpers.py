@@ -13,8 +13,16 @@ def belongs_to(user, group_name):
 
 
 def is_officer(user):
-    return user.is_authenticated() and (belongs_to(user, 'Marinastay Officers') or user.is_superuser)
+    return user.is_authenticated() and user.is_staff
 
+def is_inventory(user):
+    return user.is_authenticated() and belongs_to(user, "Mooring Inventory")
+
+def is_admin(user):
+    return user.is_authenticated() and belongs_to(user, "Mooring Admin")
+
+def is_payment_officer(user):
+    return user.is_authenticated() and belongs_to(user, "Payments Officers")
 
 def is_customer(user):
     """
@@ -28,7 +36,7 @@ def is_customer(user):
 
 
 def get_all_officers():
-    return EmailUser.objects.filter(groups__name='Marinastay Officers')
+    return EmailUser.objects.filter(is_staff=True)
 
 def can_view_campground(user,campground):
     for g in campground.mooringareagroup_set.all():

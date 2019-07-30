@@ -3,13 +3,13 @@
 {%  block content %}
     {% if linked_by.email != user.email %}
         <p>Your have been linked to:</p>
-        <p><strong>Organisation : {{ organisation.name }}</strong></p>
-        <p><strong>ABN : {{ organisation.abn}}</strong></p>
-        <p>You were linked to this organisation by {{linked_by.get_full_name}}({{linked_by.email}}).</p>
+        <p><strong>Organisation: {{ organisation.name }}</strong></p>
+        <p><strong>ABN: {{ organisation.abn }}</strong></p>
+        <p>You were linked to this organisation by {{linked_by.get_full_name}} ({{linked_by.email}}).</p>
     {% else %}
         <p>You have linked yourself to:</p>
-        <p><strong>Organisation : {{ organisation.name }}</strong></p>
-        <p><strong>ABN : {{ organisation.abn}}</strong></p>
+        <p><strong>Organisation: {{ organisation.name }}</strong></p>
+        <p><strong>ABN: {{ organisation.abn }}</strong></p>
     {% endif %}
     <p>You can now make applications on behalf of this organisation.</p>
 {%  endblock %}
