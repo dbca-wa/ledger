@@ -41,6 +41,7 @@ class Inspection(RevisionedMixin):
             ('open', 'Open'),
             ('endorsement', 'Awaiting Endorsement'),
             ('sanction_outcome', 'Awaiting Sanction Outcomes'),
+            ('discarded', 'Discarded'),
             ('closed', 'Closed')
             )
 
