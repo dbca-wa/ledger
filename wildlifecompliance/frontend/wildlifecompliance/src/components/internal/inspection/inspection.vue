@@ -214,9 +214,9 @@
                                 <div class="col-sm-2">
                                     <button @click.prevent="addTeamMember" class="btn btn-primary">Add Member</button>
                                 </div>
-                                <div class="col-sm-2">
+                                <!--div class="col-sm-2">
                                     <button @click.prevent="makeTeamLead" class="btn btn-primary">Make Team Lead</button>
-                                </div>
+                                </div-->
                                 <!--div class="col-sm-2">
                                     <button @click.prevent="clearInspectionTeam" class="btn btn-primary pull-right">Clear</button>
                                 </div-->
@@ -358,11 +358,18 @@ export default {
                   mRender: function(data, type, row){
                       // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
                       //return '<a href="#">Remove</a>';
-                      return (
-                      '<a href="#" class="remove_button" data-member-id="' +
-                      row.id +
-                      '">Remove</a>'
-                      );
+                      if (data === 'Member') {
+                        return (
+                        '<a href="#" class="make_team_lead" data-member-id="' + row.id +'">Make Team Lead</a>' +
+                        '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
+                        );
+                      } else {
+                        return (
+                        '<a href="#" class="remove_button" data-member-id="' +
+                        row.id +
+                        '">Remove</a>'
+                        );
+                      }
                   }
               },
           ]
@@ -466,6 +473,7 @@ export default {
       this.sanctionOutcomeInitialised = true;
       this.$nextTick(() => {
           this.$refs.sanction_outcome.isModalOpen = true;
+          this.constructRelatedItemsTable();
       });
     },
     offence(){
@@ -486,14 +494,15 @@ export default {
     removeTeamMember: async function(e) {
         let memberId = e.target.getAttribute("data-member-id");
         await this.modifyInspectionTeam({
-            user_id: memberId, 
+            user_id: memberId,
             action: 'remove'
         });
         this.$refs.inspection_team_table.vmDataTable.ajax.reload()
     },
     makeTeamLead: async function() {
+        let memberId = e.target.getAttribute("data-member-id");
         await this.modifyInspectionTeam({
-            user_id: this.teamMemberSelected, 
+            user_id: memberId, 
             action: 'make_team_lead'
         });
         this.$refs.inspection_team_table.vmDataTable.ajax.reload()
@@ -541,9 +550,6 @@ export default {
         this.$refs.add_workflow.isModalOpen = true;
       });
       // this.$refs.add_workflow.isModalOpen = true;
-    },
-    offence(){
-      this.$refs.offence.isModalOpen = true;
     },
     save: async function () {
         if (this.inspection.id) {
@@ -598,6 +604,11 @@ export default {
           'click',
           '.remove_button',
           vm.removeTeamMember,
+          );
+      $('#inspection-team-table').on(
+          'click',
+          '.make_team_lead',
+          vm.makeTeamLead,
           );
     },
     updateAssignedToId: async function (user) {
