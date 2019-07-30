@@ -16,9 +16,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         logger.info('Running command {}'.format(__name__))
-        subprocess.call('python manage_ds.py update_compliance_status', shell=True) 
-        subprocess.call('python manage_ds.py send_compliance_reminder', shell=True) 
-        subprocess.call('python manage_ds.py update_approval_status', shell=True) 
-        subprocess.call('python manage_ds.py expire_approvals', shell=True) 
-        subprocess.call('python manage_ds.py approval_renewal_notices', shell=True) 
+        subprocess.call('python manage_co.py update_compliance_status', shell=True) 
+        subprocess.call('python manage_co.py send_compliance_reminder', shell=True) 
+        subprocess.call('python manage_co.py update_approval_status', shell=True) 
+        subprocess.call('python manage_co.py expire_approvals', shell=True) 
+        subprocess.call('python manage_co.py approval_renewal_notices', shell=True) 
         logger.info('Command {} completed'.format(__name__))

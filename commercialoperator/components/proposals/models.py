@@ -3558,7 +3558,7 @@ def check_migrate_approval(data):
     except:
         raise ValidationError('Licence holder is required')
 
-def migrate_approval(data):
+def migrate_approval(data, not_found):
     from commercialoperator.components.approvals.models import Approval
     org_applicant = None
     proxy_applicant = None
@@ -3571,20 +3571,23 @@ def migrate_approval(data):
                 submitter = EmailUser.objects.get(email__icontains=data['submitter'])
             except:
                 submitter = EmailUser.objects.create(email=data['submitter'], password = '')
-            if data['org_applicant']:
+            if data['abn']:
                 #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
-                org_applicant = Organisation.objects.get(organisation__abn=data['org_applicant'])
+                org_applicant = Organisation.objects.get(organisation__abn=data['abn'])
         else:
-            ValidationError('Licence holder is required')
+            #ValidationError('Licence holder is required')
+            logger.error('Licence holder is required: submitter {}, abn {}'.format(data['submitter'], data['abn']))
+            not_found.append({'submitter': data['submitter'], 'abn': data['abn']})
+            return None
     except Exception, e:
-        raise ValidationError('Licence holder is required: \n{}'.format(e))
+        #raise ValidationError('Licence holder is required: \n{}'.format(e))
+        logger.error('Licence holder is required: submitter {}, abn {}'.format(data['submitter'], data['abn']))
+        not_found.append({'submitter': data['submitter'], 'abn': data['abn']})
+        return None
 
-    start_date = datetime.datetime.strptime(data['start_date'], '%d/%m/%Y')
-    issue_date = datetime.datetime.strptime(data['issue_date'], '%d/%m/%Y')
-    expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d/%m/%Y')
     application_type=ApplicationType.objects.get(name=data['application_type'])
     application_name = application_type.name
-            # Get most recent versions of the Proposal Types
+    # Get most recent versions of the Proposal Types
     qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
     proposal_type = qs_proposal_type.get(name=application_name)
     proposal= Proposal.objects.create( # Dummy 'T Class' proposal
@@ -3594,9 +3597,9 @@ def migrate_approval(data):
                     schema=proposal_type.schema
                 )
     approval = Approval.objects.create(
-                    issue_date=issue_date,
-                    expiry_date=expiry_date,
-                    start_date=start_date,
+                    issue_date=data['issue_date'],
+                    expiry_date=data['expiry_date'],
+                    start_date=data['start_date'],
                     org_applicant=org_applicant,
                     submitter= submitter,
                     current_proposal=proposal
@@ -3611,7 +3614,42 @@ def migrate_approval(data):
     approval.save()
     return approval
 
-def create_migration_data(filename, verify=False):
+def create_migration_data(filename, verify=False, app_type='T Class'):
+    def get_dates(data, row):
+        try:
+            #import ipdb; ipdb.set_trace()
+            if data['start_date']:
+                start_date = datetime.datetime.strptime(data['start_date'], '%d-%b-%y').date() # '05-Feb-89'
+            else:
+                start_date = None
+
+            if data['issue_date']:
+                issue_date = datetime.datetime.strptime(data['issue_date'], '%d-%b-%y').date()
+            else:
+                issue_date = None
+
+            if data['expiry_date']:
+                expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date()
+
+            if not (start_date and issue_date):
+                start_date = datetime.date.today()
+                issue_date = datetime.date.today()
+            elif not start_date:
+                start_date = issue_date
+            elif not issue_date:
+                issue_date = start_date
+
+        except Exception, e:
+            logger.error('Error in Dates: {}'.format(data))
+            raise
+
+        data.update({'start_date': start_date})
+        data.update({'issue_date': start_date})
+        data.update({'expiry_date': expiry_date})
+        
+        return data
+
+
     try:
         '''
         Example csv
@@ -3623,25 +3661,51 @@ def create_migration_data(filename, verify=False):
             create_migration_data('commercialoperator/utils/csv/approvals.csv')
         '''
         data={}
+        not_found=[]
+        no_expiry=[]
         with open(filename) as csvfile:
             reader = csv.reader(csvfile, delimiter=str(','))
             header = next(reader) # skip header
             for row in reader:
                 #import ipdb; ipdb.set_trace()
-                data.update({'org_applicant': row[0].strip()})
+                data.update({'abn': row[0].translate(None, string.whitespace)})
                 data.update({'submitter': row[1].strip()})
                 data.update({'start_date': row[2].strip()})
                 data.update({'issue_date': row[3].strip()})
                 data.update({'expiry_date': row[4].strip()})
                 data.update({'application_type': row[5].strip()})
-                print data
+                data.update({'submitter2': row[6].strip()})
+                data.update({'submitter3': row[7].strip()})
+                data.update({'submitter4': row[8].strip()})
+                data.update({'submitter_full_str': row[9].strip()})
 
-                if verify:
-                    approval=check_migrate_approval(data)
+                if data['expiry_date']:
+                    get_dates(data, row)
+                    if row[5].strip()[0] == 'T':
+                        application_type = 'T Class'
+                    elif row[5].strip()[0] == 'E':
+                        application_type = 'E Class'
+                    else:
+                        logger.error('Unknown Application Type: {}'.format(row[5].strip()))
+
+                    data.update({'application_type': application_type})
+                    #print data
+
+                    if application_type == app_type:
+                        if verify:
+                            approval=check_migrate_approval(data)
+                        else:
+                            approval=migrate_approval(data, not_found)
+                        #print data
+                        print '{} - {}'.format(approval, data['submitter'])
+                        print 
                 else:
-                    approval=migrate_approval(data)
-                print approval
+                    no_expiry.append(data['submitter'])
+
+        print 'Not Found: {}'.format(not_found)
+        print 'No Expiry: {}'.format(no_expiry)
     except Exception, e:
+        print data
         print e
 
 
@@ -3773,6 +3837,7 @@ def create_organisation(data, count, debug=False):
     return abn_new, abn_existing
 
 def create_organisation_data(filename, verify=False):
+    #import ipdb; ipdb.set_trace()
     def get_start_date(data, row):
         try:
             expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date() # '05-Feb-89'

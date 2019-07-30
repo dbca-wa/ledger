@@ -21,7 +21,8 @@ def is_email_auth_backend(request):
     return 'EmailAuth' in request.session.get('_auth_user_backend')
 
 def is_commercialoperator_admin(request):
-    return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(request) and (belongs_to(request.user, 'Commercial Operator Admin'))
+    logger.info('settings.COLS_ADMIN_GROUP: {}'.format(settings.COLS_ADMIN_GROUP))
+    return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(request) and (belongs_to(request.user, settings.COLS_ADMIN_GROUP))
 
 def in_dbca_domain(request):
     user = request.user
