@@ -249,7 +249,7 @@ export default {
                             result= `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
                             }
                             else if(full.migrated){
-                               var icon = "<i class='fa fa-file-pdf-o' style='color:green'></i>"
+                               var icon = "<i class='fa fa-file-pdf-o' style='color:red'></i>"
                                var message= 'This is a migrated licence';
                                popTemplate = _.template('<a href="#" ' +
                                             'role="button" ' +
