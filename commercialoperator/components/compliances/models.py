@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
+from django.conf import settings
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -223,8 +224,7 @@ class Compliance(RevisionedMixin):
 
 
 def update_proposal_complaince_filename(instance, filename):
-    #return 'proposals/{}/compliance/{}/{}'.format(instance.compliance.proposal.id,instance.compliance.id,filename)
-    return 'proposals/{}/compliance/{}'.format(instance.compliance.proposal.id,filename)
+    return '{}/proposals/{}/compliance/{}'.format(settings.MEDIA_APP_DIR, instance.compliance.proposal.id,filename)
 
 
 class ComplianceDocument(Document):
@@ -281,8 +281,7 @@ class ComplianceLogEntry(CommunicationsLogEntry):
         app_label = 'commercialoperator'
 
 def update_compliance_comms_log_filename(instance, filename):
-    #return 'proposals/{}/compliance/{}/communications/{}/{}'.format(instance.log_entry.compliance.proposal.id,instance.log_entry.compliance.id,instance.id,filename)
-    return 'proposals/{}/compliance/communications/{}'.format(instance.log_entry.compliance.proposal.id,filename)
+    return '{}/proposals/{}/compliance/communications/{}'.format(settings.MEDIA_APP_DIR, instance.log_entry.compliance.proposal.id,filename)
 
 
 class ComplianceLogDocument(Document):

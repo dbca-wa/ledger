@@ -5,7 +5,7 @@
         <div class="row">
             <h3>{{ user.first_name }} {{ user.last_name  }} - {{ user.dob }} ({{ user.email }})</h3>
             <div class="col-md-3">
-                <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
+                <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :is_user_log="true" :disable_add_entry="false"/>
             </div>
             <div class="col-md-9">
                 <ul class="nav nav-tabs">

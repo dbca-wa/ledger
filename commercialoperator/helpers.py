@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 from ledger.accounts.models import EmailUser
 from django.conf import settings
 
+import logging
+logger = logging.getLogger(__name__)
 
 def belongs_to(user, group_name):
     """

@@ -575,7 +575,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     _file = request.FILES.get('_file')
 
                 document = instance.documents.get_or_create(input_name=section, name=filename)[0]
-                path = default_storage.save('proposals/{}/documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('{}/proposals/{}/documents/{}'.format(settings.MEDIA_APP_DIR, proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
@@ -635,7 +635,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     _file = request.FILES.get('_file')
 
                 document = instance.onhold_documents.get_or_create(input_name=section, name=filename)[0]
-                path = default_storage.save('proposals/{}/onhold/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('{}/proposals/{}/onhold/{}'.format(settings.MEDIA_APP_DIR, proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
@@ -683,7 +683,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     _file = request.FILES.get('_file')
 
                 document = instance.qaofficer_documents.get_or_create(input_name=section, name=filename)[0]
-                path = default_storage.save('proposals/{}/qaofficer/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('{}/proposals/{}/qaofficer/{}'.format(settings.MEDIA_APP_DIR, proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
@@ -936,8 +936,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
                 required_doc_instance=RequiredDocument.objects.get(id=required_doc_id)
                 document = instance.required_documents.get_or_create(input_name=section, name=filename, required_doc=required_doc_instance)[0]
-                #path = default_storage.save('proposals/{}/required_documents/{}/{}'.format(proposal_id,required_doc_id, filename), ContentFile(_file.read()))
-                path = default_storage.save('proposals/{}/required_documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('{}/proposals/{}/required_documents/{}'.format(settings.MEDIA_APP_DIR, proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
