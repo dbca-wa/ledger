@@ -206,7 +206,7 @@
                                 <label class="col-sm-2">Date of call</label>
                                 <div class="col-sm-4">
                                     <div class="input-group date" ref="dateOfCallPicker">
-                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.date_of_call" />
+                                        <input :disabled="readonlyForm" type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.date_of_call" />
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
@@ -245,7 +245,7 @@
                                 <label class="col-sm-3">{{ occurrenceDateLabel }}</label>
                                 <div class="col-sm-4">
                                     <div class="input-group date" ref="occurrenceDateFromPicker">
-                                        <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_from" />
+                                        <input :disabled="readonlyForm" type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_from" />
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
@@ -254,7 +254,7 @@
                                 <div v-show="call_email.occurrence_from_to">
                                     <div class="col-sm-4">
                                         <div class="input-group date" ref="occurrenceDateToPicker">
-                                            <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_to" />
+                                            <input :disabled="readonlyForm" type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.occurrence_date_to" />
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
