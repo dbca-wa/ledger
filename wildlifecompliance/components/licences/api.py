@@ -182,15 +182,18 @@ class LicencePaginatedViewSet(viewsets.ModelViewSet):
         self.serializer_class = DTExternalWildlifeLicenceSerializer
         # Filter for WildlifeLicence objects that have a current application linked with an
         # ApplicationSelectedActivity that has been ACCEPTED
-        asa_accepted = ApplicationSelectedActivity.objects.filter(
-            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED)
         user_orgs = [
             org.id for org in request.user.wildlifecompliance_organisations.all()]
+        asa_accepted = ApplicationSelectedActivity.objects.filter(
+            Q(application__org_applicant_id__in=user_orgs) |
+            Q(application__proxy_applicant=request.user) |
+            Q(application__submitter=request.user)
+        ).filter(
+            processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+        )
         queryset = WildlifeLicence.objects.filter(
-            Q(current_application__org_applicant_id__in=user_orgs) |
-            Q(current_application__proxy_applicant=request.user) |
-            Q(current_application__submitter=request.user)
-        ).filter(current_application__in=asa_accepted.values_list('application_id', flat=True))
+            current_application__in=asa_accepted.values_list('application_id', flat=True)
+        )
         # Filter by org
         org_id = request.GET.get('org_id', None)
         if org_id:
@@ -623,13 +626,24 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         application_type = request.GET.get('application_type')
         licence_category_id = request.GET.get('licence_category')
         licence_activity_id = request.GET.get('licence_activity')
-
         active_applications = Application.get_active_licence_applications(request, application_type)
+        active_current_applications = active_applications.exclude(
+            selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
+        )
+        open_applications = Application.get_open_applications(request)
+
+        # Exclude purposes in currently OPEN applications
+        if open_applications:
+            for app in open_applications:
+                available_purpose_records = available_purpose_records.exclude(
+                    id__in=app.licence_purposes.all().values_list('id', flat=True))
+
         if not active_applications.count() and application_type == Application.APPLICATION_TYPE_RENEWAL:
             # Do not present with renewal options if no activities are within the renewal period
             queryset = LicenceCategory.objects.none()
             available_purpose_records = LicencePurpose.objects.none()
 
+        # Filter based on currently ACTIVE applications
         elif active_applications.count():
             # Activities relevant to the current application type
             current_activities = Application.get_active_licence_activities(request, application_type)
@@ -665,12 +679,12 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(id__in=current_activities.values_list(
                     'licence_activity__licence_category_id', flat=True).distinct())
 
-            # Only include active purposes for Amendment or Renewal application types
+            # Only include current (active but not suspended) purposes for Amendment or Renewal application types
             elif application_type in [
                 Application.APPLICATION_TYPE_AMENDMENT,
                 Application.APPLICATION_TYPE_RENEWAL,
             ]:
-                amendable_purpose_ids = active_applications.values_list(
+                amendable_purpose_ids = active_current_applications.values_list(
                     'licence_purposes__id',
                     flat=True
                 )

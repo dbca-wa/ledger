@@ -284,12 +284,12 @@ class WildlifeLicence(models.Model):
         merged_activities = {}
 
         if self.is_latest_in_category:
-            purposes_in_open_applications = self.get_purposes_in_open_applications()
+            purposes_in_open_applications = list(self.get_purposes_in_open_applications())
         else:
             purposes_in_open_applications = None
 
         for activity in latest_activities:
-            if self.is_latest_in_category:
+            if purposes_in_open_applications or purposes_in_open_applications == []:
                 activity_can_action = activity.can_action(purposes_in_open_applications)
             else:
                 activity_can_action = {
@@ -394,7 +394,7 @@ class WildlifeLicence(models.Model):
               current_application__proxy_applicant=None,
               current_application__org_applicant=None
             )
-        ).latest('id') == self
+        ).filter(licence_category_id=self.licence_category.id).latest('id') == self
 
     @property
     def can_action(self):

@@ -652,6 +652,7 @@ class ApplicationSerializer(BaseApplicationSerializer):
 class CreateExternalApplicationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, read_only=True)
     licence_purposes = serializers.ListField(required=False, write_only=True)
+    data = ApplicationFormDataRecordSerializer(required=False, many=True)
 
     class Meta:
         model = Application
