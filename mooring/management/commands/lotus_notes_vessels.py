@@ -50,7 +50,7 @@ class Command(BaseCommand):
 
 
             # Field names in list format.
-            fields = ["DoTRego", "TotLength", "Draft", "Beam", "Tonnage", "StickerLNo", "StickerAuNo", "StickerAnNo"]
+            fields = ["DoTRego", "RegLength", "Draft", "Beam", "Tonnage", "StickerLNo", "StickerAuNo", "StickerAnNo"]
 
             for record in regos:
                 for i in range(1,8):

@@ -53,10 +53,10 @@
                         <div class="col-md-4">
                             <div class="form-group">
                             <label for="">Cancelled</label>
-                            <select class="form-control" v-model="filterCanceled" id="filterCanceled">
+                                <select class="form-control" v-model="filterCanceled" id="filterCanceled">
                                     <option value="True">Yes</option>
                                     <option value="False">No</option>
-                            </select>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -157,7 +157,6 @@
                             </select>
                             </div>
                         </div>
-
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -175,7 +174,15 @@
 
 <script>
 // Variabled ending with a 2 (except select2) are reused for the admissions fee payment table.
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal,select2} from "../../hooks.js"
+import {$,
+        bus,
+        datetimepicker,
+        api_endpoints,
+        helpers,
+        Moment,
+        swal,
+//        select2
+        } from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import changebooking from "./changebooking.vue"
@@ -225,10 +232,10 @@ export default {
                             d.departure = vm.filterDateTo;
                         }
                         if (vm.filterCampground != "All") {
-                            d.campground = vm.filterCampground
+                            d.campground = vm.filterCampground;
                         }
                         if (vm.filterRegion != "All") {
-                            d.region = vm.filterRegion
+                            d.region = vm.filterRegion;
                         }
                         d.canceled = vm.filterCanceled;
                         d.refund_status = vm.filterRefundStatus;
@@ -255,7 +262,7 @@ export default {
                         data:"id",
                         orderable:false,
                         searchable:false,
-                        mRender:function(data,type,full){
+                        mRender:function(data,type,full) {
                             return full.status != 'Canceled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
                         }
                     },
@@ -403,7 +410,7 @@ export default {
                             }
 
                             full.has_history ? column += "<a href='/view-booking/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
-                            $.each(full.active_invoices,(i,v) =>{
+                            $.each(full.invoices,(i,v) =>{
                                 invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
                             invoices += " <a class='text-primary' href='/booking-history/"+full.id+"'>View History</a>";
@@ -603,7 +610,7 @@ export default {
         ]),
     },
     methods:{
-        showhidebookings: function(){
+        showhidebookings: function() {
             var content = $('#content_booking');
             var span = $('#collapse_bookings_span');
             if (content.css("display") !== "none"){

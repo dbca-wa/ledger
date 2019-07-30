@@ -494,7 +494,7 @@ class MooringsiteSerialiser(serializers.ModelSerializer):
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
-        fields = ('name','abbreviation','ratis_id','wkb_geometry','zoom_level','mooring_group')
+        fields = ('id','name','abbreviation','ratis_id','wkb_geometry','zoom_level','mooring_group')
 
 
 class MooringsiteClassSerializer(serializers.HyperlinkedModelSerializer):
@@ -616,8 +616,8 @@ class RateDetailSerializer(serializers.Serializer):
         return value
 
     def validate(self,obj):
-        if obj.get('reason') == 1 and not obj.get('details'):
-            raise serializers.ValidationError('Details required if reason is other.')
+        #if obj.get('reason') == 1 and not obj.get('details'):
+        #    raise serializers.ValidationError('Details required if reason is other.')
         return obj
 
 class BookingPeriodOptionsSerializer(serializers.ModelSerializer):
