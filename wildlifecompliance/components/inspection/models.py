@@ -14,6 +14,7 @@ from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document, get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 from wildlifecompliance.components.main.models import InspectionType
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +120,14 @@ class Inspection(RevisionedMixin):
         
     def log_user_action(self, action, request):
         return InspectionUserAction.log_action(self, action, request.user)
+    
+    @property
+    def get_related_items_identifier(self):
+        return self.id
+
+    @property
+    def get_related_items_descriptor(self):
+        return '{0}, {1}'.format(self.title, self.details)
     
 
 class InspectionCommsLogDocument(Document):

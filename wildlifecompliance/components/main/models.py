@@ -167,6 +167,9 @@ for method_name, method in queryset_methods.items():
 
 approved_related_item_models = [
         'Offence',
+        'CallEmail',
+        'Inspection',
+        'SanctionOutcome',
         ]
 
 def get_related_items(self, **kwargs):

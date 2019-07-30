@@ -364,7 +364,7 @@
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome"/>
         </div>
-        <Inspection ref="inspection" />
+        <Inspection ref="inspection" :parent_update_function="loadCallEmail" />
     </div>
 </template>
 <script>
