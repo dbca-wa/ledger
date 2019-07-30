@@ -125,7 +125,8 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             # delete Sanction Outcome if user cancels modal
             action = request.data.get('action')
             if action == 'cancel' and returned_data:
-                returned_data = instance.delete()
+                instance.status = 'discarded'
+                returned_data = instance.save()
             # return response
             if returned_data:
                 return Response(returned_data)
