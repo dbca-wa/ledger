@@ -521,7 +521,8 @@ class CommunicationsLogEntry(models.Model):
     #cc = models.CharField(max_length=200, blank=True, verbose_name="cc")
     cc = models.TextField(blank=True, verbose_name="cc")
 
-    type = models.CharField(max_length=35, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    #type = models.CharField(max_length=35, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    log_type = models.CharField(max_length=35, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
     reference = models.CharField(max_length=100, blank=True)
     subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
     text = models.TextField(blank=True)
