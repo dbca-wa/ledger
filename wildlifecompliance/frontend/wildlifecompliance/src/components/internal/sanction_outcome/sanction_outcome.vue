@@ -495,7 +495,9 @@ export default {
       this.close();
     },
     cancel: async function() {
-        await this.$refs.sanction_outcome_file.cancel();
+        if(this.$refs.sanction_outcome_file) {
+            await this.$refs.sanction_outcome_file.cancel();
+        }
         this.close();
     },
     makeModalsDraggable: function(){

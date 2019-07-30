@@ -91,7 +91,11 @@ class EmailUserSerializer(serializers.ModelSerializer):
             return 'Team Member'
 
     def get_action(self, obj):
-        return ''
+        inspection_team_lead_id = self.context.get('inspection_team_lead_id')
+        if obj.id == inspection_team_lead_id:
+            return 'Lead'
+        else:
+            return 'Member'
 
 
 # class InspectionTeamSerializer(serializers.ModelSerializer):
