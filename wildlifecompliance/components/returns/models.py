@@ -1,11 +1,17 @@
 from __future__ import unicode_literals
+from concurrency.exceptions import RecordModifiedError
+from concurrency.fields import IntegerVersionField
 from django.db import models, transaction
+from django.db.utils import IntegrityError
 from django.db.models.signals import post_save
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.dispatch import receiver
 from django.utils import timezone
 from django.core.exceptions import FieldError, ValidationError
 from ledger.accounts.models import EmailUser, RevisionedMixin
+from ledger.payments.invoice.models import Invoice
+from ledger.checkout.utils import calculate_excl_gst
+from wildlifecompliance.components.main.utils import checkout, flush_checkout_session
 from wildlifecompliance.components.returns.utils_schema import Schema
 from wildlifecompliance.components.applications.models import ApplicationCondition, Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction
@@ -13,6 +19,9 @@ from wildlifecompliance.components.returns.email import send_external_submit_ema
                                                         send_return_accept_email_notification, \
                                                         send_sheet_transfer_email_notification
 import ast
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def template_directory_path(instance, filename):
@@ -29,13 +38,13 @@ class ReturnType(models.Model):
     """
     A definition to identify the format used to facilitate Return.
     """
-    RETURN_TYPE_SHEET = 'sheet'
-    RETURN_TYPE_QUESTION = 'question'
-    RETURN_TYPE_DATA = 'data'
-    RETURN_TYPE_CHOICES = (
-        (RETURN_TYPE_SHEET, 'Sheet'),
-        (RETURN_TYPE_QUESTION, 'Question'),
-        (RETURN_TYPE_DATA, 'Data')
+    FORMAT_SHEET = 'sheet'
+    FORMAT_QUESTION = 'question'
+    FORMAT_DATA = 'data'
+    FORMAT_CHOICES = (
+        (FORMAT_SHEET, 'Sheet'),
+        (FORMAT_QUESTION, 'Question'),
+        (FORMAT_DATA, 'Data')
     )
     name = models.CharField(null=True, blank=True, max_length=100)
     description = models.TextField(null=True, blank=True, max_length=256)
@@ -43,9 +52,15 @@ class ReturnType(models.Model):
     data_format = models.CharField(
         'Data format',
         max_length=30,
-        choices=RETURN_TYPE_CHOICES,
-        default=RETURN_TYPE_SHEET)
+        choices=FORMAT_CHOICES,
+        default=FORMAT_DATA)
+    # data_template is only used by ReturnData Format for upload.
     data_template = models.FileField(upload_to=template_directory_path, null=True, blank=True)
+    fee_required = models.BooleanField(default=False)
+    # fee_amount is a base amount required for the Return Type.
+    fee_amount = models.DecimalField(max_digits=8, decimal_places=2, default='0')
+    # fee_name is an optional field for fee and can be used to correspond to JSON property.
+    fee_name = models.CharField(null=True, blank=True, max_length=50)
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
 
@@ -97,20 +112,20 @@ class Return(models.Model):
     RETURN_CUSTOMER_STATUS_FUTURE = 'future'
     RETURN_CUSTOMER_STATUS_UNDER_REVIEW = 'under_review'
     RETURN_CUSTOMER_STATUS_ACCEPTED = 'accepted'
+
     lodgement_number = models.CharField(max_length=9, blank=True, default='')
-    application = models.ForeignKey(Application, related_name='returns')
+    application = models.ForeignKey(Application, related_name='returns_application')
     licence = models.ForeignKey(
         'wildlifecompliance.WildlifeLicence',
-        related_name='returns')
+        related_name='returns_licence')
     due_date = models.DateField()
-    text = models.TextField(blank=True)
     processing_status = models.CharField(
         choices=PROCESSING_STATUS_CHOICES,
         max_length=20,
         default=RETURN_PROCESSING_STATUS_FUTURE)
     assigned_to = models.ForeignKey(
         EmailUser,
-        related_name='wildlifecompliance_return_assignments',
+        related_name='returns_curator',
         null=True,
         blank=True)
     condition = models.ForeignKey(
@@ -124,12 +139,13 @@ class Return(models.Model):
         EmailUser,
         blank=True,
         null=True,
-        related_name='disturbance_compliances')
+        related_name='returns_submitter')
     reminder_sent = models.BooleanField(default=False)
     post_reminder_sent = models.BooleanField(default=False)
     return_type = models.ForeignKey(ReturnType, null=True)
     nil_return = models.BooleanField(default=False)
     comments = models.TextField(blank=True, null=True)
+    return_fee = models.DecimalField(max_digits=8, decimal_places=2, default='0')
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -141,10 +157,6 @@ class Return(models.Model):
             new_lodgement_id = 'R{0:06d}'.format(self.pk)
             self.lodgement_number = new_lodgement_id
             self.save()
-
-    @property
-    def regions(self):
-        return self.application.regions_list
 
     @property
     def activity(self):
@@ -219,7 +231,7 @@ class Return(models.Model):
         Property defining if the Return is Question based.
         :return: Boolean
         """
-        return True if self.format == ReturnType.RETURN_TYPE_QUESTION else False
+        return True if self.format == ReturnType.FORMAT_QUESTION else False
 
     @property
     def has_data(self):
@@ -227,7 +239,7 @@ class Return(models.Model):
         Property defining if the Return is Data based.
         :return: Boolean
         """
-        return True if self.format == ReturnType.RETURN_TYPE_DATA else False
+        return True if self.format == ReturnType.FORMAT_DATA else False
 
     @property
     def has_sheet(self):
@@ -235,7 +247,7 @@ class Return(models.Model):
         Property defining if the Return is Running Sheet based.
         :return: Boolean
         """
-        return True if self.format == ReturnType.RETURN_TYPE_SHEET else False
+        return True if self.format == ReturnType.FORMAT_SHEET else False
 
     @property
     def customer_status(self):
@@ -261,14 +273,25 @@ class Return(models.Model):
         Property defining fee status for this Return.
         :return:
         """
-        # TODO: provide status for the Return payment fee.
-        # if self.return_fee == 0:
-        #   return 'payment_not_required'
-        # else:
-        #    if self.invoices.count() == 0:
-        #    return 'unpaid'
+        if self.return_fee == 0:
+            return Invoice.PAYMENT_STATUS_NOT_REQUIRED
+        else:
+            if self.invoices.count() == 0:
+                return Invoice.PAYMENT_STATUS_UNPAID
+            else:
+                try:
+                    latest_invoice = Invoice.objects.get(reference=self.invoices.latest('id').invoice_reference)
+                except Invoice.DoesNotExist:
+                    return Invoice.PAYMENT_STATUS_UNPAID
+                return latest_invoice.payment_status
 
-        return 'payment_not_required'
+    @property
+    def return_fee_paid(self):
+        return self.payment_status in [
+            Invoice.PAYMENT_STATUS_NOT_REQUIRED,
+            Invoice.PAYMENT_STATUS_PAID,
+            Invoice.PAYMENT_STATUS_OVERPAID,
+        ]
 
     @property
     def has_payment(self):
@@ -276,10 +299,7 @@ class Return(models.Model):
         Property defining if payment is required for this Return.
         :return:
         """
-        if self.payment_status == 'payment_not_required':
-            return False
-
-        return True
+        return True if self.payment_status != Invoice.PAYMENT_STATUS_NOT_REQUIRED else False
 
     @transaction.atomic
     def set_submitted(self, request):
@@ -323,8 +343,9 @@ class Return(models.Model):
         :return:
         """
         try:
-            return_table = ReturnTable.objects.get_or_create(
-                name=table_name, ret=self)[0]
+            # get the Return Table record and save immediately to check if it has been concurrently modified.
+            return_table, created = ReturnTable.objects.get_or_create(name=table_name, ret=self)
+            return_table.save()
             # delete any existing rows as they will all be recreated
             return_table.returnrow_set.all().delete()
             return_rows = [
@@ -334,40 +355,10 @@ class Return(models.Model):
             ReturnRow.objects.bulk_create(return_rows)
             # log transaction
             self.log_user_action(ReturnUserAction.ACTION_SAVE_REQUEST.format(self), request)
+        except RecordModifiedError:
+            raise IntegrityError('A concurrent save occurred please refresh page details.')
         except BaseException:
             raise
-
-    def store(self, request):
-        """
-        Save the current state of the Return.
-        :param request:
-        :return:
-        """
-        pass
-
-    def submit(self, request):
-        """
-        Submit Return to Curator.
-        :param request:
-        :return:
-        """
-        pass
-
-    def amend(self, request):
-        """
-        Request amendment for Return.
-        :param request:
-        :return:
-        """
-        pass
-
-    def discard(self, request):
-        """
-        Discard a Return.
-        :param request:
-        :return:
-        """
-        pass
 
     def log_user_action(self, action, request):
         return ReturnUserAction.log_action(self, action, request.user)
@@ -502,7 +493,7 @@ class ReturnData(object):
 
     def _is_post_data_valid(self, tables_info, post_data):
         """
-        Validates table data against the schema,
+        Validates table data against the Schema for correct entry of data types.
         :param tables_info:
         :param post_data:
         :return:
@@ -517,7 +508,7 @@ class ReturnData(object):
 
     def _get_table_rows(self, table_name, post_data):
         """
-        Build row of data.
+        Builds a row of data taken from a table into a standard that can be consumed by the Schema.
         :param table_name:
         :param post_data:
         :return:
@@ -566,7 +557,7 @@ class ReturnQuestion(object):
         """
         tables = []
         for resource in self._return.return_type.resources:
-            resource_name = ReturnType.RETURN_TYPE_QUESTION
+            resource_name = ReturnType.FORMAT_QUESTION
             schema = Schema(resource.get('schema'))
             headers = []
             for f in schema.fields:
@@ -610,11 +601,11 @@ class ReturnQuestion(object):
         :return:
         """
         table_rows = self._get_table_rows(request.data)  # Nb: There is only ONE row where each Question is a header.
-        self._return.save_return_table(ReturnType.RETURN_TYPE_QUESTION, table_rows, request)
+        self._return.save_return_table(ReturnType.FORMAT_QUESTION, table_rows, request)
 
     def _get_table_rows(self, _data):
         """
-        Gets the formatted row of data from Questions and Answers.
+        Builds a row of data taken from the Request into a standard that can be saved.
         :param _data:
         :return:
         """
@@ -637,7 +628,7 @@ class ReturnSheet(object):
     _DEFAULT_SPECIES = '0000000'
 
     _SHEET_SCHEMA = {"name": "sheet", "title": "Running Sheet of Return Data", "resources": [{"name":
-                     "SpecieID", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
+                     "species_id", "path": "", "title": "Return Data for Specie", "schema": {"fields": [{"name":
                      "date", "type": "date", "format": "fmt:%d/%m/%Y", "constraints": {"required": True}}, {"name":
                      "activity", "type": "string", "constraints": {"required": True}}, {"name": "qty", "type":
                      "number", "constraints": {"required": True}}, {"name": "total", "type": "number",
@@ -646,6 +637,7 @@ class ReturnSheet(object):
 
     _NO_ACTIVITY = {"echo": 1, "totalRecords": "0", "totalDisplayRecords": "0", "data": []}
 
+    # todo: change activity id to a meaningful name
     _ACTIVITY_TYPES = {
         "SA01": {"label": "Stock", "auto": "false", "licence": "false", "pay": "false", "initial": ""},
         "SA02": {"label": "In through import", "auto": "false", "licence": "false", "pay": "false", "inward": ""},
@@ -676,6 +668,8 @@ class ReturnSheet(object):
         """
         _data = []
         # TODO: create default entries for each species on the licence.
+        # TODO: Each species has a defaulted Stock Activity (0 Totals).
+        # TODO: Call _set_activity_from_previous to carry over Stock totals for Licence reissues.
         '''
         new_sheet = the_return.sheet
         for species in the_return.licence.species_list:
@@ -726,6 +720,54 @@ class ReturnSheet(object):
         """
         return self._ACTIVITY_TYPES
 
+    # todo: more generic method name for payment transfer
+    @property
+    def process_transfer_fee_payment(self, request):
+        from ledger.payments.models import BpointToken
+        #if self.return_fee_paid:
+        #    return True
+
+        application = self.application
+        applicant = application.proxy_applicant if application.proxy_applicant else application.submitter
+        card_owner_id = applicant.id
+        card_token = BpointToken.objects.filter(user_id=card_owner_id).order_by('-id').first()
+        if not card_token:
+            logger.error("No card token found for user: %s" % card_owner_id)
+            return False
+
+        product_lines = []
+        return_submission = u'Transfer of stock for {} Return {}'.format(
+            u'{} {}'.format(applicant.first_name, applicant.last_name), application.lodgement_number)
+        product_lines.append({
+            'ledger_description': '{}'.format(self._return.id),
+            'quantity': 1,
+            'price_incl_tax': str(self._return.return_fee),
+            'price_excl_tax': str(calculate_excl_gst(self.licence_fee)),
+            'oracle_code': ''
+        })
+        checkout(
+            request, application, lines=product_lines,
+            invoice_text=return_submission,
+            internal=True,
+            add_checkout_params={
+                'basket_owner': request.user.id,
+                'payment_method': 'card',
+                'checkout_token': card_token.id,
+            }
+        )
+        try:
+            invoice_ref = request.session['checkout_invoice']
+        except KeyError:
+            logger.error("No invoice reference generated for Activity ID: %s" % self.licence_activity_id)
+            return False
+        ReturnInvoice.objects.get_or_create(
+            invoice_return=self,
+            invoice_reference=invoice_ref
+        )
+        flush_checkout_session(request.session)
+        #return self.licence_fee_paid and send_activity_invoice_email_notification(application, self, invoice_ref, request)
+        return self.licence_fee_paid
+
     def store(self, request):
         """
         Save the current state of this Return Sheet.
@@ -735,23 +777,12 @@ class ReturnSheet(object):
         for species in self.species_list:
             try:
                 _data = request.data.get(species).encode('utf-8')
-                _data = tuple(ast.literal_eval(_data))
+                _data = ast.literal_eval(_data)  # ast should convert list to tuple.
                 table_rows = self._get_table_rows(_data)
                 self._return.save_return_table(species, table_rows, request)
             except AttributeError:
                 continue
         self._add_transfer_activity(request)
-
-    def pay_transfer(self, request):
-        """
-        Payment associated with the movement of stock.
-        :param request:
-        :return:
-        """
-        # TODO: Call to payment process either from here or api.
-
-    def send_transfer_sender(self):
-        return self._return.submitter
 
     def set_species(self, _species):
         """
@@ -782,7 +813,7 @@ class ReturnSheet(object):
         _transfers = ast.literal_eval(_data)
         _licence = _transfers['licence']
         is_valid = False if not is_valid else self._is_valid_transfer_licence(_licence)
-        #is_valid = False if not is_valid else self._is_valid_transfer_quantity(request)
+        is_valid = False if not is_valid else self._is_valid_transfer_quantity(request)
 
         return is_valid
 
@@ -809,7 +840,6 @@ class ReturnSheet(object):
                 self._table = self._NO_ACTIVITY
 
         return self._table
-
 
     def _get_table_rows(self, _data):
         """
@@ -855,25 +885,20 @@ class ReturnSheet(object):
     def _set_activity_from_previous(self):
         """
         Sets Running Sheet Species stock total from previous Licence Running Sheet.
-        :return:
+        :return: tuple of species and total.
         """
         previous_licence = self._return.application.previous_application.licence
-        if previous_licence:
-            # TODO : for the reissue of licences. Species stock count must carry over. Nb. change in species.
-            '''      
-            table = {'data': None}              
-            for each species in previous_licence
-                try:
-                    return_table = self._return.returntable_set.get(name=_resource_name)
-                    rows = [_return_row.data for _return_row in _return_table.returnrow_set.all()]
-                    table['data'] = rows
-                    table['echo'] = 1
-                    table['totalRecords'] = str(rows.__len__())
-                    table['totalDisplayRecords'] = str(rows.__len__())
-                except ReturnTable.DoesNotExist:
-                    self._table = self._NO_ACTIVITY
-                self._create_return_data(self._return, _species_id, _table)
-            '''
+        previous_return = self._get_licence_return(previous_licence)
+        previous_stock = {}  # {species_id: amount}
+        if previous_return:
+            species_tables = ReturnTable.objects.filter(ret=previous_return)
+            for table in species_tables:
+                rows = ReturnRow.objects.filter(return_table=table)
+                stock_total = 0
+                for row in rows:
+                    stock_total = row.data['total']
+                previous_stock[table.name] = stock_total
+        return previous_stock
 
     def _get_licence_return(self, licence_no):
         """
@@ -883,7 +908,7 @@ class ReturnSheet(object):
         """
         try:
             return Return.objects.filter(licence__licence_number=licence_no,
-                                         return_type__data_format=ReturnType.RETURN_TYPE_SHEET
+                                         return_type__data_format=ReturnType.FORMAT_SHEET
                                          ).first()
         except Return.DoesNotExist:
             raise ValidationError({'error': 'Error exception.'})
@@ -919,6 +944,7 @@ class ReturnSheet(object):
         :param request:
         :return: boolean
         """
+        # TODO: This validation is not completed.
         if not request.data.get('transfer'):
             return False
         data = request.data.get('transfer').encode('utf-8')
@@ -944,6 +970,7 @@ class ReturnSheet(object):
                 row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
             table_rows.append(row.data)
         '''
+        return True
 
     def __str__(self):
         return self._return.lodgement_number
@@ -955,9 +982,9 @@ class ReturnActivity(object):
     """
 
     _TRANSFER_STATUS_NONE = ''
-    _TRANSFER_STATUS_NOTIFY = 'notify'
-    _TRANSFER_STATUS_ACCEPT = 'accept'
-    _TRANSFER_STATUS_DECLINE = 'decline'
+    _TRANSFER_STATUS_NOTIFY = 'Notified'
+    _TRANSFER_STATUS_ACCEPT = 'Accepted'
+    _TRANSFER_STATUS_DECLINE = 'Declined'
 
     # Activity properties.
     _ACTIVITY_DATE = 'date'
@@ -967,6 +994,7 @@ class ReturnActivity(object):
     _LICENCE = 'licence'
     _ACTIVITY = 'activity'
     _TOTAL = 'total'
+    _ROWID = 'rowId'
 
     def __init__(self, transfer):
         self.date = transfer[self._ACTIVITY_DATE]
@@ -985,7 +1013,7 @@ class ReturnActivity(object):
         """
         try:
             return Return.objects.filter(licence__licence_number=self.licence,
-                                         return_type__data_format=ReturnType.RETURN_TYPE_SHEET
+                                         return_type__data_format=ReturnType.FORMAT_SHEET
                                          ).first()
         except Return.DoesNotExist:
             raise ValidationError({'error': 'Error exception.'})
@@ -1021,11 +1049,15 @@ class NotifyTransfer(ReturnActivity):
         self.licence = from_return.licence.licence_number
 
         try:
-            return_table = ReturnTable.objects.get(name=species, ret=to_return)
-            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            # get the Return Table record and save immediately to check if it has been concurrently modified.
+            return_table, created = ReturnTable.objects.get_or_create(name=species, ret=to_return)
+            return_table.save()
+            rows = ReturnRow.objects.filter(return_table=return_table)
             table_rows = []
             row_exists = False
             total = 0
+            row_cnt = 0
+            self.rowId = str(row_cnt)
             for row in rows:
                 if row.data[self._ACTIVITY_DATE] == self.date:  # update to record
                     row_exists = True
@@ -1034,6 +1066,8 @@ class NotifyTransfer(ReturnActivity):
                     row.data[self._TRANSFER] = self.transfer
                 total = row.data[self._TOTAL]
                 table_rows.append(row.data)
+                row_cnt = row_cnt + 1
+                self.rowId = str(row_cnt)
             if not row_exists:
                 self.total = total
                 table_rows.append(self.__dict__)
@@ -1051,6 +1085,8 @@ class NotifyTransfer(ReturnActivity):
                 send_sheet_transfer_email_notification(request, to_return, from_return)
 
             return row_exists
+        except RecordModifiedError:
+            raise IntegrityError('A concurrent save occurred please refresh page details.')
         except BaseException:
             raise
 
@@ -1072,17 +1108,17 @@ class AcceptTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
+            # get the Return Table record and save immediately to check if it has been concurrently modified.
             return_table = ReturnTable.objects.get(name=species, ret=to_return)
-            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            return_table.save()
+            rows = ReturnRow.objects.filter(return_table=return_table)
             table_rows = []
             row_exists = False
-            total = 0
             for row in rows:  # update total and status for accepted activity.
                 if row.data[self._ACTIVITY_DATE] == self.date:
                     row_exists = True
                     row.data[self._TRANSFER] = ReturnActivity._TRANSFER_STATUS_ACCEPT
                     row.data[self._TOTAL] = int(row.data[self._TOTAL]) - int(self.qty)
-                    table_rows.append(row.data)
                     break
             for row in rows:  # update totals for subsequent activities.
                 if row_exists and int(row.data[self._ACTIVITY_DATE]) > int(self.date):
@@ -1099,6 +1135,8 @@ class AcceptTransfer(ReturnActivity):
             from_return.log_user_action(ReturnUserAction.ACTION_ACCEPT_TRANSFER.format(from_return), request)
 
             return row_exists
+        except RecordModifiedError:
+            raise IntegrityError('A concurrent save occurred please refresh page details.')
         except BaseException:
             raise
 
@@ -1120,8 +1158,10 @@ class DeclineTransfer(ReturnActivity):
         to_return = self.get_licence_return()
 
         try:
+            # get the Return Table record and save immediately to check if it has been concurrently modified.
             return_table = ReturnTable.objects.get(name=species, ret=to_return)
-            rows = ReturnRow.objects.filter(return_table=return_table)  # optimistic load of rows.
+            return_table.save()
+            rows = ReturnRow.objects.filter(return_table=return_table)
             table_rows = []
             row_exists = False
             for row in rows:  # update status for selected activity.
@@ -1141,14 +1181,16 @@ class DeclineTransfer(ReturnActivity):
             from_return.log_user_action(ReturnUserAction.ACTION_DECLINE_TRANSFER.format(from_return), request)
 
             return row_exists
+        except RecordModifiedError:
+            raise IntegrityError('A concurrent save occurred please refresh page details.')
         except BaseException:
             raise
 
 
 class ReturnTable(RevisionedMixin):
     ret = models.ForeignKey(Return)
-
     name = models.CharField(max_length=50)
+    version = IntegerVersionField()
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -1204,3 +1246,27 @@ class ReturnLogEntry(CommunicationsLogEntry):
         if not self.reference:
             self.reference = self.return_obj.id
         super(ReturnLogEntry, self).save(**kwargs)
+
+
+class ReturnInvoice(models.Model):
+    invoice_return = models.ForeignKey(Return, related_name='invoices')
+    invoice_reference = models.CharField(
+        max_length=50, null=True, blank=True, default='')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def __str__(self):
+        return 'Return {} : Invoice #{}'.format(
+            self.invoice_return.id, self.invoice_reference)
+
+    # Properties
+    # ==================
+    @property
+    def active(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return False if invoice.voided else True
+        except Invoice.DoesNotExist:
+            pass
+        return False

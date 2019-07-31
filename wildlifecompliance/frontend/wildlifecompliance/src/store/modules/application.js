@@ -60,9 +60,11 @@ export const applicationStore = {
         },
         isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data.activity.length,
         isApplicationActivityVisible: (state, getters, rootState, rootGetters) =>
-            ({activity_id, exclude_statuses,
-                exclude_processing_statuses,
-                for_user_role, only_processing_statuses,
+            ({activity_id,
+              exclude_statuses,
+              exclude_processing_statuses,
+              for_user_role,
+              only_processing_statuses,
             }) => {
             if(!state.application.activities) {
                 return 0;

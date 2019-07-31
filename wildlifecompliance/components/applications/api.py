@@ -259,9 +259,12 @@ class ApplicationPaginatedViewSet(viewsets.ModelViewSet):
         # Filter by user (submitter or proxy_applicant)
         user_id = request.GET.get('user_id', None)
         if user_id:
-            queryset = Application.objects.filter(
+            user_orgs = [
+                org.id for org in EmailUser.objects.get(id=user_id).wildlifecompliance_organisations.all()]
+            queryset = queryset.filter(
                 Q(proxy_applicant=user_id) |
-                Q(submitter=user_id)
+                Q(submitter=user_id) |
+                Q(org_applicant_id__in=user_orgs)
             )
         queryset = self.filter_queryset(queryset)
         self.paginator.page_size = queryset.count()
@@ -1056,7 +1059,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @renderer_classes((JSONRenderer,))
     def create(self, request, *args, **kwargs):
-        from wildlifecompliance.components.licences.models import LicencePurpose
+        from wildlifecompliance.components.licences.models import WildlifeLicence, LicencePurpose
         try:
             org_applicant = request.data.get('organisation_id')
             proxy_applicant = request.data.get('proxy_id')
@@ -1072,44 +1075,72 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
             if not licence_purposes:
                 raise serializers.ValidationError(
-                    'Please select at least one purpose for editing!')
+                    'Please select at least one purpose')
 
             with transaction.atomic():
 
-                # Use serializer for external application creation - do not expose unneeded fields
-                serializer = CreateExternalApplicationSerializer(data=data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
                 licence_purposes_queryset = LicencePurpose.objects.filter(
                     id__in=licence_purposes
                 )
                 licence_category = licence_purposes_queryset.first().licence_category
                 licence_activities = Application.get_active_licence_activities(
+                    request, application_type)
+                licence_activity_ids = Application.get_active_licence_activities(
                     request, application_type).values_list('licence_activity_id', flat=True)
-                active_applications = Application.get_active_licence_applications(request, application_type)
-                active_application = active_applications.filter(
-                    licence_purposes__licence_category_id=licence_category.id
+                active_current_applications = Application.get_active_licence_applications(request, application_type) \
+                    .filter(licence_purposes__licence_category_id=licence_category.id) \
+                    .exclude(
+                        selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
+                    ) \
+                    .order_by('-id')
+                latest_active_licence = WildlifeLicence.objects.filter(
+                    licence_category_id=licence_category.id,
+                    current_application__in=active_current_applications.values_list('id', flat=True)
                 ).order_by('-id').first()
 
+                # Initial validation
                 if application_type in [
                     Application.APPLICATION_TYPE_AMENDMENT,
                     Application.APPLICATION_TYPE_RENEWAL,
                 ]:
-                    if not active_application:
+                    # Check that at least one active application exists in this licence category for amendment/renewal
+                    if not latest_active_licence:
                         raise serializers.ValidationError(
                             'Cannot create amendment application: active licence not found!')
 
-                    # Re-load purposes from the last active application to prevent front-end tampering.
-                    # Do not allow amending an incomplete subset.
-                    licence_purposes = active_applications.filter(
-                        licence_purposes__licence_activity_id__in=licence_activities
+                    # Ensure purpose ids are in a shared set with the latest current applications purposes
+                    # to prevent front-end tampering. Remove any that aren't valid for renew/amendment.
+                    active_current_purposes = active_current_applications.filter(
+                        licence_purposes__licence_activity_id__in=licence_activity_ids
                     ).values_list(
                         'licence_purposes__id',
                         flat=True
                     )
+                    cleaned_purpose_ids = set(active_current_purposes) & set(licence_purposes)
+                    data['licence_purposes'] = cleaned_purpose_ids
 
-                if active_application:
-                    serializer.instance.previous_application_id = active_application.id
+                # Use serializer for external application creation - do not expose unneeded fields
+                serializer = CreateExternalApplicationSerializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+
+                # Pre-fill the ApplicationFormDataRecord table with data from latest current applications
+                # for selected purpose ids
+                if application_type in [
+                    Application.APPLICATION_TYPE_AMENDMENT,
+                    Application.APPLICATION_TYPE_RENEWAL,
+                ]:
+                    target_application = serializer.instance
+                    for activity in licence_activities:
+                        activity_purpose_ids = activity.purposes.values_list('id', flat=True)
+                        purposes_to_copy = set(cleaned_purpose_ids) & set(activity_purpose_ids)
+                        for purpose_id in purposes_to_copy:
+                            activity.application.copy_application_purpose_to_target_application(
+                                target_application, purpose_id)
+
+                # Set previous_application to the latest active application if exists
+                if latest_active_licence:
+                    serializer.instance.previous_application_id = latest_active_licence.current_application.id
                     serializer.instance.save()
 
                 serializer.instance.update_dynamic_attributes()
