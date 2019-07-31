@@ -153,14 +153,14 @@ def checkout(request, proposal, lines, return_url_ns='public_booking_success', r
     basket_params = {
         'products': lines,
         'vouchers': vouchers,
-        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'system': settings.PAYMENT_SYSTEM_ID,
         'custom_basket': True,
     }
 
     basket, basket_hash = create_basket_session(request, basket_params)
     #fallback_url = request.build_absolute_uri('/')
     checkout_params = {
-        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'system': settings.PAYMENT_SYSTEM_ID,
         'fallback_url': request.build_absolute_uri('/'),                                      # 'http://mooring-ria-jm.dbca.wa.gov.au/'
         'return_url': request.build_absolute_uri(reverse(return_url_ns)),          # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
         'return_preload_url': request.build_absolute_uri(reverse(return_url_ns)),  # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
