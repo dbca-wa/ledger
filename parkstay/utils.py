@@ -540,12 +540,15 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
         raise Exception('There was an error while trying to get the daily rates.')
     for rates in daily_rates:
         for c in rates:
+            # This line is used to initialize th rate_list, it updates the blank rate_list with the initially found values (triggered only once)
             if c['rate']['campsite'] not in rate_list.keys():
                 rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
             else:
+                # This line is triggered when there are multiple rates,it updates rates_list with the other rate (i.e updates the others rates found into rate_list)
                 if c['rate']['id'] not in rate_list[c['rate']['campsite']].keys():
                     rate_list[c['rate']['campsite']][c['rate']['id']] = {'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}
                 else:
+                    # This line is triggered when the rate for a particular date does not change compared to the previous day,only end date is updated in rate_list
                     rate_list[c['rate']['campsite']][c['rate']['id']]['end'] = c['date']
 
 
