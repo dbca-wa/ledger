@@ -3072,9 +3072,9 @@ class BookingViewSet(viewsets.ModelViewSet):
                         bk_list['status'] = 'Cancelled'
                     else:
                         bk_list['status'] = booking.status
-
+                    booking_invoices= booking.invoices.all()
                     bk_list['booking_type'] = booking.booking_type
-                    bk_list['has_history'] = booking.has_history
+                    bk_list['has_history'] = 0 #booking.has_history
                     bk_list['cost_total'] = booking.cost_total
                     bk_list['amount_paid'] = booking.amount_paid
                     bk_list['invoice_status'] = booking.invoice_status
@@ -3085,8 +3085,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk_list['canceled_by'] = booking.canceled_by.get_full_name() if booking.canceled_by else ''
                     bk_list['cancelation_time'] = booking.cancelation_time if booking.cancelation_time else ''
                     bk_list['paid'] = booking.paid
-                    bk_list['invoices'] = [i.invoice_reference for i in booking.invoices.all()]
-                    bk_list['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
+                    bk_list['invoices'] = [i.invoice_reference for i in booking_invoices]
+                    bk_list['active_invoices'] = [ i.invoice_reference for i in booking_invoices if i.active]
                     bk_list['guests'] = booking.guests
                     bk_list['admissions'] = { 'id' :booking.admission_payment.id, 'amount': booking.admission_payment.totalCost } if booking.admission_payment else None
 
