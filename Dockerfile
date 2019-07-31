@@ -4,11 +4,11 @@
 FROM ubuntu:18.04 as builder_base_parkstay
 MAINTAINER asi@dbca.wa.gov.au
 ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Australia/Perth
 RUN apt-get update -y \
   && apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin \
   python python-setuptools python-dev python-pip tzdata \
   && pip install --upgrade pip
-ENV TZ=Australia/Perth
 
 # Install Python libs from requirements.txt.
 FROM builder_base_parkstay as python_libs_parkstay
