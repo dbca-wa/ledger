@@ -643,7 +643,7 @@ export default {
 
       // inspection_types
       let returned_inspection_types = await cache_helper.getSetCacheList(
-          'InspectionTypes',
+          'Inspection_InspectionTypes',
           api_endpoints.inspection_types
           );
       Object.assign(this.inspectionTypes, returned_inspection_types);
