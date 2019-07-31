@@ -342,9 +342,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def modify_inspection_team(self, request, instance=None, workflow=False, user_id=None, *args, **kwargs):
-        print("modify..")
-        print(request.data)
-        print(instance.id)
         try:
             with transaction.atomic():
                 if not instance:
@@ -591,8 +588,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, instance=None, *args, **kwargs):
-        print("in_work_log")
-        print(request.data)
         try:
             with transaction.atomic():
                 if not instance:
