@@ -79,6 +79,14 @@
                             </span>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <label for="">Keyword</label>
+                            <div class="form-group" id="booking-keyword">
+                            <input type="text" class="form-control"  placeholder="" v-model="filterBookingKeyword" name='BookingKeyword' id="BookingKeyword">
+                            </div>
+                        </div>
+
+
                         <div style='display: none' class="col-md-4" iv-if="filterCanceled == 'True'">
                             <div class="form-group">
                             <label for="">Refund Status</label>
@@ -130,7 +138,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="">Date From</label>
                             <div class="input-group date" id="admission-date-from">
                             <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateFrom2">
@@ -139,7 +147,7 @@
                             </span>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="">Date To</label>
                             <div class="input-group date" id="admission-date-to">
                             <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo2">
@@ -148,7 +156,7 @@
                             </span>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="form-group">
                             <label for="">Cancelled</label>
                             <select class="form-control" v-model="filterCanceled2" id="filterCanceled2">
@@ -157,6 +165,14 @@
                             </select>
                             </div>
                         </div>
+                        <div class="col-md-3">
+                            <label for="">Keyword</label>
+                            <div class="form-group" id="booking-keyword">
+                            <input type="text" class="form-control"  placeholder="" v-model="filterAdmissionKeyword" name='AdmissionKeyword' id="AdmissionKeyword">
+                            </div>
+                        </div>
+
+
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -221,6 +237,7 @@ export default {
                 serverSide:true,
                 processing:true,
                 searchDelay: 800,
+                searching: false,
                 ajax: {
                     "url": api_endpoints.bookings,
                     "dataSrc": 'results',
@@ -239,7 +256,9 @@ export default {
                         }
                         d.canceled = vm.filterCanceled;
                         d.refund_status = vm.filterRefundStatus;
-
+                        if (vm.filterBookingKeyword.length > 0) {
+			     d.search_keyword = vm.filterBookingKeyword;
+			}
                         return d;
                     }
                 },
@@ -440,6 +459,7 @@ export default {
                 serverSide:true,
                 processing:true,
                 searchDelay: 800,
+                searching:false,
                 ajax: {
                     "url": api_endpoints.admissionsbookings,
                     "dataSrc": 'results',
@@ -450,6 +470,9 @@ export default {
                         if (vm.filterDateTo2) {
                             d.departure = vm.filterDateTo2;
                         }
+                        if (vm.filterAdmissionKeyword.length > 0) {
+                             d.search_keyword = vm.filterAdmissionKeyword;
+			}
                         d.canceled = vm.filterCanceled2;
                     }
                 },
@@ -577,6 +600,8 @@ export default {
             filterDateFrom2:"",
             filterDateTo2:"",
             filterCanceled2: 'False',
+            filterBookingKeyword: '',
+            filterAdmissionKeyword: ''
         }
     },
     watch:{
@@ -819,8 +844,9 @@ export default {
                 campground : vm.filterCampground != 'All' ? vm.filterCampground : '',
                 region : vm.filterRegion != 'All' ? vm.filterRegion : '',
                 canceled: vm.filterCanceled,
-                'search[value]': vm.$refs.bookings_table.vmDataTable.search()
             }
+             // 'search[value]': vm.$refs.bookings_table.vmDataTable.search()
+
             for(var p in obj)
                 if (obj.hasOwnProperty(p)) {
                 str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
@@ -830,7 +856,6 @@ export default {
         printParams2() {
             let vm = this;
             var str = [];
-            console.log("printParams2");
             let obj = {
                 arrival : vm.filterDateFrom2 != null ? vm.filterDateFrom2: '',
                 departure : vm.filterDateTo2 != null ? vm.filterDateTo2:'' ,
@@ -847,7 +872,6 @@ export default {
         print:function () {
             let vm =this;
             vm.exportingCSV = true;
-
             vm.$http.get(api_endpoints.bookings+'?'+vm.printParams()).then(res => {
                 var data = res.body.results;
 
@@ -1210,6 +1234,16 @@ export default {
             $('#collapse_admissions_span').removeClass("glyphicon glyphicon-menu-up");
             $('#collapse_admissions_span').addClass("glyphicon glyphicon-menu-down");
         });
+
+        $('#BookingKeyword').on('change', function() {
+               vm.$refs.bookings_table.vmDataTable.ajax.reload();
+        });
+
+
+        $('#AdmissionKeyword').on('change', function() { 
+               vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload(); 
+        }); 
+
     }
 
 }

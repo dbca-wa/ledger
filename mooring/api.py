@@ -2799,7 +2799,8 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
             
 #            recordsTotal = len(data)
 #            recordsTotal = AdmissionsBooking.objects.filter(booking_type__in=[0,1,4],`
-            search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
+            #search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
+            search = request.GET.get('search_keyword') if request.GET.get('search_keyword') else None
             start = request.GET.get('start') if request.GET.get('start') else 0
             length = request.GET.get('length') if request.GET.get('length') else len(data)
             date_from = datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y').date() if request.GET.get('arrival') else None
@@ -2814,7 +2815,7 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                 #    except:
                 #        pass
                 for row in data:
-                     if row.warningReferenceNo.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.vesselRegNo.lower().find(search.lower()) >= 0 or str(row.id) == search:
+                     if row.warningReferenceNo.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.vesselRegNo.lower().find(search.lower()) >= 0 or str(row.id) == search or str(row.customer.first_name.lower()+' '+row.customer.last_name.lower()).find(search.lower()) >= 0 or 'AD'+str(row.id) == search:
                           data_temp.append(row)
                      data = data_temp
                 #data = data.filter(Q(warningReferenceNo__icontains=search) | Q(vesselRegNo__icontains=search) | Q(customer__first_name__icontains=search) | Q(customer__last_name__icontains=search) | Q(id__icontains=search))
@@ -2912,7 +2913,8 @@ class BookingViewSet(viewsets.ModelViewSet):
         from django.db import connection, transaction
         try:
 
-            search = request.GET.get('search[value]')
+            #search = request.GET.get('search[value]')
+            search = request.GET.get('search_keyword')
             draw = request.GET.get('draw') if request.GET.get('draw') else None
             start = request.GET.get('start') if request.GET.get('draw') else 1
             length = request.GET.get('length') if request.GET.get('draw') else 'all'
@@ -3008,6 +3010,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                      if skip_row is False:
                           string_found = False
                           if search == str(booking.id):
+                               string_found = True
+                          if search == 'PS'+str(booking.id):
                                string_found = True
                           if booking.customer:
                                 customer_email = booking.customer.email if booking.customer and booking.customer.email else ""
