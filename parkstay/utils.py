@@ -528,6 +528,7 @@ def get_park_entry_rate(request,start_date):
 
 
 def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None):
+
     total_price = Decimal(0)
     rate_list = {}
     invoice_lines = []
@@ -543,9 +544,10 @@ def price_or_lineitems(request,booking,campsite_list,lines=True,old_booking=None
                 rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
             else:
                 if c['rate']['id'] not in rate_list[c['rate']['campsite']].keys():
-                    rate_list[c['rate']['campsite']] = {c['rate']['id']:{'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}}
+                    rate_list[c['rate']['campsite']][c['rate']['id']] = {'start':c['date'],'end':c['date'],'adult':c['rate']['adult'],'concession':c['rate']['concession'],'child':c['rate']['child'],'infant':c['rate']['infant']}
                 else:
                     rate_list[c['rate']['campsite']][c['rate']['id']]['end'] = c['date']
+
 
     if len(campsite_list) > 1: # check if this is a multibook
         # Get the cheapest campsite (based on adult rate) to be used
