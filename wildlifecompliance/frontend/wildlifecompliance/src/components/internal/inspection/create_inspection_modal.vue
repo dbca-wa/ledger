@@ -136,6 +136,7 @@ export default {
             allocatedGroup: [],
             allocated_group_id: null,
             documentActionUrl: '',
+            payload: null,
             // files: [
             //         {
             //             'file': null,
@@ -155,6 +156,9 @@ export default {
           },
           parent_update_function: {
               type: Function,
+          },
+          parent_id: {
+              type: Number,
           },
       },
     computed: {
@@ -249,7 +253,11 @@ export default {
               }
               // For CallEmail related items table
               if (this.$parent.call_email && this.$parent.$refs.related_items_table) {
-                  await this.parent_update_function({call_email_id: this.$parent.call_email.id});
+                  this.payload.append('workflow_type', 'allocate_for_inspection')
+                  await this.parent_update_function({
+                      call_email_id: this.$parent.call_email.id,
+                      payload: this.payload
+                  });
                   this.$parent.constructRelatedItemsTable();
               }
           }
@@ -270,35 +278,35 @@ export default {
           } else {
                 post_url = '/api/inspection/'
           }
-          let payload = new FormData(this.form);
-          payload.append('details', this.workflowDetails);
+          this.payload = new FormData(this.form);
+          this.payload.append('details', this.workflowDetails);
           if (this.$refs.comms_log_file.commsLogId) {
-              payload.append('comms_log_id', this.$refs.comms_log_file.commsLogId)
+              this.payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId)
           }
           if (this.$parent.call_email) {
-              payload.append('call_email_id', this.$parent.call_email.id)
+              this.payload.append('call_email_id', this.$parent.call_email.id)
           }
 
           //payload.append('email_subject', this.modalTitle);
           if (this.district_id) {
-              payload.append('district_id', this.district_id);
+              this.payload.append('district_id', this.district_id);
           }
           if (this.assigned_to_id) {
-              payload.append('assigned_to_id', this.assigned_to_id);
+              this.payload.append('assigned_to_id', this.assigned_to_id);
               //payload.append('inspection_team_lead_id', this.assigned_to_id);
           }
           if (this.inspection_type_id) {
-              payload.append('inspection_type_id', this.inspection_type_id);
+              this.payload.append('inspection_type_id', this.inspection_type_id);
           }
           if (this.region_id) {
-              payload.append('region_id', this.region_id);
+              this.payload.append('region_id', this.region_id);
           }
           if (this.allocated_group_id) {
-              payload.append('allocated_group_id', this.allocated_group_id);
+              this.payload.append('allocated_group_id', this.allocated_group_id);
           }
 
           try {
-              let res = await Vue.http.post(post_url, payload);
+              let res = await Vue.http.post(post_url, this.payload);
               console.log(res);
               if (res.ok) {
                 return res

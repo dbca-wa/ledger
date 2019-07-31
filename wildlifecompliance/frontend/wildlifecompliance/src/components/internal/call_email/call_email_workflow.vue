@@ -379,7 +379,7 @@ export default {
           payload.append('call_email_id', this.call_email.id);
           payload.append('details', this.workflowDetails);
           if (this.$refs.comms_log_file.commsLogId) {
-              payload.append('comms_log_id', this.$refs.comms_log_file.commsLogId)
+              payload.append('call_email_comms_log_id', this.$refs.comms_log_file.commsLogId)
           }
 
           payload.append('workflow_type', this.workflow_type);

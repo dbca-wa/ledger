@@ -297,6 +297,13 @@ class CallEmail(RevisionedMixin):
     def log_user_action(self, action, request):
         return CallEmailUserAction.log_action(self, action, request.user)
 
+    @property
+    def get_related_items_identifier(self):
+        return self.id
+
+    @property
+    def get_related_items_descriptor(self):
+        return '{0}, {1}'.format(self.status, self.classification)
     # @property
     # def related_items(self):
     #     return get_related_items(self)
