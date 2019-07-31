@@ -1662,8 +1662,13 @@ class ParkEntryRateListener(object):
             price_before = ParkEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
             if price_before:
                 price_before = price_before[0]
-                price_before.period_end = instance.period_start
-                instance.period_start = instance.period_start + timedelta(days=1)
+
+                price_before.period_end = instance.period_start - timedelta(days=1)
+                #price_before.period_end = instance.period_start
+
+                instance.period_start = instance.period_start
+                #instance.period_start = instance.period_start + timedelta(days=1)
+
                 price_before.save()
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
@@ -1672,9 +1677,14 @@ class ParkEntryRateListener(object):
                 price_before = ParkEntryRate.objects.filter(period_start__lt=instance.period_start).order_by("-period_start")
                 if price_before:
                     price_before = price_before[0]
-                    price_before.period_end = instance.period_start
+
+                    price_before.period_end = instance.period_start - timedelta(days=1)
                     price_before.save()
-                    instance.period_start = instance.period_start + timedelta(days=1)
+                    instance.period_start = instance.period_start
+
+                #     price_before.period_end = instance.period_start
+                #     price_before.save()
+                #     instance.period_start = instance.period_start + timedelta(days=1)
                 price_after = ParkEntryRate.objects.filter(period_start__gt=instance.period_start).order_by("period_start")
                 if price_after:
                     price_after = price_after[0]
