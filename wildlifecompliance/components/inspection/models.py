@@ -9,27 +9,18 @@ from ledger.accounts.models import EmailUser, RevisionedMixin, Organisation
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.organisations.models import Organisation
+from wildlifecompliance.components.call_email.models import CallEmail
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document, get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
+from wildlifecompliance.components.main.models import InspectionType
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
 def update_inspection_comms_log_filename(instance, filename):
     return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
         instance.log_entry.inspection.id, instance.id, filename)
-
-
-class InspectionType(models.Model):
-   description = models.CharField(max_length=255, null=True, blank=True)
-
-   class Meta:
-       app_label = 'wildlifecompliance'
-       verbose_name = 'CM_InspectionType'
-       verbose_name_plural = 'CM_InspectionTypes'
-
-   def __str__(self):
-       return self.description
 
 
 class Inspection(RevisionedMixin):
@@ -62,6 +53,11 @@ class Inspection(RevisionedMixin):
             choices=PARTY_CHOICES,
             default='individual'
             )
+    call_email = models.ForeignKey(
+        CallEmail, 
+        related_name='inspection_call_email',
+        null=True
+        )
     individual_inspected = models.ForeignKey(
         EmailUser, 
         related_name='individual_inspected',
@@ -124,6 +120,14 @@ class Inspection(RevisionedMixin):
         
     def log_user_action(self, action, request):
         return InspectionUserAction.log_action(self, action, request.user)
+    
+    @property
+    def get_related_items_identifier(self):
+        return self.id
+
+    @property
+    def get_related_items_descriptor(self):
+        return '{0}, {1}'.format(self.title, self.details)
     
 
 class InspectionCommsLogDocument(Document):

@@ -12,7 +12,7 @@ from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document, get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
-from wildlifecompliance.components.inspection.models import InspectionType
+from wildlifecompliance.components.main.models import InspectionType
 
 logger = logging.getLogger(__name__)
 
@@ -297,6 +297,13 @@ class CallEmail(RevisionedMixin):
     def log_user_action(self, action, request):
         return CallEmailUserAction.log_action(self, action, request.user)
 
+    @property
+    def get_related_items_identifier(self):
+        return self.id
+
+    @property
+    def get_related_items_descriptor(self):
+        return '{0}, {1}'.format(self.status, self.classification)
     # @property
     # def related_items(self):
     #     return get_related_items(self)
