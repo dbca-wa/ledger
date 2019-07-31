@@ -71,7 +71,7 @@
                         </div>
                         
                         <div class="row action-button">
-                          <div v-if="!readonlyForm" class="col-sm-12">
+                          <div v-if="!readonlyForms" class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
@@ -79,7 +79,7 @@
                         </div>
 
                         <div  class="row action-button">
-                          <div v-if="!readonlyForm" class="col-sm-12">
+                          <div v-if="!readonlyForm && offenceExists" class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
@@ -436,7 +436,15 @@ export default {
     readonlyForm: function() {
         return !this.inspection.can_user_action;
     },
-
+    offenceExists: function() {
+        for (let item in this.inspection.related_items) {
+            if (item.model_name === "offence") {
+                return true
+            }
+        }
+        // return false if no related item is an Offence
+        return false
+    },
   },
   filters: {
     formatDate: function(data) {
