@@ -12,7 +12,7 @@ from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document, get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
-from wildlifecompliance.components.inspection.models import InspectionType
+from wildlifecompliance.components.main.models import InspectionType
 
 logger = logging.getLogger(__name__)
 
@@ -207,6 +207,11 @@ class CallEmail(RevisionedMixin):
         related_name='callemail_assigned_to',
         null=True
     )
+    volunteer = models.ForeignKey(
+        EmailUser, 
+        related_name='callemail_volunteer',
+        null=True
+    )
     anonymous_call = models.BooleanField(default=False)
     caller_wishes_to_remain_anonymous = models.BooleanField(default=False)
     occurrence_from_to = models.BooleanField(default=False)
@@ -216,6 +221,8 @@ class CallEmail(RevisionedMixin):
     occurrence_date_to = models.DateField(null=True)
     occurrence_time_to = models.CharField(max_length=20, blank=True, null=True)
     occurrence_time_end = models.TimeField(blank=True, null=True)
+    date_of_call = models.DateField(null=True)
+    time_of_call = models.TimeField(blank=True, null=True)
     report_type = models.ForeignKey(
         ReportType,
         null=True,
@@ -290,6 +297,13 @@ class CallEmail(RevisionedMixin):
     def log_user_action(self, action, request):
         return CallEmailUserAction.log_action(self, action, request.user)
 
+    @property
+    def get_related_items_identifier(self):
+        return self.number
+
+    @property
+    def get_related_items_descriptor(self):
+        return '{0}, {1}'.format(self.status, self.caller)
     # @property
     # def related_items(self):
     #     return get_related_items(self)

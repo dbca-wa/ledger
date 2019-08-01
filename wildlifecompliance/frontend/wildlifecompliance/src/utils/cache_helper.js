@@ -57,7 +57,7 @@ module.exports = {
             // ensure cached value is not stale (1 week based on default expiry date)
             let store_keys = await storeInstance.keys();
             if (store_keys.length > 0) {
-                for (let store_key in store_keys) {
+                for (let store_key of store_keys) {
                     let this_entry = await storeInstance.getItem(store_key);
                     let timeDiff = timeNow - this_entry[0];
                     if (timeDiff > expiryDiff * 7) {

@@ -49,7 +49,11 @@ from wildlifecompliance.components.inspection.models import (
     InspectionUserAction,
     InspectionType,
     InspectionCommsLogEntry,
-)    
+    )
+from wildlifecompliance.components.call_email.models import (
+        CallEmail,
+        CallEmailUserAction,
+        )
 from wildlifecompliance.components.inspection.serializers import (
     InspectionSerializer,
     InspectionUserActionSerializer,
@@ -269,47 +273,30 @@ class InspectionViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
-    def add_comms_log(self, request, instance, workflow=False, *args, **kwargs):
+    def add_comms_log(self, request, instance=None, workflow=False, *args, **kwargs):
         try:
             with transaction.atomic():
-                instance = self.get_object()
-                request.data['inspection'] = u'{}'.format(instance.id)
-                # request.data['staff'] = u'{}'.format(request.user.id)
-                if request.data.get('comms_log_id'):
-                    comms_instance = InspectionCommsLogEntry.objects.get(
-                        id=request.data.get('comms_log_id')
+                # create Inspection instance if not passed to this method
+                if not instance:
+                    instance = self.get_object()
+                # add Inspection attribute to request_data
+                request_data = request.data.copy()
+                request_data['inspection'] = u'{}'.format(instance.id)
+                if request_data.get('comms_log_id'):
+                    comms = InspectionCommsLogEntry.objects.get(
+                        id=request_data.get('comms_log_id')
                         )
                     serializer = InspectionCommsLogEntrySerializer(
-                        comms_instance, 
+                        instance=comms, 
                         data=request.data)
                 else:
                     serializer = InspectionCommsLogEntrySerializer(
-                        data=request.data
+                        data=request_data
                         )
                 serializer.is_valid(raise_exception=True)
+                # overwrite comms with updated instance
                 comms = serializer.save()
                 
-                #instance = self.get_object()
-                print("add_comms_log")
-                print("instance.id")
-                print(instance.id)
-                request_data = request.data.copy()
-                request_data['inspection'] = u'{}'.format(instance.id)
-                
-                # request.data['staff'] = u'{}'.format(request.user.id)
-                serializer = InspectionCommsLogEntrySerializer(data=request_data)
-                serializer.is_valid(raise_exception=True)
-                comms = serializer.save()
-                # Save the files
-                # for f in request.FILES:
-                #     document = comms.documents.create()
-                #     print("filename")
-                #     print(str(request.FILES[f]))
-                #     document.name = str(request.FILES[f])
-                #     document._file = request.FILES[f]
-                #     document.save()
-                # End Save Documents
-
                 if workflow:
                     return comms
                 else:
@@ -354,10 +341,11 @@ class InspectionViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
-    def modify_inspection_team(self, request, workflow=False, user_id=None, *args, **kwargs):
+    def modify_inspection_team(self, request, instance=None, workflow=False, user_id=None, *args, **kwargs):
         try:
             with transaction.atomic():
-                instance = self.get_object()
+                if not instance:
+                    instance = self.get_object()
                 if workflow:
                     action = 'add' # 'add', 'remove or 'clear'
                     user_id = user_id
@@ -449,8 +437,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def update_assigned_to_id(self, request, *args, **kwargs):
-        print("update assigned to")
-        print(request.data)
         try:
             instance = self.get_object()
             serializer = None
@@ -498,8 +484,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def process_comms_log_document(self, request, *args, **kwargs):
-        print("process_comms_log_document")
-        print(request.data)
         try:
             instance = self.get_object()
             returned_data = process_generic_document(
@@ -525,7 +509,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     def create(self, request, *args, **kwargs):
-        print(request.data)
         try:
             with transaction.atomic():
                 serializer = SaveInspectionSerializer(
@@ -535,12 +518,16 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     instance = serializer.save()
-                    headers = self.get_success_headers(serializer.data)
-                    return Response(
-                            serializer.data, 
-                            status=status.HTTP_201_CREATED,
-                            headers=headers
-                            )
+                    if request.data.get('allocated_group_id'):
+                        res = self.add_workflow_log(request, instance)
+                        return res
+                    else:
+                        headers = self.get_success_headers(serializer.data)
+                        return Response(
+                                serializer.data, 
+                                status=status.HTTP_201_CREATED,
+                                headers=headers
+                                )
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -553,48 +540,65 @@ class InspectionViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @detail_route(methods=['POST'])
-    @renderer_classes((JSONRenderer,))
-    def add_workflow_log(self, request, *args, **kwargs):
-        print("add_workflow_log")
+    def send_mail(self, request, instance, workflow_entry, *args, **kwargs):
+        print("send_mail")
         print(request.data)
         try:
+            attachments = []
+            for doc in workflow_entry.documents.all():
+                attachments.append(doc)
+
+            email_group = []
+            if request.data.get('assigned_to'):
+                try:
+                    user_id_int = int(request.data.get('assigned_to'))
+                    email_group.append(EmailUser.objects.get(id=user_id_int))
+                    # update CallEmail
+                    instance.assigned_to = (EmailUser.objects.get(id=user_id_int))
+                except Exception as e:
+                        print(traceback.print_exc())
+                        raise
+            elif request.data.get('allocated_group'):
+                users = request.data.get('allocated_group').split(",")
+                for user_id in users:
+                    if user_id:
+                        try:
+                            user_id_int = int(user_id)
+                            email_group.append(EmailUser.objects.get(id=user_id_int))
+                        except Exception as e:
+                            print(traceback.print_exc())
+                            raise
+            else:
+                email_group.append(request.user)
+
+            # send email
+            email_data = send_inspection_forward_email(
+            email_group, 
+            instance,
+            # workflow_entry.documents,
+            workflow_entry,
+            request)
+
+            return email_data
+
+        except Exception as e:
+            print(traceback.print_exc())
+            raise e
+
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def add_workflow_log(self, request, instance=None, *args, **kwargs):
+        try:
             with transaction.atomic():
-                instance = self.get_object()
-                #workflow_entry = self.add_comms_log(request, workflow=True)
-                comms_log_id = request.data.get('comms_log_id')
+                if not instance:
+                    instance = self.get_object()
+
+                comms_log_id = request.data.get('inspection_comms_log_id')
                 if comms_log_id and comms_log_id is not 'null':
                     workflow_entry = instance.comms_logs.get(
                             id=comms_log_id)
                 else:
                     workflow_entry = self.add_comms_log(request, instance, workflow=True)
-
-                attachments = []
-                for doc in workflow_entry.documents.all():
-                    attachments.append(doc)
-
-                email_group = []
-                if request.data.get('assigned_to'):
-                    try:
-                        user_id_int = int(request.data.get('assigned_to'))
-                        email_group.append(EmailUser.objects.get(id=user_id_int))
-                        # update Inspection
-                        instance.assigned_to = (EmailUser.objects.get(id=user_id_int))
-                    except Exception as e:
-                            print(traceback.print_exc())
-                            raise
-                elif request.data.get('allocated_group'):
-                    users = request.data.get('allocated_group').split(",")
-                    for user_id in users:
-                        if user_id:
-                            try:
-                                user_id_int = int(user_id)
-                                email_group.append(EmailUser.objects.get(id=user_id_int))
-                            except Exception as e:
-                                print(traceback.print_exc())
-                                raise
-                else:
-                    email_group.append(request.user)
 
                 # Set Inspection status to open
                 instance.status = 'open'
@@ -606,21 +610,23 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 instance.assigned_to_id = None if request.data.get('assigned_to_id') == 'null' else request.data.get('assigned_to_id')
                 instance.inspection_type_id = None if request.data.get('inspection_type_id') == 'null' else request.data.get('inspection_type_id')
                 instance.allocated_group_id = None if request.data.get('allocated_group_id') == 'null' else request.data.get('allocated_group_id')
+                instance.call_email_id = None if request.data.get('call_email_id') == 'null' else request.data.get('call_email_id')
 
-                #if not workflow_type == 'allocate_for_follow_up':
-                 #   instance.assigned_to_id = None
+                # Log parent actions and update status
                 instance.save()
+                if instance.call_email_id:
+                    call_email_instance = CallEmail.objects.get(id=instance.call_email_id)
+                    call_email_instance.log_user_action(
+                            CallEmailUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(
+                            call_email_instance.number), request)
+                    call_email_instance.status = 'open_inspection'
+                    call_email_instance.save()
 
-                instance = self.modify_inspection_team(request, workflow=True, user_id=instance.assigned_to_id)
+                if instance.assigned_to_id:
+                    instance = self.modify_inspection_team(request, instance, workflow=True, user_id=instance.assigned_to_id)
 
                 # send email
-                email_data = send_inspection_forward_email(
-                select_group=email_group, 
-                inspection=instance,
-                # workflow_entry.documents,
-                workflow_entry=workflow_entry,
-                request=request
-                )
+                email_data = self.send_mail(request, instance, workflow_entry)
 
                 serializer = InspectionCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
                 serializer.is_valid(raise_exception=True)
@@ -648,8 +654,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def create_modal_process_comms_log_document(self, request, *args, **kwargs):
-        print("process_default_document")
-        print(request.data)
         try:
             instance = self.get_object()
             # process docs
@@ -657,7 +661,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
             # delete Inspection if user cancels modal
             action = request.data.get('action')
             if action == 'cancel' and returned_data:
-                returned_data = instance.delete()
+                # returned_data = instance.delete()
+                instance.status = 'discarded'
+                instance.save()
             # return response
             if returned_data:
                 return Response(returned_data)
@@ -675,8 +681,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
-
 
 
 class InspectionTypeViewSet(viewsets.ModelViewSet):

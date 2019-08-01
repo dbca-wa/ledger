@@ -63,7 +63,7 @@
                         </div-->
 
                         <div  class="row action-button">
-                          <div class="col-sm-12">
+                          <div v-if="!readonlyForm" class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                   Send to Manager
                                 </a>
@@ -71,7 +71,7 @@
                         </div>
                         
                         <div class="row action-button">
-                          <div class="col-sm-12">
+                          <div v-if="!readonlyForm" class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
@@ -79,7 +79,7 @@
                         </div>
 
                         <div  class="row action-button">
-                          <div class="col-sm-12">
+                          <div v-if="!readonlyForm && offenceExists" class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
@@ -87,7 +87,7 @@
                         </div>
                         
                         <div  class="row action-button">
-                          <div class="col-sm-12">
+                          <div v-if="!readonlyForm" class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                   Close
                                 </a>
@@ -195,6 +195,11 @@
                                   <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
                             </div></div>
+                            <div class="col-sm-12 form-group"><div class="row">
+                              <label class="col-sm-4" for="inspection_inform">Inform party being inspected</label>
+                              <input type="checkbox" id="inspection_inform" v-model="inspection.inform_party_being_inspected">
+                              
+                            </div></div>
                           </FormSection>
                           <FormSection :formCollapse="false" label="Inspection Team" Index="1">
                             <div class="form-group">
@@ -209,9 +214,9 @@
                                 <div class="col-sm-2">
                                     <button @click.prevent="addTeamMember" class="btn btn-primary">Add Member</button>
                                 </div>
-                                <div class="col-sm-2">
+                                <!--div class="col-sm-2">
                                     <button @click.prevent="makeTeamLead" class="btn btn-primary">Make Team Lead</button>
-                                </div>
+                                </div-->
                                 <!--div class="col-sm-2">
                                     <button @click.prevent="clearInspectionTeam" class="btn btn-primary pull-right">Clear</button>
                                 </div-->
@@ -333,7 +338,8 @@ export default {
       dtHeadersInspectionTeam: [
           'Name',
           'Role',
-          'Action',
+          '',
+          '',
       ],
       dtOptionsInspectionTeam: {
           ajax: {
@@ -349,17 +355,25 @@ export default {
                   data: 'member_role',
               },
               {
-                  data: 'action',
+                  data: 'id',
                   mRender: function(data, type, row){
-                      // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
-                      //return '<a href="#">Remove</a>';
-                      return (
-                      '<a href="#" class="remove_button" data-member-id="' +
-                      row.id +
-                      '">Remove</a>'
-                      );
+                        return (
+                        '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
+                              );
                   }
               },
+              {
+                  data: 'action',
+                  mRender: function(data, type, row){
+                      if (data === 'Member') {
+                        return (
+                        '<a href="#" class="make_team_lead" data-member-id="' + row.id + '">Make Team Lead</a>'
+                              );
+                      } else {
+                          return ('');
+                      }
+                  }
+              }
           ]
       },
       // disabledDates: {
@@ -424,7 +438,15 @@ export default {
     readonlyForm: function() {
         return !this.inspection.can_user_action;
     },
-
+    offenceExists: function() {
+        for (let item in this.inspection.related_items) {
+            if (item.model_name === "offence") {
+                return true
+            }
+        }
+        // return false if no related item is an Offence
+        return false
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -461,6 +483,7 @@ export default {
       this.sanctionOutcomeInitialised = true;
       this.$nextTick(() => {
           this.$refs.sanction_outcome.isModalOpen = true;
+          this.constructRelatedItemsTable();
       });
     },
     offence(){
@@ -481,14 +504,15 @@ export default {
     removeTeamMember: async function(e) {
         let memberId = e.target.getAttribute("data-member-id");
         await this.modifyInspectionTeam({
-            user_id: memberId, 
+            user_id: memberId,
             action: 'remove'
         });
         this.$refs.inspection_team_table.vmDataTable.ajax.reload()
     },
-    makeTeamLead: async function() {
+    makeTeamLead: async function(e) {
+        let memberId = e.target.getAttribute("data-member-id");
         await this.modifyInspectionTeam({
-            user_id: this.teamMemberSelected, 
+            user_id: memberId, 
             action: 'make_team_lead'
         });
         this.$refs.inspection_team_table.vmDataTable.ajax.reload()
@@ -536,9 +560,6 @@ export default {
         this.$refs.add_workflow.isModalOpen = true;
       });
       // this.$refs.add_workflow.isModalOpen = true;
-    },
-    offence(){
-      this.$refs.offence.isModalOpen = true;
     },
     save: async function () {
         if (this.inspection.id) {
@@ -594,6 +615,11 @@ export default {
           '.remove_button',
           vm.removeTeamMember,
           );
+      $('#inspection-team-table').on(
+          'click',
+          '.make_team_lead',
+          vm.makeTeamLead,
+          );
     },
     updateAssignedToId: async function (user) {
         let url = helpers.add_endpoint_join(
@@ -627,7 +653,7 @@ export default {
 
       // inspection_types
       let returned_inspection_types = await cache_helper.getSetCacheList(
-          'InspectionTypes',
+          'Inspection_InspectionTypes',
           api_endpoints.inspection_types
           );
       Object.assign(this.inspectionTypes, returned_inspection_types);

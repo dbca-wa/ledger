@@ -303,8 +303,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-
-
     @detail_route(methods=['post'])
     @renderer_classes((JSONRenderer,))
     def form_data(self, request, *args, **kwargs):
@@ -571,7 +569,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
     
-
     @detail_route(methods=['POST', ])
     def call_email_save_person(self, request, *args, **kwargs):
         call_email_instance = self.get_object()
@@ -707,7 +704,52 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-    
+
+    def send_mail(self, request, instance, workflow_entry, *args, **kwargs):
+        print("send_mail")
+        print(request.data)
+        try:
+            attachments = []
+            for doc in workflow_entry.documents.all():
+                attachments.append(doc)
+
+            email_group = []
+            if request.data.get('assigned_to'):
+                try:
+                    user_id_int = int(request.data.get('assigned_to'))
+                    email_group.append(EmailUser.objects.get(id=user_id_int))
+                    # update CallEmail
+                    instance.assigned_to = (EmailUser.objects.get(id=user_id_int))
+                except Exception as e:
+                        print(traceback.print_exc())
+                        raise
+            elif request.data.get('allocated_group'):
+                users = request.data.get('allocated_group').split(",")
+                for user_id in users:
+                    if user_id:
+                        try:
+                            user_id_int = int(user_id)
+                            email_group.append(EmailUser.objects.get(id=user_id_int))
+                        except Exception as e:
+                            print(traceback.print_exc())
+                            raise
+            else:
+                email_group.append(request.user)
+
+            # send email
+            email_data = send_call_email_forward_email(
+            email_group, 
+            instance,
+            # workflow_entry.documents,
+            workflow_entry,
+            request)
+
+            return email_data
+
+        except Exception as e:
+            print(traceback.print_exc())
+            raise e
+
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, *args, **kwargs):
@@ -716,39 +758,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 instance = self.get_object()
                 #workflow_entry = self.add_comms_log(request, workflow=True)
-                comms_log_id = request.data.get('comms_log_id')
+                comms_log_id = request.data.get('call_email_comms_log_id')
                 if comms_log_id and comms_log_id is not 'null':
                     workflow_entry = instance.comms_logs.get(
                             id=comms_log_id)
                 else:
                     workflow_entry = self.add_comms_log(request, workflow=True)
-
-                attachments = []
-                for doc in workflow_entry.documents.all():
-                    attachments.append(doc)
-
-                email_group = []
-                if request.data.get('assigned_to'):
-                    try:
-                        user_id_int = int(request.data.get('assigned_to'))
-                        email_group.append(EmailUser.objects.get(id=user_id_int))
-                        # update CallEmail
-                        instance.assigned_to = (EmailUser.objects.get(id=user_id_int))
-                    except Exception as e:
-                            print(traceback.print_exc())
-                            raise
-                elif request.data.get('allocated_group'):
-                    users = request.data.get('allocated_group').split(",")
-                    for user_id in users:
-                        if user_id:
-                            try:
-                                user_id_int = int(user_id)
-                                email_group.append(EmailUser.objects.get(id=user_id_int))
-                            except Exception as e:
-                                print(traceback.print_exc())
-                                raise
-                else:
-                    email_group.append(request.user)
 
                 # Set CallEmail status depending on workflow type
                 workflow_type = request.data.get('workflow_type')
@@ -824,13 +839,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                  #   instance.assigned_to_id = None
                 instance.save()
 
-                # send email
-                email_data = send_call_email_forward_email(
-                email_group, 
-                instance,
-                # workflow_entry.documents,
-                workflow_entry,
-                request)
+                email_data = self.send_mail(request, instance, workflow_entry)
 
                 serializer = CallEmailLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
                 serializer.is_valid(raise_exception=True)
@@ -858,8 +867,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
     def update_assigned_to_id(self, request, *args, **kwargs):
-        print("update assigned to")
-        print(request.data)
         try:
             instance = self.get_object()
             serializer = None

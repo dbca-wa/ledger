@@ -153,6 +153,12 @@ export default {
               type: String,
               default: '',
           },
+          parent_update_function: {
+              type: Function,
+          },
+          parent_id: {
+              type: Number,
+          },
       },
     computed: {
       ...mapGetters('inspectionStore', {
@@ -240,7 +246,19 @@ export default {
           console.log(response);
           if (response.ok) {
               this.close();
-              this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
+              // For Inspection Dashboard
+              if (this.$parent.$refs.inspection_table) {
+                  this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
+              }
+              // For CallEmail related items table
+              if (this.$parent.call_email) {
+                  await this.parent_update_function({
+                      call_email_id: this.$parent.call_email.id,
+                  });
+              }
+              if (this.$parent.$refs.related_items_table) {
+                  this.$parent.constructRelatedItemsTable();
+              }
           }
       },
       cancel: async function() {
@@ -253,12 +271,19 @@ export default {
           this.isModalOpen = false;
       },
       sendData: async function() {
-          //let post_url = '/api/inspection/'
-          let post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
+          let post_url = '';
+          if (this.inspection && this.inspection.id) {
+              post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
+          } else {
+                post_url = '/api/inspection/'
+          }
           let payload = new FormData(this.form);
           payload.append('details', this.workflowDetails);
           if (this.$refs.comms_log_file.commsLogId) {
-              payload.append('comms_log_id', this.$refs.comms_log_file.commsLogId)
+              payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId)
+          }
+          if (this.$parent.call_email) {
+              payload.append('call_email_id', this.$parent.call_email.id)
           }
 
           //payload.append('email_subject', this.modalTitle);

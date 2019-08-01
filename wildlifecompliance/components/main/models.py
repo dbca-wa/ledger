@@ -30,6 +30,18 @@ class Sequence(models.Model):
             repr(self.name), repr(self.last))
 
 
+class InspectionType(models.Model):
+   description = models.CharField(max_length=255, null=True, blank=True)
+
+   class Meta:
+       app_label = 'wildlifecompliance'
+       verbose_name = 'CM_InspectionType'
+       verbose_name_plural = 'CM_InspectionTypes'
+
+   def __str__(self):
+       return self.description
+
+
 @python_2_unicode_compatible
 class Region(models.Model):
     name = models.CharField(max_length=200, blank=False, unique=True)
@@ -155,6 +167,9 @@ for method_name, method in queryset_methods.items():
 
 approved_related_item_models = [
         'Offence',
+        'CallEmail',
+        'Inspection',
+        'SanctionOutcome',
         ]
 
 def get_related_items(self, **kwargs):
@@ -181,8 +196,8 @@ def get_related_items(self, **kwargs):
 
                     return_list.append(
                         {   'model_name': f.name,
-                            'get_related_items_identifier': field_object.get_related_items_identifier, 
-                            'get_related_items_descriptor': field_object.get_related_items_descriptor
+                            'identifier': field_object.get_related_items_identifier, 
+                            'descriptor': field_object.get_related_items_descriptor
                         })
     return return_list       
 

@@ -8,6 +8,8 @@ from wildlifecompliance.components.inspection.models import (
     Inspection,
     InspectionUserAction,
     InspectionCommsLogEntry,
+    )
+from wildlifecompliance.components.main.models import (
     InspectionType,
     )
 from wildlifecompliance.components.main.models import get_related_items
@@ -42,7 +44,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'abn',
             'name',
         )
-        read_only_fields = ()
+        # read_only_fields = ()
 
 
 class IndividualSerializer(serializers.ModelSerializer):
@@ -91,7 +93,11 @@ class EmailUserSerializer(serializers.ModelSerializer):
             return 'Team Member'
 
     def get_action(self, obj):
-        return ''
+        inspection_team_lead_id = self.context.get('inspection_team_lead_id')
+        if obj.id == inspection_team_lead_id:
+            return 'Lead'
+        else:
+            return 'Member'
 
 
 # class InspectionTeamSerializer(serializers.ModelSerializer):
@@ -113,7 +119,7 @@ class InspectionSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     inspection_team = EmailUserSerializer(many=True, read_only=True)
     individual_inspected = IndividualSerializer()
-    organisation_inspected = OrganisationSerializer()
+    organisation_inspected = OrganisationSerializer(read_only=True)
     #inspection_type = InspectionTypeSerializer()
     related_items = serializers.SerializerMethodField()
 
@@ -142,6 +148,8 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'individual_inspected_id',
                 'organisation_inspected_id',
                 'related_items',
+                'inform_party_being_inspected',
+                'call_email_id',
                 )
         read_only_fields = (
                 'id',
@@ -206,6 +214,8 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
         required=False, write_only=True, allow_null=True)
     organisation_inspected_id = serializers.IntegerField(
         required=False, write_only=True, allow_null=True)
+    call_email_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
     
     class Meta:
         model = Inspection
@@ -220,7 +230,9 @@ class SaveInspectionSerializer(serializers.ModelSerializer):
                 'allocated_group_id',
                 'inspection_type_id',
                 'individual_inspected_id',
-                'organisation_inspected_id'
+                'organisation_inspected_id',
+                'inform_party_being_inspected',
+                'call_email_id',
                 )
         read_only_fields = (
                 'id',
