@@ -501,7 +501,6 @@ export default {
       vm.setCurrentAllegedOffenceEmpty();
     },
     ok: async function() {
-      console.log(this.$parent)
       this.processingDetails = true;
       await this.sendData();
       // For CallEmail related items table
@@ -518,9 +517,6 @@ export default {
       if (this.$parent.$refs.related_items_table) {
           this.$parent.constructRelatedItemsTable();
       }
-
-      // Update call_email in vuex
-      //await this.loadCallEmail({ call_email_id: this.call_email.id });
 
       this.setOffenceEmpty();
       this.close();
