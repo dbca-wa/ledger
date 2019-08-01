@@ -215,6 +215,7 @@ export default {
       dTab: "dTab" + vm._uid,
       pTab: "pTab" + vm._uid,
       lTab: "lTab" + vm._uid,
+      errorResponse: '',
       dtHeadersOffender: ["id", "data_type", "Description", "Action"],
       dtHeadersAllegedOffence: [
         "id",
@@ -316,10 +317,12 @@ export default {
     PersonSearch,
     CreateNewPerson
   },
+  props:{
+        parent_update_function: {
+            type: Function,
+        },
+  },
   computed: {
-    ...mapGetters("callemailStore", {
-      call_email: "call_email"
-    }),
     ...mapGetters("offenceStore", {
       offence: "offence"
     }),
@@ -347,14 +350,11 @@ export default {
     }
   },
   methods: {
-    ...mapActions("callemailStore", {
-      setAllocatedTo: "setAllocatedTo",
-      loadCallEmail: "loadCallEmail"
-    }),
     ...mapActions("offenceStore", {
       setAllegedOffenceIds: "setAllegedOffenceIds",
       setOffenders: "setOffenders",
       setCallEmailId: "setCallEmailId",
+      setInspectionId: "setInspectionId",
       saveOffence: "saveOffence",
       setOffenceEmpty: "setOffenceEmpty"
     }),
@@ -503,9 +503,20 @@ export default {
     ok: async function() {
       this.processingDetails = true;
       await this.sendData();
-
-      // Update call_email in vuex
-      await this.loadCallEmail({ call_email_id: this.call_email.id });
+      // For CallEmail related items table
+      if (this.$parent.call_email) {
+          await this.parent_update_function({
+              call_email_id: this.$parent.call_email.id,
+          });
+      }
+      if (this.$parent.inspection) {
+          await this.parent_update_function({
+              inspection_id: this.$parent.inspection.id,
+          });
+      }
+      if (this.$parent.$refs.related_items_table) {
+          this.$parent.constructRelatedItemsTable();
+      }
 
       this.setOffenceEmpty();
       this.close();
@@ -524,9 +535,15 @@ export default {
     sendData: async function() {
       let vm = this;
 
-      // Set call_email id to the offence
-      vm.setCallEmailId(vm.call_email.id);
+      // If exists, set call_email id to the offence
+      if (this.$parent.call_email) {
+          vm.setCallEmailId(this.$parent.call_email.id);
+      }
 
+      // If exists, set inspection id to the offence
+      if (this.$parent.inspection) {
+          vm.setInspectionId(this.$parent.inspection.id);
+      }
       // Collect offenders data from the datatable, and set them to the vuex
       let offenders = vm.$refs.offender_table.vmDataTable
         .rows()
@@ -544,8 +561,17 @@ export default {
       });
       vm.setAllegedOffenceIds(alleged_offence_ids);
 
+      try {
+          let res = await vm.saveOffence();;
+          console.log(res);
+          if (res.ok) {
+            return res
+          }
+      } catch(err) {
+              this.errorResponse = err.statusText;
+          }
       // TODO: send data to the server
-      vm.saveOffence();
+      //vm.saveOffence();
     },
     addEventListeners: function() {
       let vm = this;

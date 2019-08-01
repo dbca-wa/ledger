@@ -79,7 +79,7 @@
                         </div>
 
                         <div  class="row action-button">
-                          <div v-if="!readonlyForm && offenceExists" class="col-sm-12">
+                          <div v-if="!readonlyForm && this.offenceExists" class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
@@ -279,9 +279,9 @@
         <!--div v-if="workflow_type">
           <InspectionWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
         </div-->
-        <Offence ref="offence" />
+        <Offence ref="offence" :parent_update_function="loadInspection" />
         <div v-if="sanctionOutcomeInitialised">
-            <SanctionOutcome ref="sanction_outcome"/>
+            <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
     </div>
 </template>
@@ -298,7 +298,7 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import moment from 'moment';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
-import Offence from '../offence/offence_inspection';
+import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome';
 
 export default {
@@ -439,8 +439,8 @@ export default {
         return !this.inspection.can_user_action;
     },
     offenceExists: function() {
-        for (let item in this.inspection.related_items) {
-            if (item.model_name === "offence") {
+        for (let item of this.inspection.related_items) {
+            if (item.model_name.toLowerCase() === "offence") {
                 return true
             }
         }
