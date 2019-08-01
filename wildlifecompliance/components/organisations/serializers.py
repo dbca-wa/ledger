@@ -14,8 +14,8 @@ from wildlifecompliance.components.organisations.utils import (
                                 can_manage_org,
                                 can_admin_org,
                                 is_consultant,
-                                can_change_role,
                                 can_relink,
+                                can_approve,
                             )
 from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
@@ -32,10 +32,11 @@ class OrganisationCheckSerializer(serializers.Serializer):
     name = serializers.CharField()
 
     def validate(self, data):
+        # Check no admin request pending approval.
         requests = OrganisationRequest.objects.filter(abn=data['abn'], role='employee')\
             .exclude(status__in=('declined', 'approved'))
         if requests.exists():
-            raise serializers.ValidationError('A request already submitted - Pending Approval.')
+            raise serializers.ValidationError('A request has been submitted and is Pending Approval.')
         return data
 
 class OrganisationPinCheckSerializer(serializers.Serializer):
@@ -103,21 +104,28 @@ class OrganisationCheckExistSerializer(serializers.Serializer):
     id = serializers.IntegerField(default=0)
     first_five = serializers.CharField(allow_blank=True, required=False)
     user = serializers.IntegerField()
+    abn = serializers.CharField()
 
     def validate(self, data):
+        user = EmailUser.objects.get(id=data['user'])
         if data['exists']:
-            user = EmailUser.objects.get(id=data['user'])
             org = Organisation.objects.get(id=data['id'])
             if can_relink(org, user):
-                raise serializers.ValidationError('Please contact {} to re-link to Organisation'
+                raise serializers.ValidationError('Please contact {} to re-link to Organisation.'
                                                   .format(data['first_five']))
+            if can_approve(org, user):
+                raise serializers.ValidationError('Please contact {} to Approve your request.'
+                                                  .format(data['first_five']))
+        # Check no consultant request is pending approval for an ABN
+        if OrganisationRequest.objects.filter(abn=data['abn'], requester=user, role='consultant')\
+                .exclude(status__in=('declined', 'approved')).exists():
+            raise serializers.ValidationError('A request has been submitted and is Pending Approval.')
         return data
 
 
 class MyOrganisationsSerializer(serializers.ModelSerializer):
     is_admin = serializers.SerializerMethodField(read_only=True)
     is_consultant = serializers.SerializerMethodField(read_only=True)
-    can_change_role = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Organisation
@@ -126,8 +134,7 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
             'name',
             'abn',
             'is_admin',
-            'is_consultant',
-            'can_change_role'
+            'is_consultant'
         )
 
     def get_is_consultant(self, obj):
@@ -139,11 +146,6 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         # Check if the request user is among the first five delegates in the organisation
         return can_admin_org(obj, user)
-
-    def get_can_change_role(self, obj):
-        user = self.context['request'].user
-        # Check if the request user can change their role within the organisation.
-        return can_change_role(obj, user)
 
 
 class DetailsSerializer(serializers.ModelSerializer):

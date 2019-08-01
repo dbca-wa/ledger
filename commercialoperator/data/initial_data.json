@@ -1,0 +1,239 @@
+[
+{
+    "model": "commercialoperator.applicationtype",
+    "pk": 1,
+    "fields": {
+        "name": "T Class",
+        "order": 1,
+        "visible": true
+    }
+},
+{
+    "model": "commercialoperator.applicationtype",
+    "pk": 2,
+    "fields": {
+        "name": "Filming",
+        "order": 2,
+        "visible": true
+    }
+},
+{
+    "model": "commercialoperator.applicationtype",
+    "pk": 3,
+    "fields": {
+        "name": "Event",
+        "order": 3,
+        "visible": true
+    }
+},
+{
+    "model": "commercialoperator.activitymatrix",
+    "pk": 1,
+    "fields": {
+        "name": "Commercial Operator",
+        "description": "testing",
+        "schema": [
+            {}
+        ],
+        "replaced_by": null,
+        "version": 1,
+        "ordered": false
+    }
+},
+{
+    "model": "commercialoperator.proposaltype",
+    "pk": 1,
+    "fields": {
+        "description": "T Class Dummy",
+        "name": "T Class",
+        "schema": [
+            {}
+        ],
+        "replaced_by": null,
+        "version": 1
+    }
+},
+{
+    "model": "commercialoperator.proposalassessorgroup",
+    "pk": 1,
+    "fields": {
+        "name": "Default Group",
+        "region": null,
+        "default": true,
+        "members": [
+            255
+        ]
+    }
+},
+{
+    "model": "commercialoperator.proposalapprovergroup",
+    "pk": 1,
+    "fields": {
+        "name": "Default Group",
+        "region": null,
+        "default": true,
+        "members": [
+            255
+        ]
+    }
+},
+{
+    "model": "commercialoperator.proposal",
+    "pk": 1,
+    "fields": {
+        "proposal_type": "new_proposal",
+        "data": [
+            {
+                "regionActivitySection": [
+                    {
+                        "Sub-activity level 2": "",
+                        "Sub-activity level 1": "",
+                        "District": null,
+                        "Management area": "",
+                        "Region": null,
+                        "ActivityType": ""
+                    }
+                ]
+            }
+        ],
+        "assessor_data": null,
+        "comment_data": null,
+        "schema": [
+            {}
+        ],
+        "proposed_issuance_approval": null,
+        "customer_status": "draft",
+        "applicant": 1,
+        "lodgement_number": "P000001",
+        "lodgement_sequence": 0,
+        "lodgement_date": null,
+        "proxy_applicant": null,
+        "submitter": 255,
+        "assigned_officer": null,
+        "assigned_approver": null,
+        "processing_status": "draft",
+        "id_check_status": "not_checked",
+        "compliance_check_status": "not_checked",
+        "character_check_status": "not_checked",
+        "review_status": "not_reviewed",
+        "approval": null,
+        "previous_application": null,
+        "proposed_decline_status": false,
+        "title": null,
+        "activity": "",
+        "tenure": null,
+        "region": null,
+        "district": null,
+        "application_type": 1,
+        "approval_level": "",
+        "approval_level_document": null,
+        "approval_comment": ""
+    }
+},
+{
+    "model": "commercialoperator.proposal",
+    "pk": 2,
+    "fields": {
+        "proposal_type": "new_proposal",
+        "data": [
+            {
+                "regionActivitySection": [
+                    {
+                        "Sub-activity level 2": "",
+                        "Sub-activity level 1": "",
+                        "District": null,
+                        "Management area": "",
+                        "Region": null,
+                        "ActivityType": ""
+                    }
+                ]
+            }
+        ],
+        "assessor_data": null,
+        "comment_data": null,
+        "schema": [
+            {}
+        ],
+        "proposed_issuance_approval": null,
+        "customer_status": "draft",
+        "applicant": 1,
+        "lodgement_number": "P000002",
+        "lodgement_sequence": 0,
+        "lodgement_date": null,
+        "proxy_applicant": null,
+        "submitter": 255,
+        "assigned_officer": null,
+        "assigned_approver": null,
+        "processing_status": "draft",
+        "id_check_status": "not_checked",
+        "compliance_check_status": "not_checked",
+        "character_check_status": "not_checked",
+        "review_status": "not_reviewed",
+        "approval": null,
+        "previous_application": null,
+        "proposed_decline_status": false,
+        "title": null,
+        "activity": "",
+        "tenure": null,
+        "region": null,
+        "district": null,
+        "application_type": 1,
+        "approval_level": "",
+        "approval_level_document": null,
+        "approval_comment": ""
+    }
+},
+{
+    "model": "commercialoperator.proposal",
+    "pk": 3,
+    "fields": {
+        "proposal_type": "new_proposal",
+        "data": [
+            {
+                "regionActivitySection": [
+                    {
+                        "Sub-activity level 2": "",
+                        "Sub-activity level 1": "",
+                        "District": null,
+                        "Management area": "",
+                        "Region": null,
+                        "ActivityType": ""
+                    }
+                ]
+            }
+        ],
+        "assessor_data": null,
+        "comment_data": null,
+        "schema": [
+            {}
+        ],
+        "proposed_issuance_approval": null,
+        "customer_status": "draft",
+        "applicant": 1,
+        "lodgement_number": "P000003",
+        "lodgement_sequence": 0,
+        "lodgement_date": null,
+        "proxy_applicant": null,
+        "submitter": 255,
+        "assigned_officer": null,
+        "assigned_approver": null,
+        "processing_status": "draft",
+        "id_check_status": "not_checked",
+        "compliance_check_status": "not_checked",
+        "character_check_status": "not_checked",
+        "review_status": "not_reviewed",
+        "approval": null,
+        "previous_application": null,
+        "proposed_decline_status": false,
+        "title": null,
+        "activity": "",
+        "tenure": null,
+        "region": null,
+        "district": null,
+        "application_type": 1,
+        "approval_level": "",
+        "approval_level_document": null,
+        "approval_comment": ""
+    }
+}
+]

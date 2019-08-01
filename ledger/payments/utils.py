@@ -341,6 +341,7 @@ def oracle_parser_on_invoice(date,system,system_name,override=False):
         with transaction.atomic():
             op,created = OracleParser.objects.get_or_create(date_parsed=date)
             op_invoices = OracleParserInvoice.objects.filter(parser=op)
+            #import ipdb; ipdb.set_trace()
 
             #Build a list of invoices already in the oracle parse for parse date query
             for opi in op_invoices:

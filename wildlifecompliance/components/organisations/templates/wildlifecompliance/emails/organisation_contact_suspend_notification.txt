@@ -2,20 +2,20 @@
 
 {%  block content %}
     {% if linked_by.email != user.email %}
-        Your have been suspended from:
+        Your link to the following organisation has been suspended:
 
-        Organisation : {{ organisation.name }}
+        Organisation: {{ organisation.name }}
 
-        ABN : {{ organisation.abn}}
+        ABN: {{ organisation.abn }}
 
-        You were linked to this organisation by {{ linked_by.get_full_name }}({{linked_by.email}}).
+        You were suspended from this organisation by {{ linked_by.get_full_name }}({{linked_by.email}}).
     {% else %}
-        Your have suspended yourself from:
+        Your have suspended yourself from the following organisation:
 
-        Organisation : {{ organisation.name }}
+        Organisation: {{ organisation.name }}
 
-        ABN : {{ organisation.abn}}
+        ABN: {{ organisation.abn }}
     {% endif %}
-    You can not make applications on behalf of this organisation now.
+    You can no longer make applications on behalf of this organisation.
 
 {%  endblock %}
