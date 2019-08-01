@@ -71,7 +71,7 @@
                         </div>
                         
                         <div class="row action-button">
-                          <div v-if="!readonlyForms" class="col-sm-12">
+                          <div v-if="!readonlyForm" class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
@@ -338,7 +338,8 @@ export default {
       dtHeadersInspectionTeam: [
           'Name',
           'Role',
-          'Action',
+          'Make Team Lead',
+          'Remove',
       ],
       dtOptionsInspectionTeam: {
           ajax: {
@@ -356,18 +357,19 @@ export default {
               {
                   data: 'action',
                   mRender: function(data, type, row){
-                      // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
-                      //return '<a href="#">Remove</a>';
                       if (data === 'Member') {
                         return (
-                        '<a href="#" class="make_team_lead" data-member-id="' + row.id +'">Make Team Lead</a>' +
-                        '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
+                        '<a href="#" class="make_team_lead" data-member-id="' + row.id + '">Make Team Lead</a>'
                         );
-                      } else {
+                      } 
+                  }
+              },
+              {
+                  data: 'action',
+                  mRender: function(data, type, row){
+                      if (data !== 'Member') {
                         return (
-                        '<a href="#" class="remove_button" data-member-id="' +
-                        row.id +
-                        '">Remove</a>'
+                        '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
                         );
                       }
                   }

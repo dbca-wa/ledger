@@ -196,8 +196,8 @@ def get_related_items(self, **kwargs):
 
                     return_list.append(
                         {   'model_name': f.name,
-                            'get_related_items_identifier': field_object.get_related_items_identifier, 
-                            'get_related_items_descriptor': field_object.get_related_items_descriptor
+                            'identifier': field_object.get_related_items_identifier, 
+                            'descriptor': field_object.get_related_items_descriptor
                         })
     return return_list       
 
