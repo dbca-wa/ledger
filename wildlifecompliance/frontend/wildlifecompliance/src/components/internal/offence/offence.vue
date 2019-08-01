@@ -501,25 +501,27 @@ export default {
       vm.setCurrentAllegedOffenceEmpty();
     },
     ok: async function() {
-      this.processingDetails = true;
-      await this.sendData();
-      // For CallEmail related items table
-      if (this.$parent.call_email) {
-          await this.parent_update_function({
-              call_email_id: this.$parent.call_email.id,
-          });
-      }
-      if (this.$parent.inspection) {
-          await this.parent_update_function({
-              inspection_id: this.$parent.inspection.id,
-          });
-      }
-      if (this.$parent.$refs.related_items_table) {
-          this.$parent.constructRelatedItemsTable();
-      }
+        this.processingDetails = true;
+        let response = await this.sendData();
+        if (response.ok) {
+            // For CallEmail related items table
+            if (this.$parent.call_email) {
+                await this.parent_update_function({
+                call_email_id: this.$parent.call_email.id,
+                });
+            }
+            if (this.$parent.inspection) {
+                await this.parent_update_function({
+                    inspection_id: this.$parent.inspection.id,
+                });
+            }
+        }
+        if (this.$parent.$refs.related_items_table) {
+            this.$parent.constructRelatedItemsTable();
+        }
 
-      this.setOffenceEmpty();
-      this.close();
+        this.setOffenceEmpty();
+        this.close();
     },
     cancel: function() {
       this.processingDetails = false;
