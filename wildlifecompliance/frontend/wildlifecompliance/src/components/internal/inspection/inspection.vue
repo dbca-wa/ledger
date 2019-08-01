@@ -79,7 +79,7 @@
                         </div>
 
                         <div  class="row action-button">
-                          <div v-if="!readonlyForm && offenceExists" class="col-sm-12">
+                          <div v-if="!readonlyForm && this.offenceExists" class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
@@ -439,8 +439,8 @@ export default {
         return !this.inspection.can_user_action;
     },
     offenceExists: function() {
-        for (let item in this.inspection.related_items) {
-            if (item.model_name === "offence") {
+        for (let item of this.inspection.related_items) {
+            if (item.model_name.toLowerCase() === "offence") {
                 return true
             }
         }

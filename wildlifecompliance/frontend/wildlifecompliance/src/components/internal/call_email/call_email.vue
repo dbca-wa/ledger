@@ -97,7 +97,7 @@
                           </div>
                         </div>
 
-                        <div v-if="statusId ==='open_followup' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open_followup' && this.call_email.can_user_action && this.offenceExists" class="row action-button">
                           <div class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
@@ -508,6 +508,15 @@ export default {
     },
     statusId: function() {
       return this.call_email.status ? this.call_email.status.id : '';
+    },
+    offenceExists: function() {
+        for (let item of this.call_email.related_items) {
+            if (item.model_name.toLowerCase() === "offence") {
+                return true
+            }
+        }
+        // return false if no related item is an Offence
+        return false
     },
   },
   filters: {
