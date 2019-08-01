@@ -51,7 +51,6 @@ from wildlifecompliance.components.inspection.models import (
     InspectionCommsLogEntry,
     )
 from wildlifecompliance.components.call_email.models import (
-        CallEmail,
         CallEmailUserAction,
         )
 from wildlifecompliance.components.inspection.serializers import (
@@ -522,6 +521,8 @@ class InspectionViewSet(viewsets.ModelViewSet):
                         res = self.add_workflow_log(request, instance)
                         return res
                     else:
+                        # Log parent actions and update status
+                        self.update_parent(request, instance)
                         headers = self.get_success_headers(serializer.data)
                         return Response(
                                 serializer.data, 
@@ -585,6 +586,17 @@ class InspectionViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise e
 
+    def update_parent(self, request, instance, *args, **kwargs):
+        # Log parent actions and update status
+        # If CallEmail
+        if instance.call_email:
+            instance.call_email.log_user_action(
+                    CallEmailUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(
+                    instance.call_email.number), request)
+            instance.call_email.status = 'open_inspection'
+            instance.call_email.save()
+
+
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def add_workflow_log(self, request, instance=None, *args, **kwargs):
@@ -612,15 +624,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 instance.allocated_group_id = None if request.data.get('allocated_group_id') == 'null' else request.data.get('allocated_group_id')
                 instance.call_email_id = None if request.data.get('call_email_id') == 'null' else request.data.get('call_email_id')
 
-                # Log parent actions and update status
                 instance.save()
-                if instance.call_email_id:
-                    call_email_instance = CallEmail.objects.get(id=instance.call_email_id)
-                    call_email_instance.log_user_action(
-                            CallEmailUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(
-                            call_email_instance.number), request)
-                    call_email_instance.status = 'open_inspection'
-                    call_email_instance.save()
+                # Log parent actions and update status
+                self.update_parent(request, instance)
 
                 if instance.assigned_to_id:
                     instance = self.modify_inspection_team(request, instance, workflow=True, user_id=instance.assigned_to_id)

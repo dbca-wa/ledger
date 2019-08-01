@@ -279,9 +279,9 @@
         <!--div v-if="workflow_type">
           <InspectionWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
         </div-->
-        <Offence ref="offence" />
+        <Offence ref="offence" :parent_update_function="loadInspection" />
         <div v-if="sanctionOutcomeInitialised">
-            <SanctionOutcome ref="sanction_outcome"/>
+            <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
     </div>
 </template>
@@ -298,7 +298,7 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import moment from 'moment';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
-import Offence from '../offence/offence_inspection';
+import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome';
 
 export default {
