@@ -318,18 +318,11 @@ export default {
     CreateNewPerson
   },
   props:{
-        workflow_type: {
-            type: String,
-            default: '',
-        },
         parent_update_function: {
             type: Function,
         },
   },
   computed: {
-    //...mapGetters("callemailStore", {
-     // call_email: "call_email"
-    //}),
     ...mapGetters("offenceStore", {
       offence: "offence"
     }),
@@ -357,10 +350,6 @@ export default {
     }
   },
   methods: {
-    //...mapActions("callemailStore", {
-      //setAllocatedTo: "setAllocatedTo",
-      //loadCallEmail: "loadCallEmail"
-    //}),
     ...mapActions("offenceStore", {
       setAllegedOffenceIds: "setAllegedOffenceIds",
       setOffenders: "setOffenders",

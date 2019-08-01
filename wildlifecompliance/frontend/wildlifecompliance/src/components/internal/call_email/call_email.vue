@@ -438,7 +438,6 @@ export default {
       loading: [],
       renderer_form: null,
       callemailTab: "callemailTab" + this._uid,
-      call_email_id: null,
       comms_url: helpers.add_endpoint_json(
         api_endpoints.call_email,
         this.$route.params.call_email_id + "/comms_log"
@@ -739,7 +738,6 @@ export default {
     if (this.$route.params.call_email_id) {
       await this.loadCallEmail({ call_email_id: this.$route.params.call_email_id });
     }
-    this.call_email_id = this.call_email.id;
     // await this.loadComplianceAllocatedGroup(this.call_email.allocated_group_id);
     // load drop-down select lists
     // classification_types

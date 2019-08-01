@@ -156,9 +156,6 @@ export default {
           parent_update_function: {
               type: Function,
           },
-          //parent_id: {
-          //    type: Number,
-          //},
     },
     computed: {
       ...mapGetters('inspectionStore', {

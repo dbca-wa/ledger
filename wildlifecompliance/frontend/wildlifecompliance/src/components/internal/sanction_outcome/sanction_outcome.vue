@@ -423,9 +423,6 @@ export default {
     // }
   },
   computed: {
-    //...mapGetters("callemailStore", {
-      //call_email: "call_email"
-    //}),
     ...mapGetters("offenceStore", {
       offence: "offence"
     }),
@@ -486,9 +483,6 @@ export default {
     }
   },
   methods: {
-    ...mapActions("callemailStore", {
-      loadCallEmail: "loadCallEmail"
-    }),
     ...mapActions("offenceStore", {}),
     ok: async function() {
       await this.sendData();
