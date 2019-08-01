@@ -123,7 +123,7 @@ class Inspection(RevisionedMixin):
     
     @property
     def get_related_items_identifier(self):
-        return self.id
+        return self.number
 
     @property
     def get_related_items_descriptor(self):

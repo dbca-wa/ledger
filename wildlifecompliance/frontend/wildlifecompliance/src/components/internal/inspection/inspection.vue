@@ -79,7 +79,7 @@
                         </div>
 
                         <div  class="row action-button">
-                          <div v-if="!readonlyForm" class="col-sm-12">
+                          <div v-if="!readonlyForm && offenceExists" class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
@@ -338,7 +338,8 @@ export default {
       dtHeadersInspectionTeam: [
           'Name',
           'Role',
-          'Action',
+          '',
+          '',
       ],
       dtOptionsInspectionTeam: {
           ajax: {
@@ -354,24 +355,25 @@ export default {
                   data: 'member_role',
               },
               {
-                  data: 'action',
+                  data: 'id',
                   mRender: function(data, type, row){
-                      // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
-                      //return '<a href="#">Remove</a>';
-                      if (data === 'Member') {
                         return (
-                        '<a href="#" class="make_team_lead" data-member-id="' + row.id +'">Make Team Lead</a>' +
                         '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
-                        );
-                      } else {
-                        return (
-                        '<a href="#" class="remove_button" data-member-id="' +
-                        row.id +
-                        '">Remove</a>'
-                        );
-                      }
+                              );
                   }
               },
+              {
+                  data: 'action',
+                  mRender: function(data, type, row){
+                      if (data === 'Member') {
+                        return (
+                        '<a href="#" class="make_team_lead" data-member-id="' + row.id + '">Make Team Lead</a>'
+                              );
+                      } else {
+                          return ('');
+                      }
+                  }
+              }
           ]
       },
       // disabledDates: {
@@ -436,7 +438,15 @@ export default {
     readonlyForm: function() {
         return !this.inspection.can_user_action;
     },
-
+    offenceExists: function() {
+        for (let item in this.inspection.related_items) {
+            if (item.model_name === "offence") {
+                return true
+            }
+        }
+        // return false if no related item is an Offence
+        return false
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -499,7 +509,7 @@ export default {
         });
         this.$refs.inspection_team_table.vmDataTable.ajax.reload()
     },
-    makeTeamLead: async function() {
+    makeTeamLead: async function(e) {
         let memberId = e.target.getAttribute("data-member-id");
         await this.modifyInspectionTeam({
             user_id: memberId, 
