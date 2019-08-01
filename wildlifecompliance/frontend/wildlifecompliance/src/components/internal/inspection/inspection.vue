@@ -338,8 +338,8 @@ export default {
       dtHeadersInspectionTeam: [
           'Name',
           'Role',
-          'Make Team Lead',
-          'Remove',
+          '',
+          '',
       ],
       dtOptionsInspectionTeam: {
           ajax: {
@@ -355,25 +355,25 @@ export default {
                   data: 'member_role',
               },
               {
-                  data: 'action',
+                  data: 'id',
                   mRender: function(data, type, row){
-                      if (data === 'Member') {
                         return (
-                        '<a href="#" class="make_team_lead" data-member-id="' + row.id + '">Make Team Lead</a>'
-                        );
-                      } 
+                        '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
+                              );
                   }
               },
               {
                   data: 'action',
                   mRender: function(data, type, row){
-                      if (data !== 'Member') {
+                      if (data === 'Member') {
                         return (
-                        '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
-                        );
+                        '<a href="#" class="make_team_lead" data-member-id="' + row.id + '">Make Team Lead</a>'
+                              );
+                      } else {
+                          return ('');
                       }
                   }
-              },
+              }
           ]
       },
       // disabledDates: {
@@ -509,7 +509,7 @@ export default {
         });
         this.$refs.inspection_team_table.vmDataTable.ajax.reload()
     },
-    makeTeamLead: async function() {
+    makeTeamLead: async function(e) {
         let memberId = e.target.getAttribute("data-member-id");
         await this.modifyInspectionTeam({
             user_id: memberId, 
