@@ -11,15 +11,74 @@ from rest_framework import viewsets, serializers
 from rest_framework.decorators import list_route, detail_route, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from rest_framework_datatables.filters import DatatablesFilterBackend
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
+
 from wildlifecompliance.components.main.api import process_generic_document
 
 from wildlifecompliance.components.call_email.models import CallEmail, CallEmailUserAction
 from wildlifecompliance.components.inspection.models import Inspection, InspectionUserAction
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
-    SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer
+    SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer, SanctionOutcomeDatatableSerializer
 from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.helpers import is_internal
+
+
+class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+        total_count = queryset.count()
+
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        if len(ordering):
+            for num, item in enumerate(ordering):
+                if item == 'planned_for':
+                    ordering.pop(num)
+                    ordering.insert(num, 'planned_for_date')
+                if item == '-planned_for':
+                    ordering.pop(num)
+                    ordering.insert(num, '-planned_for_date')
+                if item == 'status__name':
+                    ordering.pop(num)
+                    ordering.insert(num, 'status')
+                if item == '-status__name':
+                    ordering.pop(num)
+                    ordering.insert(num, '-status')
+
+            queryset = queryset.order_by(*ordering)
+
+        setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class SanctionOutcomePaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (SanctionOutcomeFilterBackend,)
+    # filter_backends = (DatatablesFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    # renderer_classes = (InspectionRenderer,)
+    queryset = SanctionOutcome.objects.none()
+    serializer_class = SanctionOutcomeDatatableSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        # user = self.request.user
+        if is_internal(self.request):
+            return SanctionOutcome.objects.all()
+        return SanctionOutcome.objects.none()
+
+    @list_route(methods=['GET', ])
+    def get_paginated_datatable(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = SanctionOutcomeDatatableSerializer(result_page, many=True, context={'request': request})
+        ret = self.paginator.get_paginated_response(serializer.data)
+        return ret
 
 
 class SanctionOutcomeViewSet(viewsets.ModelViewSet):
@@ -27,7 +86,7 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
     serializer_class = SanctionOutcomeSerializer
 
     def get_queryset(self):
-        user = self.request.user
+        # user = self.request.user
         if is_internal(self.request):
             return SanctionOutcome.objects.all()
         return SanctionOutcome.objects.none()
@@ -116,6 +175,13 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def process_default_document(self, request, *args, **kwargs):
+        """
+        Request sent from the immediate file uploader comes here for both saving and canceling.
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         print("process_default_document")
         print(request.data)
         try:
@@ -125,7 +191,7 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             # delete Sanction Outcome if user cancels modal
             action = request.data.get('action')
             if action == 'cancel' and returned_data:
-                instance.status = 'discarded'
+                instance.status = 'discarded'  # We don't want to delete the instance for audit purpose.
                 returned_data = instance.save()
             # return response
             if returned_data:
@@ -144,4 +210,21 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['GET', ])
+    def datatable_list(self, request, *args, **kwargs):
+        try:
+            qs = self.get_queryset()
+            serializer = SanctionOutcomeSerializer(qs, many=True, context={'request': request})
+            return Response({ 'tableData': serializer.data })
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 

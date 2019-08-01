@@ -294,7 +294,7 @@ import moment from 'moment';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 import Offence from '../offence/offence_inspection';
-import SanctionOutcome from '../sanction_outcome/sanction_outcome';
+import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 
 export default {
   name: "ViewInspection",
