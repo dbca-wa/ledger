@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from collections import OrderedDict
-from wildlifecompliance.components.applications.models import Application, ApplicationType, ExcelApplication, ExcelActivityType
+from wildlifecompliance.components.applications.models import Application, ExcelApplication, ExcelActivityType
 from wildlifecompliance.components.licences.models import DefaultActivityType, WildlifeLicence, WildlifeLicenceClass, WildlifeLicenceActivity
 from wildlifecompliance.components.organisations.models import Organisation
 from ledger.accounts.models import OrganisationAddress

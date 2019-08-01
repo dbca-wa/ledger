@@ -234,7 +234,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
 
     def handle_last_check(self,url):
         try:
-            res = requests.get(url,cookies=self.request.COOKIES)
+            res = requests.get(url,cookies=self.request.COOKIES, verify=False)
             res.raise_for_status()
             response = json.loads(res.content.decode('utf-8')).get('status')
             if response != 'approved':

@@ -1,0 +1,5 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+        Please find attached the invoice, for booking {{ booking_number }}, for your own records for your upcoming trip.
+{%  endblock %}

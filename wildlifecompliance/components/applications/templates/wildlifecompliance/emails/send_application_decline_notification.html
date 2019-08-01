@@ -2,9 +2,8 @@
 
 {% block content %}
     A Wildlife Licensing application activity type has been declined, with below details.
-    <p><strong>Application : {{ application.id }}</strong></p>
-    <p><strong>Activity Type : {{ activity_type_name }}</strong></p>
-    <p><strong>Link: {{url}}</strong></p>
-
-    <p>Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.</p>
+    <p><strong>Application: {{ application.id }}</strong></p>
+    <p><strong>Activity Type: {{ activity_type_name }}</strong></p>
+    <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
+    <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
 {% endblock %}

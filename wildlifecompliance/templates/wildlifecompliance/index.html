@@ -9,8 +9,8 @@
 {% endblock %}
 
 {% block left_menu_items %}
-    <li><a href="">Contact Us</a></li>
-    <li><a href="">Further Information</a></li>
+    <li><a href="{% url 'wc_contact' %}">Contact Us</a></li>
+    <li><a href="{% url 'wc_further_info' %}">Further Information</a></li>
 {% endblock %}
 
 {% block messages %}
