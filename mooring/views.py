@@ -1072,9 +1072,6 @@ class MakeBookingsView(TemplateView):
             if override_reason is not None:
                 booking.override_reason = DiscountReason.objects.get(id=override_reason)
             booking.override_reason_info = request.POST.get('overrideDetail') if request.POST.get('overrideDetail') else ""
-            print ("POST LIST")
-            print request.POST.get('bookingLines',{})
-            print request.POST.get('admissionsLines',{})
             #print request.POST.get('admissionsLines',{})
             bookingLinesOverRideJson = json.loads(request.POST.get('bookingLines',{}))
             #admissionLineOverRideJson = json.loads(request.POST.get('admissionsLines',{}))
