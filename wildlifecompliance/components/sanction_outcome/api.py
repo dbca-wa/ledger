@@ -35,18 +35,20 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
         ordering = self.get_ordering(getter, fields)
         if len(ordering):
             for num, item in enumerate(ordering):
-                if item == 'planned_for':
-                    ordering.pop(num)
-                    ordering.insert(num, 'planned_for_date')
-                if item == '-planned_for':
-                    ordering.pop(num)
-                    ordering.insert(num, '-planned_for_date')
-                if item == 'status__name':
-                    ordering.pop(num)
-                    ordering.insert(num, 'status')
-                if item == '-status__name':
-                    ordering.pop(num)
-                    ordering.insert(num, '-status')
+                # offender is the foreign key of the sanction outcome
+                if item == 'offender':
+                    # offender can be a person or an organisation
+                    ordering[num] = 'offender__person'
+                    ordering.insert(num + 1, 'offender__organisation')
+                elif item == '-offender':
+                    ordering[num] = '-offender__person'
+                    ordering.insert(num + 1, '-offender__organisation')
+                elif item == 'status__name':
+                    ordering[num] = 'status'
+                elif item == '-status__name':
+                    ordering[num] = '-status'
+                elif item == 'user_action':
+                    pass
 
             queryset = queryset.order_by(*ordering)
 
