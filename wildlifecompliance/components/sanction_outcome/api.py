@@ -22,6 +22,65 @@ from wildlifecompliance.components.users.models import CompliancePermissionGroup
 from wildlifecompliance.helpers import is_internal
 
 
+<<<<<<< HEAD
+=======
+class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+        total_count = queryset.count()
+
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        if len(ordering):
+            for num, item in enumerate(ordering):
+                if item == 'planned_for':
+                    ordering.pop(num)
+                    ordering.insert(num, 'planned_for_date')
+                if item == '-planned_for':
+                    ordering.pop(num)
+                    ordering.insert(num, '-planned_for_date')
+                if item == 'status__name':
+                    ordering.pop(num)
+                    ordering.insert(num, 'status')
+                if item == '-status__name':
+                    ordering.pop(num)
+                    ordering.insert(num, '-status')
+
+            queryset = queryset.order_by(*ordering)
+
+        setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class SanctionOutcomePaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (SanctionOutcomeFilterBackend,)
+    # filter_backends = (DatatablesFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    # renderer_classes = (InspectionRenderer,)
+    queryset = SanctionOutcome.objects.none()
+    serializer_class = SanctionOutcomeDatatableSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        # user = self.request.user
+        if is_internal(self.request):
+            return SanctionOutcome.objects.all()
+        return SanctionOutcome.objects.none()
+
+    @list_route(methods=['GET', ])
+    def get_paginated_datatable(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = SanctionOutcomeDatatableSerializer(result_page, many=True, context={'request': request})
+        ret = self.paginator.get_paginated_response(serializer.data)
+        return ret
+
+
+>>>>>>> parent of 59545b305... Make more columns in the sanction outcome table orderable
 class SanctionOutcomeViewSet(viewsets.ModelViewSet):
     queryset = SanctionOutcome.objects.all()
     serializer_class = SanctionOutcomeSerializer
