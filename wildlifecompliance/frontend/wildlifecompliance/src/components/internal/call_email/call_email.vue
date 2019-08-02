@@ -97,7 +97,7 @@
                           </div>
                         </div>
 
-                        <div v-if="statusId ==='open_followup' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open_followup' && this.call_email.can_user_action && this.offenceExists" class="row action-button">
                           <div class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
@@ -360,11 +360,11 @@
         <div v-if="workflow_type">
           <CallWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
         </div>
-        <Offence ref="offence" />
+        <Offence ref="offence" :parent_update_function="loadCallEmail"/>
         <div v-if="sanctionOutcomeInitialised">
-            <SanctionOutcome ref="sanction_outcome"/>
+            <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadCallEmail"/>
         </div>
-        <Inspection ref="inspection" :parent_update_function="loadCallEmail" :parent_id="call_email.id"/>
+        <Inspection ref="inspection" :parent_update_function="loadCallEmail"/>
     </div>
 </template>
 <script>
@@ -508,6 +508,15 @@ export default {
     },
     statusId: function() {
       return this.call_email.status ? this.call_email.status.id : '';
+    },
+    offenceExists: function() {
+        for (let item of this.call_email.related_items) {
+            if (item.model_name.toLowerCase() === "offence") {
+                return true
+            }
+        }
+        // return false if no related item is an Offence
+        return false
     },
   },
   filters: {

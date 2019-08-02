@@ -34,6 +34,31 @@ class OffenceViewSet(viewsets.ModelViewSet):
 
         serializer = OffenceSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+    @list_route(methods=['GET', ])
+    def filter_by_inspection(self, request, *args, **kwargs):
+        inspection_id = self.request.query_params.get('inspection_id', None)
+        queryset = self.get_queryset().filter(inspection_id__exact=inspection_id)
+
+        serializer = OffenceSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def update_parent(self, request, instance, *args, **kwargs):
+        # Log parent actions and update status, if required
+        # If CallEmail
+        if instance.call_email:
+            instance.call_email.log_user_action(
+                    CallEmailUserAction.ACTION_OFFENCE.format(
+                    instance.call_email.number), request)
+            #instance.call_email.status = 'open_inspection'
+            #instance.call_email.save()
+        # If Inspection
+        elif instance.inspection:
+            instance.inspection.log_user_action(
+                    InspectionUserAction.ACTION_OFFENCE.format(
+                    instance.inspection.number), request)
+            #instance.inspection.status = 'open_inspection'
+            #instance.inspection.save()
 
     @list_route(methods=['POST', ])
     def offence_save(self, request, *args, **kwargs):
@@ -59,19 +84,22 @@ class OffenceViewSet(viewsets.ModelViewSet):
                 saved_offence_instance = serializer.save()  # Here, relations between this offence and location, and this offence and call_email/inspection are created
                 print(serializer.data)
 
-                # 2a. Log it to the call email, if applicable
-                if saved_offence_instance.call_email:
-                    saved_offence_instance.call_email.log_user_action(
-                            CallEmailUserAction.ACTION_OFFENCE.format(
-                                saved_offence_instance.call_email.number),
-                                request)
+                # 2. Update parents
+                self.update_parent(request, saved_offence_instance)
+                
+                ## 2a. Log it to the call email, if applicable
+                #if saved_offence_instance.call_email:
+                #    saved_offence_instance.call_email.log_user_action(
+                #            CallEmailUserAction.ACTION_OFFENCE.format(
+                #                saved_offence_instance.call_email.number),
+                #                request)
 
-                # 2b. Log it to the inspection, if applicable
-                if saved_offence_instance.inspection:
-                    saved_offence_instance.inspection.log_user_action(
-                            InspectionUserAction.ACTION_OFFENCE.format(
-                                saved_offence_instance.inspection.number),
-                                request)
+                ## 2b. Log it to the inspection, if applicable
+                #if saved_offence_instance.inspection:
+                #    saved_offence_instance.inspection.log_user_action(
+                #            InspectionUserAction.ACTION_OFFENCE.format(
+                #                saved_offence_instance.inspection.number),
+                #                request)
 
                 # 3. Create relations between this offence and the alleged 0ffence(s)
                 for dict in request_data['alleged_offences']:

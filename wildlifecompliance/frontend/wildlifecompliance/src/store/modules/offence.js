@@ -160,7 +160,9 @@ export const offenceStore = {
                     payload.occurrence_date_to = moment(payload.occurrence_date_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
                 }
                 const savedOffence = await Vue.http.post(fetchUrl, payload);
+                await dispatch("setOffence", savedOffence.body);
                 await swal("Saved", "The record has been saved", "success");
+                return savedOffence;
             } catch (err) {
                 if (err.body.non_field_errors){
                     await swal("Error", err.body.non_field_errors[0], "error");
