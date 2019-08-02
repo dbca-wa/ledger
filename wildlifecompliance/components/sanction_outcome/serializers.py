@@ -1,9 +1,6 @@
 from rest_framework import serializers
 
-<<<<<<< HEAD
-=======
 from wildlifecompliance.components.main.fields import CustomChoiceField
->>>>>>> parent of 59545b305... Make more columns in the sanction outcome table orderable
 from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 
@@ -31,8 +28,6 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
         read_only_fields = ()
 
 
-<<<<<<< HEAD
-=======
 class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     user_action = serializers.SerializerMethodField()
@@ -80,7 +75,6 @@ class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
 
         return returned_url
 
->>>>>>> parent of 59545b305... Make more columns in the sanction outcome table orderable
 class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
     offence_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
     offender_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
