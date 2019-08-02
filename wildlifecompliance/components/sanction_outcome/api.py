@@ -22,8 +22,6 @@ from wildlifecompliance.components.users.models import CompliancePermissionGroup
 from wildlifecompliance.helpers import is_internal
 
 
-<<<<<<< HEAD
-=======
 class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
@@ -80,7 +78,6 @@ class SanctionOutcomePaginatedViewSet(viewsets.ModelViewSet):
         return ret
 
 
->>>>>>> parent of 59545b305... Make more columns in the sanction outcome table orderable
 class SanctionOutcomeViewSet(viewsets.ModelViewSet):
     queryset = SanctionOutcome.objects.all()
     serializer_class = SanctionOutcomeSerializer
