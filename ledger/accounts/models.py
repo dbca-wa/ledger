@@ -26,7 +26,7 @@ from ledger.accounts.utils import get_department_user_compact, in_dbca_domain
 from ledger.address.models import UserAddress, Country
 
 
-def unicode_compaitable(value):
+def unicode_compatible(value):
     try: 
         return unicode(value)
     except:
@@ -205,7 +205,7 @@ class BaseAddress(models.Model):
         #for f in fields:
         #    print unicode(f).encode('utf-8').decode('unicode-escape').strip()
         #fields = [str(f).strip() for f in fields if f]
-        fields = [unicode_compaitable(f).encode('utf-8').decode('unicode-escape').strip() for f in fields if f]
+        fields = [unicode_compatible(f).encode('utf-8').decode('unicode-escape').strip() for f in fields if f]
         
         return fields
 
