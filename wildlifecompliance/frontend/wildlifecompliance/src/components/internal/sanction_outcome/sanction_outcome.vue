@@ -423,9 +423,6 @@ export default {
     // }
   },
   computed: {
-    ...mapGetters("callemailStore", {
-      call_email: "call_email"
-    }),
     ...mapGetters("offenceStore", {
       offence: "offence"
     }),
@@ -486,9 +483,6 @@ export default {
     }
   },
   methods: {
-    ...mapActions("callemailStore", {
-      loadCallEmail: "loadCallEmail"
-    }),
     ...mapActions("offenceStore", {}),
     ok: async function() {
       await this.sendData();
@@ -518,8 +512,12 @@ export default {
       let vm = this;
 
       vm.sanction_outcome.type = "";
-      vm.sanction_outcome.region_id = vm.call_email.region_id;
-      vm.sanction_outcome.district_id = vm.call_email.district_id;
+      if (this.$parent.call_email) {
+          vm.sanction_outcome.region_id = this.$parent.call_email.region_id;
+      }
+      if (this.$parent.call_email) {
+         vm.sanction_outcome.district_id = this.$parent.call_email.district_id;
+      }
       vm.sanction_outcome.identifier = "";
       vm.sanction_outcome.current_offence = {};
       vm.sanction_outcome.current_offender = {};
@@ -750,7 +748,8 @@ export default {
           ).format("YYYY-MM-DD");
         }
 
-        payload.call_email_id = vm.call_email ? vm.call_email.id : null;
+        payload.call_email_id = this.$parent.call_email ? this.$parent.call_email.id : null;
+        payload.inspection_id = this.$parent.inspection ? this.$parent.inspection.id : null;
 
         // Set set_sequence to generate lodgement number at the backend
         // payload.set_sequence = true;
@@ -800,15 +799,19 @@ export default {
       // Use checkbox instead of cell click
       // vm.addEventListener();
     },
-    updateOptionsForOffences: function(call_email_id) {
-      let vm = this;
-      let returned = Vue.http.get("/api/offence/filter_by_call_email.json", {
-        params: { call_email_id: call_email_id }
-      });
-      returned.then(res => {
-        console.log(res.body);
-        vm.options_for_offences = res.body;
-      });
+    updateOptionsForOffences: async function() {
+      let returned = null;
+      if (this.$parent.call_email) {
+          returned = await Vue.http.get("/api/offence/filter_by_call_email.json", {
+          params: { call_email_id: this.$parent.call_email.id }
+          });
+      }
+      if (this.$parent.inspection) {
+          returned = await Vue.http.get("/api/offence/filter_by_inspection.json", {
+          params: { inspection_id: this.$parent.inspection.id }
+          });
+      }
+      this.options_for_offences = returned.body;
     },
     createDocumentActionUrl: async function() {
         // create sanction outcome and get id
@@ -834,7 +837,7 @@ export default {
     for (let i = 0; i < options_for_types.length; i++) {
       vm.options_for_types.push(options_for_types[i]);
     }
-    await vm.updateOptionsForOffences(vm.call_email.id);
+    await vm.updateOptionsForOffences();
     await vm.constructRegionsAndDistricts();
     vm.loadDefaultData();
   },
