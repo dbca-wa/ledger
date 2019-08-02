@@ -44,7 +44,7 @@ def send_application_fee_invoice_tclass_email_notification(request, proposal, in
     }
 
     filename = 'invoice.pdf'
-    doc = create_invoice_pdf_bytes(filename, invoice)
+    doc = create_invoice_pdf_bytes(filename, invoice, proposal)
     attachment = (filename, doc, 'application/pdf')
 
     msg = email.send(recipients, attachments=[attachment], context=context)
@@ -58,7 +58,7 @@ def send_application_fee_invoice_tclass_email_notification(request, proposal, in
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
     else:
         _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
-    
+
 
 def send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients):
     email = ApplicationFeeConfirmationTClassSendNotificationEmail()
@@ -70,7 +70,7 @@ def send_application_fee_confirmation_tclass_email_notification(request, proposa
     }
 
     filename = 'confirmation.pdf'
-    doc = create_invoice_pdf_bytes(filename, invoice)
+    doc = create_invoice_pdf_bytes(filename, invoice, proposal)
     attachment = (filename, doc, 'application/pdf')
 
     msg = email.send(recipients, attachments=[attachment], context=context)
@@ -91,7 +91,7 @@ def send_invoice_tclass_email_notification(request, booking, invoice, recipients
     }
 
     filename = 'invoice.pdf'
-    doc = create_invoice_pdf_bytes(filename, invoice)
+    doc = create_invoice_pdf_bytes(filename, invoice, booking.proposal)
     attachment = (filename, doc, 'application/pdf')
 
     msg = email.send(recipients, attachments=[attachment], context=context)

@@ -100,14 +100,22 @@ def create_fee_lines(proposal, invoice_text=None, vouchers=[], internal=False):
 
     #import ipdb; ipdb.set_trace()
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
-    price = proposal.application_type.application_fee
-    line_items = [{
-            'ledger_description': 'Application Fee - {} - {}'.format(now, proposal.lodgement_number),
+    application_price = proposal.application_type.application_fee
+    licence_price = proposal.licence_fee_amount
+    line_items = [
+        {   'ledger_description': 'Application Fee - {} - {}'.format(now, proposal.lodgement_number),
             'oracle_code': proposal.application_type.oracle_code,
-            'price_incl_tax':  price,
-            'price_excl_tax':  price if proposal.application_type.is_gst_exempt else calculate_excl_gst(price),
+            'price_incl_tax':  application_price,
+            'price_excl_tax':  application_price if proposal.application_type.is_gst_exempt else calculate_excl_gst(application_price),
             'quantity': 1,
-        }]
+        },
+        {   'ledger_description': 'Licence Fee {} - {} - {}'.format(proposal.other_details.get_preferred_licence_period_display(), now, proposal.lodgement_number),
+            'oracle_code': proposal.application_type.oracle_code,
+            'price_incl_tax':  licence_price,
+            'price_excl_tax':  licence_price if proposal.application_type.is_gst_exempt else calculate_excl_gst(licence_price),
+            'quantity': 1,
+        }
+    ]
     logger.info('{}'.format(line_items))
     return line_items
 

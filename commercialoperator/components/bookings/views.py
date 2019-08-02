@@ -289,8 +289,15 @@ class BookingSuccessView(TemplateView):
 class InvoicePDFView(InvoiceOwnerMixin,View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
+        if bi:
+            proposal = bi.booking.proposal
+        else:
+            proposal = Proposal.objects.get(fee_invoice_reference=invoice.reference)
+
+        #import ipdb; ipdb.set_trace()
         response = HttpResponse(content_type='application/pdf')
-        response.write(create_invoice_pdf_bytes('invoice.pdf',invoice))
+        response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
         return response
 
     def get_object(self):
@@ -303,6 +310,7 @@ class ConfirmationPDFView(InvoiceOwnerMixin,View):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
 
+        # GST ignored here because GST amount is not included on the confirmation PDF
         response = HttpResponse(content_type='application/pdf')
         response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking))
         return response

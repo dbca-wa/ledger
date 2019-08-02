@@ -12,6 +12,7 @@ from reportlab.lib.colors import HexColor, black
 
 from django.core.files import File
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from commercialoperator.components.approvals.models import ApprovalDocument
 
@@ -184,7 +185,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     if proposal.org_applicant:
         email = proposal.org_applicant.organisation.organisation_set.all().first().contacts.all().first().email
     else:
-        email= proposal.submitter.email    
+        email= proposal.submitter.email
     elements.append(Paragraph(email,styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph(_format_name(approval.applicant),styles['BoldLeft']))
@@ -341,7 +342,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     # this is the only way to get data into the onPage callback function
     doc.approval = approval
     doc.site_url = site_url
-    
+
     approval_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])
     box_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'), ('BOX', (0,0), (-1,-1), 0.25, black), ('INNERGRID', (0,0), (-1,-1), 0.25, black), ('ALIGN', (0, 0), (-1, -1), 'RIGHT')])
 
@@ -350,12 +351,15 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     #Organization details
 
     #import ipdb; ipdb.set_trace()
-    address = proposal.applicant_address 
+    address = proposal.applicant_address
     # address = proposal.applicant_address
     if proposal.org_applicant:
-        email = proposal.org_applicant.organisation.organisation_set.all().first().contacts.all().first().email
+        try:
+            email = proposal.org_applicant.organisation.organisation_set.all().first().contacts.all().first().email
+        except:
+            raise ValidationError('There is no contact for Organisation. Please create an Organisation contact')
     else:
-        email= proposal.submitter.email    
+        email= proposal.submitter.email
     #elements.append(Paragraph(email,styles['BoldLeft']))
     elements.append(Paragraph('CONSERVATION AND LAND MANAGEMENT REGULATIONS 2002 (PART 7)', styles['BoldCenter']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
@@ -392,14 +396,14 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-        
+
     elements.append(KeepTogether(delegation))
 
     elements.append(Paragraph('Commencing on the date of execution of this licence and expiring on {}'.format(approval.expiry_date.strftime(DATE_FORMAT)),styles['BoldLeft']))
     elements.append(Paragraph('to enter upon and use the land within parks/ reserves in order to conduct activites as contained in the schedule attached to this Commercial Operations Licence.',styles['BoldLeft']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('CONDITIONS', styles['BoldLeft'])) 
+    elements.append(Paragraph('CONDITIONS', styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     list_of_bullets= []
@@ -437,7 +441,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     elements.append(Paragraph('Under Section 133(2) of the CALM Act 1984', styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']))
-    
+
     elements.append(PageBreak())
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     table_data=[[Paragraph('License Number', styles['BoldLeft']),
@@ -469,7 +473,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     elements.append(t)
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))    
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('SCHEDULE 2', styles['BoldCenter']))
     elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE CONDITIONS', styles['BoldCenter']))
     requirements = proposal.requirements.all().exclude(is_deleted=True)
@@ -658,7 +662,7 @@ def _create_renewal(renewal_buffer, approval, proposal):
     #     address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
     #                       Paragraph(address.line3, styles['Left']),
     #                       Paragraph('%s %s' % (address.state, address.postcode), styles['Left']),
-    #                       Paragraph(address.country.name, styles['Left'])]                
+    #                       Paragraph(address.country.name, styles['Left'])]
     delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
                               [Paragraph(_format_name(approval.applicant),
                                          styles['Left'])] + address_paragraphs]],
