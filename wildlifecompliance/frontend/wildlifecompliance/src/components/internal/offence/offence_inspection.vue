@@ -317,8 +317,8 @@ export default {
     CreateNewPerson
   },
   computed: {
-    ...mapGetters("callemailStore", {
-      call_email: "call_email"
+    ...mapGetters("inspectionStore", {
+      inspection: "inspection"
     }),
     ...mapGetters("offenceStore", {
       offence: "offence"
@@ -347,14 +347,13 @@ export default {
     }
   },
   methods: {
-    ...mapActions("callemailStore", {
-      setAllocatedTo: "setAllocatedTo",
-      loadCallEmail: "loadCallEmail"
+    ...mapActions("inspectionStore", {
+      loadInspection: "loadInspection"
     }),
     ...mapActions("offenceStore", {
       setAllegedOffenceIds: "setAllegedOffenceIds",
       setOffenders: "setOffenders",
-      setCallEmailId: "setCallEmailId",
+      setInspectionId: "setInspectionId",
       saveOffence: "saveOffence",
       setOffenceEmpty: "setOffenceEmpty"
     }),
@@ -504,8 +503,8 @@ export default {
       this.processingDetails = true;
       await this.sendData();
 
-      // Update call_email in vuex
-      await this.loadCallEmail({ call_email_id: this.call_email.id });
+      // Update inspection in vuex
+      await this.loadInspection({ inspection_id: this.inspection.id });
 
       this.setOffenceEmpty();
       this.close();
@@ -524,8 +523,8 @@ export default {
     sendData: async function() {
       let vm = this;
 
-      // Set call_email id to the offence
-      vm.setCallEmailId(vm.call_email.id);
+      // Set inspection id to the offence
+      vm.setInspectionId(vm.inspection.id);
 
       // Collect offenders data from the datatable, and set them to the vuex
       let offenders = vm.$refs.offender_table.vmDataTable
@@ -790,6 +789,7 @@ export default {
   mounted: function() {
     let vm = this;
     vm.$nextTick(() => {
+      console.log('mounted offence');
       vm.addEventListeners();
     });
   }
