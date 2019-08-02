@@ -780,6 +780,9 @@ export default {
                                         //        vm.mooring_book_row[index] = false;
                                         //}
                                         vm.addBooking(vm.sites[site_index_id].id, vm.sites[site_index_id].mooring_id, booking_period[0].id, booking_period[0].date);
+                                        //if (vm.ongoing_booking == false) {
+                                           
+                                        //}
                         }
 
 
@@ -810,7 +813,7 @@ export default {
                   url: vm.parkstayUrl + '/api/booking/create', 
                   dataType: 'json',
                   method: 'POST',
-                  // async: false,
+                  //async: false,
                   data: submitData, 
                   success: function(data, stat, xhr) {
                      if (this.loadID == vm.loadingID) { 

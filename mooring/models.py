@@ -1213,6 +1213,7 @@ class Booking(models.Model):
     canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
     old_booking = models.ForeignKey('Booking', null=True, blank=True)
     admission_payment = models.ForeignKey('AdmissionsBooking', null=True, blank=True)
+    override_lines = JSONField(null=True, blank=True, default={})
 
     # Properties
     # =================================
@@ -1285,7 +1286,7 @@ class Booking(models.Model):
         if today <= self.departure:
             if not self.is_canceled:
                 return True
-        return False
+        return True
 
     @property
     def campsite_id_list(self):
@@ -1817,6 +1818,7 @@ class AdmissionsBooking(models.Model):
     cancelation_time = models.DateTimeField(null=True,blank=True)
     created = models.DateTimeField(default=timezone.now)
     location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)    
+    override_lines = JSONField(null=True, blank=True, default={})
 
     def __str__(self):
         email = ''
