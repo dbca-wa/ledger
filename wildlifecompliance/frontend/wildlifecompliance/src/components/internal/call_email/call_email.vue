@@ -381,7 +381,7 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import moment from 'moment';
 import CallWorkflow from './call_email_workflow';
 import Offence from '../offence/offence';
-import SanctionOutcome from '../sanction_outcome/sanction_outcome';
+import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 require("select2/dist/css/select2.min.css");

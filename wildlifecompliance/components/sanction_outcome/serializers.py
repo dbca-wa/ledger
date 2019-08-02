@@ -1,14 +1,13 @@
 from rest_framework import serializers
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
-<<<<<<< HEAD
-=======
 from wildlifecompliance.components.main.fields import CustomChoiceField
->>>>>>> parent of 59545b305... Make more columns in the sanction outcome table orderable
-from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer
+from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer, OffenderSerializer
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 
 
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
+    status = CustomChoiceField(read_only=True)
     alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
 
     class Meta:
@@ -16,6 +15,8 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'type',
+            'status',
+            'lodgement_number',
             'region',
             'district',
             'identifier',
@@ -31,11 +32,10 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
         read_only_fields = ()
 
 
-<<<<<<< HEAD
-=======
 class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     user_action = serializers.SerializerMethodField()
+    offender = OffenderSerializer(read_only=True,)
 
     class Meta:
         model = SanctionOutcome
@@ -80,7 +80,6 @@ class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
 
         return returned_url
 
->>>>>>> parent of 59545b305... Make more columns in the sanction outcome table orderable
 class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
     offence_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
     offender_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
@@ -91,8 +90,6 @@ class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'type',
-            # 'region',
-            # 'district',
             'identifier',
             'offence_id',
             'offender_id',
