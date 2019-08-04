@@ -67,7 +67,6 @@ class ApplicationFeeView(TemplateView):
 
         proposal = self.get_object()
         application_fee = ApplicationFee.objects.create(proposal=proposal, created_by=request.user, payment_type=3)
-        #import ipdb; ipdb.set_trace()
 
         try:
             with transaction.atomic():
@@ -97,7 +96,6 @@ class MakePaymentView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
 
     def post(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
 
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
@@ -117,23 +115,7 @@ class MakePaymentView(TemplateView):
                 )
 
                 logger.info('{} built payment line items {} for Park Bookings and handing over to payment gateway'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
-                #import ipdb; ipdb.set_trace()
                 return checkout_response
-
-#                # FIXME: replace with session check
-#                invoice = None
-#                if 'invoice=' in checkout_response.url:
-#                    invoice = checkout_response.url.split('invoice=', 1)[1]
-#                else:
-#                    for h in reversed(checkout_response.history):
-#                        if 'invoice=' in h.url:
-#                            invoice = h.url.split('invoice=', 1)[1]
-#                            break
-#                print ("-== internal_booking ==-")
-#                self.internal_create_booking_invoice(booking, invoice)
-#                delete_session_booking(request.session)
-#
-#                return checkout_response
 
         except Exception, e:
             logger.error('Error Creating booking: {}'.format(e))
@@ -242,46 +224,96 @@ class ApplicationFeeSuccessView(TemplateView):
         }
         return render(request, self.template_name, context)
 
-
 class BookingSuccessView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
 
     def get(self, request, *args, **kwargs):
         print (" BOOKING SUCCESS ")
 
-        context = template_context(self.request)
-        basket = None
-        booking = get_session_booking(request.session)
-
-        if self.request.user.is_authenticated():
-            basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
-        else:
-            basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
-
-        order = Order.objects.get(basket=basket[0])
-        invoice = Invoice.objects.get(order_number=order.number)
-        invoice_ref = invoice.reference
-        book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-
-        print ("BOOKING")
-
+        booking = None
+        submitter = None
+        invoice = None
         try:
-            recipient = booking.proposal.applicant.email
-            submitter = booking.proposal.applicant
-        except:
-            recipient = booking.proposal.submitter.email
-            submitter = booking.proposal.submitter
+            context = template_context(self.request)
+            basket = None
+            booking = get_session_booking(request.session)
+            proposal = booking.proposal
 
-        #import ipdb; ipdb.set_trace()
-        send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
-        send_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+            try:
+                recipient = proposal.applicant.email
+                submitter = proposal.applicant
+            except:
+                recipient = proposal.submitter.email
+                submitter = proposal.submitter
 
-        #delete_session_booking(request.session)
+            if self.request.user.is_authenticated():
+                basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
+            else:
+                basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
+
+            order = Order.objects.get(basket=basket[0])
+            invoice = Invoice.objects.get(order_number=order.number)
+            invoice_ref = invoice.reference
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+
+            if booking.booking_type == 3:
+                try:
+                    inv = Invoice.objects.get(reference=invoice_ref)
+                    order = Order.objects.get(number=inv.order_number)
+                    order.user = submitter
+                    order.save()
+                except Invoice.DoesNotExist:
+                    logger.error('{} tried paying an admission fee with an incorrect invoice'.format('User {} with id {}'.format(proposal.submitter.get_full_name(), proposal.submitter.id) if proposal.submitter else 'An anonymous user'))
+                    return redirect('external-proposal-detail', args=(proposal.id,))
+                if inv.system not in ['0557']:
+                    logger.error('{} tried paying an admission fee with an invoice from another system with reference number {}'.format('User {} with id {}'.format(proposal.submitter.get_full_name(), proposal.submitter.id) if proposal.submitter else 'An anonymous user',inv.reference))
+                    return redirect('external-proposal-detail', args=(proposal.id,))
+
+                if book_inv:
+                    booking.booking_type = 1  # internet booking
+                    booking.expiry_time = None
+                    update_payments(invoice_ref)
+
+                    if not (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid'):
+                        logger.error('Admission Fee Invoice payment status is {}'.format(invoice.payment_status))
+                        raise
+
+                    booking.save()
+                    request.session['cols_last_booking'] = booking.id
+                    delete_session_booking(request.session)
+
+                    send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+                    send_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+
+                    context.update({
+                        'booking_id': booking.id,
+                        'submitter': submitter,
+                        'booking_invoice': invoice
+                    })
+                    return render(request, self.template_name, context)
+
+        except Exception as e:
+            if ('cols_last_booking' in request.session) and ApplicationFee.objects.filter(id=request.session['cols_last_booking']).exists():
+                booking = Booking.objects.get(id=request.session['cols_last_booking'])
+                proposal = booking.proposal
+
+                try:
+                    recipient = proposal.applicant.email
+                    submitter = proposal.applicant
+                except:
+                    recipient = proposal.submitter.email
+                    submitter = proposal.submitter
+
+                if BookingInvoice.objects.filter(booking=booking).count() > 0:
+                    bi = BookingInvoice.objects.filter(booking=booking)
+                    invoice = bi[0]
+            else:
+                return redirect('home')
 
         context.update({
             'booking_id': booking.id,
             'submitter': submitter,
-            'book_inv': [book_inv]
+            'booking_invoice': invoice
         })
         return render(request, self.template_name, context)
 
@@ -295,7 +327,6 @@ class InvoicePDFView(InvoiceOwnerMixin,View):
         else:
             proposal = Proposal.objects.get(fee_invoice_reference=invoice.reference)
 
-        #import ipdb; ipdb.set_trace()
         response = HttpResponse(content_type='application/pdf')
         response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
         return response
