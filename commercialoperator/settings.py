@@ -114,7 +114,7 @@ EMAIL_FROM = DEFAULT_FROM_EMAIL
 
 OSCAR_BASKET_COOKIE_OPEN = 'cols_basket'
 PAYMENT_SYSTEM_ID = env('PAYMENT_SYSTEM_ID', 'S557')
-os.environ['LEDGER_CUSTOM_PRODUCT_LIST'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code')"
+os.environ['LEDGER_PRODUCT_CUSTOM_FIELDS'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code')"
 
 if not VALID_SYSTEMS:
     VALID_SYSTEMS = [PAYMENT_SYSTEM_ID]
