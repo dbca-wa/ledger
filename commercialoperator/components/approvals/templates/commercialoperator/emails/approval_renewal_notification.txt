@@ -7,6 +7,7 @@
     Application : {{ proposal.lodgement_number}}
 
     Please find the attached renewal notice.
+    To Renew your Commercial Operations Licence please click the link: {{url}}
 
    
 {%  endblock %}

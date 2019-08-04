@@ -138,10 +138,18 @@ def send_approval_surrender_email_notification(approval):
 def send_approval_renewal_email_notification(approval):
     email = ApprovalRenewalNotificationEmail()
     proposal = approval.current_proposal
+    url=settings.SITE_URL if settings.SITE_URL else ''
+    url += reverse('external')
+
+    if "-internal" in url:
+        # remove '-internal'. This email is for external submitters
+        url = ''.join(url.split('-internal'))
+
 
     context = {
         'approval': approval,
-        'proposal': approval.current_proposal
+        'proposal': approval.current_proposal,
+        'url': url,
 
     }
     sender = settings.DEFAULT_FROM_EMAIL
