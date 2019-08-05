@@ -172,7 +172,17 @@ DATABASES = {
     # Defined in the DATABASE_URL env variable.
     'default': database.config(),
 }
+# Configure Foreign Data Wrapper database if available
+if env('FDW_MANAGER_DATABASE_URL', None):
+    FDW_MANAGER_DATABASE = {
+        'fdw_manager_db': database.parse_database_url(env('FDW_MANAGER_DATABASE_URL')),
+    }
+    DATABASES.update(FDW_MANAGER_DATABASE)
+else:
+    raise ImproperlyConfigured('FDW_MANAGER_DATABASE_URL environment variable must not be empty; it is '
+                               'required for ledger connection to OracleAccountCode and OracleOpenPeriod models.')
 
+DATABASE_ROUTERS = ['ledger.routers.FdwManagerRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
