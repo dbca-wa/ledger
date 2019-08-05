@@ -216,7 +216,7 @@ export default {
       pTab: "pTab" + vm._uid,
       lTab: "lTab" + vm._uid,
       errorResponse: '',
-      dtHeadersOffender: ["id", "data_type", "Description", "Action"],
+      dtHeadersOffender: ["id", "Individual/Organisation", "Details", "Action"],
       dtHeadersAllegedOffence: [
         "id",
         "Act",
