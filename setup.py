@@ -7,6 +7,6 @@ setup(name='ledger',
       author='Department of Parks and Wildlife',
       author_email='asi@dbca.wa.gov.au',
       license='BSD',
-      packages=['ledger',],
+      packages=['ledger','ledger.*',],
       install_requires=[],
       zip_safe=False)
