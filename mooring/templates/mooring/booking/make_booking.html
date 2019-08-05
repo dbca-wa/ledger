@@ -22,7 +22,6 @@
     </style>
 {% endblock %}
 {% block content %}
-
 <div id="addBooking">
 {% if not booking %}
     <div class="container">
@@ -45,7 +44,7 @@
                             {% verbatim %}
                                 <b>Time left to complete booking {{ timeleft }}.</b> 
                             {% endverbatim %}
-                                <a class="btn btn-info" href="{% url 'public_abort_booking' %}?change=true">Change in-progress booking</a>
+                                <a class="btn btn-info" href="{% url 'public_abort_booking' %}?change=True">Change in-progress booking</a>
                                 <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel in-progress booking</a>
                             </p>
                             {% if show_errors %}
@@ -67,9 +66,137 @@
                                 </ul>
                             </div>
                             {% endif %}
-                            <h3 class="text-primary">Booking for</h3>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-12">
+                            <div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h3 class="text-primary">Booking for</h3>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Mooring</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>Vessel</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>From</strong>
+                                    </div>
+                                    <div class="col-md-1">
+                                        &nbsp; 
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>To</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>Price</strong>
+                                    </div>
+                                </div>
+
+                                {% for bm in booking_mooring %}
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        {{ bm.campsite.mooringarea.name }} 
+                                    </div>
+                                    <div class="col-md-2">
+                                        {% verbatim %}
+                                            <small v-cloak>{{ rego.toUpperCase() }}</small>
+                                        {% endverbatim %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ bm.from_dt }} 
+                                    </div>
+                                    <div class="col-md-1">
+                                        to
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ bm.to_dt }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        ${{ bm.amount }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+				</div>
+ 
+                                <BR> 
+				<div class="row">
+
+                                {% for bc in booking_change_fees %}
+                                  <div class="col-md-10">
+                                        {{ bc.description }}
+                                  </div>
+			          <div class="col-md-2"> 	
+					{{ bc.amount }}
+				  </div>
+				{% endfor %}
+                                </div>
+                            <div v-if="payingAdmissions && linesAdmissions.length > 0" v-cloak>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h3 class="text-primary">Admission Fees</h3>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <strong>Adults</strong>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <strong>Children</strong>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <strong>Infants</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        &nbsp;
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>From</strong>
+                                    </div>
+                                    <div class="col-md-1">
+                                        &nbsp;
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>To</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>Price</strong>
+                                    </div>
+                                </div>
+                                {% verbatim %}
+                                <div class="row" v-for="index in linesAdmissions.length" v-cloak>
+                                    <div class="col-md-1">
+                                        {{ numAdults }}
+                                    </div>
+                                    <div class="col-md-1">
+                                        {{ numChildren }}
+                                    </div>
+                                    <div class="col-md-1">
+                                        {{ numInfants }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        &nbsp;
+                                    </div>
+                                    <div class="col-md-2">
+                                        {{ linesAdmissions[index-1].from }}
+                                    </div>
+                                    <div class="col-md-1">
+                                        to
+                                    </div>
+                                    <div class="col-md-2">
+                                            {{ linesAdmissions[index-1].to }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        ${{ linesAdmissions[index-1].admissionFee }}
+                                    </div>
+                                </div>
+                                {% endverbatim %}
+                            </div>
+                        </div>
+
+                        <div class="hiddenAdmissions" style="display:none;">
+                            <input type="hidden" id="admissionsLines" v-model="admissionsLines" name="admissionsLines"/>
+                        </div>
+            
+                        <div class="col-md-2" style='display:none'>
                               <img alt="campground"  class="img-thumbnail img-responsive" src="{{ booking.campground.first_image.image.url }}" style='display:none'>
                               <p class="pricing" v-cloak >
                             {% verbatim %}
@@ -78,7 +205,7 @@
                                   <br> <span class="text-muted">Per day</span>
                               </p>
                         </div>
-                        <div class="col-md-10">
+                        <div class="col-md-10" style='display:none'>
                             <div class="row form-horizontal">
                                 <div class="col-md-12">
                                     <div class="form-group">
@@ -151,73 +278,75 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-6">
-                <div class="well">
+            
+            <div class="col-lg-12"> 
+                <div class='col-lg-6 col-xs-12 col-sm-12' style='padding:0px; padding-left: 1px;' >
+                <div class="well col-lg-12 col-xs-12 col-sm-12 ml-1" style='min-height: 450px;' >
                     <div class="row">
                         <div class="col-lg-12">
                             <h3 class="text-primary">Personal Details</h3>
                         </div>
                     </div>
                     <div class="row">
-                    {% if request.user.is_anonymous %}
-                      <div class="col-md-6">
-                          <div class="form-group">
+                    {% if request.user.is_anonymous or request.user.is_staff %}
+                        <div class="col-md-6">
+                            <div class="form-group">
                             {{form.email.label_tag}}
                             {{ form.email|class:'form-control'}}
-                          </div>
-                      </div>
-                      <div class="col-md-6" >
-                          <div class="form-group">
-                              {{form.confirm_email.label_tag}}
-                              {{ form.confirm_email|class:'form-control'}}
-                          </div>
-                      </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6" >
+                            <div class="form-group">
+                                {{form.confirm_email.label_tag}}
+                                {{ form.confirm_email|class:'form-control'}}
+                            </div>
+                        </div>
                     {% else %}
-                      <div class="col-md-12">
-                          <p>Logged in as user <b>{{ request.user.email }}</b>.</p>
-                      </div>
+                        <div class="col-md-12">
+                            <p>Logged in as user <b>{{ request.user.email }}</b>.</p>
+                        </div>
                     {% endif %}
                     </div>
                     <div class="row">
-                      <div class="col-md-6">
-                          <div class="form-group">
+                        <div class="col-md-6">
+                            <div class="form-group">
                             {{form.first_name.label_tag}}
                             {{ form.first_name|class:'form-control'}}
-                          </div>
-                      </div>
-                      <div class="col-md-6">
-                          <div class="form-group">
-                              {{form.last_name.label_tag}}
-                              {{ form.last_name|class:'form-control'}}
-                          </div>
-                      </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{form.last_name.label_tag}}
+                                {{ form.last_name|class:'form-control'}}
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
-                      <div class="col-md-6">
-                          <div class="form-group">
-                              {{form.postcode.label_tag}}
-                              {{ form.postcode|class:'form-control'}}
-                          </div>
-                      </div>
-                      <div class="col-md-6">
-                          <div class="form-group">
-                              {{form.country.label_tag}}
-                              {{ form.country|class:'form-control'}}
-                          </div>
-                      </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{form.postcode.label_tag}}
+                                {{ form.postcode|class:'form-control'}}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{form.country.label_tag}}
+                                {{ form.country|class:'form-control'}}
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
-                      <div class="col-md-6">
-                          <div class="form-group">
-                              {{form.phone.label_tag}}
-                              {{ form.phone|class:'form-control'}}
-                          </div>
-                      </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{form.phone.label_tag}}
+                                {{ form.phone|class:'form-control'}}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="well">
+                </div>
+                <div class='col-lg-6 col-xs-12 col-sm-12' style='padding:0px; padding-left: 1px;'>
+                <div class="well col-lg-12 col-xs-12 col-sm-12 " style='min-height: 450px;'>
                     <div class="row">
                         <div class="col-lg-12">
                             <h3 class="text-primary">Vessels</h3>
@@ -228,7 +357,7 @@
                     {# Manual rendering of the 'vehicles' formset. #}
                     {# Django 1.11 will move form rendering junk into proper templates, #}
                     {# so there should be a cleaner way of doing this in future. #}
-                    <div class="row" v-cloak>
+                    <div class="row" style='display: none' v-cloak>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label style='display: none'>Number of vessels:
@@ -240,18 +369,108 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row form-group" v-for="(vehicle, index) in vehicles">
-                        <div class="col-md-4">
-                            <select v-on:change="calculateTotal" v-bind:name="'form-'+Number(index).toString()+'-vehicle_type'" class="form-control" v-model="vehicle[0]">
-                                <option value="0">Vessel</option>
-                            </select>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="text-right">Vessel Registration:</label>
+                                <input class="form-control" type="text" v-model="rego" required v-on:change="searchRego()" style="text-transform:uppercase" readonly/>
+                            </div>
+                            <div class="form-group" v-for="(vehicle, index) in vehicles" style="display:none;">
+                                <select v-on:change="calculateTotal" v-bind:name="'form-'+Number(index).toString()+'-vehicle_type'" class="form-control" v-model="vehicle[0]" >
+                                    <option value="0">Vessel</option>
+                                </select>
+                                <label for="'form-'+Number(index).toString()+'-vehicle_rego'" class="text-right" >Vessel</label><label>&nbspRegistration:</label>
+                                <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" v-model="vehicle[1]" v-on:change="searchRego()" style="text-transform:uppercase;" readonly/>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <input class="form-control" v-bind:name="'form-'+Number(index).toString()+'-vehicle_rego'" type="text" placeholder="Registration" v-model="vehicle[1]" required v-on:change="updateLocalStorage"/>
-                        </div>
-                        <div class="col-md-4">
+                    </div>
+                        <!-- <div class="col-md-4">
                             <div class="checkbox" v-if="pricing.vehicle"><label><input v-bind:name="'form-'+Number(index).toString()+'-entry_fee'" type="checkbox" v-model="vehicle[2]" v-on:change="updateVehicles"/> Entry fee</label></div>
+                        </div> -->
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vessel_size" class="text-right">Vessel Size (Meters)</label>
+                                <input type="number" class="form-control" id="vessel_size" name="size" v-model="size" readonly/>
+                            </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vessel_draft" class="text-right">Vessel Draft (Meters)</label>
+                                <input type="number" class="form-control" id="vessel_draft" name="draft" v-model="draft" readonly/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vessel_beam" class="text-right">Vessel Beams (Meters)</label>
+                                <input type="number" class="form-control" id="vessel_beam" name="size" v-model="beam" readonly/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="vessel_weight" class="text-right">Vessel Weight (Tonnes)</label>
+                                <input type="number" class="form-control" id="vessel_weight" name="draft" v-model="weight" readonly/>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="linesAdmissions.length > 0">
+                        <h3 class="text-primary">Guest Details</h3>
+                        <div v-if="payingAdmissions" class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="num_adults" class="text-right">Adults (ages 12+):</label>
+                                    <input type="number" class="form-control" id="numAdults" name="num_adults" v-model="numAdults" v-on:change="guestsUpdated()" min="0" max="16"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="num_children" class="text-right">Children (ages 4-12):</label>
+                                    <input type="number" class="form-control" id="numChildren" name="num_children" v-model="numChildren" v-on:change="guestsUpdated()" min="0" max="16"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="num_infants" class="text-right">Infants (ages 0-4):</label>
+                                    <input type="number" class="form-control" id="numInfants" name="num_infants" v-model="numInfants" v-on:change="guestsUpdated()" min="0" max="16"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                            </div>
+
+                                <div class="row" style="display:none;">
+                                    <div class="small-6 columns">
+                                        <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
+                                            - Seniors Card
+                                            - Age Pension
+                                            - Disability Support
+                                            - Carer Payment
+                                            - Carer Allowance
+                                            - Companion Card
+                                            - Department of Veterans' Affairs">Concessions</span>
+                                        </label>
+                                    </div><div class="small-6 columns">
+                                        <input type="number" id="numConcessions" name="num_concessions" v-model="numConcessions" min="0" max="16"/></label>
+                                    </div>
+                                </div>
+                            <div class="row" style="display:none;">
+                                <div class="small-6 columns">
+                                    <label for="num_children" class="text-right">Moorings<label>
+                                </div>
+                                <div class="small-6 columns">
+                                    <input type="number" id="numMooring" name="num_mooring" v-model="numMooring" min="0" max="16"/></label>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div v-else>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    No admission fees required for {% verbatim %} {{ rego.toUpperCase() }} {% endverbatim %}
+                                </div>
+                            </div>
+                        </div>
+                     </div>
                     </div>
                     <template v-if="pricing.vehicle">
                         <div class="row" v-cloak>
@@ -285,13 +504,50 @@
                       </div>
                       <div class="col-md-6">
                           <div class="form-group">
-                              <p style="margin-top:30px;">Changes not permitted.Cancel up to 29 days before arrival for 50% refund.</p>
+                              <p style="margin-top:30px;"></p>
                           </div>
                       </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
+                            {% if request.user.is_staff %}
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label>Phone Booking Fee:</label>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input type="checkbox" id="nononline" name="nononline" v-model="nononline" @change="calculateTotal()" checked/>
+                                        </div>
+                                    </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label>Override Price:</label>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="checkbox" id="override" name="override" v-model="override"/>
+                                </div>
+                            </div>
+                                <div v-if="override">
+                                    <div class="form-group">
+                                        <label>Override Amount:</label>
+                                        <div class="input-group">
+                                            <span class="input-group-addon">AUD $</span>
+                                            <input type="number" class="form-control" name="overridePrice" v-model="overridePrice" step="0.01">
+                                        </div>
+                                    </div>
+                                    <div class="form-group" id="override-container">
+                                        <label>Reason:</label>
+                                        <select class="overrideReason" name="overrideReason" id="overrideReason" style="width:100%;">
+                                            <option v-for="res in override_reasons" :value="res.id">{% verbatim %}{{res.text}}{% endverbatim %}</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" >
+                                        <label>Details:</label>
+                                        <textarea v-model="overrideDetail" name="overrideDetail" style="width:100%;resize:none;"></textarea>
+                                    </div>
+                                </div>
+                            {% endif %}
                             <p class="text-muted">
                                 Payments will be recorded against the booking once the booking is completed and the payment is received.
                             </p>
@@ -300,9 +556,10 @@
                             <div class="row"> 
                                 <div class="col-md-8 col-md-offset-5">
                                     <div class="checkbox">
-                                        <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
+                                        <label><input type="checkbox" id="toc_check" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
                                     </div>
-                                    <button :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
+                                    <button v-if="total >= 0" :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to payment</button>
+                                    <button v-else="total < 0" :disabled="!toc" type="submit" class="btn btn-primary btn-lg">Proceed to Refund</button>
                                 </div>
                             </div>
                         </div>
@@ -318,20 +575,20 @@
 {% block custom_js %}
 {{ block.super }}
 {% if booking %}
-<script src="/static/common/js/moment.min.js"></script>
-<script src="/static/common/js/vue.min.js"></script>
+<script src="/static/common/js/moment.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script src="/static/common/js/vue.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<link href="/static/common/css/select2.min2.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+<script src="/static/common/js/select2.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script src="/static/common/js/sweetalert2.js"></script>
+<link rel="stylesheet" href="/static/common/css/sweetalert2.css"/>
 <script type="text/javascript">
     var book = new Vue({
         el: '#addBooking',
-        data: {
+        data: function() {
+            return {
             expiry: moment('{{ expiry|escapejs }}'),
             timer: {{ timer }},
             pricing: {
-                mooring: {{ pricing.mooring }},
-                adult: {{ pricing.adult }},
-                concession: {{ pricing.concession }},
-                child: {{ pricing.child }},
-                infant: {{ pricing.infant }},
                 vehicle: {{ pricing.vehicle }},
                 vehicleConc: {{ pricing.vehicle_conc }},
                 motorcycle: {{ pricing.motorcycle }}
@@ -343,9 +600,34 @@
             entryFee: 0,
             total: 0,
             concessionWarning: false,
+            numAdults: {% if details.num_adult > 0 %}{{ details.num_adult }}{% else %}0{% endif %},
+            numChildren: {% if details.num_children > 0 %}{{ details.num_children }}{% else %}0{% endif %},
+            numInfants: {% if details.num_infant > 0 %}{{ details.num_infant }}{% else %}0{% endif %},
+            linesAdmissions: {{ lines|safe }},
+            admissionsLines: [],
+            numConcessions: 0,
+            numMooring: 0,
             vehicleCount: 1,
+            payingAdmissions: true,
+            size: {{ details.vessel_size }},
+            draft: {{ details.vessel_draft }},
+            beam: {{ details.vessel_beam }},
+            weight: {{ details.vessel_weight }},
+            rego: '{{ details.vessel_rego }}',
+            admissionFee: 0,
+            nononline: false,
+            override: false,
+            overridePrice: 0,
+            overrideReason: '',
+            override_reasons: [],
+            overrideDetail: '',
+            isStaff: {{ staff }},
+            nonOnlineFee: 0,
+            isFirst: true,
             toc: false,
-            booking_id: {{ booking.id }}
+            booking_id: {{ booking.id }},
+            booking_change_fees: {{ booking_change_fees|safe }}
+            }
         },
         filters:{
             formatMoney:function(n,c, d, t){
@@ -358,7 +640,39 @@
                return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
              }
         },
+        watch: {
+            override: function (val){
+                console.log("Something changed");
+                if (val){
+//                    this.$nextTick(() => {
+                       this.$nextTick(function() {
+                        $('.overrideReason').select2({
+                            minimumResultsForSearch: Infinity
+                        }).
+                        on("select2:select",function (e) {
+                            var selected = $(e.currentTarget);
+                            this.overrideReason = selected.val();
+                        }).
+                        on("select2:unselect",function (e) {
+                            var selected = $(e.currentTarget);
+                            this.overrideReason = selected.val();
+                        }); 
+                    })
+                }
+                
+            }
+        },
         computed: {
+            numPeople: {
+                get: function get(){
+                    var count = parseInt(this.numAdults) + parseInt(this.numChildren) + parseInt(this.numInfants);
+                    if (count === 1) {
+                        return count +" person ▼";
+                    } else {
+                        return count + " people ▼";
+                    }
+                }
+            },
             timeleft: {
                 cache: false,
                 get: function get() {
@@ -398,7 +712,7 @@
                 var diff = vm.vehicles.length - vm.vehicleCount
                 if (diff < 0) {
                     for (var i=0; i<-diff; i++) {
-                        vm.vehicles.push([0, '', true]);
+                        vm.vehicles.push([0, vm.rego, true]);
                     }
                 } else if (diff > 0) {
                     for (var i=0; i<diff; i++) {
@@ -409,12 +723,178 @@
 
                 vm.updateLocalStorage();
             },
+            searchRego: function(rego){
+                let vm = this;
+                if (rego){
+                    var reg = rego;
+                } else {
+                    var reg = vm.rego
+                }
+                var data = {
+                    'rego': reg
+                }
+                if(reg){
+                    $.ajax({
+                        url: "/api/registeredVessels/",
+                        dataType: 'json',
+                        data: data,
+                        method: 'GET',
+                        success: function(data, stat, xhr) {
+                            if(data[0]){
+                                if (vm.linesAdmissions.length > 0){
+                                    if (data[0].admissionsPaid){
+                                        vm.payingAdmissions = false;
+                                    } else {
+                                        vm.payingAdmissions = true;
+                                    }
+                                    vm.calculateTotal();
+                                }                                
+                            } else {
+                                console.log("Registration was not found.");
+                                if (vm.linesAdmissions.length > 0){
+                                    vm.payingAdmissions = true;
+                                }
+                                vm.calculateTotal();
+                            }
+                        }
+                    });
+                    vm.isFirst = false;
+                }
+            },
+            getCookie: function(name){
+                var cookieValue = null;
+                if (document.cookie && document.cookie != ''){
+                    var cookies = document.cookie.split(';');
+                    for (var i = 0; i < cookies.length; i++){
+                        var cookie = $.trim(cookies[i]);
+                        if(cookie.substring(0, name.length +1) === (name + '=')){
+                            cookieValue = decodeURIComponent(cookie.substring(name.length +1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            },
+            csrfSafeMethod: function(method){
+                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+            },
+            guestsUpdated: function() {
+                let vm = this;
+                console.log(vm.numAdults);
+                var details = {
+                    'num_adults' : parseInt(vm.numAdults),
+                    'num_children' : parseInt(vm.numChildren),
+                    'num_infants' : parseInt(vm.numInfants),
+                    'vessel_rego' : vm.rego,
+                    'vessel_size' : vm.size,
+                    'vessel_draft' : vm.draft,
+                    'vessel_beam' : vm.beam,
+                    'vessel_weight' : vm.weight
+
+                }
+                data = {
+                    booking : vm.booking_id,
+                    details : JSON.stringify(details)
+                }
+                csrftoken = vm.getCookie('csrftoken');
+                $.ajax({
+                    beforeSend: function(xhr, settings){
+                        if (!vm.csrfSafeMethod(settings.type) && !this.crossDomain){
+                            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                        }
+                    },
+                    url: "/api/booking/" + vm.booking_id + "/",
+                    dataType: 'json',
+                    data: data,
+                    async: true,
+                    method: "PATCH",
+                    success: function(data, stat, xhr){
+                        console.log("Updated guests");
+
+                    }
+                });
+                vm.calculateTotal();
+            },
             calculateTotal: function () {
                 var vm = this;
                 var form = document.forms.addBookingForm;
 
                 vm.entryFee = 0;
                 vm.total = 0;
+                vm.total = '{{ booking_total }}';
+                vm.total = parseFloat(vm.total);
+                vm.admissionFee = 0;
+
+                if (vm.nononline){
+                    vm.total += (vm.nonOnlineFee/100);
+                }
+                
+
+                if (vm.payingAdmissions){
+                    // Will need to calculate price per person based on input.
+
+                    var family = 0;
+                    var adults = vm.numAdults;
+                    var children = vm.numChildren;
+
+                    if (adults > 1 & children > 1){
+                        if (adults == children){
+                            if (adults % 2 == 0){
+                                family = adults/2;
+                                adults = 0;
+                                children = 0;
+                            } else {
+                                adults -= 1;
+                                family = adults/2;
+                                adults = 1;
+                                children = 1;
+                            }
+                        }
+                        else if (adults > children){
+                            if (children % 2 == 0){
+                                family = children/2;
+                                adults -= children;
+                                children = 0;
+                            } else {
+                                children -= 1;
+                                family = children/2;
+                                adults -= children;
+                                children = 1;
+                            }
+                        } else {
+                            if (adults % 2 == 0){
+                                family = adults/2;
+                                children -= adults;
+                                adults = 0;
+                            } else {
+                                adults -= 1;
+                                family = adults/2;
+                                children -= adults;
+                                adults = 1;
+                            }
+                        }
+                    } 
+                    // Then calculate per line, adding as we go.
+                    for (var i = 0; i < vm.linesAdmissions.length; i++){
+                        var thisAdmission = 0;
+                        if (vm.linesAdmissions[i].from != vm.linesAdmissions[i].to){
+                            thisAdmission += (vm.numInfants * parseFloat(vm.linesAdmissions[i].infant_on));
+                            thisAdmission += (adults * parseFloat(vm.linesAdmissions[i].adult_on));
+                            thisAdmission += (children * parseFloat(vm.linesAdmissions[i].child_on));
+                            thisAdmission += (family * parseFloat(vm.linesAdmissions[i].family_on));
+                        } else {
+                            thisAdmission += (vm.numInfants * parseFloat(vm.linesAdmissions[i].infant));
+                            thisAdmission += (adults * parseFloat(vm.linesAdmissions[i].adult));
+                            thisAdmission += (children * parseFloat(vm.linesAdmissions[i].child));
+                            thisAdmission += (family * parseFloat(vm.linesAdmissions[i].family));
+                        }
+                        vm.linesAdmissions[i].admissionFee = parseFloat(thisAdmission).toFixed(2);
+                        vm.admissionFee += parseFloat(thisAdmission);
+                        vm.total += parseFloat(thisAdmission);
+
+                    }
+                    vm.admissionsLines = JSON.stringify(vm.linesAdmissions);
+                }
 
                 // add per-person fees
                 // vm.total += (parseInt(form.num_adult.value) || 0)*vm.pricing.adult;
@@ -422,32 +902,31 @@
                 // vm.total += (parseInt(form.num_child.value) || 0)*vm.pricing.child;
                 // vm.total += (parseInt(form.num_infant.value) || 0)*vm.pricing.infant;
                 
-                vm.total += vm.pricing.mooring;
+//                vm.total += vm.pricing.mooring;
                 // generate per night rate the ugly way
                 // (price can vary based on date, so this is an approximate measure)
-                vm.perDayFee = vm.total/{{ booking.num_days }};
+//                vm.perDayFee = vm.total/{{ booking.num_days }};
 
                 // generate + add park entry fees
-                vm.vehicles.forEach(function (el) {
-                    if (el[2]) {
-                        switch(el[0]) {
-                            case '1':
-                                vm.entryFee += vm.pricing.vehicleConc;
-                                break;
-                            case '2':
-                                vm.entryFee += vm.pricing.motorcycle;
-                                break;
-                            case '0':
-                            default:
-                                vm.entryFee += vm.pricing.vehicle;
-                                break;
-                        }
-                    }
-                });
-                vm.total += vm.entryFee;
-
+ //               vm.vehicles.forEach(function (el) {
+//                    if (el[2]) {
+//                        switch(el[0]) {
+//                            case '1':
+//                                vm.entryFee += vm.pricing.vehicleConc;
+//                                break;
+//                            case '2':
+//                                vm.entryFee += vm.pricing.motorcycle;
+//                                break;
+//                            case '0':
+//                            default:
+//                                vm.entryFee += vm.pricing.vehicle;
+//                                break;
+//                        }
+//                    }
+//                });
+//                vm.total += vm.entryFee;
                 // show concession warning text if the number > 0
-                vm.concessionWarning = (parseInt(form.num_concession.value) > 0);
+//                vm.concessionWarning = (parseInt(form.num_concession.value) > 0);
                 return;
             },
             validate: function (e) {
@@ -475,7 +954,19 @@
                 if (isValid) {
                     form.submit();
                 }
-            }
+            },
+            swalMessage: function(value){
+                Swal({
+                title: value.title,
+                text: value.text,
+                type: value.type,
+                width: '30%',
+                showCancelButton: false,
+                confirmButtonText: 'OK',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: false
+                });
+            },
         },
         mounted: function () {
             var vm = this;
@@ -502,6 +993,12 @@
                 } 
             }, 1000);
 
+            if (vm.linesAdmissions.length > 0){
+                vm.payingAdmissions = true;
+            } else {
+                vm.payingAdmissions = false;
+            }
+
             // wire up events to the form controls
             // TODO: for django 1.11 replace python form controls with templates;
             // should be easier to inject vue stuff
@@ -524,7 +1021,7 @@
                             var length = storedData.vehicles.length;
                             vm.vehicles = [];
                             $.each(storedData.vehicles, function(i,v) {
-                                vm.vehicles.push(v);
+                                vm.vehicles.push([i, vm.rego, true]);
                             });
                             vm.vehicleCount = length;
                         }
@@ -536,9 +1033,90 @@
                 catch(e){
                 }
             }
+            //Set the rego if entered.
+            vm.isFirst = true;
+            if (vm.rego !== ""){
+                console.log(vm.rego);
+                vm.vehicles = [[0, vm.rego, true]];
+                console.log(vm.vehicles)
+                vm.searchRego(vm.rego);
+            }
+            
+            $.get("/api/discountReasons/",function (data) {
+                vm.override_reasons = data;
+            });
+
+            if (vm.isStaff){
+                data = {
+                    'key': '0'
+                }
+                $.ajax({
+                    url: "/api/global_settings",
+                    dataType: 'json',
+                    data: data,
+                    async: true,
+                    method: "GET",
+                    success: function(data, stat, xhr){
+                        if (data == "Error more than 1 group"){
+                            console.log("group error");
+                            var error = {
+                                title : "Invalid Group",
+                                text : "Please alert admin, you are part of no or too many mooring groups. Unable to perform bookings.",
+                                type : "error",
+                            }
+                            vm.swalMessage(error);
+                            $('#toc_check').prop('disabled', "disabled");
+                            vm.toc = false;
+                        } else {
+                            console.log(data[0].value);
+                            var intval = parseInt(data[0].value);
+                            intval *= 100;
+                            vm.nonOnlineFee = intval;
+                            if (intval > 0){
+                                vm.nononline = true;
+                            }
+                            vm.calculateTotal();
+                        }
+                    }
+                });
+            }
             vm.calculateTotal();
+            // console.log("FEE CHANGE");
+	    // console.log(vm.booking_change_fees);
+
+            $( "#id_email" ).change(function() {
+                var email = this.value;
+                $.ajax({
+                    url: "/api/profile-admin?email_address="+email,
+                    dataType: 'json',
+                    data: data,
+                    async: true,
+                    method: "GET",
+                    success: function(data, stat, xhr){
+                        $('#id_confirm_email').val(data['email']);
+                        $('#id_first_name').val(data['first_name']);
+                        $('#id_last_name').val(data['last_name']);
+                        if (data['mobile_number'] > 5) {
+				$('#id_phone').val(data['mobile_number']);
+			} else {
+ 				$('#id_phone').val(data['phone_number']);
+			}
+                        if (data['residential_address'] != null) {
+				$('#id_postcode').val(data['residential_address']['postcode']);
+                                $('#id_country').val(data['residential_address']['country']);
+                                
+			}
+                        console.log(data);
+                    }
+                });
+            });
         }
     });
 </script>
+<style>
+.swal2-popup {
+    font-size: 20px !important;
+}
+</style>
 {% endif %}
 {% endblock %}

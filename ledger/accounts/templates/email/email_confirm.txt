@@ -1,12 +1,12 @@
 Dear Sir/Madam,
 
-{{ name }} ({{ email }}) wants to add this email address to their Parks and Wildlife customer account.
+{{ name }} ({{ email }}) wants to add this email address to their Biodiversity, Conservation and Attractions customer account.
 
-By doing this, you will be able to access {{ name }}'s Parks and Wildlife account using this email address. {% if is_merge %}As this email address already has a Parks and Wildlife account associated with it, be aware that this action will merge the contents of both accounts.{% endif %}
+By doing this, you will be able to access {{ name }}'s Biodiversity, Conservation and Attractions account using this email address. {% if is_merge %}As this email address already has a Biodiversity, Conservation and Attractions account associated with it, be aware that this action will merge the contents of both accounts.{% endif %}
 
 You can confirm this action by visiting this link: {{ confirm_url }} 
 If you did not approve this action, please disregard this message.
 
 Best regards,
 
-Parks and Wildlife Customer Portal
+Biodiversity, Conservation and Attractions Customer Portal

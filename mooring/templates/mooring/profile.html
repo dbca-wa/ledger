@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    My Profile - Department of Parks and Wildlife
+    My Profile 
 {% endblock %}
 
 {% block content %}
@@ -168,8 +168,8 @@
 
 {% block custom_js %}
 {{ block.super }}
-<script src="/static/common/js/moment.min.js"></script>
-<script src="/static/common/js/vue.min.js"></script>
+<script src="/static/common/js/moment.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script src="/static/common/js/vue.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script type="text/javascript">
     var API_COUNTRIES = "/api/countries";
     var API_PROFILE = "/api/profile";
