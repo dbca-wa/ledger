@@ -1,0 +1,11 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+    <p>Your Approval has been surrendered:</p>
+    <p><strong>Approval : {{ approval.lodgement_number}}</strong></p>
+    <p><strong>Surrender Details : {{details}}</strong></p>
+    <p><strong>Surrender Date : {{surrender_date}}</strong></p>
+  
+
+    
+{%  endblock %}

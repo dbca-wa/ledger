@@ -1,0 +1,7 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+    <p>Your organisation request has been declined:</p>
+    <p><strong>Organisation : {{ request.name }}</strong></p>
+    <p><strong>ABN : {{ request.abn}}</strong></p>
+{%  endblock %}

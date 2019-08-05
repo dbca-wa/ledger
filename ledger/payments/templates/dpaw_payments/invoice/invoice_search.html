@@ -8,19 +8,18 @@
         <meta name="description" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/jquery/2.2.0/jquery.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/localforage/1.3.1/localforage.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
-        <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/js/egg.js"></script>
-        <script type="text/javascript" src="{% static 'js/f6_oim_cms.js' %}"></script>
-        <link rel="icon" href="//static.dpaw.wa.gov.au/images/favicon.svg" sizes="any" type="image/svg+xml" />
-        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/fonts/Lato2OFLWeb/Lato/latofonts.css" />
-        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation-flex.css">
-        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
-        <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
-        <link rel="stylesheet" type="text/css" media="all" href="{% static 'css/f6_oim_cms.css' %}" />
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/localforage/1.3.1/localforage.min.js"></script>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/foundation/6.1.2/foundation.min.js"></script>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/foundation-datepicker/1.5.0/js/foundation-datepicker.min.js"></script>
+        <script type="text/javascript" src="{% static 'ledger/js/f6_oim_cms.js' %}"></script>
+        <link rel="icon" href="{% static 'favicon.ico' %}"/>
+        <link rel="stylesheet" type="text/css" media="all" href="{% static 'ledger/css/latofonts.css' %}" />
+        <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/foundation/6.1.2/foundation-flex.css">
+        <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
+        <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/foundation-datepicker/1.5.0/css/foundation-datepicker.min.css" />
+        <link rel="stylesheet" type="text/css" media="all" href="{% static 'ledger/css/f6_oim_cms.css' %}" />
         {% block extra_css %}
 
         {% endblock %}
@@ -30,7 +29,7 @@
             <div class="content">
                 <div class="row align-center">
                     <div class="align-center columns show-for-large hide-for-print"><a target="_blank" href="//www.dpaw.wa.gov.au">
-                        <img class="align-center" src="//static.dpaw.wa.gov.au/images/oimlogo_left.svg" alt="Department of Biodiversity, Conservation and Attractions"></a>
+                        <img class="align-center" src="{% static 'ledger/images/oimlogo_left.svg' %}" alt="Department of Biodiversity, Conservation and Attractions"></a>
                     </div>
                 </div>
                 <div class="row align-justify">

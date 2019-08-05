@@ -136,7 +136,7 @@
                                 <div class="row form-horizontal" v-if="initialised">
                                     <div class="col-md-12">
                                         <div class="form-group">
-                                            <label class="col-md-4" for="Total Price">Total Price <span class="text-muted">(GST inclusive.)</span></label>
+                                            <label class="col-md-4" for="Total Price">iii Total Price <span class="text-muted">(GST inclusive.)</span></label>
                                             <div class="col-md-8">
                                                 <div class="input-group">
                                                     <span class="input-group-addon">AUD <i class="fa fa-usd"></i></span>

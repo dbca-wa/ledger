@@ -22,7 +22,7 @@
 {% endif %}
     var useAdminApi = true;
     </script>
-    <script src="{% static 'availability/js/manifest.js' %}"></script>
-    <script src="{% static 'availability/js/vendor.js' %}"></script>
-    <script src="{% static 'availability/js/app.js' %}"></script>
+    <script src="{% static 'availability/js/manifest.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script src="{% static 'availability/js/vendor.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
+    <script src="{% static 'availability/js/app.js' %}?ver={{ GIT_COMMIT_HASH }}"></script>
 {% endblock %}

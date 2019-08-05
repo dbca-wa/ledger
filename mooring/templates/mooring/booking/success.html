@@ -7,7 +7,10 @@
             <div class="row"><div class="col-sm-12">
                 <h2>Success!</h2>
                 <p>A confirmation email has been sent to {{ booking.customer.email }}. </p>
-                <p>Please click <a href="{{EXPLORE_PARKS_SEARCH}}">here</a> if you want to make another booking.</p>
+                <p>For any refund details please refer to the email send to {{ booking.customer.email }}. </p>
+                <p>&nbsp;</p>
+		<p>Please click <a href="{{EXPLORE_PARKS_SEARCH}}">here</a> if you want to make another booking.</p>
+
             </div></div>
         </div>
         {% include "mooring/booking/booking_view.html" %}
