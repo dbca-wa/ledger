@@ -30,7 +30,7 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
     def filter_queryset(self, request, queryset, view):
         total_count = queryset.count()
         sanction_outcome_type = request.GET.get('sanction_outcome_type')
-        
+
 
         getter = request.query_params.get
         fields = self.get_fields(getter)
