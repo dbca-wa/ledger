@@ -804,12 +804,11 @@ export default {
       let returned = null;
       if (this.$parent.call_email) {
           returned = await Vue.http.get("/api/offence/filter_by_call_email.json", {
-          params: { call_email_id: this.$parent.call_email.id }
+              params: { call_email_id: this.$parent.call_email.id }
           });
-      }
-      if (this.$parent.inspection) {
+      } else if (this.$parent.inspection) {
           returned = await Vue.http.get("/api/offence/filter_by_inspection.json", {
-          params: { inspection_id: this.$parent.inspection.id }
+              params: { inspection_id: this.$parent.inspection.id }
           });
       }
       this.options_for_offences = returned.body;
