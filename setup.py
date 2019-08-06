@@ -33,7 +33,7 @@ setup(name='ledger',
       package_data = {
         '': ['*.py'],
         '': ['*.txt'],
-        '': ['ledger/address/fixtures/*.json'],
+        'ledger/address/fixtures': ['*.json'],
         '': ['*.js'],
         '': ['*.css'],
       },
