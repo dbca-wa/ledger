@@ -66,10 +66,10 @@ class MooringAreaMooringsiteFilterSerializer(serializers.Serializer):
     num_mooring = serializers.IntegerField(default=0)
     avail = serializers.ChoiceField(choices=('all', 'rental-available', 'rental-notavailable', 'public-notbookable'), default='all')
     pen_type = serializers.ChoiceField(choices=('all', 0, 1, 2), default='all')
-    vessel_size = serializers.IntegerField(default=0)
-    vessel_draft = serializers.IntegerField(default=0)
-    vessel_beam = serializers.IntegerField(default=0)
-    vessel_weight = serializers.IntegerField(default=0)
+    vessel_size = serializers.FloatField(default=0)
+    vessel_draft = serializers.FloatField(default=0)
+    vessel_beam = serializers.FloatField(default=0)
+    vessel_weight = serializers.FloatField(default=0)
     vessel_rego = serializers.CharField(default=None, allow_null=True, allow_blank=True)
     #distance_radius = serializers.IntegerField(default=0)
 
@@ -494,7 +494,7 @@ class MooringsiteSerialiser(serializers.ModelSerializer):
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
-        fields = ('name','abbreviation','ratis_id','wkb_geometry','zoom_level','mooring_group')
+        fields = ('id','name','abbreviation','ratis_id','wkb_geometry','zoom_level','mooring_group')
 
 
 class MooringsiteClassSerializer(serializers.HyperlinkedModelSerializer):
@@ -616,8 +616,8 @@ class RateDetailSerializer(serializers.Serializer):
         return value
 
     def validate(self,obj):
-        if obj.get('reason') == 1 and not obj.get('details'):
-            raise serializers.ValidationError('Details required if reason is other.')
+        #if obj.get('reason') == 1 and not obj.get('details'):
+        #    raise serializers.ValidationError('Details required if reason is other.')
         return obj
 
 class BookingPeriodOptionsSerializer(serializers.ModelSerializer):

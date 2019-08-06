@@ -53,10 +53,10 @@
                         <div class="col-md-4">
                             <div class="form-group">
                             <label for="">Cancelled</label>
-                            <select class="form-control" v-model="filterCanceled" id="filterCanceled">
+                                <select class="form-control" v-model="filterCanceled" id="filterCanceled">
                                     <option value="True">Yes</option>
                                     <option value="False">No</option>
-                            </select>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -148,6 +148,15 @@
                             </span>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                            <label for="">Cancelled</label>
+                            <select class="form-control" v-model="filterCanceled2" id="filterCanceled2">
+                                    <option value="True">Yes</option>
+                                    <option value="False">No</option>
+                            </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -165,7 +174,15 @@
 
 <script>
 // Variabled ending with a 2 (except select2) are reused for the admissions fee payment table.
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal,select2} from "../../hooks.js"
+import {$,
+        bus,
+        datetimepicker,
+        api_endpoints,
+        helpers,
+        Moment,
+        swal,
+//        select2
+        } from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import changebooking from "./changebooking.vue"
@@ -215,10 +232,10 @@ export default {
                             d.departure = vm.filterDateTo;
                         }
                         if (vm.filterCampground != "All") {
-                            d.campground = vm.filterCampground
+                            d.campground = vm.filterCampground;
                         }
                         if (vm.filterRegion != "All") {
-                            d.region = vm.filterRegion
+                            d.region = vm.filterRegion;
                         }
                         d.canceled = vm.filterCanceled;
                         d.refund_status = vm.filterRefundStatus;
@@ -245,7 +262,7 @@ export default {
                         data:"id",
                         orderable:false,
                         searchable:false,
-                        mRender:function(data,type,full){
+                        mRender:function(data,type,full) {
                             return full.status != 'Canceled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
                         }
                     },
@@ -258,7 +275,10 @@ export default {
                             var max_length = 25;
                             var short_name = (name.length > max_length) ? name.substring(0,max_length-1)+'...' : name;
                             var popover =  (name.length > max_length) ? "class=\"name_popover\"":"";
-                            var column = '<td ><div '+popover+' tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div></td>';
+                            var column = '<td ><div '+popover+' tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div>';
+
+                            column += '<BR>'+ full.booking_phone_number;
+                            column += '</td>';
                             column.replace(/__SHNAME__/g, short_name);
                             return column.replace(/__NAME__/g, name);
 
@@ -390,7 +410,7 @@ export default {
                             }
 
                             full.has_history ? column += "<a href='/view-booking/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
-                            $.each(full.active_invoices,(i,v) =>{
+                            $.each(full.invoices,(i,v) =>{
                                 invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
                             invoices += " <a class='text-primary' href='/booking-history/"+full.id+"'>View History</a>";
@@ -430,6 +450,7 @@ export default {
                         if (vm.filterDateTo2) {
                             d.departure = vm.filterDateTo2;
                         }
+                        d.canceled = vm.filterCanceled2;
                     }
                 },
                 columns:[
@@ -511,16 +532,16 @@ export default {
                                 invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
                             var invoice = "/ledger/payments/invoice/payment?" + search;
-                            if(full.payment_visible){
+                            if (full.payment_visible) {
                                 var invoice_link= (full.invoice_ref)?"<a href='"+invoice+"' target='_blank' class='text-primary'>View Payment</a><br/>":"";
                                 column += invoice_link;
                             }
                             console.log(full.part_booking);
-                            if (full.in_future && !full.part_booking){
+                            if (full.in_future && !full.part_booking) {
                                 if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
                                     var cancel_booking = "<a href='/cancel-admissions-booking/"+full.id+"' class='text-primary'> Cancel</a><br/>";
                                     column += cancel_booking;
-				                }
+			        }
                             }
                             // invoices += " <a href='/booking-history/{{ full.id }}'>View History</a>";
                             column += invoices;
@@ -555,6 +576,7 @@ export default {
             filterRefundStatus: 'All',
             filterDateFrom2:"",
             filterDateTo2:"",
+            filterCanceled2: 'False',
         }
     },
     watch:{
@@ -588,7 +610,7 @@ export default {
         ]),
     },
     methods:{
-        showhidebookings: function(){
+        showhidebookings: function() {
             var content = $('#content_booking');
             var span = $('#collapse_bookings_span');
             if (content.css("display") !== "none"){
@@ -776,6 +798,9 @@ export default {
                 }
 
             });
+            $('#filterCanceled2').on('change',function (e) {
+                   vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+	    });
             helpers.namePopover($,vm.$refs.bookings_table.vmDataTable);
             $(document).on('keydown', function(e) {
                 if(e.ctrlKey && (e.key == "p" || e.charCode == 16 || e.charCode == 112 || e.keyCode == 80) ){
@@ -805,11 +830,14 @@ export default {
         printParams2() {
             let vm = this;
             var str = [];
+            console.log("printParams2");
             let obj = {
                 arrival : vm.filterDateFrom2 != null ? vm.filterDateFrom2: '',
                 departure : vm.filterDateTo2 != null ? vm.filterDateTo2:'' ,
-                'search[value]': vm.$refs.admissions_bookings_table.vmDataTable.search()
+                'search[value]': vm.$refs.admissions_bookings_table.vmDataTable.search(),
+                canceled: vm.filterCanceled2,
             }
+
             for(var p in obj)
                 if (obj.hasOwnProperty(p)) {
                 str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
@@ -1006,7 +1034,7 @@ export default {
         print2:function () {
             let vm =this;
             vm.exportingCSV2 = true;
-
+            
             vm.$http.get(api_endpoints.admissionsbookings+'?'+vm.printParams2()).then(res => {
                 var data = res.body.results;
 

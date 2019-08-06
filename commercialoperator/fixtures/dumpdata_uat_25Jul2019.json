@@ -1,0 +1,1766 @@
+[
+{
+    "model": "commercialoperator.accesstype",
+    "pk": 1,
+    "fields": {
+        "name": "Coach",
+        "visible": true
+    }
+},
+{
+    "model": "commercialoperator.accesstype",
+    "pk": 2,
+    "fields": {
+        "name": "Minibus",
+        "visible": true
+    }
+},
+{
+    "model": "commercialoperator.accesstype",
+    "pk": 3,
+    "fields": {
+        "name": "4WD",
+        "visible": true
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 9,
+    "fields": {
+        "name": "Abseiling",
+        "visible": true,
+        "activity_category": 5
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 10,
+    "fields": {
+        "name": "Bushwalking",
+        "visible": true,
+        "activity_category": 5
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 11,
+    "fields": {
+        "name": "Cruise ships",
+        "visible": true,
+        "activity_category": 6
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 12,
+    "fields": {
+        "name": "Boat tours or charters",
+        "visible": true,
+        "activity_category": 6
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 13,
+    "fields": {
+        "name": "Waterskiing",
+        "visible": true,
+        "activity_category": 8
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 14,
+    "fields": {
+        "name": "Sailing Tours",
+        "visible": true,
+        "activity_category": 8
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 15,
+    "fields": {
+        "name": "Camping",
+        "visible": true,
+        "activity_category": 5
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 16,
+    "fields": {
+        "name": "Canoening",
+        "visible": true,
+        "activity_category": 5
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 17,
+    "fields": {
+        "name": "Caving",
+        "visible": true,
+        "activity_category": 5
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 18,
+    "fields": {
+        "name": "Rafting",
+        "visible": true,
+        "activity_category": 5
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 19,
+    "fields": {
+        "name": "Rock Climbing",
+        "visible": true,
+        "activity_category": 5
+    }
+},
+{
+    "model": "commercialoperator.activity",
+    "pk": 20,
+    "fields": {
+        "name": "Mountain Biking",
+        "visible": true,
+        "activity_category": 5
+    }
+},
+{
+    "model": "commercialoperator.activitycategory",
+    "pk": 5,
+    "fields": {
+        "name": "default",
+        "visible": true,
+        "activity_type": "land"
+    }
+},
+{
+    "model": "commercialoperator.activitycategory",
+    "pk": 6,
+    "fields": {
+        "name": "Motorised boating",
+        "visible": true,
+        "activity_type": "marine"
+    }
+},
+{
+    "model": "commercialoperator.activitycategory",
+    "pk": 7,
+    "fields": {
+        "name": "Motorised watersports",
+        "visible": true,
+        "activity_type": "marine"
+    }
+},
+{
+    "model": "commercialoperator.activitycategory",
+    "pk": 8,
+    "fields": {
+        "name": "Non-motorised watersports",
+        "visible": true,
+        "activity_type": "marine"
+    }
+},
+{
+    "model": "commercialoperator.checklistquestion",
+    "pk": 1,
+    "fields": {
+        "text": "Assessor Question 1",
+        "list_type": "assessor_list",
+        "obsolete": false
+    }
+},
+{
+    "model": "commercialoperator.checklistquestion",
+    "pk": 2,
+    "fields": {
+        "text": "Assessor Question 2",
+        "list_type": "assessor_list",
+        "obsolete": false
+    }
+},
+{
+    "model": "commercialoperator.checklistquestion",
+    "pk": 3,
+    "fields": {
+        "text": "Assessor Question 3",
+        "list_type": "assessor_list",
+        "obsolete": false
+    }
+},
+{
+    "model": "commercialoperator.checklistquestion",
+    "pk": 4,
+    "fields": {
+        "text": "Assessor Question 4",
+        "list_type": "assessor_list",
+        "obsolete": false
+    }
+},
+{
+    "model": "commercialoperator.checklistquestion",
+    "pk": 5,
+    "fields": {
+        "text": "Referral Question 1",
+        "list_type": "referral_list",
+        "obsolete": false
+    }
+},
+{
+    "model": "commercialoperator.checklistquestion",
+    "pk": 6,
+    "fields": {
+        "text": "Referral Question 2",
+        "list_type": "referral_list",
+        "obsolete": false
+    }
+},
+{
+    "model": "commercialoperator.checklistquestion",
+    "pk": 7,
+    "fields": {
+        "text": "Referral Question 3",
+        "list_type": "referral_list",
+        "obsolete": false
+    }
+},
+{
+    "model": "commercialoperator.globalsettings",
+    "pk": 1,
+    "fields": {
+        "key": "credit_facility_link",
+        "value": "https://parks.dpaw.wa.gov.au/park-finder"
+    }
+},
+{
+    "model": "commercialoperator.globalsettings",
+    "pk": 2,
+    "fields": {
+        "key": "deed_poll",
+        "value": "https://parks.dpaw.wa.gov.au/park-finder"
+    }
+},
+{
+    "model": "commercialoperator.globalsettings",
+    "pk": 3,
+    "fields": {
+        "key": "online_training_document",
+        "value": "https://parks.dpaw.wa.gov.au/park-finder"
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 2,
+    "fields": {
+        "district": 9,
+        "name": "Albany district park one",
+        "code": "A1",
+        "park_type": "land",
+        "adult_price": "10.00",
+        "child_price": "7.00",
+        "oracle_code": "NNP439 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 3,
+    "fields": {
+        "district": 2,
+        "name": "East Kimberley Park one",
+        "code": "EK2",
+        "park_type": "land",
+        "adult_price": "10.00",
+        "child_price": "7.00",
+        "oracle_code": "NNP445 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            15,
+            17
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 4,
+    "fields": {
+        "district": 15,
+        "name": "Rowley Shoal Marine Park",
+        "code": "R1",
+        "park_type": "marine",
+        "adult_price": "10.00",
+        "child_price": "7.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 5,
+    "fields": {
+        "district": 12,
+        "name": "Wellington Marine Park",
+        "code": "W1",
+        "park_type": "marine",
+        "adult_price": "10.00",
+        "child_price": "7.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 6,
+    "fields": {
+        "district": 1,
+        "name": "Goldfields park one",
+        "code": "GOP1",
+        "park_type": "land",
+        "adult_price": "10.00",
+        "child_price": "7.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            15,
+            16,
+            17,
+            19
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 7,
+    "fields": {
+        "district": 4,
+        "name": "Geraldton Park one",
+        "code": "GEP1",
+        "park_type": "land",
+        "adult_price": "10.00",
+        "child_price": "7.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            15,
+            16,
+            19
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 8,
+    "fields": {
+        "district": 7,
+        "name": "Exmouth park one",
+        "code": "EXP1",
+        "park_type": "land",
+        "adult_price": "10.00",
+        "child_price": "7.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            17,
+            18
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 9,
+    "fields": {
+        "district": 11,
+        "name": "Blackwood park one",
+        "code": "BLK1",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            10,
+            16,
+            19
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 10,
+    "fields": {
+        "district": 13,
+        "name": "Perth hills park one",
+        "code": "PHO1",
+        "park_type": "land",
+        "adult_price": "10.00",
+        "child_price": "7.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            15,
+            17,
+            19
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 11,
+    "fields": {
+        "district": 15,
+        "name": "Donelly park one",
+        "code": "DON1",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            15,
+            19
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 12,
+    "fields": {
+        "district": 17,
+        "name": "Central park one",
+        "code": "CEN1",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15,
+            19
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 13,
+    "fields": {
+        "district": 2,
+        "name": "East kimberley park two",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "12.00",
+        "child_price": "5.00",
+        "oracle_code": "a123",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            10
+        ],
+        "allowed_access": [
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 14,
+    "fields": {
+        "district": 2,
+        "name": "Drysdale River NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15,
+            16
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 15,
+    "fields": {
+        "district": 2,
+        "name": "Mirima NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 16,
+    "fields": {
+        "district": 2,
+        "name": "Purnululu NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": [
+            3
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 17,
+    "fields": {
+        "district": 2,
+        "name": "Wolfe Creek Crater NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 18,
+    "fields": {
+        "district": 2,
+        "name": "Lawley River NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 19,
+    "fields": {
+        "district": 2,
+        "name": "Prince Regent NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 20,
+    "fields": {
+        "district": 2,
+        "name": "Parry Lagoons NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 21,
+    "fields": {
+        "district": 3,
+        "name": "Geikie Gorge NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            16
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 22,
+    "fields": {
+        "district": 3,
+        "name": "King Leopold Ranges CP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": [
+            3
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 23,
+    "fields": {
+        "district": 3,
+        "name": "Tunnel Creek NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            17
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 24,
+    "fields": {
+        "district": 3,
+        "name": "Windjana Gorge NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 25,
+    "fields": {
+        "district": 8,
+        "name": "Collier Range NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": [
+            3
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 26,
+    "fields": {
+        "district": 8,
+        "name": "Karijini NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            10,
+            15,
+            19
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 27,
+    "fields": {
+        "district": 8,
+        "name": "Millstream Chichester NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            10,
+            15,
+            19
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 28,
+    "fields": {
+        "district": 8,
+        "name": "Karlamilyi NP (formerly Rudall River NP)",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": [
+            3
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 29,
+    "fields": {
+        "district": 8,
+        "name": "Dampier Archipelago (mixed tenure)",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 30,
+    "fields": {
+        "district": 8,
+        "name": "Montebello Islands CP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 31,
+    "fields": {
+        "district": 7,
+        "name": "Cape Range NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            10,
+            15,
+            17,
+            19
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 32,
+    "fields": {
+        "district": 6,
+        "name": "Francois Peron NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15,
+            16
+        ],
+        "allowed_access": [
+            3,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 33,
+    "fields": {
+        "district": 6,
+        "name": "Hamelin Pool MNR",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": [
+            3,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 34,
+    "fields": {
+        "district": 6,
+        "name": "Shell Beach CP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 35,
+    "fields": {
+        "district": 4,
+        "name": "Kennedy Range NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 36,
+    "fields": {
+        "district": 4,
+        "name": "Mt Augustus NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 37,
+    "fields": {
+        "district": 4,
+        "name": "Coalseam CP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            15
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 38,
+    "fields": {
+        "district": 4,
+        "name": "Kalbarri NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            9,
+            10,
+            16,
+            18,
+            19
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 39,
+    "fields": {
+        "district": 5,
+        "name": "Alexander Morrison NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 40,
+    "fields": {
+        "district": 5,
+        "name": "Badgingarra NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 41,
+    "fields": {
+        "district": 5,
+        "name": "Drovers Cave NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 42,
+    "fields": {
+        "district": 5,
+        "name": "Lesueur NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 43,
+    "fields": {
+        "district": 5,
+        "name": "Nambung NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "6.00",
+        "child_price": "6.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 44,
+    "fields": {
+        "district": 5,
+        "name": "Stockyard Gully [5(1)(g) reserve]",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10,
+            17
+        ],
+        "allowed_access": [
+            3
+        ]
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 45,
+    "fields": {
+        "district": 5,
+        "name": "Tathra NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": []
+    }
+},
+{
+    "model": "commercialoperator.park",
+    "pk": 46,
+    "fields": {
+        "district": 5,
+        "name": "Watheroo NP",
+        "code": "",
+        "park_type": "land",
+        "adult_price": "0.00",
+        "child_price": "0.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": false,
+        "allowed_activities": [
+            10
+        ],
+        "allowed_access": [
+            3,
+            1,
+            2
+        ]
+    }
+},
+{
+    "model": "commercialoperator.question",
+    "pk": 1,
+    "fields": {
+        "question_text": "Are there more than 10 rules for absiling?",
+        "answer_one": "Yes",
+        "answer_two": "No",
+        "answer_three": "",
+        "answer_four": "",
+        "correct_answer": "answer_one"
+    }
+},
+{
+    "model": "commercialoperator.question",
+    "pk": 2,
+    "fields": {
+        "question_text": "Are you allowed to abseil after sunset?",
+        "answer_one": "Yes",
+        "answer_two": "No",
+        "answer_three": "Neither",
+        "answer_four": "",
+        "correct_answer": "answer_two"
+    }
+},
+{
+    "model": "commercialoperator.question",
+    "pk": 3,
+    "fields": {
+        "question_text": "Is a free fall an acceptable method for abseiling?",
+        "answer_one": "Yes",
+        "answer_two": "No",
+        "answer_three": "Neither",
+        "answer_four": "both",
+        "correct_answer": "answer_three"
+    }
+},
+{
+    "model": "commercialoperator.section",
+    "pk": 1,
+    "fields": {
+        "name": "Map 1",
+        "visible": true,
+        "trail": 1,
+        "doc_url": "https://parks.dpaw.wa.gov.au/park-finder"
+    }
+},
+{
+    "model": "commercialoperator.section",
+    "pk": 2,
+    "fields": {
+        "name": "Map 2",
+        "visible": true,
+        "trail": 1,
+        "doc_url": ""
+    }
+},
+{
+    "model": "commercialoperator.section",
+    "pk": 3,
+    "fields": {
+        "name": "Map 1",
+        "visible": true,
+        "trail": 3,
+        "doc_url": "https://parks.dpaw.wa.gov.au/park-finder"
+    }
+},
+{
+    "model": "commercialoperator.section",
+    "pk": 4,
+    "fields": {
+        "name": "Map 2",
+        "visible": true,
+        "trail": 3,
+        "doc_url": ""
+    }
+},
+{
+    "model": "commercialoperator.section",
+    "pk": 5,
+    "fields": {
+        "name": "Map 1",
+        "visible": true,
+        "trail": 2,
+        "doc_url": "https://parks.dpaw.wa.gov.au/park-finder"
+    }
+},
+{
+    "model": "commercialoperator.section",
+    "pk": 6,
+    "fields": {
+        "name": "Map 2",
+        "visible": true,
+        "trail": 2,
+        "doc_url": ""
+    }
+},
+{
+    "model": "commercialoperator.trail",
+    "pk": 1,
+    "fields": {
+        "name": "Bibbulmun Track",
+        "code": "T1",
+        "allowed_activities": [
+            10
+        ]
+    }
+},
+{
+    "model": "commercialoperator.trail",
+    "pk": 2,
+    "fields": {
+        "name": "Munda Bidi Trail",
+        "code": "T2",
+        "allowed_activities": [
+            9,
+            10
+        ]
+    }
+},
+{
+    "model": "commercialoperator.trail",
+    "pk": 3,
+    "fields": {
+        "name": "Cape to Cape Track",
+        "code": "T3",
+        "allowed_activities": [
+            10
+        ]
+    }
+},
+{
+    "model": "commercialoperator.zone",
+    "pk": 1,
+    "fields": {
+        "name": "Sanctuary zone",
+        "visible": true,
+        "park": 4,
+        "allowed_activities": [
+            11,
+            13
+        ]
+    }
+},
+{
+    "model": "commercialoperator.zone",
+    "pk": 2,
+    "fields": {
+        "name": "Water zone",
+        "visible": true,
+        "park": 4,
+        "allowed_activities": [
+            12,
+            14,
+            13
+        ]
+    }
+},
+{
+    "model": "commercialoperator.zone",
+    "pk": 3,
+    "fields": {
+        "name": "Sanctuary zone",
+        "visible": true,
+        "park": 5,
+        "allowed_activities": [
+            12,
+            11,
+            14
+        ]
+    }
+},
+{
+    "model": "commercialoperator.region",
+    "pk": 1,
+    "fields": {
+        "name": "Goldfields",
+        "forest_region": false
+    }
+},
+{
+    "model": "commercialoperator.region",
+    "pk": 2,
+    "fields": {
+        "name": "Kimberley",
+        "forest_region": false
+    }
+},
+{
+    "model": "commercialoperator.region",
+    "pk": 3,
+    "fields": {
+        "name": "Midwest",
+        "forest_region": false
+    }
+},
+{
+    "model": "commercialoperator.region",
+    "pk": 4,
+    "fields": {
+        "name": "Pilbara",
+        "forest_region": false
+    }
+},
+{
+    "model": "commercialoperator.region",
+    "pk": 5,
+    "fields": {
+        "name": "South Coast",
+        "forest_region": false
+    }
+},
+{
+    "model": "commercialoperator.region",
+    "pk": 6,
+    "fields": {
+        "name": "South West",
+        "forest_region": true
+    }
+},
+{
+    "model": "commercialoperator.region",
+    "pk": 7,
+    "fields": {
+        "name": "Swan",
+        "forest_region": true
+    }
+},
+{
+    "model": "commercialoperator.region",
+    "pk": 8,
+    "fields": {
+        "name": "Warren",
+        "forest_region": true
+    }
+},
+{
+    "model": "commercialoperator.region",
+    "pk": 9,
+    "fields": {
+        "name": "Wheatbelt",
+        "forest_region": false
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 1,
+    "fields": {
+        "region": 1,
+        "name": "Goldfields Region",
+        "code": "GLD",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 2,
+    "fields": {
+        "region": 2,
+        "name": "East Kimberley",
+        "code": "EKM",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 3,
+    "fields": {
+        "region": 2,
+        "name": "West Kimberley",
+        "code": "WKM",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 4,
+    "fields": {
+        "region": 3,
+        "name": "Geraldton",
+        "code": "GER",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 5,
+    "fields": {
+        "region": 3,
+        "name": "Moora",
+        "code": "MOR",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 6,
+    "fields": {
+        "region": 3,
+        "name": "Shark Bay",
+        "code": "SHB",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 7,
+    "fields": {
+        "region": 4,
+        "name": "Exmouth",
+        "code": "EXM",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 8,
+    "fields": {
+        "region": 4,
+        "name": "Pilbara Region",
+        "code": "PIL",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 9,
+    "fields": {
+        "region": 5,
+        "name": "Albany",
+        "code": "ALB",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 10,
+    "fields": {
+        "region": 5,
+        "name": "Esperance",
+        "code": "ESP",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 11,
+    "fields": {
+        "region": 6,
+        "name": "Blackwood",
+        "code": "BWD",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 12,
+    "fields": {
+        "region": 6,
+        "name": "Wellington",
+        "code": "WTN",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 13,
+    "fields": {
+        "region": 7,
+        "name": "Perth Hills",
+        "code": "PHS",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 14,
+    "fields": {
+        "region": 7,
+        "name": "Swan Coastal",
+        "code": "SWC",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 15,
+    "fields": {
+        "region": 8,
+        "name": "Donnelly",
+        "code": "DON",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 16,
+    "fields": {
+        "region": 8,
+        "name": "Frankland",
+        "code": "FRK",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 17,
+    "fields": {
+        "region": 9,
+        "name": "Central Wheatbelt",
+        "code": "CWB",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.district",
+    "pk": 18,
+    "fields": {
+        "region": 9,
+        "name": "Wheatbelt Region",
+        "code": "SWB",
+        "archive_date": null
+    }
+},
+{
+    "model": "commercialoperator.applicationtype",
+    "pk": 1,
+    "fields": {
+        "name": "T Class",
+        "order": 1,
+        "visible": true,
+        "max_renewals": null,
+        "max_renewal_period": null,
+        "application_fee": "117.00",
+        "oracle_code": "GGE53 EXEMPT",
+        "is_gst_exempt": true
+    }
+},
+{
+    "model": "commercialoperator.applicationtype",
+    "pk": 2,
+    "fields": {
+        "name": "Filming",
+        "order": 2,
+        "visible": false,
+        "max_renewals": null,
+        "max_renewal_period": null,
+        "application_fee": "40.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": true
+    }
+},
+{
+    "model": "commercialoperator.applicationtype",
+    "pk": 3,
+    "fields": {
+        "name": "Event",
+        "order": 2,
+        "visible": false,
+        "max_renewals": null,
+        "max_renewal_period": null,
+        "application_fee": "117.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": true
+    }
+},
+{
+    "model": "commercialoperator.applicationtype",
+    "pk": 6,
+    "fields": {
+        "name": "E Class",
+        "order": 0,
+        "visible": false,
+        "max_renewals": 1,
+        "max_renewal_period": 5,
+        "application_fee": "117.00",
+        "oracle_code": "ABC123 GST",
+        "is_gst_exempt": true
+    }
+},
+{
+    "model": "commercialoperator.proposaltype",
+    "pk": 1,
+    "fields": {
+        "description": "T Class Dummy",
+        "name": "T Class",
+        "schema": [
+            {}
+        ],
+        "replaced_by": null,
+        "version": 1
+    }
+},
+{
+    "model": "commercialoperator.proposaltype",
+    "pk": 2,
+    "fields": {
+        "description": "Filming Dummy",
+        "name": "Filming",
+        "schema": [
+            {}
+        ],
+        "replaced_by": null,
+        "version": 1
+    }
+},
+{
+    "model": "commercialoperator.proposaltype",
+    "pk": 3,
+    "fields": {
+        "description": "Event",
+        "name": "Event",
+        "schema": [
+            {}
+        ],
+        "replaced_by": null,
+        "version": 1
+    }
+},
+{
+    "model": "commercialoperator.proposaltype",
+    "pk": 4,
+    "fields": {
+        "description": "E Class",
+        "name": "E Class",
+        "schema": [
+            {}
+        ],
+        "replaced_by": null,
+        "version": 1
+    }
+}
+]

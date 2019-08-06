@@ -7,10 +7,11 @@
 {% load application_filters %}
 
 {% block extra_css %}
-    <link href="//static.dpaw.wa.gov.au/static/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
-    <link href="//static.dpaw.wa.gov.au/static/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.css" rel="stylesheet"/>
-    <link href="//static.dpaw.wa.gov.au/static/libs/bootstrap-datetimepicker/4.7.14/css/bootstrap-datetimepicker.min.css"
-        rel="stylesheet"/>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2/3.5.3/select2.min.css" rel="stylesheet"/>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-css/1.4.6/select2-bootstrap.min.css"
+          rel="stylesheet"/>
+    <link href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.7.14/css/bootstrap-datetimepicker.min.css"
+          rel="stylesheet"/>
     {{ block.super }}
 {% endblock %}
 

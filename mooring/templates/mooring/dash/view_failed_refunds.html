@@ -60,22 +60,38 @@
 	</div>	
         <table width="100%" id='table-policy' class='hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline'>
         <thead>
-        <tr><th>ID</th><th>Booking ID</th><th>Refund Amount</th><th>Status</th><th>Completed</th><th>Completed By</th><th>Created</th><th>Actions</th></tr>
+        <tr><th>ID</th><th>Booking ID</th><th>Refund Amount</th>{% if show == "TRUE" %}<th>Refund Split</th>{% endif %}<th>Status</th><th>Completed</th><th>Completed By</th><th>Created</th><th>Actions</th></tr>
         </thead>
         <tbody>
         {% for row in failedrefunds %}
             <tr>
-                <td>{{ row.id }}</td>
-                <td>PS{{ row.booking.id }}</td>
-                <td>${{ row.refund_amount }}</td>
-                <td>{{ row.get_status_display }}</td>
-                <td>{{ row.completed_date }}</td>
-                <td>{{ row.completed_by }}</td>
-
-                <td>{{ row.created }}</td>
+                <td>{{ row.fr.id }}</td>
+                <td>{% if row.fr.booking %}PS{{ row.fr.booking.id }}{% endif %}
+                    {% if row.fr.admission_booking %}AD{{ row.fr.admission_booking.id }}{% endif %}
+               </td>
+                <td>${{ row.fr.refund_amount }}</td>
+                {% if show == "TRUE" %}
+                <!-- only works with cancelled booking not changed booking, work in progress --> 
                 <td>
-                   <a href='{% url 'view_booking_history' row.booking.id %}'>View History</a><BR>
-                   <a href='{% url 'dash-complete_failed_refund' row.id %}'>Mark Completed</a><BR>
+                    {% for mg in row.mgsplit %}
+                        {% if mg.amount > 0 %}
+                        {{ mg.name }} : ${{ mg.amount }} <BR>
+                        {% endif %}
+		    {% endfor %}
+
+                </td>
+                 {% endif %}
+                <td>{{ row.fr.get_status_display }}</td>
+                <td>{{ row.fr.completed_date }}</td>
+                <td>{{ row.fr.completed_by }}</td>
+
+                <td>{{ row.fr.created }}</td>
+                <td>
+                   {% if row.fr.booking %}
+                   <a href='{% url 'view_booking_history' row.fr.booking.id %}'>View History</a><BR>
+		   {% endif %}
+                    
+                   <a href='{% url 'dash-complete_failed_refund' row.fr.id %}'>Mark Completed</a><BR>
                 </td>
             </tr>
 	{% endfor %}

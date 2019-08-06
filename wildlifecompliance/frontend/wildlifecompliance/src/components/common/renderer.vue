@@ -98,10 +98,11 @@ export default {
         'selected_activity_tab_id',
         'renderer_tabs',
         'unfinishedActivities',
+        'allCurrentActivities',
         'sectionsForTab',
     ]),
     listVisibleActivities: function() {
-        return this.unfinishedActivities;
+        return this.application.can_user_edit ? this.unfinishedActivities : this.allCurrentActivities;
     },
   },
   methods: {

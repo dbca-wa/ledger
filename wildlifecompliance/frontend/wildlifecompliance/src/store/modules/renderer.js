@@ -42,11 +42,17 @@ export const rendererStore = {
         unfinishedActivities: (state, getters, rootState, rootGetters) => {
             return getters.visibleActivities(
                 state.visibility.exclude_decisions, // Hide by decision
-                state.visibility.exclude_processing_status  // Hide by processing_status
+                state.visibility.exclude_processing_status  // Hide by processing_status (discarded)
             ).filter(activity => !rootGetters.application.has_amendment ||
                 rootGetters.application.amendment_requests.find(
                     request => request.licence_activity.id == activity.id
                 )
+            );
+        },
+        allCurrentActivities: (state, getters, rootState, rootGetters) => {
+            return getters.visibleActivities(
+                [], // Do not hide by any decision
+                state.visibility.exclude_processing_status  // Hide by processing_status (discarded)
             );
         },
         isComponentVisible: (state) => (key) => {
