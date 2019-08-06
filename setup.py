@@ -30,11 +30,12 @@ setup(name='ledger',
                 ],
       install_requires=[],
       include_package_data=True,
-      package_data = {
-        '': ['*.py'],
-        '': ['*.txt'],
-        'fixtures': ['*.json'],
-        '': ['*.js'],
-        '': ['*.css'],
-      },
+      data_files=[('fixtures', ['fixtures/*.json'])]
+#      package_data = {
+#        '': ['*.py'],
+#        '': ['*.txt'],
+#        'fixtures': ['*.json'],
+#        '': ['*.js'],
+#        '': ['*.css'],
+#      },
       zip_safe=False)
