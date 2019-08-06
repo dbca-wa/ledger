@@ -19,7 +19,6 @@ setup(name='ledger',
                 'ledger.partner',
                 'ledger.payment','ledger.payment.migrations',
                 'ledger.payments','ledger.payments.bpay','ledger.payments.bpoint','ledger.payments.cash','ledger.payments.invoice','ledger.payments.management','ledger.payments.migrations','ledger.payments.static.payments','ledger.payments.templates.dpaw_payments','ledger.payments.templatetags',
-                'ledger.payments.templatetags.bpay','ledger.payments.templatetags.bpoint','ledger.payments.templatetags.emails','ledger.payments.templatetags.invoice'
                 'ledger.payments.bpay.dashboard','ledger.payments.bpay.management','ledger.payments.bpay.management.commands','ledger.payments.bpay.migrations',
                 'ledger.payments.bpoint.BPOINT','ledger.payments.bpoint.dashboard','ledger.payments.bpoint.management','ledger.payments.bpoint.management.commands','ledger.payments.bpoint.migrations',
                 'ledger.payments.cash.fixtures','ledger.payments.cash.migrations',
