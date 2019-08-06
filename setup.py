@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='ledger',
-      version='1.3',
+      version='1.4',
       description='Ledger Payments App',
       url='https://github.com/dbca-wa/ledger',
       author='Department of Parks and Wildlife',
@@ -16,7 +16,8 @@ setup(name='ledger',
                 'ledger.emails',
                 'ledger.licence','ledger.licence.migrations',
                 'ledger.order','ledger.order.migrations',
-                'ledger.partner','',
+                'ledger.partner',
+                'ledger.payment','ledger.payment.migrations',
                 'ledger.payments','ledger.payments.migrations',
                 'ledger.static.ledger','ledger.static.ledger.css','ledger.static.ledger.fonts','ledger.static.ledger.images',
                 'ledger.taxonomy',
