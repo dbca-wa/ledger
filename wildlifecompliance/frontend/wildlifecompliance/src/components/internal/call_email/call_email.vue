@@ -204,10 +204,10 @@
             
                           <FormSection :formCollapse="true" label="Details" Index="2">
                             <div class="col-sm-12 form-group"><div class="row">
-                                <label class="col-sm-2">Date of call</label>
-                                <div class="col-sm-4">
+                                <label class="col-sm-3">Date of call</label>
+                                <div class="col-sm-3">
                                     <div class="input-group date" ref="dateOfCallPicker">
-                                        <input :disabled="readonlyForm" type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.date_of_call" />
+                                        <input :disabled="readonlyForm" type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.date_of_call"/>
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
@@ -535,6 +535,7 @@ export default {
       setOccurrenceTimeStart: 'setOccurrenceTimeStart',
       setOccurrenceTimeEnd: 'setOccurrenceTimeEnd',
       setTimeOfCall: 'setTimeOfCall',
+      setDateOfCall: 'setDateOfCall',
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -708,7 +709,8 @@ export default {
       el_date_of_call.datetimepicker({
         format: "DD/MM/YYYY",
         maxDate: "now",
-        showClear: true
+        //useCurrent: true,
+        //showClear: true
       });
       el_date_of_call.on("dp.change", function(e) {
         if (el_date_of_call.data("DateTimePicker").date()) {
@@ -787,16 +789,15 @@ export default {
       api_endpoints.region_district
       );
     Object.assign(this.regionDistricts, returned_region_districts);
-
-    // load volunteer group list
-    //let url = helpers.add_endpoint_join(
-      //          api_endpoints.call_email, 
-        //        this.call_email.id + '/get_allocated_group/'
-          //      );
-//    let returned_volunteer_list = await Vue.http.get(url);
-  //  if (returned_volunteer_list.body.allocated_group) {
-    //  this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group.members);
-    //}
+    
+    // Apply current timestamp to date and time of call
+    if (!this.call_email.date_of_call && this.call_email.can_user_edit_form) {
+        this.setDateOfCall(moment().format('DD/MM/YYYY'));
+    }
+    if (!this.call_email.time_of_call && this.call_email.can_user_edit_form) {
+        this.setTimeOfCall(moment().format('LT'));
+    }
+    
   },
   mounted: function() {
       let vm = this;
