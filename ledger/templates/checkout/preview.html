@@ -91,7 +91,7 @@
                                     {% endthumbnail %}
                                 {% endwith %}
                             {% else %}
-                                <img class="thumbnail" src="https://static.dpaw.wa.gov.au/images/no-image.jpg" alt="{{ product.get_title }}">
+                                <img class="thumbnail" src="{% static 'ledger/images/no-image.png' %}" alt="{{ product.get_title }}">
                             {% endif %}
                         </div>
                     </div>

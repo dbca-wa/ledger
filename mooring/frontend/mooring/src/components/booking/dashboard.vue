@@ -1,98 +1,188 @@
 <template lang="html" id="booking-dashboard">
-<div class="row">
-  <div class="col-lg-12" v-show="!isLoading">
-      <div class="well"     style="overflow: auto;">
-          <div class="row">
-              <div class="col-lg-12">
-                  <button v-if="!exportingCSV" type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
-                      <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
-                  </button>
-                  <button v-else type="button" class="btn btn-default pull-right" disabled>
-                      <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Exporting to CSV
-                  </button>
-              </div>
-          </div>
-          <div class="row">
-            <div class="col-md-4">
-                <div class="form-group">
-                  <label for="">Mooring</label>
-                  <select v-show="isLoading" class="form-control" >
-                      <option value="">Loading...</option>
-                  </select>
-                  <select ref="campgroundSelector" v-if="!isLoading" class="form-control" v-model="filterCampground" id="filterCampground">
-                      <option value="All">All</option>
-                      <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
-                  </select>
+<div class="panel-group" id="bookings-accordion" role="tablist" aria-multiselectable="true">
+    <div class="row" v-show="!isLoading">
+        <div class="panel panel-default" style="overflow:visible;">
+            <div class="panel-heading" role="tab" id="bookings-heading">
+                <h4 class="panel-title">
+                    <a role="button" data-toggle="collapse" href="#bookings-collapse"
+                    aria-expanded="false" aria-controls="bookings-collapse" style="outline:none;">
+                        <div>
+                            <h3 style="display:inline;">Bookings</h3>
+                            <span id="collapse_bookings_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                        </div>
+                    </a>
+                </h4>
+            </div>
+            <div id="bookings-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="bookings-heading">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button v-if="!exportingCSV" type="button" class="btn btn-default pull-right" id="print-btn" @click="print()">
+                                <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
+                            </button>
+                            <button v-else type="button" class="btn btn-default pull-right" disabled>
+                                <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Exporting to CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                            <label for="">Mooring</label>
+                            <select v-show="isLoading" class="form-control" >
+                                <option value="">Loading...</option>
+                            </select>
+                            <select ref="campgroundSelector" v-if="!isLoading" class="form-control" v-model="filterCampground" id="filterCampground">
+                                <option value="All">All</option>
+                                <option v-for="campground in campgrounds" :value="campground.id">{{campground.name}}</option>
+                            </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                            <label for="">Region</label>
+                            <select v-show="isLoading" class="form-control" name="">
+                                    <option value="">Loading...</option>
+                            </select>
+                            <select ref="regionSelector" v-if="!isLoading" class="form-control" v-model="filterRegion" id="filterRegion">
+                                    <option value="All">All</option>
+                                    <option v-for="region in regions" :value="region.id">{{region.name}}</option>
+                            </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                            <label for="">Cancelled</label>
+                                <select class="form-control" v-model="filterCanceled" id="filterCanceled">
+                                    <option value="True">Yes</option>
+                                    <option value="False">No</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-bottom:10px;">
+                        <div class="col-md-4">
+                            <label for="">Date From</label>
+                            <div class="input-group date" id="booking-date-from">
+                            <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateFrom">
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="">Date To</label>
+                            <div class="input-group date" id="booking-date-to">
+                            <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo">
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                            </div>
+                        </div>
+                        <div style='display: none' class="col-md-4" iv-if="filterCanceled == 'True'">
+                            <div class="form-group">
+                            <label for="">Refund Status</label>
+                            <select class="form-control" v-model="filterRefundStatus" id="filterRefundStatus">
+                                    <option value="All">All</option>
+                                    <option value="Refunded">Refunded</option>
+                                    <option value="Partially Refunded">Partially Refunded</option>
+                                    <option value="Not Refunded">Not Refunded</option>
+                            </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <datatable ref="bookings_table" id="bookings-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
+                        </div>
+                    </div>
+                    <changebooking ref="changebooking" :booking_id="selected_booking" :campgrounds="campgrounds"/>
+                    <bookingHistory ref="bookingHistory" :booking_id="selected_booking" />
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                  <label for="">Region</label>
-                  <select v-show="isLoading" class="form-control" name="">
-                        <option value="">Loading...</option>
-                  </select>
-                  <select ref="regionSelector" v-if="!isLoading" class="form-control" v-model="filterRegion" id="filterRegion">
-                        <option value="All">All</option>
-                        <option v-for="region in regions" :value="region.id">{{region.name}}</option>
-                  </select>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="form-group">
-                  <label for="">Cancelled</label>
-                  <select class="form-control" v-model="filterCanceled" id="filterCanceled">
-                        <option value="True">Yes</option>
-                        <option value="False">No</option>
-                  </select>
-                </div>
-            </div>
+        <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
         </div>
-        <div class="row" style="margin-bottom:10px;">
-            <div class="col-md-4">
-                <label for="">Date From</label>
-                <div class="input-group date" id="booking-date-from">
-                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateFrom">
-                  <span class="input-group-addon">
-                      <span class="glyphicon glyphicon-calendar"></span>
-                  </span>
+    </div>
+
+    <div class="row" v-show="!isLoading2">
+        <div class="panel panel-default" style="overflow:visible;margin-top:20px;">
+            <div class="panel-heading" role="tab" id="admissions-heading">
+                <h4 class="panel-title">
+                    <a role="button" data-toggle="collapse" href="#admissions-collapse"
+                    aria-expanded="false" aria-controls="admissions-collapse" style="outline:none;">
+                        <div>
+                            <h3 style="display:inline;">Admission Fee Payments</h3>
+                            <span id="collapse_admissions_span" class="glyphicon glyphicon-menu-up" style="float:right;"></span>
+                        </div>
+                    </a>
+                </h4>
+            </div>
+            <div id="admissions-collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="admissions-heading">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button v-if="!exportingCSV2" type="button" class="btn btn-default pull-right" id="print-btn" @click="print2()">
+                                <i class="fa fa-file-excel-o" aria-hidden="true"></i> Export to CSV
+                            </button>
+                            <button v-else type="button" class="btn btn-default pull-right" disabled>
+                                <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i> Exporting to CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="">Date From</label>
+                            <div class="input-group date" id="admission-date-from">
+                            <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateFrom2">
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="">Date To</label>
+                            <div class="input-group date" id="admission-date-to">
+                            <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo2">
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                            <label for="">Cancelled</label>
+                            <select class="form-control" v-model="filterCanceled2" id="filterCanceled2">
+                                    <option value="True">Yes</option>
+                                    <option value="False">No</option>
+                            </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <datatable ref="admissions_bookings_table" id="admissions-bookings-table" :dtOptions="dtOptions2" :dtHeaders="dtHeaders2"></datatable>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <label for="">Date To</label>
-                <div class="input-group date" id="booking-date-to">
-                  <input type="text" class="form-control"  placeholder="DD/MM/YYYY" v-model="filterDateTo">
-                  <span class="input-group-addon">
-                      <span class="glyphicon glyphicon-calendar"></span>
-                  </span>
-                </div>
-            </div>
-            <div class="col-md-4" v-if="filterCanceled == 'True'">
-                <div class="form-group">
-                  <label for="">Refund Status</label>
-                  <select class="form-control" v-model="filterRefundStatus" id="filterRefundStatus">
-                        <option value="All">All</option>
-                        <option value="Refunded">Refunded</option>
-                        <option value="Partially Refunded">Partially Refunded</option>
-                        <option value="Not Refunded">Not Refunded</option>
-                  </select>
-                </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-lg-12">
-                <datatable ref="bookings_table" id="bookings-table" :dtOptions="dtOptions" :dtHeaders="dtHeaders"></datatable>
-            </div>
-          </div>
-      </div>
-      <changebooking ref="changebooking" :booking_id="selected_booking" :campgrounds="campgrounds"/>
-      <bookingHistory ref="bookingHistory" :booking_id="selected_booking" />
-  </div>
-   <loader :isLoading="isLoading" >{{loading.join(' , ')}}</loader>
+            <loader :isLoading2="isLoading2" >{{loading2.join(' , ')}}</loader>
+        </div>
+    </div>
 </div>
 </template>
 
+
 <script>
-import {$,bus,datetimepicker,api_endpoints,helpers,Moment,swal,select2} from "../../hooks.js"
+// Variabled ending with a 2 (except select2) are reused for the admissions fee payment table.
+import {$,
+        bus,
+        datetimepicker,
+        api_endpoints,
+        helpers,
+        Moment,
+        swal,
+//        select2
+        } from "../../hooks.js"
 import loader from "../utils/loader.vue"
 import datatable from '../utils/datatable.vue'
 import changebooking from "./changebooking.vue"
@@ -112,11 +202,22 @@ export default {
         let vm =this;
         return {
             exportingCSV: false,
+            exportingCSV2: false,
+            payment_officer: false,
             dtOptions:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
                 },
                 responsive: true,
+                fnDrawCallback: function(oSettings, json){
+                    if(vm.payment_officer){
+                        vm.$refs.bookings_table.vmDataTable.rows().every(function(){
+                            var rowdata = this.data();
+                            rowdata['payment_visible'] = true;
+                            this.data(rowdata);
+                        });
+                    }
+                },
                 serverSide:true,
                 processing:true,
                 searchDelay: 800,
@@ -131,10 +232,10 @@ export default {
                             d.departure = vm.filterDateTo;
                         }
                         if (vm.filterCampground != "All") {
-                            d.campground = vm.filterCampground
+                            d.campground = vm.filterCampground;
                         }
                         if (vm.filterRegion != "All") {
-                            d.region = vm.filterRegion
+                            d.region = vm.filterRegion;
                         }
                         d.canceled = vm.filterCanceled;
                         d.refund_status = vm.filterRefundStatus;
@@ -158,14 +259,12 @@ export default {
                 ],
                 columns:[
                     {
-                        data:"campground_name",
+                        data:"id",
                         orderable:false,
-                        searchable:false
-                    },
-                    {
-                        data:"campground_region",
-                        orderable:false,
-                        searchable:false
+                        searchable:false,
+                        mRender:function(data,type,full) {
+                            return full.status != 'Canceled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
+                        }
                     },
                     {
                         mRender: function(data, type, full) {
@@ -176,7 +275,10 @@ export default {
                             var max_length = 25;
                             var short_name = (name.length > max_length) ? name.substring(0,max_length-1)+'...' : name;
                             var popover =  (name.length > max_length) ? "class=\"name_popover\"":"";
-                            var column = '<td ><div '+popover+' tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div></td>';
+                            var column = '<td ><div '+popover+' tabindex="0" data-toggle="popover" data-placement="top" data-content="__NAME__">'+short_name+'</div>';
+
+                            column += '<BR>'+ full.booking_phone_number;
+                            column += '</td>';
                             column.replace(/__SHNAME__/g, short_name);
                             return column.replace(/__NAME__/g, name);
 
@@ -185,12 +287,40 @@ export default {
                         searchable:false
                     },
                     {
-                        data:"id",
+                        mRender: function(data, type, full){
+                            if (full.regos.length > 0){
+                                var rego = full.regos[0].vessel;
+                            } else {
+                                var rego = "-"
+                            }
+                            return rego;
+                        },
                         orderable:false,
-                        searchable:false,
-                        mRender:function(data,type,full){
-                            return full.status != 'Canceled' ? "<a href='/api/get_confirmation/"+full.id+"' target='_blank' class='text-primary'>PS"+data+"</a><br/>": "PS"+full.id;
-                        }
+                        searchable:false
+                    },
+                    {
+                        mRender: function(data, type, full){
+                            var line = "<td>";
+                            for (var msb in full.mooringsite_bookings){
+                                line += '<tr>' + full.mooringsite_bookings[msb][0] + '<br/></tr>';
+                            }
+                            line += '</td>';
+                            return line;
+                        },
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        mRender: function(data, type, full){
+                            var line = '<td>';
+                            for (var msb in full.mooringsite_bookings){
+                                line += '<tr>' + full.mooringsite_bookings[msb][1] + '<br/></tr>';
+                            }
+                            line += '</td>';
+                            return line;
+                        },
+                        orderable:false,
+                        searchable:false
                     },
 //                    {
 //                        data:"campground_site_type",
@@ -207,7 +337,33 @@ export default {
 //                        searchable:false
 //                   },
                     {
-                        data:"status",
+                        orderable:false,
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            var line = '<td>';
+                            for (var msb in full.mooringsite_bookings){
+                                var date = Moment(full.mooringsite_bookings[msb][2]).format('DD/MM/YYYY HH:mm');
+                                line += '<tr>' + date + '<br/></tr>';
+                            }
+                            line += '</td>';
+                            return line;
+                        }
+                    },
+                    {
+                        orderable:false,
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            var line = '<td>';
+                            for (var msb in full.mooringsite_bookings){
+                                var date = Moment(full.mooringsite_bookings[msb][3]).format('DD/MM/YYYY HH:mm');
+                                line += '<tr>' + date + '<br/></tr>';
+                            }
+                            line += '</td>';
+                            return line;
+                        }
+                    },
+                    {
+                        data:"invoice_status",
                         orderable:false,
                         searchable:false,
                         mRender: function(data,type,full){
@@ -218,22 +374,6 @@ export default {
                             return data;
                         },
                         'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {
-                        data:"arrival",
-                        orderable:false,
-                        searchable:false,
-                        mRender:function(data,type,full){
-                            return Moment(data).format('DD/MM/YYYY');
-                        }
-                    },
-                    {
-                        data:"departure",
-                        orderable:false,
-                        searchable:false,
-                        mRender:function(data,type,full){
-                            return Moment(data).format('DD/MM/YYYY');
-                        }
                     },
                     {
                         mRender: function(data, type, full) {
@@ -252,20 +392,28 @@ export default {
                                 var location_port = window.location.port ? ':'+window.location.port : '';
                                 var location_url = `${window.location.protocol}//${window.location.hostname}${location_port}`;
                                 invoice_string += full.payment_callback_url ? '&callback_url='+location_url+full.payment_callback_url : '';
-                                var payment = (full.paid || full.status == 'Canceled') ? "View" : "Record";
-                                var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
-                                column += record_payment;
+//                                if (full.invoice_status == 'unpaid') { 
+                               if(full.payment_visible){
+                                     var payment = (full.invoice_status == 'paid') ? "View" : "Record";
+                                
+                                     var record_payment = "<a href='"+invoice_string+"' target='_blank' class='text-primary' data-rec-payment='' > "+payment+" Payment</a><br/>";
+                                     column += record_payment; 
+                                }                                
                             }
                             if (full.editable){
-                                var change_booking = "<a href='edit/"+full.id+"' class='text-primary' data-change = '"+booking+"' > Change</a><br/>";
-                                var cancel_booking = "<a href='#' class='text-primary' data-cancel='"+booking+"' > Cancel</a><br/>";
+                                if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
+                                var change_booking = "<a href='/view-booking/"+full.id+"' class='text-primary' > Change</a><br/>";
+                                var cancel_booking = "<a href='/cancel-booking/"+full.id+"' class='text-primary' idata-cancel='"+booking+"' > Cancel</a><br/>";
                                 column += cancel_booking;
                                 column += change_booking;
+				}
                             }
-                            full.has_history ? column += "<a href='edit/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
-                            $.each(full.active_invoices,(i,v) =>{
-                                invoices += "<a href='/ledger/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
+
+                            full.has_history ? column += "<a href='/view-booking/"+full.id+"' class='text-primary' data-history = '"+booking+"' > View History</a><br/>" : '';
+                            $.each(full.invoices,(i,v) =>{
+                                invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
                             });
+                            invoices += " <a class='text-primary' href='/booking-history/"+full.id+"'>View History</a>";
                             column += invoices;
                             column += "</td>";
                             return column.replace('__Status__', status);
@@ -275,9 +423,141 @@ export default {
                     },
                 ]
             },
-            dtHeaders:["Mooring","Region","Person","Confirmation #","Status","From","To","Action"],
+            dtOptions2:{
+                language: {
+                    processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
+                },
+                responsive: true,
+                fnDrawCallback: function(oSettings, json){
+                    if(vm.payment_officer){
+                        vm.$refs.admissions_bookings_table.vmDataTable.rows().every(function(){
+                            var rowdata = this.data();
+                            rowdata['payment_visible'] = true;
+                            this.data(rowdata);
+                        });
+                    }
+                },
+                serverSide:true,
+                processing:true,
+                searchDelay: 800,
+                ajax: {
+                    "url": api_endpoints.admissionsbookings,
+                    "dataSrc": 'results',
+                    data :function (d) {
+                        if (vm.filterDateFrom2) {
+                            d.arrival = vm.filterDateFrom2;
+                        }
+                        if (vm.filterDateTo2) {
+                            d.departure = vm.filterDateTo2;
+                        }
+                        d.canceled = vm.filterCanceled2;
+                    }
+                },
+                columns:[
+                    {
+                        data: "id",
+                        mRender:function(data,type,full){
+                            return "<a href='/api/get_admissions_confirmation/"+data+"' target='_blank' class='text-primary'>AD"+data+"</a><br/>";
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        mRender: function(data, type, full){
+                            if (full.booking){
+                                return "<a href='/api/get_confirmation/"+full.booking+"' target='_blank' class='text-primary'>PS"+full.booking+"</a><br/>"
+                            } else {
+                                return "-"
+                            }
+                        },
+                        orderable: false,
+                        searchable: false,
+                    },
+                    {
+                        data: "customerName",
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        mRender: function(data,type,full){
+                            if(full.vesselRegNo){
+                                return full.vesselRegNo;
+                            } else {
+                                return "-";
+                            }
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        mRender:function(data,type,full){
+                            return full.noOfAdults + full.noOfChildren + full.noOfInfants;
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        data:"arrivalDate",
+                        orderable:false,
+                        searchable:false,
+                        mRender:function(data,type,full){
+                            var dates = ""
+                            for (var no in full.lines){
+                                dates += Moment(full.lines[no].date).format("DD/MM/YYYY") + "<br/>";
+                            }
+                            return dates;
+                        }
+                    },
+                    {
+                         mRender: function(data,type,full){
+                            if(full.warningReferenceNo){
+                                return full.warningReferenceNo;
+                            } else {
+                                return "-";
+                            }
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                    {
+                        mRender: function(data, type, full) {
+                            var search = "";
+                            var invoices = "";
+                            var column = ""
+                            $.each(full.invoice_ref,(i,v) =>{
+                                if (i != 0){
+                                    search += "&";
+                                }
+                                search += "invoice=" + v
+                                invoices += "<a href='/mooring/payments/invoice-pdf/"+v+"' target='_blank' class='text-primary'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #"+v+"</a><br/>"; 
+                            });
+                            var invoice = "/ledger/payments/invoice/payment?" + search;
+                            if (full.payment_visible) {
+                                var invoice_link= (full.invoice_ref)?"<a href='"+invoice+"' target='_blank' class='text-primary'>View Payment</a><br/>":"";
+                                column += invoice_link;
+                            }
+                            console.log(full.part_booking);
+                            if (full.in_future && !full.part_booking) {
+                                if (full.booking_type == 0 || full.booking_type == 1 || full.booking_type == 2) { 
+                                    var cancel_booking = "<a href='/cancel-admissions-booking/"+full.id+"' class='text-primary'> Cancel</a><br/>";
+                                    column += cancel_booking;
+			        }
+                            }
+                            // invoices += " <a href='/booking-history/{{ full.id }}'>View History</a>";
+                            column += invoices;
+                            return column;
+                        },
+                        orderable:false,
+                        searchable:false
+                    },
+                ]
+            },
+            dtHeaders:["Confirmation #", "Person", "Vessel Reg #", "Mooring", "Region", "From", "To", "Status", "Action"],
+            dtHeaders2:["Confirmation #", "Booking #", "Person", "Vessel Reg #", "Total Attendees", "Admission Date", "Warning Ref #", "Action"],
             dateFromPicker:null,
             dateToPicker:null,
+            dateFromPicker2:null,
+            dateToPicker2:null,
             datepickerOptions:{
                 format: 'DD/MM/YYYY',
                 showClear:true,
@@ -286,13 +566,17 @@ export default {
                 allowInputToggle:true
             },
             loading:[],
+            loading2:[],
             selected_booking:-1,
             filterCampground:"All",
             filterRegion:"All",
             filterDateFrom:"",
             filterDateTo:"",
             filterCanceled: 'False',
-            filterRefundStatus: 'All'
+            filterRefundStatus: 'All',
+            filterDateFrom2:"",
+            filterDateTo2:"",
+            filterCanceled2: 'False',
         }
     },
     watch:{
@@ -317,12 +601,41 @@ export default {
         isLoading:function () {
             return this.loading.length > 0;
         },
+        isLoading2: function (){
+            return this.loading2.length > 0;
+        },
         ...mapGetters([
           'regions',
           'campgrounds'
         ]),
     },
     methods:{
+        showhidebookings: function() {
+            var content = $('#content_booking');
+            var span = $('#collapse_bookings_span');
+            if (content.css("display") !== "none"){
+                content.css("display", "none");
+                span.removeClass("glyphicon glyphicon-menu-up");
+                span.addClass("glyphicon glyphicon-menu-down");
+            } else {
+                content.css("display", "block");
+                span.removeClass("glyphicon glyphicon-menu-down");
+                span.addClass("glyphicon glyphicon-menu-up");
+            }
+        },
+        showhideadmissions: function(){
+            var content = $('#content_admissions')
+            var span = $('#collapse_admissions_span');
+            if (content.css("display") !== "none"){
+                content.css("display", "none");
+                span.removeClass("glyphicon glyphicon-menu-up");
+                span.addClass("glyphicon glyphicon-menu-down");
+            } else {
+                content.css("display", "block");
+                span.removeClass("glyphicon glyphicon-menu-down");
+                span.addClass("glyphicon glyphicon-menu-up");
+            }
+        },
         fetchCampgrounds:function () {
             let vm =this;
             vm.loading.push('fetching campgrounds');
@@ -391,15 +704,15 @@ export default {
             /* End Region Selector*/
             
             vm.$refs.bookings_table.vmDataTable.on('click','a[data-change]',function (e) {
-                e.preventDefault();
-                var selected_booking = JSON.parse($(this).attr('data-change'));
-                vm.selected_booking = selected_booking.id;
-                vm.$router.push({
-                    'name':'edit-booking',
-                    params: {
-                        booking_id: selected_booking.id
-                    }
-                })
+                //e.preventDefault();
+                //var selected_booking = JSON.parse($(this).attr('data-change'));
+                //vm.selected_booking = selected_booking.id;
+               // vm.$router.push({
+               //     'name':'edit-booking',
+                //    params: {
+                //        booking_id: selected_booking.id
+                //    }
+               // })
                 //vm.$refs.changebooking.fetchBooking(vm.selected_booking);
             });
 
@@ -460,6 +773,34 @@ export default {
                 }
 
             });
+
+            vm.dateToPicker2.on('dp.change', function(e){
+                if (vm.dateToPicker2.data('DateTimePicker').date()) {
+                    vm.filterDateTo2 =  e.date.format('DD/MM/YYYY');
+                    vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+                }
+                else if (vm.dateToPicker2.data('date') === "") {
+                    vm.filterDateTo2 = "";
+                    vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+                }
+
+             });
+
+            vm.dateFromPicker2.on('dp.change',function (e) {
+                if (vm.dateFromPicker2.data('DateTimePicker').date()) {
+                    vm.filterDateFrom2 = e.date.format('DD/MM/YYYY');
+                    vm.dateToPicker2.data("DateTimePicker").minDate(e.date);
+                    vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+                }
+                else if (vm.dateFromPicker2.data('date') === "") {
+                    vm.filterDateFrom2 = "";
+                    vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+                }
+
+            });
+            $('#filterCanceled2').on('change',function (e) {
+                   vm.$refs.admissions_bookings_table.vmDataTable.ajax.reload();
+	    });
             helpers.namePopover($,vm.$refs.bookings_table.vmDataTable);
             $(document).on('keydown', function(e) {
                 if(e.ctrlKey && (e.key == "p" || e.charCode == 16 || e.charCode == 112 || e.keyCode == 80) ){
@@ -486,6 +827,23 @@ export default {
                 }
             return str.join("&");
         },
+        printParams2() {
+            let vm = this;
+            var str = [];
+            console.log("printParams2");
+            let obj = {
+                arrival : vm.filterDateFrom2 != null ? vm.filterDateFrom2: '',
+                departure : vm.filterDateTo2 != null ? vm.filterDateTo2:'' ,
+                'search[value]': vm.$refs.admissions_bookings_table.vmDataTable.search(),
+                canceled: vm.filterCanceled2,
+            }
+
+            for(var p in obj)
+                if (obj.hasOwnProperty(p)) {
+                str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                }
+            return str.join("&");
+        },
         print:function () {
             let vm =this;
             vm.exportingCSV = true;
@@ -498,17 +856,21 @@ export default {
                 //var fields = [...vm.dtHeaders];
                 var fields = [...fields,...vm.dtHeaders];
                 fields.splice(vm.dtHeaders.length-1,1);
-                fields = [...fields,"Adults","Concession","Children","Infants","Regos","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By"]
-                fields.splice(4,0,"Email");
-                fields.splice(5,0,"Phone");
-                fields.splice(9,0,'Amount Due')
-                fields.splice(10,0,'Amount Paid')
-                fields.splice(22,0,'Booking Type')
+                fields = ['Created', 'Confirmation No', 'Person', 'Email', 'Phone', 'Vessel Rego', 'Amount Due', 'Amount Paid',"Status", "Mooring", "Region", "Arrival", "Departure", "Adults","Concession","Children","Infants",'Booking Type','Invoices','Admission Ref#', 'Admission Amount']
+                //fields = ['Created', 'Confirmation No', 'Person', 'Email', 'Phone', 'Vessel Rego', 'Amount Due', 'Amount Paid',"Status", "Mooring", "Region", "Arrival", "Departure", "Adults","Concession","Children","Infants","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By", 'Booking Type','Invoices']
+                // fields = [...fields,"Adults","Concession","Children","Infants","Regos","Cancelled","Cancellation Reason","Cancelation Date","Cancelled By"]
+                // fields.splice(4,0,"Email");
+                // fields.splice(5,0,"Phone");
+                // fields.splice(9,0,'Amount Due')
+                // fields.splice(10,0,'Amount Paid')
+                // fields.splice(22,0,'Booking Type')
                 var booking_types = {
                     0: 'Reception booking',
                     1: 'Internet booking',
                     2: 'Black booking',
                     3: 'Temporary reservation',
+                    4: 'Cancelled Booking',
+                    5: 'Changed Booking',
                 };
 
                 //var data = vm.$refs.bookings_table.vmDataTable.ajax.json().results;
@@ -521,40 +883,68 @@ export default {
                                 bk[field] = Moment(booking.created).format("DD/MM/YYYY HH:mm:ss");
                             break;
                             case 1:
-                                bk[field] = booking.campground_name;
+                                // bk[field] = booking.campground_name;
+                                bk[field] = "PS" + booking.id;
                             break;
                             case 2:
-                                bk[field] = booking.campground_region;
-                            break;
-                            case 3:
+                                // bk[field] = booking.campground_region;
                                 bk[field] = booking.firstname +" "+ booking.lastname;
                             break;
-                            case 4:
+                            case 3:
+                                // bk[field] = booking.firstname +" "+ booking.lastname;
                                 bk[field] = booking.email;
                             break;
-                            case 5:
+                            case 4:
+                                // bk[field] = booking.email;
                                 bk[field] = booking.phone;
                             break;
+                            case 5:
+                                // bk[field] = booking.phone;
+                                bk[field] = booking.regos[0].vessel;
+                            break;
                             case 6:
-                                bk[field] = booking.id;
-                            break;
-                            case 7:
-                                bk[field] = booking.campground_site_type;
-                            break;
-                            case 8:
-                                bk[field] = booking.status;
-                            break;
-                            case 9:
                                 bk[field] = booking.cost_total;
                             break;
-                            case 10:
+                            case 7:
+                                // bk[field] = booking.campground_site_type;
                                 bk[field] = booking.amount_paid;
                             break;
+                            case 8:
+                                bk[field] = booking.invoice_status;
+                            break;
+                            case 9:
+                                var name_list = []
+                                console.log(booking.mooringsite_bookings)
+                                for (var i = 0; i < booking.mooringsite_bookings.length; i++){
+                                    console.log(booking.mooringsite_bookings[i]);
+                                    console.log(booking.mooringsite_bookings[i][0]);
+                                    console.log(booking.mooringsite_bookings[i][1]);
+                                    console.log(booking.mooringsite_bookings[i][2]);
+                                    console.log(booking.mooringsite_bookings[i][3]);
+                                    name_list.push(booking.mooringsite_bookings[i][0]);
+                                }
+                                bk[field] = name_list;
+                            break;
+                            case 10:
+                                var name_list = []
+                                for (var i = 0; i < booking.mooringsite_bookings.length; i++){
+                                    name_list.push(booking.mooringsite_bookings[i][1]);
+                                }
+                                bk[field] = name_list;
+                            break;
                             case 11:
-                                bk[field] = Moment(booking.arrival).format("DD/MM/YYYY");
+                                var name_list = []
+                                for (var i = 0; i < booking.mooringsite_bookings.length; i++){
+                                    name_list.push(Moment(booking.mooringsite_bookings[i][2]).format('DD/MM/YYYY HH:mm'));
+                                }
+                                bk[field] = name_list;
                             break;
                             case 12:
-                                bk[field] = Moment(booking.departure).format("DD/MM/YYYY");
+                                var name_list = []
+                                for (var i = 0; i < booking.mooringsite_bookings.length; i++){
+                                    name_list.push(Moment(booking.mooringsite_bookings[i][3]).format('DD/MM/YYYY HH:mm'));
+                                }
+                                bk[field] = name_list;
                             break;
                             case 13:
                                 bk[field] = booking.guests.adults;
@@ -568,47 +958,44 @@ export default {
                             case 16:
                                 bk[field] =  booking.guests.infants;
                             break;
+//                            case 17:
+//                                bk[field] = booking.is_canceled;
+//                            break;
+//                            case 18:
+//                                bk[field] = booking.cancelation_reason;
+//                            break;
+//                            case 19:
+//                                bk[field] = booking.cancelation_time ? Moment(booking.cancelation_time).format("DD/MM/YYYY HH:mm:ss") : '';
+//                            break;
+//                            case 20:
+//                                bk[field] = booking.canceled_by;
+//                            break;
                             case 17:
-                                bk[field] =  booking.vehicle_payment_status.map(r =>{
-                                    var val =Object.keys(r).map(k =>{
-                                        if (k == 'Fee' || k == 'original_type'){ return 'avoid'; }
-                                        if (k == 'Paid'){
-                                            if (r[k] == 'Yes'){
-                                                return "Status" +" : Entry Fee Paid";
-                                            }
-                                            else if( r[k] == 'No'){
-                                                return "Status" +" : Unpaid";
-                                            }
-                                            else if(r[k] == 'pass_required'){
-                                                return "Status" +" : Park Pass Required"
-                                            }
-                                        }
-                                        else{
-                                            return k +" : "+ r[k]
-                                        }
-                                    });
-                                    return val.filter(i => i != 'avoid');
-                                }).join(" | ");
-                            break;
-                            case 18:
-                                bk[field] = booking.is_canceled;
-                            break;
-                            case 19:
-                                bk[field] = booking.cancelation_reason;
-                            break;
-                            case 20:
-                                bk[field] = booking.cancelation_time ? Moment(booking.cancelation_time).format("DD/MM/YYYY HH:mm:ss") : '';
-                            break;
-                            case 21:
-                                bk[field] = booking.canceled_by;
-                            break;
-                            case 22:
                                 if (typeof booking_types[booking.booking_type] !== 'undefined') {
                                     bk[field] = booking_types[booking.booking_type];
                                 } else {
                                     bk[field] = booking.booking_type;
                                 }
                             break;                   
+                            case 18:
+                                bk[field] = booking.invoices;
+                            break;
+                            case 19:
+                                if (booking.admissions) { 
+                                	bk[field] = 'AD'+booking.admissions.id;
+                                } else {
+					bk[field] = '';
+				}
+                            break;
+                            case 20:
+                                if (booking.admissions) {
+                                    	bk[field] = booking.admissions.amount;
+                                } else {
+					bk[field] = '';
+				}
+                            break;
+
+
                         }
                     });
                     bookings.push(bk);
@@ -643,17 +1030,159 @@ export default {
                     text: helpers.apiVueResourceError(error), 
                 })
             });
-        }
+        },
+        print2:function () {
+            let vm =this;
+            vm.exportingCSV2 = true;
+            
+            vm.$http.get(api_endpoints.admissionsbookings+'?'+vm.printParams2()).then(res => {
+                var data = res.body.results;
+
+                var json2csv = require('json2csv');
+                var fields = ["Confirmation No", "Customer", "Email", "Overnight Stay", "Arrival Date", "Total Attendees", "Adults","Children","Infants", "Vessel Reg No", "Warning Reference", "Invoice Reference"]
+                
+                var bookings = [];
+                $.each(data,function (i,booking) {
+                    var bk = {};
+                    $.each(fields,function (j,field) {
+                        switch (j) {
+                            case 0:
+                                bk[field] = "AD" + booking.id;
+                                
+                            break;
+                            case 1:
+                                bk[field] = booking.customerName;
+                            break;
+                            case 2:
+                                bk[field] = booking.email;
+                            break;
+                            case 3:
+                                var answer = "";
+                                if(booking.lines){
+                                    for (var line in booking.lines){
+                                        if (line > 0){
+                                            answer += ", ";
+                                        }
+                                        if (booking.lines[line].overnight){
+                                            answer += "Yes";
+                                        } else {
+                                            answer += "No"
+                                        }
+                                        
+                                    }
+                                }
+                                bk[field] = answer;
+                            break;
+                            case 4:
+                                var dates = ""
+                                if (booking.lines){
+                                    for (var line in booking.lines){
+                                        if (line > 0){
+                                            dates += ", ";
+                                        }
+                                        dates += Moment(booking.lines[line].date).format("DD/MM/YYYY");
+                                    }
+                                }
+                                bk[field] = dates
+                            break;
+                            case 5:
+                                bk[field] = booking.noOfAdults + booking.noOfChildren + booking.noOfInfants;
+                            break;
+                            case 6:
+                                bk[field] = booking.noOfAdults;
+                            break;
+                            case 7:
+                                bk[field] = booking.noOfChildren;
+                            break;
+                            case 8:
+                                bk[field] = booking.noOfInfants;
+                            break;
+                            case 9:
+                                bk[field] = booking.vesselRegNo;
+                            break;
+                            case 10:
+                                bk[field] = booking.warningReferenceNo;
+                            break;
+                            case 11:
+                                bk[field] = booking.invoice_ref;
+                            break;
+                        }
+                    });
+                    bookings.push(bk);
+                });
+                var csv = json2csv({ data:bookings, fields: fields });
+                var a = document.createElement("a"),
+                file = new Blob([csv], {type: 'text/csv'});
+                var filterDates = (vm.filterDateFrom2) ? (vm.filterDateTo2) ? "From "+vm.filterDateFrom2 + " To "+vm.filterDateTo2: "From "+vm.filterDateFrom2 : (vm.filterDateTo2) ? " To "+vm.filterDateTo2 : "" ;
+                var filename =  filterDates + "_admissions" + ".csv";
+                filename.replace(" ", "_");
+                if (window.navigator.msSaveOrOpenBlob) // IE10+
+                    window.navigator.msSaveOrOpenBlob(file, filename);
+                else { // Others
+                    var url = URL.createObjectURL(file);
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(function() {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    }, 0);
+                }
+                vm.exportingCSV2 = false;
+            },
+            (error) => {
+                vm.exportingCSV2 = false;
+                swal({
+                    type: 'error',
+                    title: 'Export Error', 
+                    text: helpers.apiVueResourceError(error), 
+                })
+            });
+        },
+    },
+    created: function(){
+        let vm = this;
+        $.ajax({
+            url: api_endpoints.profile,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data, stat, xhr){
+                if(data.is_payment_officer){
+                    vm.payment_officer = true;
+                }
+            }
+        });
     },
     mounted:function () {
         let vm = this;
         vm.dateFromPicker = $('#booking-date-from').datetimepicker(vm.datepickerOptions);
         vm.dateToPicker = $('#booking-date-to').datetimepicker(vm.datepickerOptions);
+        vm.dateFromPicker2 = $('#admission-date-from').datetimepicker(vm.datepickerOptions);
+        vm.dateToPicker2 = $('#admission-date-to').datetimepicker(vm.datepickerOptions);
         vm.fetchCampgrounds();
         vm.fetchRegions();
         vm.addEventListeners();
-        // Set the from date to todays date as default
-        vm.filterDateFrom = Moment().format('DD/MM/YYYY')
+        //Bookings
+        $('#bookings-collapse').on('shown.bs.collapse', function(){
+            $('#collapse_bookings_span').removeClass("glyphicon glyphicon-menu-down");
+            $('#collapse_bookings_span').addClass("glyphicon glyphicon-menu-up");
+
+        });
+        $('#bookings-collapse').on('hidden.bs.collapse', function(){
+            $('#collapse_bookings_span').removeClass("glyphicon glyphicon-menu-up");
+            $('#collapse_bookings_span').addClass("glyphicon glyphicon-menu-down");
+        });
+        //Admissions
+        $('#admissions-collapse').on('shown.bs.collapse', function(){
+            $('#collapse_admissions_span').removeClass("glyphicon glyphicon-menu-down");
+            $('#collapse_admissions_span').addClass("glyphicon glyphicon-menu-up");
+
+        });
+        $('#admissions-collapse').on('hidden.bs.collapse', function(){
+            $('#collapse_admissions_span').removeClass("glyphicon glyphicon-menu-up");
+            $('#collapse_admissions_span').addClass("glyphicon glyphicon-menu-down");
+        });
     }
 
 }

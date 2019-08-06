@@ -5,7 +5,7 @@ python:
     - "2.7"
     - "3.5"
 addons:
-    postgresql: "9.4"
+    postgresql: "9.6"
 services:
     - postgresql
 branches:
@@ -23,19 +23,21 @@ env:
         - BPAY_ALLOWED=True
 sudo: true
 install:
-    - sudo apt-get install postgresql-9.4-postgis-2.3 -y -q
+    - sudo apt-get install postgresql-9.6-postgis-2.4 -y -q
     - pip install pip --upgrade
     - pip install -r requirements.txt
 before_script:
     - psql -c 'create database travis_ci_test;' -U postgres
     - python manage_wl.py migrate --noinput
     - python manage_ps.py migrate --noinput
+    - python manage_mo.py migrate --noinput
     - python manage_wl.py load_ledger_fixtures
     - python manage_wl.py load_fixtures
 script:
     - COVERAGE_FILE=.coverage_ledger coverage run --source="." manage_wl.py test --noinput ledger
     - COVERAGE_FILE=.coverage_wl coverage run --source="." manage_wl.py test --noinput wildlifelicensing
     - COVERAGE_FILE=.coverage_ps coverage run --source="." manage_ps.py test --noinput parkstay
-    - coverage combine .coverage_ledger .coverage_wl .coverage_ps
+    - COVERAGE_FILE=.coverage_mo coverage run --source="." manage_mo.py test --noinput mooring
+    - coverage combine .coverage_ledger .coverage_wl .coverage_ps .coverage_mo
 after_success:
     - coveralls

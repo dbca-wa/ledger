@@ -33,6 +33,7 @@ class Invoice(models.Model):
     token = models.CharField(max_length=80,null=True,blank=True)
     voided = models.BooleanField(default=False)
     previous_invoice = models.ForeignKey('self',null=True,blank=True)
+    settlement_date = models.DateField(blank=True, null=True) 
 
     def __unicode__(self):
         return 'Invoice #{0}'.format(self.reference)

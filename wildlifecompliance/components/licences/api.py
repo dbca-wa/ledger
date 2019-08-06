@@ -626,6 +626,7 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
         application_type = request.GET.get('application_type')
         licence_category_id = request.GET.get('licence_category')
         licence_activity_id = request.GET.get('licence_activity')
+        # active_applications are applications linked with licences that have CURRENT or SUSPENDED activities
         active_applications = Application.get_active_licence_applications(request, application_type)
         active_current_applications = active_applications.exclude(
             selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
@@ -643,7 +644,11 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
             queryset = LicenceCategory.objects.none()
             available_purpose_records = LicencePurpose.objects.none()
 
-        # Filter based on currently ACTIVE applications
+        # Filter based on currently ACTIVE applications (elif block below)
+        # - Exclude active licence categories for New Licence application type
+        # - Only display active licence categories for New Activity/purpose application type
+        # - Only include current (active but not suspended) purposes for
+        #     Amendment, Renewal or Reissue application types
         elif active_applications.count():
             # Activities relevant to the current application type
             current_activities = Application.get_active_licence_activities(request, application_type)
@@ -679,10 +684,12 @@ class UserAvailableWildlifeLicencePurposesViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(id__in=current_activities.values_list(
                     'licence_activity__licence_category_id', flat=True).distinct())
 
-            # Only include current (active but not suspended) purposes for Amendment or Renewal application types
+            # Only include current (active but not suspended) purposes for
+            # Amendment, Renewal or Reissue application types
             elif application_type in [
                 Application.APPLICATION_TYPE_AMENDMENT,
                 Application.APPLICATION_TYPE_RENEWAL,
+                Application.APPLICATION_TYPE_REISSUE,
             ]:
                 amendable_purpose_ids = active_current_applications.values_list(
                     'licence_purposes__id',

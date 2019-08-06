@@ -1,0 +1,23 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+	The Application {{ proposal.lodgement_number }} has been assessed and has been recommended for approval.
+
+    {% comment %}
+    {% if proposal.proposed_issuance_approval %}
+        <p>
+        	<span>Approved: </span>
+        </p>
+        <p>Start date: {{ start_date }}</p>
+        <p>Expiry date: {{ expiry_date }}</p>
+        <p>Details: {{ details }}</p>
+    {% endif %}
+    {% endcomment %}
+
+    <p>
+    You can access this Application using the following link:
+    </p>
+    <a href="{{url}}">Access Application</a>
+
+
+{%  endblock %}
