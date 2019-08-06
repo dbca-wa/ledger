@@ -103,7 +103,7 @@ export default {
     },
 
     methods:{
-        handleChange:function (e) {
+        handleChange: async function (e) {
             let vm = this;
 
             vm.show_spinner = true;
@@ -130,7 +130,7 @@ export default {
 
             if (e.target.files.length > 0) {
                 //vm.upload_file(e)
-                vm.save_document(e);
+                await vm.save_document(e);
             }
 
             vm.show_spinner = false;
