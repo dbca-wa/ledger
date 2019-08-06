@@ -88,8 +88,6 @@ export const userStore = {
             commit(UPDATE_SELECTED_TAB_ID, id);
             commit(UPDATE_SELECTED_TAB_NAME, name);
         },
-        loadCurrentUser({ dispatch }, { url }) {
-            console.log(url);
         setApplyOrgId({ commit }, { id }) {
             commit(UPDATE_SELECTED_APPLY_ORG_ID, id);
         },
