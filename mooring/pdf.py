@@ -1,7 +1,7 @@
 import os
 from io import BytesIO
-from datetime import date
-
+import calendar
+from datetime import datetime, date, timedelta
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, KeepTogether, PageBreak, Image, ImageAndFlowables
@@ -12,7 +12,7 @@ from reportlab.lib.colors import HexColor
 from django.core.files import File
 from django.conf import settings
 
-from mooring.models import Booking, BookingVehicleRego
+from mooring.models import Booking, BookingVehicleRego, AdmissionsBooking, AdmissionsLine, RegisteredVessels
 
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring','img','mooring_header.png')
 
@@ -55,6 +55,7 @@ LETTER_HEADER_MARGIN = 30
 LETTER_PAGE_MARGIN = 60
 LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH/3.0
 LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT/3.0
+
 LETTER_HEADER_RIGHT_LABEL_OFFSET = 400
 LETTER_HEADER_RIGHT_INFO_OFFSET = 450
 LETTER_HEADER_SMALL_BUFFER = 5
@@ -97,7 +98,6 @@ def _create_letter_header_footer(canvas, doc):
 
     #canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
     #canvas.setFillColor(HexColor(LETTER_BLUE_FONT))
-
     #canvas.drawRightString(current_x, current_y, DPAW_URL)
     #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE,
     #                       'Phone: {} Fax: {} Email: {}'.format(DPAW_PHONE, DPAW_FAX, DPAW_EMAIL))
@@ -108,7 +108,21 @@ def _create_letter_header_footer(canvas, doc):
     #canvas.drawRightString(current_x, current_y + SMALL_FONTSIZE * 3, DPAW_BUSINESS)
 
 
-def create_confirmation(confirmation_buffer, booking):
+def create_confirmation(confirmation_buffer, booking, mooring_bookings, mooring_var):
+    global DPAW_HEADER_LOGO 
+    global LETTER_IMAGE_WIDTH
+    global LETTER_IMAGE_HEIGHT
+    if  mooring_var["TEMPLATE_GROUP"] == 'rottnest':
+        DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring', 'img','logo-rottnest-island-sm.png')
+        LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH/2.9
+        LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT/1.4
+
+    else:
+        DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring','img','mooring_header.png')
+        LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH/3.0
+        LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT/3.0
+
+ 
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 160, id='EveryPagesFrame')
     every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_letter_header_footer)
@@ -124,23 +138,82 @@ def create_confirmation(confirmation_buffer, booking):
     #text2 = Paragraph('Twelve voices were shouting in anger, and they were all alike. No question, now, what had happened to the faces of the pigs. The creatures outside looked from pig to man, and from man to pig, and from pig to man again; but already it was impossible to say which was which.', styles['Left'])
 
     #elements.append(ImageAndFlowables(im, [text1, text2], imageSide='left'))
-   
-    
-
     table_data = []
-    table_data.append([Paragraph('Mooring', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.mooringarea.name, booking.mooringarea.park.name), styles['BoldLeft'])])
-    campsite = u'{}'.format(booking.first_campsite.type) if booking.mooringarea.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
-#   table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
+
+    rego = ""
+    if booking.vehicle_payment_status:
+        for r in booking.vehicle_payment_status:
+            rego = r['Rego']
+
+    lines = []
+    from_date = ""
+    to_date = ""
+    moorings = []
+    for i, mb in enumerate(mooring_bookings):
+        if mb.campsite.mooringarea not in moorings:
+            moorings.append(mb.campsite.mooringarea)
+        start = mb.from_dt
+        timestamp = calendar.timegm(start.timetuple())
+        local_dt = datetime.fromtimestamp(timestamp)
+        start = local_dt.replace(microsecond=start.microsecond)
+        start = start.strftime('%d/%m/%Y %H:%M')
+        end = mb.to_dt
+        timestamp = calendar.timegm(end.timetuple())
+        local_dt = datetime.fromtimestamp(timestamp)
+        end = local_dt.replace(microsecond=end.microsecond)
+        end_str = end.strftime('%d/%m/%Y %H:%M')
+        
+        if from_date == "":
+            from_date = start
+        if i == len(mooring_bookings)-1:
+            to_date = end_str
+        else:
+            next_dt = mooring_bookings[i+1].from_dt
+            timestamp = calendar.timegm(next_dt.timetuple())
+            local_dt = datetime.fromtimestamp(timestamp)
+            next_dt = local_dt.replace(microsecond=next_dt.microsecond)
+            next_str = next_dt.strftime('%d/%m/%Y %H:%M')
+            if (end + timedelta(minutes=1)) == next_dt and mb.campsite.mooringarea.name == mooring_bookings[i+1].campsite.mooringarea.name:
+                #Go to next booking
+                to_date = ""
+            else:
+                to_date = end_str
+        if to_date > "":
+            lines.append({'from': from_date, 'to':to_date, 'mooring': mb.campsite.mooringarea.name, 'park': mb.campsite.mooringarea.park.name, 'fees': mb.campsite.mooringarea.park.entry_fee_required})
+            from_date = ""
+            to_date = ""
+
+    for i, line in enumerate(lines):
+        table_data.append([Paragraph('Mooring {}'.format(i+1), styles['BoldLeft']), Paragraph('{}, {}'.format(line['mooring'], line['park']), styles['BoldLeft'])])
+        # campsite = u'{}'.format(booking.first_campsite.type) if booking.mooringarea.site_type == 2 else u'{} ({})'.format(booking.first_campsite.name, booking.first_campsite.type)
+    #   table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
+        days = (datetime.strptime(line['to'], '%d/%m/%Y %H:%M').date() - datetime.strptime(line['from'], '%d/%m/%Y %H:%M').date()).days
+        if days == 0:
+            days = 1
+        plural = 's' if days > 1 else ''
+        table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph('{} to {} ({} day{})'.format(line['from'], line['to'], days, plural), styles['Left'])])
+        if line['fees']:
+            fee_text = "Fees Paid"
+            if RegisteredVessels.objects.filter(rego_no=rego).count() > 0:
+                found_ves = RegisteredVessels.objects.filter(rego_no=rego)[0]
+                if found_ves.admissionsPaid:
+                    fee_text = "Covered by licence or permit"
+            table_data.append([Paragraph('Admission Fees', styles['BoldLeft']), Paragraph('{}'.format(fee_text), styles['Left'])])
+        else:
+            fee_text = "Not Applicable"
+            table_data.append([Paragraph('Admission Fees', styles['BoldLeft']), Paragraph('{}'.format(fee_text), styles['Left'])])
+        
     
-    table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph(booking.stay_dates, styles['Left'])])
 #    table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} {} ({})'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''), booking.customer.email if booking.customer else None), styles['Left'])])
     table_data.append([Paragraph('Booking confirmation number', styles['BoldLeft']), Paragraph(booking.confirmation_number, styles['Left'])])
 
     if booking.vehicle_payment_status:
         vehicle_data = []
+        rego = ""
         for r in booking.vehicle_payment_status:
-            data = [Paragraph(r['Type'], styles['Left']), Paragraph(r['Rego'], styles['Left'])]
+            data = [Paragraph(r['Rego'], styles['Left'])]
+            rego = r['Rego']
             if r.get('Paid') != None:
                 if r['Paid'] == 'Yes':
                     data.append(Paragraph('Entry fee paid', styles['Left']))
@@ -150,15 +223,77 @@ def create_confirmation(confirmation_buffer, booking):
                     pass
                     #data.append(Paragraph('Marina Pass Required', styles['Left']))
             vehicle_data.append(data)
+
             
         vehicles = Table(vehicle_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
-        table_data.append([Paragraph('Vessel', styles['BoldLeft']), vehicles])
+        table_data.append([Paragraph('Vessel', styles['BoldLeft']), rego])
     else:
         table_data.append([Paragraph('Vessel', styles['BoldLeft']), Paragraph('No vessel', styles['Left'])])
         
-    if booking.mooringarea.additional_info:        
-        table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(booking.mooringarea.additional_info, styles['Left'])])
+    additional_info = ""
 
+    for mooring in moorings:
+        if mooring.additional_info:
+            additional_info += mooring.name + ": <br/>" 
+            additional_info += mooring.additional_info + "<br/>"
+
+    if additional_info:        
+        table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(additional_info, styles['Left'])])
+
+    elements.append(Table(table_data, colWidths=(200, None), style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
+
+    doc.build(elements)
+    return confirmation_buffer
+
+def create_admissions_confirmation(confirmation_buffer, admissionsBooking, mooring_var):
+
+    global DPAW_HEADER_LOGO
+    global LETTER_IMAGE_WIDTH
+    global LETTER_IMAGE_HEIGHT
+
+    if  mooring_var["TEMPLATE_GROUP"] == 'rottnest':
+        DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring', 'img','logo-rottnest-island-sm.png')
+        LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH/2.9
+        LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT/1.4
+
+    else:
+        DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'mooring', 'static', 'mooring','img','mooring_header.png')
+        LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH/3.0
+        LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT/3.0
+
+
+
+    every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
+                             PAGE_HEIGHT - 160, id='EveryPagesFrame')
+    every_page_template = PageTemplate(id='EveryPages', frames=every_page_frame, onPage=_create_letter_header_footer)
+
+    doc = BaseDocTemplate(confirmation_buffer, pageTemplates=[every_page_template], pagesize=A4)
+
+    adl = AdmissionsLine.objects.filter(admissionsBooking=admissionsBooking)
+
+    elements = []
+
+    elements.append(Paragraph('ADMISSIONS FEE PAYMENT CONFIRMATION', styles['InfoTitleVeryLargeCenter']))
+   
+    table_data = []
+    table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} ({})'.format(admissionsBooking.customer.get_full_name(), admissionsBooking.customer.email if admissionsBooking.customer else None), styles['Left'])])
+    table_data.append([Paragraph('Admission Fee confirmation number', styles['BoldLeft']), Paragraph(admissionsBooking.confirmation_number, styles['Left'])])
+    for line in adl:
+        table_data.append([Paragraph('Date', styles['BoldLeft']), Paragraph(u'{}'.format(datetime.strftime(line.arrivalDate, '%d/%m/%Y')), styles['Left'])])
+        overnightStay = ""
+        if(line.overnightStay):
+            overnightStay = "Yes"
+        else:
+            overnightStay = "No"
+        table_data.append([Paragraph('Overnight Stay', styles['BoldLeft']), Paragraph(u'{}'.format(overnightStay), styles['Left'])])
+    if admissionsBooking.noOfAdults > 0:
+        table_data.append([Paragraph('Adults', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfAdults), styles['Left'])])
+    if admissionsBooking.noOfConcessions > 0:
+        table_data.append([Paragraph('Concessions', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfConcessions), styles['Left'])])
+    if admissionsBooking.noOfChildren > 0:
+        table_data.append([Paragraph('Children', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfChildren), styles['Left'])])
+    if admissionsBooking.noOfInfants > 0:
+        table_data.append([Paragraph('Infants', styles['BoldLeft']), Paragraph(u'{}'.format(admissionsBooking.noOfInfants), styles['Left'])])
     elements.append(Table(table_data, colWidths=(200, None), style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
 
     doc.build(elements)

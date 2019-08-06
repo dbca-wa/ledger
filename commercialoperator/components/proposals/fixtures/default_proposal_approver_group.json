@@ -1,0 +1,10 @@
+[
+    {
+        "model": "commercialoperator.proposalapprovergroup",
+        "fields":
+        {
+            "name":"Default Group",
+            "default": true
+        }
+    }
+]

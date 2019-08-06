@@ -1,0 +1,17 @@
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
+
+{%  block content %}
+    Your licence return details {{ lodgement_number }} has been reviewed and requires an amendment before further assessment.
+
+    {% if reason %}
+        Amendment Reason: {{ reason }}
+    {% endif %}
+
+    {% if text %}
+        Amendment details: {{ text }}
+    {% endif %}
+
+    If you are currently logged into the Wildlife Licensing System, use the following link:
+    {{url}}
+
+{%  endblock %}

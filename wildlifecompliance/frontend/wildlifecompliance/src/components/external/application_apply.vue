@@ -4,7 +4,10 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">New Application
+                        <h3 class="panel-title">New Application for
+                            <span v-if="selected_apply_org_id">{{ selected_apply_org_id_details.name }} ({{ selected_apply_org_id_details.abn }})</span>
+                            <span v-if="selected_apply_proxy_id">{{ selected_apply_proxy_id_details.first_name }} {{ selected_apply_proxy_id_details.last_name }} ({{ selected_apply_proxy_id_details.email }})</span>
+                            <span v-if="!selected_apply_org_id && !selected_apply_proxy_id">yourself</span>
                             <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                             </a>
@@ -54,15 +57,17 @@ import {
   helpers
 }
 from '@/utils/hooks'
+import { mapActions, mapGetters } from 'vuex'
 import utils from './utils'
+import internal_utils from '@/components/internal/utils'
 export default {
   data: function() {
     let vm = this;
     return {
         "application": null,
         agent: {},
-        behalf_of_org : this.$route.params.org_select,
-        behalf_of_proxy : this.$route.params.proxy_select,
+        selected_apply_org_id_details : {},
+        selected_apply_proxy_id_details: {},
         current_user: {
             wildlifecompliance_organisations: []
         },
@@ -75,18 +80,23 @@ export default {
   components: {
   },
   computed: {
+    ...mapGetters([
+        'selected_apply_org_id',
+        'selected_apply_proxy_id',
+        'application_workflow_state',
+    ]),
     isLoading: function() {
       return this.loading.length > 0
     },
   },
   methods: {
+    ...mapActions([
+        'setApplyLicenceSelect',
+    ]),
     submit: function() {
-        this.$router.push({
+        this.setApplyLicenceSelect({licence_select: this.licence_select});
+        this.$router.replace({
             name: "apply_application_licence",
-            params: {
-                licence_select: this.licence_select,
-                org_select: this.behalf_of_org
-            }
         });
     },
   },
@@ -96,25 +106,35 @@ export default {
   },
   beforeRouteEnter: function(to, from, next) {
     next(vm => {
+        // Sends the user back to the first application workflow screen if workflow state
+        // was interrupted (e.g. lost from page refresh)
+        if(!vm.application_workflow_state) {
+            return vm.$router.replace({
+                name: "apply_application_organisation",
+            });
+        }
         const initialisers = [
             utils.fetchCurrentUser(),
             utils.fetchCurrentActiveLicenceApplication({
-                    "proxy_id": vm.behalf_of_proxy,
-                    "organisation_id": vm.behalf_of_org,
+                    "proxy_id": vm.selected_apply_proxy_id,
+                    "organisation_id": vm.selected_apply_org_id,
                 }),
+            vm.selected_apply_org_id ? utils.fetchOrganisation(vm.selected_apply_org_id) : '',
+            vm.selected_apply_proxy_id ? internal_utils.fetchUser(vm.selected_apply_proxy_id) : '',
         ]
         Promise.all(initialisers).then(data => {
             vm.current_user = data[0];
             if(data[1].application == null) {
-                return vm.$router.push({
+                vm.setApplyLicenceSelect({licence_select: 'new_licence'});
+                // use $router.replace here because we want the back button to return to
+                // apply_application_organisation if used on the apply_application_licence screen in this case
+                return vm.$router.replace({
                     name: "apply_application_licence",
-                    params: {
-                        licence_select: 'new_licence',
-                        org_select: vm.behalf_of_org
-                    }
                 });
             }
             vm.application = data[1].application;
+            vm.selected_apply_org_id_details = data[2];
+            vm.selected_apply_proxy_id_details = data[3];
         })
     })
   }

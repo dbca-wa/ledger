@@ -1,0 +1,126 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+{% load users %}
+{% block extra_css %}
+    <link href="/static/ledger/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/common/css/dataTables.bootstrap.min.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/select2.min.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/select2-bootstrap.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link href="/static/common/css/font-awesome.css?ver={{ GIT_COMMIT_HASH }}" rel="stylesheet"/>
+    <link rel="stylesheet" href="{% static 'mooring/css/dashboard.css' %}?ver={{ GIT_COMMIT_HASH }}">
+{% endblock %}
+{% block extra_js %}
+{% endblock %}
+{% block requirements %}
+{% endblock %}
+
+{% block content %}
+
+    <div class="container" id="dashboard-table-container">
+
+<div class="panel panel-default">
+    <div class="panel-heading" role="tab" id="title_heading">
+        <h3 class="panel-title">
+            <a role="button" data-toggle="collapse" href="#search_person_company_collapse" aria-expanded="false" aria-controls="search_person_company_collapse">
+                Failed Refunds 
+            </a>
+        </h3>
+    </div>
+
+    <div class="panel-collapse collapse in" id="search_person_company_collapse" role="tabpanel" aria-labelledby="search_person_company_heading">
+        <div class="panel-body">
+
+<div class="col-lg-12">
+           <form onsubmit="searchRefunds(); return false;" method='GET'>
+          <div class="row">
+          <div class="col-lg-6">
+          </div>
+          <div class="col-lg-3">
+            <label for="">Keyword</label>
+            <input value='{{ keyword }}'  id='keyword' class="form-control" type='text' placeholder='Enter Keyword'>
+          </div>
+          <div class="col-lg-3">
+            <span style='display: none' class="pull-right"><a href="{% url "dash-failed_refunds_completed" %}" type="button" class="btn btn-primary" style="">Completed Refunds</a></span>
+		<div class="form-group">
+			<label for="">Status</label> 
+			<select id="status" class="form-control">
+                                <option value="ALL">All</option>
+				<option value="0">Pending</option> 
+				<option value="1">Completed Refunds</option>
+			</select>
+		</div>
+                <span class="pull-right"><button onclick="searchRefunds();" type="button" class="btn btn-primary" style="">Filter</a></button>
+          </div>
+	  
+          </div>
+        </div>
+        </form>
+        <div class="col-lg-12">
+		&nbsp;
+	</div>	
+        <table width="100%" id='table-policy' class='hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline'>
+        <thead>
+        <tr><th>ID</th><th>Booking ID</th><th>Refund Amount</th>{% if show == "TRUE" %}<th>Refund Split</th>{% endif %}<th>Status</th><th>Completed</th><th>Completed By</th><th>Created</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        {% for row in failedrefunds %}
+            <tr>
+                <td>{{ row.fr.id }}</td>
+                <td>{% if row.fr.booking %}PS{{ row.fr.booking.id }}{% endif %}
+                    {% if row.fr.admission_booking %}AD{{ row.fr.admission_booking.id }}{% endif %}
+               </td>
+                <td>${{ row.fr.refund_amount }}</td>
+                {% if show == "TRUE" %}
+                <!-- only works with cancelled booking not changed booking, work in progress --> 
+                <td>
+                    {% for mg in row.mgsplit %}
+                        {% if mg.amount > 0 %}
+                        {{ mg.name }} : ${{ mg.amount }} <BR>
+                        {% endif %}
+		    {% endfor %}
+
+                </td>
+                 {% endif %}
+                <td>{{ row.fr.get_status_display }}</td>
+                <td>{{ row.fr.completed_date }}</td>
+                <td>{{ row.fr.completed_by }}</td>
+
+                <td>{{ row.fr.created }}</td>
+                <td>
+                   {% if row.fr.booking %}
+                   <a href='{% url 'view_booking_history' row.fr.booking.id %}'>View History</a><BR>
+		   {% endif %}
+                    
+                   <a href='{% url 'dash-complete_failed_refund' row.fr.id %}'>Mark Completed</a><BR>
+                </td>
+            </tr>
+	{% endfor %}
+        </tbody>
+        </table>
+
+    </div>
+</div>
+<script>
+
+function loadTable() {
+    $('#table-policy').dataTable({searching: false, paging: true, "pageLength": 25, "order": [[ 0, "asc" ]],
+     columnDefs: [
+       { type: 'natural-nohtml', targets: 0 }, { 'aTargets':  1 },  { 'aTargets':  2 }, { type: 'natural-nohtml', targets: 3 }
+     ]
+    });
+}
+
+function searchRefunds() { 
+var status = $('#status').val();
+var keyword= $('#keyword').val();
+
+window.location="{% url 'dash-failedrefunds' %}/?status="+status+'&keyword='+keyword;
+}
+window.onload= function() {
+$('#status').val('{{ status }}');
+    loadTable();
+}
+
+
+</script>
+{% endblock %}

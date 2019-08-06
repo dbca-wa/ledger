@@ -6,7 +6,7 @@
     <p>Authenticated as: {{ user.email }}</p>
     <p><a href="{% url "accounts:logout" %}">Logout</a></p>
 {% else %}
-    <p>Welcome to the Parks and Wildlife Customer Portal. Please enter your email address to log in (or register); a unique sign-in link will be emailed to you.</p>
+    <p>Welcome to the Biodiversity, Conservation and Attractions Customer Portal. Please enter your email address to log in (or register); a unique sign-in link will be emailed to you.</p>
 
     <form method="post" action="{% url "social:complete" backend="email" %}">
     {% csrf_token %}

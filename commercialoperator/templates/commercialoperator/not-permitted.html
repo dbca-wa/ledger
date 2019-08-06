@@ -1,0 +1,12 @@
+{% extends 'commercialoperator/base.html' %}
+
+{% block content %}
+    <div>
+        <h2>Page not permitted.
+        <br />
+        <input type=button value="Previous Page" onClick="javascript:history.go(-1);">
+    </div>
+    {{ ret }}
+    {{ block.super }}
+{% endblock %}
+

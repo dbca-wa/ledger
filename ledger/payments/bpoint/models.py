@@ -190,7 +190,8 @@ class BpointTransaction(models.Model):
                                 except BpointToken.DoesNotExist:
                                     UsedBpointToken.objects.create(DVToken=txn.dvtoken)
                                 TrackRefund.objects.create(user=user,type=2,refund_id=txn.id,details=details)
-                                send_refund_email(Invoice.objects.get(reference=self.crn1),'card',txn.amount,card_ending=self.last_digits)
+                                # Disabled as requested by Walter
+                                #send_refund_email(Invoice.objects.get(reference=self.crn1),'card',txn.amount,card_ending=self.last_digits)
                         else:
                             raise ValidationError('The refund amount is greater than the amount refundable on this card.')
                     else:

@@ -1,9 +1,9 @@
 from ledger.settings_base import *
 from decimal import Decimal
+import os
 
 ROOT_URLCONF = 'mooring.urls'
 SITE_ID = 1
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_mo')
 
 # number of seconds before expiring a temporary booking
@@ -14,7 +14,8 @@ INSTALLED_APPS += [
     'mooring',
     'taggit',
     'rest_framework',
-    'rest_framework_gis'
+    'rest_framework_gis',
+    'crispy_forms',
 ]
 
 MIDDLEWARE_CLASSES += [
@@ -68,14 +69,14 @@ STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'mooring', 'static')
 
 
 BPAY_ALLOWED = env('BPAY_ALLOWED',False)
-
 OSCAR_BASKET_COOKIE_OPEN = 'mooring_basket'
-
 
 CRON_CLASSES = [
     #'mooring.cron.SendBookingsConfirmationCronJob',
     'mooring.cron.UnpaidBookingsReportCronJob',
     'mooring.cron.OracleIntegrationCronJob',
+    'mooring.cron.CheckMooringsNoBookingPeriod',
+    'mooring.cron.RegisteredVesselsImport',
 ]
 
 # Additional logging for mooring
@@ -90,6 +91,7 @@ LOGGING['loggers']['booking_checkout'] = {
             'handlers': ['booking_checkout'],
             'level': 'INFO'
         }
+
 #PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S019')
 PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S516')
 if not VALID_SYSTEMS:
@@ -98,6 +100,7 @@ if not VALID_SYSTEMS:
 SYSTEM_NAME = env('SYSTEM_NAME', 'Mooring Rental System')
 SYSTEM_NAME_SHORT = env('SYSTEM_NAME_SHORT', 'mooring')
 CAMPGROUNDS_EMAIL = env('CAMPGROUNDS_EMAIL','mooringbookings@dbca.wa.gov.au')
+ROTTNEST_EMAIL = env('ROTTNEST_EMAIL', 'mooringbookings@dbca.wa.gov.au')
 DEFAULT_FROM_EMAIL = env('EMAIL_FROM','no-reply@dbca.wa.gov.au')
 EXPLORE_PARKS_URL = env('EXPLORE_PARKS_URL','https://mooring.dbca.wa.gov.au/')
 PARKSTAY_EXTERNAL_URL = env('PARKSTAY_EXTERNAL_URL','https://mooring.dbca.wa.gov.au/')
@@ -105,3 +108,21 @@ DEV_STATIC = env('DEV_STATIC',False)
 DEV_STATIC_URL = env('DEV_STATIC_URL')
 ROTTNEST_ISLAND_URL = env('ROTTNEST_URL', [])
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Use git commit hash for purging cache in browser for deployment changes
+GIT_COMMIT_HASH = ''
+GIT_COMMIT_DATE = ''
+if  os.path.isdir('.git') is True:
+    GIT_COMMIT_DATE = os.popen('cd '+BASE_DIR+' ; git log -1 --format=%cd').read()
+    GIT_COMMIT_HASH = os.popen('cd  '+BASE_DIR+' ; git log -1 --format=%H').read()
+if len(GIT_COMMIT_HASH) == 0: 
+    GIT_COMMIT_HASH = os.popen('cat /app/git_hash').read()
+    if len(GIT_COMMIT_HASH) == 0:
+       print ("ERROR: No git hash provided")
+VERSION_NO = '2.03'
+os.environ['UPDATE_PAYMENT_ALLOCATION'] = 'True'
+UNALLOCATED_ORACLE_CODE = 'NNP449 GST' 
+
+ 
+#os.environ.setdefault("UPDATE_PAYMENT_ALLOCATION", True)

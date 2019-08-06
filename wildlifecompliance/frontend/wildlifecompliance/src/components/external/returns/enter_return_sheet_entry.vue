@@ -103,6 +103,7 @@ export default {
         currentStock: 0,
         speciesType: '',
         row_of_data: null,
+        return_table: null,
         table: null,
         isAddEntry: false,
         isChangeEntry: false,
@@ -130,12 +131,6 @@ export default {
       title: function(){
         return this.entrySpecies + '   Current stock: ' + this.entryTotal;
       },
-      isOutStock: function() {
-        return 'outward' in this.returns.sheet_activity_list[this.entryActivity] ? true : false
-      },
-      isInStock: function() {
-        return 'inward' in this.returns.sheet_activity_list[this.entryActivity] ? true : false
-      },
       isLicenceRequired: function() {
         return (this.returns.sheet_activity_list[this.entryActivity]['licence'] === 'true');
       },
@@ -144,15 +139,25 @@ export default {
       },
     },
     methods:{
+      isOutStock: function(activity) {
+        return 'outward' in this.returns.sheet_activity_list[activity] ? true : false
+      },
+      isInStock: function(activity) {
+        return 'inward' in this.returns.sheet_activity_list[activity] ? true : false
+      },
+      isStock: function(activity) {
+        return 'initial' in this.returns.sheet_activity_list[activity] ? true : false
+      },
       addToStock: function(value) {
         this.entryTotal = this.currentStock !== '' ? parseInt(this.currentStock) : 0
-        if (this.isInStock) {
-            this.entryTotal = parseInt(this.entryTotal) + parseInt(value)
-        } else {
+        if (this.isInStock(this.entryActivity)) {
+            this.entryTotal = parseInt(this.entryTotal) + parseInt(value) - parseInt(this.initialQty)
+        };
+        if (this.isStock(this.entryActivity)) {
             this.entryTotal = parseInt(value)
         };
-        if (this.isOutStock) {
-            this.entryTotal = parseInt(this.entryTotal) - parseInt(value)
+        if (this.isOutStock(this.entryActivity)) {
+            this.entryTotal = parseInt(this.entryTotal) - parseInt(value) + parseInt(this.initialQty)
         };
         if (this.isLicenceRequired || this.entryActivity === '0') { // notify required before total update.
             this.entryTotal = parseInt(this.currentStock)
@@ -185,8 +190,7 @@ export default {
 
               self.row_of_data.row.add(_data).node().id = newRowId;
               self.row_of_data.draw();
-              self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
-              self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[newRowId]._aData);
+              self.species_cache[self.returns.sheet_species] = self.return_table.data();
               self.close();
           }
 
@@ -210,7 +214,7 @@ export default {
 
               self.adjustTotals()
               self.row_of_data.invalidate().draw()
-              self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+              self.species_cache[self.returns.sheet_species] = self.return_table.data();
               self.close()
 
           }
@@ -246,7 +250,7 @@ export default {
         var is_valid = false;
         var data = new FormData(self.form);
         row_data['species_id'] = self.returns.sheet_species;
-        row_data['transfer'] = 'notify';
+        row_data['transfer'] = 'Notified';
         data.append('transfer', JSON.stringify(row_data))
         self.$http.post(helpers.add_endpoint_json(api_endpoints.returns,self.returns.id+'/sheet_check_transfer'),data,{
                       emulateJSON:true,
@@ -256,12 +260,10 @@ export default {
 
                             self.row_of_data.row.add(row_data).node().id = row_data.rowId;
                             self.row_of_data.draw();
-                            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
-                            self.species_cache[self.returns.sheet_species].push(self.row_of_data.context[0].aoData[row_data.rowId]._aData);
+                            self.species_cache[self.returns.sheet_species] = self.return_table.data();
 
                         } else {  // Changing records only
 
-                            self.adjustTotals(); // update totals affected
                             self.row_of_data.data().activity = self.entryActivity;
                             self.row_of_data.data().qty = self.entryQty;
                             self.row_of_data.data().total = self.entryTotal;
@@ -269,7 +271,7 @@ export default {
                             self.row_of_data.data().comment = self.entryComment;
                             self.row_of_data.data().transfer = self.entryTransfer;
                             self.row_of_data.invalidate().draw()
-                            self.species_cache[self.returns.sheet_species] = self.row_of_data.ajax.json();
+                            self.species_cache[self.returns.sheet_species] = self.return_table.data();
                         }
 
                         let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
@@ -293,15 +295,20 @@ export default {
         self.errors = false;
         self.close()
       },
-      adjustTotals: function() {
+      adjustTotals: function() { // update total value on subsequent rows.
         const self = this;
-        if (parseInt(self.entryQty) === parseInt(self.initialQty)) {
+        if (parseInt(self.entryQty) === parseInt(self.initialQty)) { // no change to quantity amount.
           return true;
         }
         var rows = self.species_cache[self.returns.sheet_species];
         for (let i=0; i<rows.length; i++) {
-          if (parseInt(rows[i].date)>parseInt(self.entryDateTime)){ // activity is after accepted
-           rows[i].total = parseInt(rows[i].total + parseInt(self.entryQty))
+          if (parseInt(rows[i].date)>parseInt(self.entryDateTime)){ // activity is after selected row.
+
+              if (this.isStock(self.entryActivity)) { // Initial Stock entries aggregate from Current Stock.
+                  rows[i].total = parseInt(rows[i].total) + (parseInt(self.entryQty) - parseInt(self.currentStock));
+              } else {
+                  rows[i].total = parseInt(rows[i].total) + (parseInt(self.entryQty) - parseInt(self.initialQty))
+              }
           }
         }
         self.species_cache[self.returns.sheet_species] = rows;

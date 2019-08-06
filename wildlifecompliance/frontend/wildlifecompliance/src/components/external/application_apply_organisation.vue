@@ -5,6 +5,8 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h3 class="panel-title">Apply on behalf of
+                            <span v-if="org">{{ org }}</span>
+                            <span v-else>yourself</span>
                             <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                             </a>
@@ -46,15 +48,15 @@ import {
   helpers
 }
 from '@/utils/hooks'
+import { mapActions, mapGetters } from 'vuex'
 import utils from './utils'
 export default {
   data: function() {
     let vm = this;
     return {
-        licence_select : this.$route.params.licence_select,
         "application": null,
         agent: {},
-        org_applicant: null,
+        org_applicant: "",
         organisations:null,
 
         current_user: {
@@ -80,14 +82,16 @@ export default {
     }
   },
   methods: {
+    ...mapActions([
+        'setApplyOrgId',
+        'setApplicationWorkflowState',
+    ]),
     submit: function() {
         let vm = this;
+        vm.setApplyOrgId({id: vm.org_applicant});
+        vm.setApplicationWorkflowState({bool: true});
         vm.$router.push({
             name:"apply_application",
-            params: {
-                licence_select: vm.licence_select,
-                org_select: vm.org_applicant
-            }
         });
     },
     
@@ -95,7 +99,7 @@ export default {
             let vm =this;
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response)=>{
                 vm.orgRequest_pending = response.body;
-                vm.loading.splice('fetching pending organisation requests ',1);
+                vm.loading.splice('fetching pending organisation requests',1);
             },(response)=>{
                 vm.loading.splice('fetching pending organisation requests',1);
             });
