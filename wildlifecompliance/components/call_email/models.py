@@ -79,10 +79,11 @@ class ReportType(models.Model):
     report_type = models.CharField(max_length=50)
     schema = JSONField(null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
-    description = models.CharField(max_length=256, blank=True, null=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
     replaced_by = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
+    advice_url = models.CharField(max_length=255, blank=True, null=True, help_text="Should start with http://")
 
     class Meta:
         app_label = 'wildlifecompliance'

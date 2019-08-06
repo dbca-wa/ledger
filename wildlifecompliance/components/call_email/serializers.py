@@ -208,11 +208,13 @@ class ReportTypeSerializer(serializers.ModelSerializer):
             'id', 
             'report_type',
             'version',
+            'advice_url',
         )
         read_only_fields = (
             'id', 
             'report_type',
             'version',
+            'advice_url',
              )
 
 
