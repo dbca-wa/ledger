@@ -1,22 +1,18 @@
 include *.rst
 include LICENSE
 recursive-include ledger/address/fixtures *.json 
-include ledger/static/ledger/css *.css *.scss
-include ledger/payments/static/payments/js *.js
-include ledger/payments/cash/fixtures *.json
-include ledger/payments/templates/dpaw_payments *.html
-include ledger/payments/templates/dpaw_payments/emails *.html
-include ledger/payments/templates/dpaw_payments/invoice *.html
-include ledger/payments/templates/dpaw_payments/bpay *.html
-include ledger/payments/templates/dpaw_payments/bpoint *.html
-include ledger/accounts/templates/customers *.html
-include ledger/accounts/templates/ledger/accounts *.html
-include ledger/templates *.html
-include ledger/templates/basket/partials *.html
-include ledger/templates/partials *.html
-include ledger/templates/checkout *.html
-include ledger/templates/email *.html
-
-
-
-
+recursive-include ledger/static/ledger/css *.css *.scss
+recursive-include ledger/payments/static/payments/js *.js
+recursive-include ledger/payments/cash/fixtures *.json
+recursive-include ledger/payments/templates/dpaw_payments *.html
+recursive-include ledger/payments/templates/dpaw_payments/emails *.html
+recursive-include ledger/payments/templates/dpaw_payments/invoice *.html
+recursive-include ledger/payments/templates/dpaw_payments/bpay *.html
+recursive-include ledger/payments/templates/dpaw_payments/bpoint *.html
+recursive-include ledger/accounts/templates/customers *.html
+recursive-include ledger/accounts/templates/ledger/accounts *.html
+recursive-include ledger/templates *.html
+recursive-include ledger/templates/basket/partials *.html
+recursive-include ledger/templates/partials *.html
+recursive-include ledger/templates/checkout *.html
+recursive-include ledger/templates/email *.html
