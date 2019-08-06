@@ -296,14 +296,24 @@
                                 </select>
                             </div></div>
             
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Report Type</label>
-                              <select :disabled="readonlyForm" @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
-                                      <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
-                                        {{ option.report_type }} 
-                                      </option>
-                              </select>
-                            </div></div>
+                            <div class="row">
+                                <div class="col-sm-9 form-group">
+                                  <label class="col-sm-4">Report Type</label>
+                                  <select :disabled="readonlyForm" @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
+                                          <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
+                                            {{ option.report_type }} 
+                                          </option>
+                                  </select>
+                                </div>
+                                <div class="col-sm-3 form-group">
+                                    <div class="row">
+                                        <label class="col-sm-2 advice-url-label">None </label>
+                                    </div>
+                                    <div class="row">
+                                        <a class="advice-url" :href="this.reportAdviceUrl" target="_blank" >Click for advice</a>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <div v-for="(item, index) in current_schema">
                               <compliance-renderer-block
@@ -519,6 +529,13 @@ export default {
         }
         // return false if no related item is an Offence
         return false
+    },
+    reportAdviceUrl: function() {
+        if (this.call_email.report_type) {
+            return this.call_email.report_type.advice_url;
+        } else {
+            return null;
+        }
     },
   },
   filters: {
@@ -870,5 +887,11 @@ export default {
 .nav-item {
   background-color: hsla(0, 0%, 78%, .8) !important;
   margin-bottom: 2px;
+}
+.advice-url-label {
+  visibility: hidden;
+}
+.advice-url {
+  padding-left: 20%;
 }
 </style>
