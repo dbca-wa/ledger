@@ -1,3 +1,22 @@
 include *.rst
 include LICENSE
 recursive-include ledger/address/fixtures *.json 
+include ledger/static/ledger/css *.css *.scss
+include ledger/payments/static/payments/js *.js
+include ledger/payments/cash/fixtures *.json
+include ledger/payments/templates/dpaw_payments *.html
+include ledger/payments/templates/dpaw_payments/emails *.html
+include ledger/payments/templates/dpaw_payments/invoice *.html
+include ledger/payments/templates/dpaw_payments/bpay *.html
+include ledger/payments/templates/dpaw_payments/bpoint *.html
+include ledger/accounts/templates/customers *.html
+include ledger/accounts/templates/ledger/accounts *.html
+include ledger/templates *.html
+include ledger/templates/basket/partials *.html
+include ledger/templates/partials *.html
+include ledger/templates/checkout *.html
+include ledger/templates/email *.html
+
+
+
+
