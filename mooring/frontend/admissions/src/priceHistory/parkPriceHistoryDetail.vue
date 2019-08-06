@@ -98,7 +98,7 @@
             <div class="row" id="div_mooring_groups">
                 <div class="form-group">
                     <div class="col-md-2">
-                        <label>Mooring Group: </label>
+                        <label>Mooring Group (Collecting Agency): </label>
                     </div>
                     <div  class="col-md-4">
                         <select class="form-control" name="mooring_group" v-model="priceHistory.mooring_group">

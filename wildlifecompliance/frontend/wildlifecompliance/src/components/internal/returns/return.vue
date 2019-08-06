@@ -130,7 +130,7 @@ export default {
      ...mapGetters([
         'isReturnsLoaded',
         'returns',
-        'is_external'
+        'is_external',
     ]),
     isWithCurator: function() {
         return true;

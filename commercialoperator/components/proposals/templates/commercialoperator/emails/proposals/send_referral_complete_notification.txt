@@ -1,0 +1,11 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+        A referral for Application {{proposal.lodgement_number}} has been completed ({{completed_by}}): 
+        Referral Comments: {{referral_comments}}
+
+    You can access this referral using the following link:
+
+    {{url}}
+
+{%  endblock %}

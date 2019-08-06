@@ -29,6 +29,12 @@ class ReturnExternalSheetTransferNotification(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/send_external_sheet_transfer_notification.txt'
 
 
+class ReturnAmendmentNotificationEmail(TemplateEmailBase):
+    subject = 'An amendment has been requested for your licence return'
+    html_template = 'wildlifecompliance/emails/send_return_amendment_notification.html'
+    txt_template = 'wildlifecompliance/emails/send_return_amendment_notification.txt'
+
+
 def send_return_accept_email_notification(return_obj, request):
     email = ReturnAcceptNotificationEmail()
     url = request.build_absolute_uri(
@@ -80,6 +86,23 @@ def send_sheet_transfer_email_notification(request, return_obj, licence):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_return_email(msg, return_obj, sender=sender)
 
+
+def send_return_amendment_email_notification(request, data, return_obj, licence):
+    email = ReturnAmendmentNotificationEmail()
+    url = request.build_absolute_uri(
+        '/external/return/{}'.format(return_obj.id)
+    )
+
+    context = {
+        'lodgement_number': return_obj.lodgement_number,
+        'reason': data['reason'],
+        'text': data['text'],
+        'url': url
+    }
+
+    msg = email.send(return_obj.submitter.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_return_email(msg, return_obj, sender=sender)
 
 def _log_return_email(email_message, return_obj, sender=None):
     from wildlifecompliance.components.returns.models import ReturnLogEntry

@@ -28,8 +28,9 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="">Activity Type:</label>
-                        <select class="form-control">
-                            <option v-for="sa in sheet_activity_type" :value="sa">{{sa['label']}}</option>
+                        <select class="form-control" v-model="filterActivityType">
+                            <option value="All">All</option>
+                            <option v-for="sa in sheet_activity_type" :value="sa['label']">{{sa['label']}}</option>
                         </select>
                     </div>
                 </div>
@@ -74,6 +75,7 @@ export default {
         pdBody: 'pdBody' + vm._uid,
         datatable_id: 'return-datatable',
         form: null,
+        filterActivityType: 'All',
         readonly: false,
         isModalOpen: false,
         sheetTitle: null,
@@ -118,17 +120,17 @@ export default {
                 mRender: function(data, type, full) {
                    if (full.activity && vm.is_external
                                 && !vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])
-                                && (full.transfer === 'notify' || full.transfer === '')) {
+                                && (full.transfer === 'Notified' || full.transfer === '')) {
                       var column = `<a class="edit-row" data-rowid=\"__ROWID__\">Edit</a><br/>`;
                       column = column.replace(/__ROWID__/g, full.rowId);
                       return column;
                    }
-                   if (full.activity && (full.transfer === 'accept' || full.transfer === 'decline')) {
+                   if (full.activity && (full.transfer === 'Accepted' || full.transfer === 'Declined')) {
                       return full.transfer;
                    }
                    if (full.activity && vm.is_external
                                 && (vm.isTrue(vm.returns.sheet_activity_list[full.activity]['auto'])
-                                && full.transfer === 'notify')) {
+                                && full.transfer === 'Notified')) {
                       var accept = `<a class="accept-row" data-rowid=\"__ROWID__\">Accept</a> or `;
                       accept = accept.replace(/__ROWID__/g, full.rowId);
                       var decline = `<a class="decline-row" data-rowid=\"__ROWID__\">Decline</a><br/>`;
@@ -144,8 +146,9 @@ export default {
             drawCallback: function() {
               vm.sheetTitle = vm.species_list[vm.returns.sheet_species]
             },
-            rowCallback: function(row, data) {
-              vm.sheet_total = parseInt(data.total) > vm.sheet_total ? parseInt(data.total) : vm.sheet_total;
+            footerCallback: function(row, data, start, end, display) {
+              var api = this.api(), data;
+              vm.sheet_total = api.column(4).data()[0]
             },
             processing: true,
             ordering: true,
@@ -158,11 +161,11 @@ export default {
                 vm.species_cache[vm.returns.sheet_species] = vm.$refs.return_datatable.vmDataTable.ajax.json()
               }
               // Populate activity list from the data in the table
-              var activityColumn = vm.$refs.return_datatable.vmDataTable.columns(1);
+              var activityColumn = vm.$refs.return_datatable.vmDataTable.columns(2);
               activityColumn.data().unique().sort().each( function ( d, j ) {
                 let activityTitles = [];
                 $.each(d,(index,a) => {
-                  a != null && activityTitles.indexOf(a)<0 ? activityTitles.push(vm.returns.sheet_activity_list[a]): '';
+                  a != null && activityTitles.indexOf(vm.returns.sheet_activity_list[a])<0 ? activityTitles.push(vm.returns.sheet_activity_list[a]): '';
                 })
                 vm.sheet_activity_type = activityTitles;
               });
@@ -174,6 +177,13 @@ export default {
     SheetEntry,
     datatable,
     Returns,
+  },
+  watch:{
+    filterActivityType: function(value){
+      let table = this.$refs.return_datatable.vmDataTable
+      value = value != 'All' ? value : ''
+      table.column(2).search(value).draw();
+    },
   },
   computed: {
      ...mapGetters([
@@ -204,6 +214,7 @@ export default {
       const self = this;
       var rows = self.$refs.return_datatable.vmDataTable
       self.$refs.sheet_entry.isAddEntry = true;
+      self.$refs.sheet_entry.return_table = rows;
       self.$refs.sheet_entry.row_of_data = rows;
       self.$refs.sheet_entry.activityList = self.returns.sheet_activity_list;
       self.$refs.sheet_entry.speciesType = self.returns.sheet_species
@@ -211,6 +222,7 @@ export default {
       self.$refs.sheet_entry.entryActivity = Object.keys(self.returns.sheet_activity_list)[0];
       self.$refs.sheet_entry.entryTotal = self.sheet_total;
       self.$refs.sheet_entry.currentStock = self.sheet_total;
+      self.$refs.sheet_entry.initialQty = '0';
       self.$refs.sheet_entry.entryComment = '';
       self.$refs.sheet_entry.entryLicence = '';
       self.$refs.sheet_entry.entryDateTime = '';
@@ -230,6 +242,7 @@ export default {
         vm.$refs.sheet_entry.isChangeEntry = true;
         vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
         vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
+        vm.$refs.sheet_entry.return_table = vm.$refs.return_datatable.vmDataTable
         vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
         vm.$refs.sheet_entry.entrySpecies = vm.sheetTitle;
         vm.$refs.sheet_entry.entryDateTime = vm.$refs.sheet_entry.row_of_data.data().date;
@@ -258,15 +271,14 @@ export default {
             rows[i].total = vm.intVal(rows[i].total) + vm.intVal(selected.data().qty)
           }
           if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
-            rows[i].transfer = 'accept'
-            rows[i].species_id = vm.returns.sheet_species
+            rows[i].transfer = 'Accepted'
 
             let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
             if (vm.returns.sheet_species in vm.species_transfer){
               transfer = vm.species_transfer[vm.returns.sheet_species]
             }
-            rows[i].licence = '';
-            transfer[rows[i].date] = rows[i];
+            transfer[rows[i].date] = Object.assign({}, rows[i]);
+            transfer[rows[i].date].species_id = vm.returns.sheet_species
             vm.species_transfer[vm.returns.sheet_species] = transfer
           }
         }
@@ -283,14 +295,14 @@ export default {
         var rows = vm.$refs.return_datatable.vmDataTable.data();
         for (let i=0; i<rows.length; i++) {
           if (vm.intVal(rows[i].date)==vm.intVal(selected.data().date)) {
-            rows[i].transfer = 'decline'
-            rows[i].species_id = vm.returns.sheet_species
+            rows[i].transfer = 'Declined'
 
             let transfer = {}  //{speciesID: {this.entryDateTime: row_data},}
             if (vm.returns.sheet_species in vm.species_transfer){
               transfer = vm.species_transfer[vm.returns.sheet_species]
             }
-            transfer[rows[i].date] = rows[i];
+            transfer[rows[i].date] = Object.assign({}, rows[i]);
+            transfer[rows[i].date].species_id = vm.returns.sheet_species
             vm.species_transfer[vm.returns.sheet_species] = transfer
           }
         }
@@ -298,15 +310,6 @@ export default {
         vm.$refs.return_datatable.vmDataTable.clear().draw();
         vm.$refs.return_datatable.vmDataTable.rows.add(vm.species_cache[vm.returns.sheet_species]);
         vm.$refs.return_datatable.vmDataTable.draw();
-     });
-
-     vm.$refs.return_datatable.vmDataTable.on('click','.pay-transfer', function(e) {  // TODO: payments
-        e.preventDefault();
-        vm.$refs.sheet_entry.isChangeEntry = true;
-        vm.$refs.sheet_entry.activityList = vm.returns.sheet_activity_list;
-        vm.$refs.sheet_entry.speciesType = vm.returns.sheet_species;
-        vm.$refs.sheet_entry.row_of_data = vm.$refs.return_datatable.vmDataTable.row('#'+$(this).attr('data-rowid'));
-        vm.$refs.sheet_entry.isModalOpen = false;
      });
 
      // Instantiate Form Actions

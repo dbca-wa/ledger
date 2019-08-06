@@ -57,7 +57,7 @@ class BookingPeriodOptionForm(forms.ModelForm):
     #mooring_group = ChoiceField(choices=[],)
     class Meta:
         model = models.BookingPeriodOption
-        fields = ['period_name','option_description','small_price','medium_price','large_price','start_time','finish_time','change_group','cancel_group']
+        fields = ['period_name','option_description','small_price','medium_price','large_price','start_time','finish_time','change_group','cancel_group','caption']
 
     def __init__(self, *args, **kwargs):
         # User must be passed in as a kwarg.
@@ -246,7 +246,7 @@ class MakeBookingsForm(forms.Form):
     num_infant = forms.IntegerField(min_value=0, max_value=16, label="Infants (ages 0-5)")
     first_name = forms.CharField(label="Given Name(s)")
     last_name = forms.CharField(widget=forms.TextInput(attrs={'required':True}), label="Last Name")
-    phone = forms.CharField(widget=forms.TextInput(attrs={'required':True}))
+    phone = forms.CharField(widget=forms.TextInput(attrs={'required':True}), label="Phone (mobile preferred)")
     postcode = forms.CharField(max_length=4, label="Post Code",widget=forms.TextInput(attrs={'required':True}))
     country = forms.ModelChoiceField(queryset=Country.objects.all(), to_field_name="iso_3166_1_a2")
     email = forms.EmailField(label="Email", widget=forms.TextInput(attrs={'required':True}))

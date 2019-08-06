@@ -108,7 +108,6 @@ def get_session_application(session):
 
 
 def delete_session_application(session):
-    print('deleting session application')
     if 'wc_application' in session:
         del session['wc_application']
         session.modified = True
