@@ -1087,21 +1087,23 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                     request, application_type)
                 licence_activity_ids = Application.get_active_licence_activities(
                     request, application_type).values_list('licence_activity_id', flat=True)
-                active_current_applications = Application.get_active_licence_applications(request, application_type) \
+                # active_applications are applications linked with licences that have CURRENT or SUSPENDED activities
+                active_applications = Application.get_active_licence_applications(request, application_type) \
                     .filter(licence_purposes__licence_category_id=licence_category.id) \
-                    .exclude(
-                        selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
-                    ) \
                     .order_by('-id')
+                active_current_applications = active_applications.exclude(
+                    selected_activities__activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED
+                )
                 latest_active_licence = WildlifeLicence.objects.filter(
                     licence_category_id=licence_category.id,
-                    current_application__in=active_current_applications.values_list('id', flat=True)
+                    current_application__in=active_applications.values_list('id', flat=True)
                 ).order_by('-id').first()
 
                 # Initial validation
                 if application_type in [
                     Application.APPLICATION_TYPE_AMENDMENT,
                     Application.APPLICATION_TYPE_RENEWAL,
+                    Application.APPLICATION_TYPE_REISSUE,
                 ]:
                     # Check that at least one active application exists in this licence category for amendment/renewal
                     if not latest_active_licence:
@@ -1109,7 +1111,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                             'Cannot create amendment application: active licence not found!')
 
                     # Ensure purpose ids are in a shared set with the latest current applications purposes
-                    # to prevent front-end tampering. Remove any that aren't valid for renew/amendment.
+                    # to prevent front-end tampering. Remove any that aren't valid for renew/amendment/reissue.
                     active_current_purposes = active_current_applications.filter(
                         licence_purposes__licence_activity_id__in=licence_activity_ids
                     ).values_list(
@@ -1129,6 +1131,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 if application_type in [
                     Application.APPLICATION_TYPE_AMENDMENT,
                     Application.APPLICATION_TYPE_RENEWAL,
+                    Application.APPLICATION_TYPE_REISSUE,
                 ]:
                     target_application = serializer.instance
                     for activity in licence_activities:

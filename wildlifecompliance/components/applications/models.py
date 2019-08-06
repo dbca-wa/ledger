@@ -768,9 +768,10 @@ class Application(RevisionedMixin):
         # Update application and licence fees
         fees = dynamic_attributes['fees']
 
-        # Amendments are always free.
+        # Amendments and Reissues are always free.
         if self.application_type in [
             Application.APPLICATION_TYPE_AMENDMENT,
+            Application.APPLICATION_TYPE_REISSUE,
         ]:
             self.application_fee = Decimal(0)
         else:
@@ -780,7 +781,11 @@ class Application(RevisionedMixin):
         # Save any parsed per-activity modifiers
         for selected_activity, field_data in dynamic_attributes['activity_attributes'].items():
             fees = field_data.pop('fees', {})
-            if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
+            # Amendments and Reissues are always free.
+            if self.application_type in [
+                Application.APPLICATION_TYPE_AMENDMENT,
+                Application.APPLICATION_TYPE_REISSUE,
+            ]:
                 selected_activity.licence_fee = Decimal(0)
             else:
                 selected_activity.licence_fee = fees['licence']
@@ -911,8 +916,20 @@ class Application(RevisionedMixin):
                     for activity in self.licence_type_data['activity']:
                         if activity["processing_status"]["id"] != ApplicationSelectedActivity.PROCESSING_STATUS_DRAFT:
                             continue
-                        self.set_activity_processing_status(
-                            activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
+                        if self.application_type == Application.APPLICATION_TYPE_REISSUE:
+                            latest_activity = self.get_latest_current_activity(activity["id"])
+                            if not latest_activity:
+                                raise Exception("Active licence not found for activity ID: %s" % activity["id"])
+                            self.set_activity_processing_status(
+                                activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_OFFICER_FINALISATION)
+                            selected_activity = self.get_selected_activity(activity["id"])
+                            selected_activity.proposed_action = ApplicationSelectedActivity.PROPOSED_ACTION_ISSUE
+                            selected_activity.proposed_start_date = latest_activity.start_date
+                            selected_activity.proposed_end_date = latest_activity.expiry_date
+                            selected_activity.save()
+                        else:
+                            self.set_activity_processing_status(
+                                activity["id"], ApplicationSelectedActivity.PROCESSING_STATUS_WITH_OFFICER)
                         qs = DefaultCondition.objects.filter(
                             licence_activity=activity["id"])
                         if (qs):
@@ -1652,15 +1669,19 @@ class Application(RevisionedMixin):
                         original_issue_date = start_date = item.get('start_date')
                         expiry_date = item.get('end_date')
 
-                        if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                        if self.application_type in [
+                            Application.APPLICATION_TYPE_AMENDMENT,
+                            Application.APPLICATION_TYPE_REISSUE,
+                        ]:
                             latest_activity = self.get_latest_current_activity(licence_activity_id)
                             if not latest_activity:
                                 raise Exception("Active licence not found for activity ID: %s" % licence_activity_id)
 
-                            # Populate start and expiry dates from the latest issued activity record
-                            original_issue_date = latest_activity.original_issue_date
-                            start_date = latest_activity.start_date
-                            expiry_date = latest_activity.expiry_date
+                            if self.application_type == Application.APPLICATION_TYPE_AMENDMENT:
+                                # Populate start and expiry dates from the latest issued activity record
+                                original_issue_date = latest_activity.original_issue_date
+                                start_date = latest_activity.start_date
+                                expiry_date = latest_activity.expiry_date
 
                         # If there is an outstanding licence fee payment - attempt to charge the stored card.
                         payment_successful = selected_activity.process_licence_fee_payment(request, self)
@@ -2347,20 +2368,17 @@ class ApplicationSelectedActivity(models.Model):
             activity_ids=[self.id]
         ).exclude(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED).count() > 0
 
-        # can_reissue is true if the activity has expired, excluding if it was surrendered or cancelled
+        # can_reissue is true if the activity can be included in a Reissue Application
+        # Extra exclude for SUSPENDED due to get_current_activities_for_application_type
+        # intentionally not excluding these as part of the default queryset
         # disable if there are any open applications to maintain licence sequence data integrity
         if not purposes_in_open_applications:
-            can_action['can_reissue'] = ApplicationSelectedActivity.objects.filter(
-                Q(id=self.id, expiry_date__isnull=False),
-                Q(expiry_date__lt=current_date) |
-                Q(activity_status=ApplicationSelectedActivity.ACTIVITY_STATUS_EXPIRED)
-            ).filter(
-                processing_status=ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED
+            can_action['can_reissue'] = ApplicationSelectedActivity.get_current_activities_for_application_type(
+                Application.APPLICATION_TYPE_REISSUE,
+                activity_ids=[self.id]
             ).exclude(
                 activity_status__in=[
-                    ApplicationSelectedActivity.ACTIVITY_STATUS_SURRENDERED,
-                    ApplicationSelectedActivity.ACTIVITY_STATUS_CANCELLED,
-                    ApplicationSelectedActivity.ACTIVITY_STATUS_REPLACED
+                    ApplicationSelectedActivity.ACTIVITY_STATUS_SUSPENDED,
                 ]
             ).count() > 0
 
@@ -2374,28 +2392,6 @@ class ApplicationSelectedActivity(models.Model):
                ]
 
         return can_action
-
-    # @property
-    # def purposes_in_open_applications(self):
-    #     """
-    #     Return a list of LicencePurpose records for the activity that are
-    #     currently in an application being processed
-    #     """
-    #     return Application.objects.filter(
-    #         Q(org_applicant=self.application.org_applicant)
-    #         if self.application.org_applicant
-    #         else Q(proxy_applicant=self.application.proxy_applicant)
-    #         if self.application.proxy_applicant
-    #         else Q(submitter=self.application.submitter, proxy_applicant=None, org_applicant=None)
-    #     ).computed_filter(
-    #         licence_category_id=self.purposes.first().licence_category.id
-    #     ).exclude(
-    #         selected_activities__processing_status__in=[
-    #             ApplicationSelectedActivity.PROCESSING_STATUS_ACCEPTED,
-    #             ApplicationSelectedActivity.PROCESSING_STATUS_DECLINED,
-    #             ApplicationSelectedActivity.PROCESSING_STATUS_DISCARDED
-    #         ]
-    #     ).values_list('licence_purposes', flat=True)
 
     @property
     def is_in_latest_licence(self):
