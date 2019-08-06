@@ -29,4 +29,5 @@ setup(name='ledger',
                 'ledger.templates','ledger.templates.basket.partials','ledger.templates.checkout','ledger.templates.email','ledger.templates.partials',
                 ],
       install_requires=[],
+      include_package_data=True,
       zip_safe=False)
