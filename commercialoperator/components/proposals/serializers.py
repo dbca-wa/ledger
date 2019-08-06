@@ -265,6 +265,7 @@ class ChecklistQuestionSerializer(serializers.ModelSerializer):
         #fields = '__all__'
         fields=('id',
                 'text',
+                'answer_type',
                 )
 class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
     question=ChecklistQuestionSerializer(read_only=True)
@@ -273,6 +274,7 @@ class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
         fields = ('id',
                 'question',
                 'answer',
+                'text_answer',
                 )
 
 class ProposalAssessmentSerializer(serializers.ModelSerializer):

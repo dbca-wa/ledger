@@ -2828,9 +2828,15 @@ class ChecklistQuestion(RevisionedMixin):
         ('assessor_list','Assessor Checklist'),
         ('referral_list','Referral Checklist')
     )
+    ANSWER_TYPE_CHOICES = (
+        ('yes_no','Yes/No type'),
+        ('free_text','Free text type')
+    )
     text = models.TextField()
     list_type = models.CharField('Checklist type', max_length=30, choices=TYPE_CHOICES,
                                          default=TYPE_CHOICES[0][0])
+    answer_type = models.CharField('Answer type', max_length=30, choices=ANSWER_TYPE_CHOICES,
+                                         default=ANSWER_TYPE_CHOICES[0][0])
     #correct_answer= models.BooleanField(default=False)
     obsolete = models.BooleanField(default=False)
 
@@ -2871,6 +2877,7 @@ class ProposalAssessmentAnswer(RevisionedMixin):
     question=models.ForeignKey(ChecklistQuestion, related_name='answers')
     answer = models.NullBooleanField()
     assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
+    text_answer= models.CharField(max_length=256, blank=True, null=True)
 
     def __str__(self):
         return self.question.text
