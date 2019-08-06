@@ -1,4 +1,3 @@
-include *.rst
 include LICENSE
 recursive-include ledger/address/fixtures *.json 
 recursive-include ledger/static/ledger/css *.css *.scss
