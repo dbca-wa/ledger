@@ -1,6 +1,6 @@
 <template lang="html">
     <div id="report-form">
-        <form method="get" id="payments-form" action="/ledger/payments/api/report">
+        <form method="get" id="payments-form" action="/ledger/payments/api/report-allocated">
             <div class="well well-sm">
                 <div class="row">
                     <div class="col-lg-12">
@@ -424,7 +424,7 @@ export default {
         },
         getReport:function (values) {
             let vm = this;
-            var url = "/ledger/payments/api/report?"+$.param(values);
+            var url = "/ledger/payments/api/report-allocated?"+$.param(values);
             window.location.assign(url);
         },
         addFormValidations: function() {

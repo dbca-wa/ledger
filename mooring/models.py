@@ -196,8 +196,8 @@ class MooringArea(models.Model):
     site_type = models.SmallIntegerField(choices=SITE_TYPE_CHOICES, default=0)
     address = JSONField(null=True,blank=True)
     features = models.ManyToManyField('Feature')
-    description = models.TextField(blank=True, null=True)
-    additional_info = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True, default="")
+    additional_info = models.TextField(blank=True, null=True, default="")
     area_activities = models.TextField(blank=True, null=True)
 
     # Tags for communications methods available and access type
@@ -217,10 +217,10 @@ class MooringArea(models.Model):
     max_advance_booking = models.IntegerField(default=180)
     oracle_code = models.CharField(max_length=50,null=True,blank=True)
     mooring_map = models.FileField(upload_to=update_mooring_map_filename,null=True,blank=True)
-    vessel_size_limit = models.IntegerField(default=0)
-    vessel_draft_limit = models.IntegerField(default=0)
-    vessel_beam_limit = models.IntegerField(default=0)
-    vessel_weight_limit = models.IntegerField(default=0)
+    vessel_size_limit = models.FloatField(default=0)
+    vessel_draft_limit = models.FloatField(default=0)
+    vessel_beam_limit = models.FloatField(default=0)
+    vessel_weight_limit = models.FloatField(default=0)
     mooring_physical_type = models.SmallIntegerField(choices=MOORING_PHYSICAL_TYPE_CHOICES, default=0)
     mooring_class = models.CharField(choices=MOORING_CLASS_CHOICES, default=0, max_length=20)
 
@@ -571,6 +571,7 @@ class BookingPeriodOption(models.Model):
     all_day = models.BooleanField(default=True)
     change_group = models.ForeignKey('ChangeGroup',null=True,blank=True)
     cancel_group = models.ForeignKey('CancelGroup',null=True,blank=True)
+    caption = models.TextField(blank=True,null=True, max_length=255)
     created = models.DateTimeField(auto_now_add=True)
     #mooring_group = models.ForeignKey('MooringAreaGroup', blank=False, null=False)
 
@@ -1208,6 +1209,7 @@ class Booking(models.Model):
     cancelation_time = models.DateTimeField(null=True,blank=True)
     confirmation_sent = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='created_by_booking')
     canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
     old_booking = models.ForeignKey('Booking', null=True, blank=True)
     admission_payment = models.ForeignKey('AdmissionsBooking', null=True, blank=True)
@@ -1595,7 +1597,8 @@ class OutstandingBookingRecipient(models.Model):
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
-
+    system_invoice = models.BooleanField(default=False)
+ 
     def __str__(self):
         return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
 
@@ -1809,6 +1812,9 @@ class AdmissionsBooking(models.Model):
     noOfInfants = models.IntegerField()
     warningReferenceNo = models.CharField(max_length=200, blank=True)
     totalCost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='created_by_admissions')
+    canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings_admissions')
+    cancelation_time = models.DateTimeField(null=True,blank=True)
     created = models.DateTimeField(default=timezone.now)
     location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)    
 
@@ -1844,6 +1850,17 @@ class AdmissionsBooking(models.Model):
         else:
             return True
 
+    @property
+    def admissions_line(self):
+        lines = AdmissionsLine.objects.filter(admissionsBooking=self)
+        return lines
+
+    @property
+    def active_invoice(self):
+        active_invoices = Invoice.objects.filter(reference__in=[x.invoice_reference for x in self.invoices.all()]).order_by('-created')
+        return active_invoices[0] if active_invoices else None
+
+
 class AdmissionsLine(models.Model):
     arrivalDate = models.DateField()
     overnightStay = models.BooleanField(default=False)
@@ -1860,6 +1877,7 @@ class AdmissionsOracleCode(models.Model):
 class AdmissionsBookingInvoice(models.Model):
     admissions_booking = models.ForeignKey(AdmissionsBooking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+    system_invoice = models.BooleanField(default=False)
 
     def __str__(self):
         return 'Fee Payment {} : Invoice #{}'.format(self.id,self.invoice_reference)
@@ -1958,10 +1976,12 @@ class RefundFailed(models.Model):
     )
 
 
-    booking = models.ForeignKey(Booking, related_name = "booking_refund")
+    booking = models.ForeignKey(Booking, related_name = "booking_refund", null=True, blank=True)
+    admission_booking = models.ForeignKey(AdmissionsBooking, null=True, blank=True)
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
     refund_amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)            
     status = models.SmallIntegerField(choices=STATUS, default=0)
+    basket_json = JSONField(null=True,blank=True)
     created = models.DateTimeField(default=timezone.now)
     completed_date = models.DateTimeField(null=True, blank=True)
     completed_by = models.ForeignKey(EmailUser, blank=True, null=True) 

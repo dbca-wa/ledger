@@ -1608,6 +1608,11 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['length'] = length
                 sqlParams['start'] = start
 
+            if length == 'all':
+                sql = sql + ' limit %(length)s offset %(start)s'
+                sqlParams['length'] = 2000
+                sqlParams['start'] = start
+
             sql += ';'
 
             cursor = connection.cursor()

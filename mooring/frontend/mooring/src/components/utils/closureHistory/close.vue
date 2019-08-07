@@ -169,11 +169,14 @@ module.exports = {
             vm.form.validate({
                 rules: {
                     closure_start: "required",
+                    closure_start_time: "required",
+                    closure_end: "required",
+                    closure_end_time: "required",
                     closure_status: "required",
                     closure_details: {
                         required: {
                             depends: function(el){
-                                var check = this.statusHistory.closure_reason
+                                var check = vm.statusHistory.closure_reason
                                 for (var i = 0; i < vm.reasons.length; i++){
                                     if (vm.reasons[i].id == check){
                                         return vm.reasons[i].detailRequired;
@@ -185,6 +188,9 @@ module.exports = {
                 },
                 messages: {
                     closure_start: "Enter a start date",
+                    closure_start_time: "Enter a start time",
+                    closure_end: "Enter a end date",
+                    closure_end_time: "Enter a end time",
                     closure_status: "Select a closure reason from the options",
                     closure_details: "Details required if Other reason is selected"
                 },

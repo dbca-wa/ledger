@@ -128,7 +128,8 @@ def send_admissions_booking_invoice(admissionsBooking, request, context_processo
 
     context = {
         'booking': admissionsBooking,
-        'arrivalDate': admissionsLine.arrivalDate
+        'arrivalDate': admissionsLine.arrivalDate,
+        'context_processor': context_processor
     }
     filename = 'invoice-{}({}).pdf'.format(admissionsLine.arrivalDate, admissionsBooking.customer.get_full_name())
     references = [b.invoice_reference for b in admissionsBooking.invoices.all()]
@@ -150,7 +151,7 @@ def send_booking_invoice(booking,request, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     to = booking.customer.email
 
     filename = 'invoice-{}({}-{}).pdf'.format(booking.mooringarea.name,booking.arrival,booking.departure)
@@ -170,7 +171,8 @@ def send_booking_invoice_old(booking, request, context_processor):
     email = booking.customer.email
 
     context = {
-        'booking': booking
+        'booking': booking,
+        'context_processor': context_processor
     }
     filename = 'invoice-{}({}-{}).pdf'.format(booking.mooringarea.name,booking.arrival,booking.departure)
     references = [b.invoice_reference for b in booking.invoices.all()]
@@ -200,11 +202,12 @@ def send_admissions_booking_confirmation(admissionsBooking, request, context_pro
     #bcc = [default_rottnest_email]
 #    rottnest_email = default_rottnest_email
     #rottnest_email = default_from_email
-    my_bookings_url = request.build_absolute_uri('/mybookings/')
+    my_bookings_url = context_processor['PUBLIC_URL']+'/mybookings/'
 
     context = {
         'booking': admissionsBooking,
-        'my_bookings': my_bookings_url
+        'my_bookings': my_bookings_url,
+        'context_processor': context_processor
     }
     att = BytesIO()
     pdf.create_admissions_confirmation(att, admissionsBooking, context_processor)
@@ -220,14 +223,12 @@ def send_booking_confirmation(booking,request,context_processor):
     email_obj.html_template = 'mooring/email/confirmation.html'
     email_obj.txt_template = 'mooring/email/confirmation.txt'
     from_email = None
-
     email = booking.customer.email
 
     template = 'mooring/email/booking_confirmation.html'
 
     cc = None
     bcc = [default_campground_email]
-
     template_group = context_processor['TEMPLATE_GROUP']
 
     #campground_email = booking.mooringarea.email if booking.mooringarea.email else default_campground_email
@@ -235,13 +236,14 @@ def send_booking_confirmation(booking,request,context_processor):
     if campground_email != default_campground_email:
         cc = [campground_email]
 
-    my_bookings_url = request.build_absolute_uri('/mybookings/')
-    booking_availability = request.build_absolute_uri('/availability/?site_id={}'.format(booking.mooringarea.id))
+    my_bookings_url = context_processor['PUBLIC_URL']+'/mybookings/'
+    #booking_availability = request.build_absolute_uri('/availability/?site_id={}'.format(booking.mooringarea.id))
     unpaid_vehicle = False
     mobile_number = booking.customer.mobile_number
     booking_number = booking.details.get('phone',None)
     phone_number = booking.customer.phone_number
     tel = None
+
     if booking_number:
         tel = booking_number
     elif mobile_number:
@@ -254,8 +256,6 @@ def send_booking_confirmation(booking,request,context_processor):
         if v.get('Paid') == 'No':
             unpaid_vehicle = True
             break
-    
-    
     additional_info = booking.mooringarea.additional_info if booking.mooringarea.additional_info else ''
 
     msbs = MooringsiteBooking.objects.filter(booking=booking)
@@ -273,16 +273,16 @@ def send_booking_confirmation(booking,request,context_processor):
                 contact_list[index]['moorings'] += ', ' + m.campsite.mooringarea.name
 
 
-    
     context = {
         'booking': booking,
         'phone_number': tel,
         'campground_email': campground_email,
         'my_bookings': my_bookings_url,
-        'availability': booking_availability,
+        #'availability': booking_availability,
         'unpaid_vehicle': unpaid_vehicle,
         'additional_info': additional_info,
         'contact_list': contact_list,
+        'context_processor': context_processor
     }
 
     att = BytesIO()
@@ -296,7 +296,7 @@ def send_booking_confirmation(booking,request,context_processor):
         subject = "Your mooring booking and admissions confirmation"
         att2 = BytesIO()
         admissionsBooking = AdmissionsBooking.objects.get(id=booking.admission_payment.id)
-        pdf.create_admissions_confirmation(att2, admissionsBooking)
+        pdf.create_admissions_confirmation(att2, admissionsBooking, context_processor)
         att2.seek(0)
         filename = 'confirmation-AD{}.pdf'.format(admissionsBooking.id)
         sendHtmlEmail([email],subject,context,template,cc,bcc,from_email,template_group,attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf'), (filename, att2.read(), 'application/pdf')])
@@ -306,6 +306,7 @@ def send_booking_confirmation(booking,request,context_processor):
         sendHtmlEmail([email],subject,context,template,cc,bcc,from_email,template_group,attachments=[('confirmation-PS{}.pdf'.format(booking.id), att.read(), 'application/pdf')])
     booking.confirmation_sent = True
     booking.save()
+
 
 def send_booking_cancelation(booking,request):
     email_obj = TemplateEmailBase()
@@ -363,15 +364,15 @@ def send_booking_period_email(moorings, group, days):
     }
     email_obj.send(emails, from_address=default_from_email, context=context)
 
-
-def send_refund_failure_email(booking, context_processor):
+### Admission Emails
+def send_refund_failure_email_admissions(booking, context_processor):
 
     subject = 'Failed to refund for {}, requires manual intervention.'.format(booking)
-    template = 'mooring/email/refund_failed.html'
+    template = 'mooring/email/refund_failed_admissions.html'
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     template_group = context_processor['TEMPLATE_GROUP']
     if not settings.PRODUCTION_EMAIL:
        to = settings.NON_PROD_EMAIL
@@ -381,6 +382,60 @@ def send_refund_failure_email(booking, context_processor):
           to = u.email
           sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
 
+
+def send_refund_completed_email_customer_admissions(booking, context_processor):
+    subject = 'Your refund for booking {} was completed.'.format(booking.id)
+    template = 'mooring/email/refund_completed_customer_admissions.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking, 'context_processor': context_processor}
+    to = booking.customer.email
+    template_group = context_processor['TEMPLATE_GROUP']
+    sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+
+def send_refund_failure_email_customer_admissions(booking, context_processor):
+
+    subject = 'Your refund for booking has failed {}.'.format(booking.id)
+    template = 'mooring/email/refund_failed_customer_admissions.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking, 'context_processor': context_processor}
+    to = booking.customer.email
+    template_group = context_processor['TEMPLATE_GROUP']
+    sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+####
+
+def send_refund_failure_email(booking, context_processor):
+
+    subject = 'Failed to refund for {}, requires manual intervention.'.format(booking)
+    template = 'mooring/email/refund_failed.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking, 'context_processor': context_processor}
+    template_group = context_processor['TEMPLATE_GROUP']
+    if not settings.PRODUCTION_EMAIL:
+       to = settings.NON_PROD_EMAIL
+       sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+    else:
+       for u in user_list:
+          to = u.email
+          sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+
+
+def send_refund_completed_email_customer(booking, context_processor):
+    subject = 'Your refund for booking {} was completed.'.format(booking.id)
+    template = 'mooring/email/refund_completed_customer.html'
+    cc = None
+    bcc = None
+    from_email = None
+    context= {'booking': booking, 'context_processor': context_processor}
+    to = booking.customer.email
+    template_group = context_processor['TEMPLATE_GROUP']
+    sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
+
 def send_refund_failure_email_customer(booking, context_processor):
 
     subject = 'Your refund for booking has failed {}.'.format(booking.id)
@@ -388,7 +443,7 @@ def send_refund_failure_email_customer(booking, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     to = booking.customer.email
     template_group = context_processor['TEMPLATE_GROUP']
     sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -400,7 +455,7 @@ def send_booking_cancellation_email_customer(booking, context_processor):
     cc = None
     bcc = None
     from_email = None
-    context= {'booking': booking}
+    context= {'booking': booking, 'context_processor': context_processor}
     to = booking.customer.email
     template_group = context_processor['TEMPLATE_GROUP']
     sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)

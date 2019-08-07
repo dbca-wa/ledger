@@ -14,7 +14,7 @@ router.register(r'mooring_map', api.MooringAreaMapViewSet)
 router.register(r'mooring_map_filter', api.MooringAreaMapFilterViewSet)
 router.register(r'marine_parks_map', api.MarineParksMapViewSet)
 router.register(r'region_marine_parks_map', api.MarineParksRegionMapViewSet)
-router.register(r'availability', api.AvailabilityViewSet, 'availability')
+#router.register(r'availability', api.AvailabilityViewSet, 'availability')
 router.register(r'availability2', api.AvailabilityViewSet2, 'availability2')
 router.register(r'availability_admin', api.AvailabilityAdminViewSet)
 router.register(r'availability_ratis', api.AvailabilityRatisViewSet, 'availability_ratis')
@@ -53,6 +53,7 @@ router.register(r'registeredVessels', api.RegisteredVesselsViewSet)
 
 api_patterns = [
     url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),
+    url(r'^api/profile-admin$',api.GetProfileAdmin.as_view(), name='get-profile-admin'),
     url(r'^api/profile/update_personal$',api.UpdateProfilePersonal.as_view(), name='update-profile-personal'),
     url(r'^api/profile/update_contact$',api.UpdateProfileContact.as_view(), name='update-profile-contact'),
     url(r'^api/profile/update_address$',api.UpdateProfileAddress.as_view(), name='update-profile-address'),
@@ -126,6 +127,8 @@ urlpatterns = [
     url(r'^cancel-booking/(?P<pk>[0-9]+)/', views.CancelBookingView.as_view(), name='public_cancel_booking'),
     url(r'^cancel-admissions-booking/(?P<pk>[0-9]+)/', views.CancelAdmissionsBookingView.as_view(), name='public_cancel_admissions_booking'),
     url(r'^success/', views.BookingSuccessView.as_view(), name='public_booking_success'),
+    url(r'^cancel-completed/(?P<booking_id>[0-9]+)/', views.BookingCancelCompletedView.as_view(), name='public_booking_cancelled'),
+    url(r'^cancel-admission-completed/(?P<booking_id>[0-9]+)/', views.AdmissionBookingCancelCompletedView.as_view(), name='public_admission_booking_cancelled'),
     url(r'^success_admissions/', views.AdmissionsBookingSuccessView.as_view(), name='public_admissions_success'),
     url(r'^createdbasket/', views.AdmissionsBasketCreated.as_view(), name='created_basket'),
     url(r'^map/', views.MapView.as_view(), name='map'),

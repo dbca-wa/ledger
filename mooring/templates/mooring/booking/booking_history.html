@@ -38,8 +38,11 @@
                   <th>Booking Type</th>
                   <th>Linked Admission</th>
 		  <th>Total</th>
-                  <th>Booking Date</th>
-                  <th>Invoices#</th>
+                  <th>Booking Date<br>
+                  Booked By 
+                  </th>
+                  <th>Cancel Date<br>Cancelled By</th>
+                  <th width='125px'>Invoices#</th>
                   <th>Ledger Payment</th>
 		</tr>
 	</thead>
@@ -52,10 +55,16 @@
                       <th>{{ bh.booking.get_booking_type_display }}</th>
                       <td>{% if bh.booking.admission_payment %}<A HREF='/api/get_admissions_confirmation/{{ bh.booking.admission_payment.id }}'>AD{{ bh.booking.admission_payment.id }}{% endif %}</A></td>
                       <td style='color: {% if bh.booking.cost_total > 0 %}red{% elif  bh.booking.cost_total < 0 %}green{% endif %}'  >${{ bh.booking.cost_total }}</td>
-                      <td>{{ bh.booking.created }}</td>
+                      <td>{{ bh.booking.created }}
+                          {{ bh.booking.created_by }}
+                      </td>
+                      <td>
+                          {% if bh.booking.cancelation_time %}{{ bh.booking.cancelation_time }}{% endif %}<BR>
+			  {% if bh.booking.canceled_by  %}{{ bh.booking.canceled_by }}{% endif %}
+                      </td>
+
                       <td>{% for bi in bh.invoices %}
                             <A href='/mooring/payments/invoice-pdf/{{ bi.invoice_reference }}'><i style="color:red;" class="fa fa-file-pdf-o"></i>&nbsp;{{ bi.invoice_reference }}</A><BR>
- 
                       {% endfor %}
 		      </td>
                       <td>{% for bi in bh.invoices %}

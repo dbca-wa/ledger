@@ -6,13 +6,13 @@
 {% load dpaw_extras %}
 
 {% block favicon %}
-    <link rel="icon" href="//static.dpaw.wa.gov.au/images/favicon.svg" sizes="any" type="image/svg+xml" />
+    <link rel="icon" href="{% static 'favicon.ico' %}"/>
 {% endblock %}
 
 {% block styles %}
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/fonts/Lato2OFLWeb/Lato/latofonts.css" />
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation-flex.css">
-    <link rel="stylesheet" type="text/css" media="all" href="//static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="{% static 'ledger/css/latofonts.css' %}" />
+    <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/foundation/6.1.2/foundation-flex.css">
+    <link rel="stylesheet" type="text/css" media="all" href="//cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/foundation-icons.css" />
     <style>
         th {
             text-align:left;
@@ -45,7 +45,7 @@
         <div class="column large-4">
             <!-- Image row -->
             <div class="row align-center">
-                <img class="align-center" src="http://static.dpaw.wa.gov.au/images/dpaw_logo.png"/>
+                <img class="align-center" src="{% static 'ledger/images/dpaw_logo.png' %}"/>
             </div>
             <!-- /Image -->
             <!-- ABN Row -->
@@ -217,7 +217,7 @@
     <div class="row">
         <div class="column large-6">
             <!-- Image  -->
-            <img src="http://static.dpaw.wa.gov.au/images/dpaw_logo.png"/>
+            <img src="{% static 'ledger/images/dpaw_logo.png' %}"/>
             <p>ABN: 38 052 249 024</p>
         </div>
         <div class="column large-6">
@@ -289,5 +289,5 @@
 {% block scripts %}
     {{block.super}}
     <!-- Foundation -->
-    <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/foundation/6.1.2/foundation.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/foundation/6.1.2/foundation.min.js"></script>
 {% endblock %}
