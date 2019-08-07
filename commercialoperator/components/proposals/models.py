@@ -953,6 +953,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         #    recipients.append(self.submitter.email)
         return recipients
 
+    #Check if the user is member of assessor group for the Proposal
+    def is_assessor(self,user):
+            return self.__assessor_group() in user.proposalassessorgroup_set.all() 
+
+    #Check if the user is member of assessor group for the Proposal
+    def is_approver(self,user):
+            return self.__approver_group() in user.proposalapprovergroup_set.all() 
+
 
     def can_assess(self,user):
         #if self.processing_status == 'on_hold' or self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
