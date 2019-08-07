@@ -190,7 +190,7 @@ class ApplicationFeeSuccessView(TemplateView):
                     delete_session_application_invoice(request.session)
 
                     send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
-                    send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
+                    send_application_fee_confirmation_tclass_email_notification(request, application_fee, invoice, recipients=[recipient])
 
                     context = {
                         'proposal': proposal,
@@ -288,12 +288,13 @@ class BookingSuccessView(TemplateView):
                     context.update({
                         'booking_id': booking.id,
                         'submitter': submitter,
-                        'booking_invoice': invoice
+                        'invoice_reference': invoice.reference
                     })
                     return render(request, self.template_name, context)
 
         except Exception as e:
-            if ('cols_last_booking' in request.session) and ApplicationFee.objects.filter(id=request.session['cols_last_booking']).exists():
+            #logger.error('{}'.format(e))
+            if ('cols_last_booking' in request.session) and Booking.objects.filter(id=request.session['cols_last_booking']).exists():
                 booking = Booking.objects.get(id=request.session['cols_last_booking'])
                 proposal = booking.proposal
 
@@ -313,7 +314,7 @@ class BookingSuccessView(TemplateView):
         context.update({
             'booking_id': booking.id,
             'submitter': submitter,
-            'booking_invoice': invoice
+            'invoice_reference': invoice.invoice_reference
         })
         return render(request, self.template_name, context)
 

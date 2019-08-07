@@ -182,7 +182,7 @@ class Remittance(Flowable):
 
 def _create_header(canvas, doc, draw_page_number=True):
     canvas.saveState()
-    canvas.setTitle('Invoice')
+    canvas.setTitle('Confirmation')
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
@@ -192,13 +192,17 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - (dpaw_header_logo_size[1]/2),width=dpaw_header_logo_size[0]/2, height=dpaw_header_logo_size[1]/2, mask='auto')
 
     current_y -= 100
-    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'BOOKING CONFIRMATION')
+    invoice = doc.invoice
+    booking = doc.booking
+    if hasattr(booking, 'payment_type'):
+        PAGE_TITLE = 'APPLICATION & LICENCE FEE CONFIRMATION'
+    else:
+        PAGE_TITLE = 'BOOKING CONFIRMATION'
+    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, PAGE_TITLE)
 
     # Invoice address details
     invoice_details_offset = 37
     current_y -= 25
-    invoice = doc.invoice
-    booking = doc.booking
     canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
     current_x = PAGE_MARGIN + 5
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.owner.get_full_name())
@@ -216,8 +220,9 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, invoice.reference)
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Paid (AUD)')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, currency(invoice.payment_amount))
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, 'Booking No.')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, booking.booking_number)
+    if hasattr(booking, 'booking_type'):
+        canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, 'Booking No.')
+        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, booking.booking_number)
     canvas.restoreState()
 
 
