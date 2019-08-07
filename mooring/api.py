@@ -2940,7 +2940,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             if arrival:
                  filter_query &= Q(departure__gt=arrival)
 
-            booking_query = Booking.objects.filter(filter_query)
+            booking_query = Booking.objects.filter(filter_query).order_by('-id')
             recordsTotal = Booking.objects.filter(Q(Q(booking_type=1) | Q(booking_type=4))).count()
             recordsFiltered = booking_query.count()
             # build predata
@@ -3140,7 +3140,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                         bk['campground_site_type'] = ""
 
 
-                    msb_list.sort(key=lambda item: item[2])
+                    #msb_list.sort(key=lambda item: item[2])
                     bk_list['mooringsite_bookings'] = msb_list
 
                     booking_data.append(bk_list)
@@ -4320,7 +4320,7 @@ def get_current_booking(ongoing_booking, request):
          expiry = ongoing_booking.expiry_time.isoformat() if ongoing_booking else ''
      payments_officer_group = request.user.groups.filter(name__in=['Payments Officers']).exists()
 
-     ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
+     ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking).order_by('from_dt')
      cb = {'current_booking':[], 'total_price': '0.00'}
      current_booking = []
 #     total_price = Decimal('0.00')
