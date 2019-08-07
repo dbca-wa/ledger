@@ -866,6 +866,18 @@ def proposal_submit(proposal,request):
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
 
-   
+def is_payment_officer(user):
+    from commercialoperator.components.proposals.models import PaymentOfficerGroup
+    try:
+        group= PaymentOfficerGroup.objects.get(default=True)
+    except PaymentOfficerGroup.DoesNotExist:
+        group= None
+    if group:
+        if user in group.members.all():
+            return True
+    return False
+
+    
+
 
 

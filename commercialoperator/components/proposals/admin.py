@@ -234,6 +234,24 @@ class QAOfficerGroupAdmin(admin.ModelAdmin):
     list_display = ['name']
     ordering = ('id',)
 
+@admin.register(models.PaymentOfficerGroup)
+class PaymentOfficerGroupAdmin(admin.ModelAdmin):
+    filter_horizontal = ('members',)
+    list_display = ['name']
+    exclude = ('site',)
+    actions = None
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "members":
+            #kwargs["queryset"] = EmailUser.objects.filter(email__icontains='@dbca.wa.gov.au')
+            kwargs["queryset"] = EmailUser.objects.filter(is_staff=True)
+        return super(PaymentOfficerGroupAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
+    #list_display = ['id','name', 'visible']
+    list_display = ['name']
+    ordering = ('id',)
+
+
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
