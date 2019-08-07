@@ -5,6 +5,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse
 
 from rest_framework import viewsets, serializers
@@ -29,7 +30,9 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
         total_count = queryset.count()
+
         sanction_outcome_type = request.GET.get('sanction_outcome_type')
+        q_type = Q(type=sanction_outcome_type)
 
 
         getter = request.query_params.get
