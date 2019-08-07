@@ -105,16 +105,16 @@ DEP_NAME = env('DEP_NAME','Department of Biodiversity, Conservation and Attracti
 DEP_NAME_SHORT = env('DEP_NAME_SHORT','DBCA')
 SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + SITE_DOMAIN)
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', 'no-reply@' + SITE_DOMAIN)
-
 MEDIA_APP_DIR = env('MEDIA_APP_DIR', 'cols')
 ADMIN_GROUP = env('ADMIN_GROUP', 'COLS Admin')
+COLS_HANDBOOK_URL = env('COLS_HANDBOOK_URL', 'www.parks.dpaw.wa.gov.au/know/commercial-operator-handbook')
 
 # for ORACLE Job Notification - override settings_base.py
 EMAIL_FROM = DEFAULT_FROM_EMAIL
 
 OSCAR_BASKET_COOKIE_OPEN = 'cols_basket'
 PAYMENT_SYSTEM_ID = env('PAYMENT_SYSTEM_ID', 'S557')
-os.environ['LEDGER_CUSTOM_PRODUCT_LIST'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code')"
+os.environ['LEDGER_PRODUCT_CUSTOM_FIELDS'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code')"
 
 if not VALID_SYSTEMS:
     VALID_SYSTEMS = [PAYMENT_SYSTEM_ID]

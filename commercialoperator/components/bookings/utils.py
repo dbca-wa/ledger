@@ -21,8 +21,7 @@ logger = logging.getLogger('payment_checkout')
 def create_booking(request, proposal_id):
     """ Create the ledger lines - line items for invoice sent to payment system """
 
-    #import ipdb; ipdb.set_trace()
-    booking = Booking.objects.create(proposal_id=proposal_id)
+    booking = Booking.objects.create(proposal_id=proposal_id, created_by=request.user, booking_type=3)
 
     tbody = json.loads(request.POST['payment'])['tbody']
     for row in tbody:
@@ -98,23 +97,29 @@ def delete_session_application_invoice(session):
 def create_fee_lines(proposal, invoice_text=None, vouchers=[], internal=False):
     """ Create the ledger lines - line item for application fee sent to payment system """
 
-    #import ipdb; ipdb.set_trace()
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
-    price = proposal.application_type.application_fee
-    line_items = [{
-            'ledger_description': 'Application Fee - {} - {}'.format(now, proposal.lodgement_number),
-            'oracle_code': proposal.application_type.oracle_code,
-            'price_incl_tax':  price,
-            'price_excl_tax':  price if proposal.application_type.is_gst_exempt else calculate_excl_gst(price),
+    application_price = proposal.application_type.application_fee
+    licence_price = proposal.licence_fee_amount
+    line_items = [
+        {   'ledger_description': 'Application Fee - {} - {}'.format(now, proposal.lodgement_number),
+            'oracle_code': proposal.application_type.oracle_code_application,
+            'price_incl_tax':  application_price,
+            'price_excl_tax':  application_price if proposal.application_type.is_gst_exempt else calculate_excl_gst(application_price),
             'quantity': 1,
-        }]
+        },
+        {   'ledger_description': 'Licence Fee {} - {} - {}'.format(proposal.other_details.get_preferred_licence_period_display(), now, proposal.lodgement_number),
+            'oracle_code': proposal.application_type.oracle_code_licence,
+            'price_incl_tax':  licence_price,
+            'price_excl_tax':  licence_price if proposal.application_type.is_gst_exempt else calculate_excl_gst(licence_price),
+            'quantity': 1,
+        }
+    ]
     logger.info('{}'.format(line_items))
     return line_items
 
 def create_lines(request, invoice_text=None, vouchers=[], internal=False):
     """ Create the ledger lines - line items for invoice sent to payment system """
 
-    #import ipdb; ipdb.set_trace()
     def add_line_item(park, arrival, age_group, price, no_persons):
         price = Decimal(price)
         if no_persons > 0:
@@ -149,7 +154,6 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
     return lines
 
 def checkout(request, proposal, lines, return_url_ns='public_booking_success', return_preload_url_ns='public_booking_success', invoice_text=None, vouchers=[], internal=False):
-    #import ipdb; ipdb.set_trace()
     basket_params = {
         'products': lines,
         'vouchers': vouchers,

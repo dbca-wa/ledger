@@ -12,6 +12,7 @@ from reportlab.lib.colors import HexColor, black
 
 from django.core.files import File
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from commercialoperator.components.approvals.models import ApprovalDocument
 
@@ -91,6 +92,7 @@ styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
 styles.add(ParagraphStyle(name='LetterLeft', fontSize=LARGE_FONTSIZE, alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='LetterBoldLeft', fontName=BOLD_FONTNAME, fontSize=LARGE_FONTSIZE, alignment=enums.TA_LEFT))
+styles.add(ParagraphStyle(name='WebAddress', alignment=enums.TA_LEFT, textColor='blue'))
 
 def _create_approval_header(canvas, doc, draw_page_number=True):
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
@@ -184,7 +186,7 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     if proposal.org_applicant:
         email = proposal.org_applicant.organisation.organisation_set.all().first().contacts.all().first().email
     else:
-        email= proposal.submitter.email    
+        email= proposal.submitter.email
     elements.append(Paragraph(email,styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph(_format_name(approval.applicant),styles['BoldLeft']))
@@ -341,7 +343,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     # this is the only way to get data into the onPage callback function
     doc.approval = approval
     doc.site_url = site_url
-    
+
     approval_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])
     box_table_style = TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'), ('BOX', (0,0), (-1,-1), 0.25, black), ('INNERGRID', (0,0), (-1,-1), 0.25, black), ('ALIGN', (0, 0), (-1, -1), 'RIGHT')])
 
@@ -350,12 +352,15 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     #Organization details
 
     #import ipdb; ipdb.set_trace()
-    address = proposal.applicant_address 
+    address = proposal.applicant_address
     # address = proposal.applicant_address
     if proposal.org_applicant:
-        email = proposal.org_applicant.organisation.organisation_set.all().first().contacts.all().first().email
+        try:
+            email = proposal.org_applicant.organisation.organisation_set.all().first().contacts.all().first().email
+        except:
+            raise ValidationError('There is no contact for Organisation. Please create an Organisation contact')
     else:
-        email= proposal.submitter.email    
+        email= proposal.submitter.email
     #elements.append(Paragraph(email,styles['BoldLeft']))
     elements.append(Paragraph('CONSERVATION AND LAND MANAGEMENT REGULATIONS 2002 (PART 7)', styles['BoldCenter']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
@@ -392,14 +397,14 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-        
+
     elements.append(KeepTogether(delegation))
 
     elements.append(Paragraph('Commencing on the date of execution of this licence and expiring on {}'.format(approval.expiry_date.strftime(DATE_FORMAT)),styles['BoldLeft']))
     elements.append(Paragraph('to enter upon and use the land within parks/ reserves in order to conduct activites as contained in the schedule attached to this Commercial Operations Licence.',styles['BoldLeft']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('CONDITIONS', styles['BoldLeft'])) 
+    elements.append(Paragraph('CONDITIONS', styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     list_of_bullets= []
@@ -437,7 +442,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     elements.append(Paragraph('Under Section 133(2) of the CALM Act 1984', styles['Left']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']))
-    
+
     elements.append(PageBreak())
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     table_data=[[Paragraph('License Number', styles['BoldLeft']),
@@ -469,7 +474,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     elements.append(t)
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))    
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('SCHEDULE 2', styles['BoldCenter']))
     elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE CONDITIONS', styles['BoldCenter']))
     requirements = proposal.requirements.all().exclude(is_deleted=True)
@@ -658,7 +663,7 @@ def _create_renewal(renewal_buffer, approval, proposal):
     #     address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
     #                       Paragraph(address.line3, styles['Left']),
     #                       Paragraph('%s %s' % (address.state, address.postcode), styles['Left']),
-    #                       Paragraph(address.country.name, styles['Left'])]                
+    #                       Paragraph(address.country.name, styles['Left'])]
     delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
                               [Paragraph(_format_name(approval.applicant),
                                          styles['Left'])] + address_paragraphs]],
@@ -672,31 +677,44 @@ def _create_renewal(renewal_buffer, approval, proposal):
     delegation.append(Paragraph('Dear {} '.format(full_name), styles['Left']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('This is a reminder that your approval: ', styles['Left']))
+    # delegation.append(Paragraph('This is a reminder that your approval: ', styles['Left']))
+
+    # delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+
+    # title_with_number = '{} - {}'.format(approval.lodgement_number, title)
+
+    # delegation.append(Paragraph(title_with_number, styles['InfoTitleLargeLeft']))
+
+    # delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    # delegation.append(Paragraph('is due to expire on {}'.format(expiry_date), styles['Left']))
+
+    delegation.append(Paragraph('This is a reminder that your Commercial Operations licence {} expires on {}. '.format(approval.lodgement_number, expiry_date), styles['BoldLeft']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    title_with_number = '{} - {}'.format(approval.lodgement_number, title)
-
-    delegation.append(Paragraph(title_with_number, styles['InfoTitleLargeLeft']))
-
-    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('is due to expire on {}'.format(expiry_date), styles['Left']))
+    delegation.append(Paragraph('It is important you apply to renew your licence now so that we can process it before your current licence expires.'
+                                'If you would like to continue operating within WA\'s national parks and other conservation reserves you need a licence under the Conservation and Land Management Regulations 2002.', styles['Left']))
+    #delegation.append(Paragraph('If you would like to continue operating within WA\'s national parks and other conservation reserves you need a licence under the Conservation and Land Management Regulations 2002.'
+    #                            , styles['Left']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('Please note that if you have outstanding compliances these are required to be submitted before the approval can be renewed'
-                                , styles['Left']))
+    delegation.append(Paragraph('As a reminder, the Commercial Operator Handbook (2019) outlines the conditions of your licence.'
+        'The handbook is available online at the {} website:'.format(settings.DEP_NAME), styles['Left']))
+    #delegation.append(Paragraph('The handbook is available online at the {} website: .'.format(settings.DEP_NAME), styles['Left']))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('{}'.format(settings.COLS_HANDBOOK_URL), styles['WebAddress']))
+    delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    delegation.append(Paragraph('Please make sure you have access to this handbook, either in hardcopy or online, when operating within WA\'s national parks and conservation reserves.', styles['Left']))
+    #delegation.append(Paragraph('', styles['Left']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('If you have any queries, contact the {} '
-                                'on {}.'.format(settings.DEP_NAME, settings.DEP_PHONE), styles['Left']))
+    delegation.append(Paragraph('If you have any questions about how to renew your licence please call Licencing Officer on {} or email licensing@dbca.wa.gov.au.'.format(settings.DEP_PHONE), styles['Left']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph('Yours sincerely ', styles['Left']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('DIRECTOR GENERAL', styles['Left']))
+    #delegation.append(Paragraph('DIRECTOR GENERAL', styles['Left']))
     delegation.append(Paragraph('{}'.format(settings.DEP_NAME), styles['Left']))
 
     elements.append(KeepTogether(delegation))

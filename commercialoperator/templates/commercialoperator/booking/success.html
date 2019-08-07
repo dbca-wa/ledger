@@ -12,14 +12,10 @@
         </div>
         <div class="row"><div class="col-sm-12" style="margin-top: 1em">
             {% if request.user == submitter or request.user.is_staff or request.session.col_booking == booking_id %}
-                {% for bi in book_inv %}
-                    <a href="{% url 'cols-confirmation-pdf' bi.invoice_reference %}" class="btn btn-info btn-lg" target="_blank">Confirmation</a>
-                {% endfor %}
+                <a href="{% url 'cols-confirmation-pdf' invoice_reference %}" class="btn btn-info btn-lg" target="_blank">Confirmation</a>
 
                 {% if request.user.is_authenticated %}
-                    {% for bi in book_inv %}
-                        <a href="{% url 'cols-invoice-pdf' bi.invoice_reference %}" class="btn btn-info btn-lg"  target="_blank">Invoice</a>
-                    {% endfor %}
+                    <a href="{% url 'cols-invoice-pdf' invoice_reference %}" class="btn btn-info btn-lg"  target="_blank">Invoice</a>
                 {% else %}
                     <a href="{% url 'home' %}" class="btn btn-info btn-lg">Log in</a><p>You must be logged in to see your invoice online.</p>
                 {% endif %}

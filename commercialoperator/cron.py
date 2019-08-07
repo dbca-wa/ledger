@@ -12,7 +12,7 @@ class OracleIntegrationCronJob(CronJobBase):
     To Test (shortly after RUN_AT_TIMES):
         ./manage_co.py runcrons
     """
-    RUN_AT_TIMES = ['01:05']
+    RUN_AT_TIMES = ['00:40']
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code = 'cols.oracle_integration'

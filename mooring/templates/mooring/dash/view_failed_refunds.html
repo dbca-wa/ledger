@@ -89,6 +89,7 @@
                 <td>
                    {% if row.fr.booking %}
                    <a href='{% url 'view_booking_history' row.fr.booking.id %}'>View History</a><BR>
+                   <a href='{% url 'view_refund_booking_history' row.fr.booking.id %}'>Oracle Refund</a><BR>
 		   {% endif %}
                     
                    <a href='{% url 'dash-complete_failed_refund' row.fr.id %}'>Mark Completed</a><BR>
