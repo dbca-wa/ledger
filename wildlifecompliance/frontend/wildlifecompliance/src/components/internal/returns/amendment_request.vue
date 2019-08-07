@@ -1,5 +1,5 @@
 <template lang="html">
-    <div id="internal-application-amend">
+    <div id="internal-return-amend">
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Amendment Request" large>
             <div class="container-fluid">
                 <div class="row">
@@ -12,16 +12,18 @@
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">Reason</label>
-                                        <text class="form-control" ></text>
+                                        <label class="control-label pull-left" >Reason</label>
+                                        <select class="form-control" name="reason" ref="reason" v-model="amendment.reason">
+                                            <option v-for="item in reason_choices" :value="item.key">{{item.value}}</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
-                                        <label class="control-label pull-left"  for="Name">Comments to User</label>
-                                        <textarea class="form-control" name="name" ></textarea>
+                                        <label class="control-label pull-left" >Comments to User</label>
+                                        <textarea class="form-control" name="text" v-model="amendment.text" ></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -55,8 +57,8 @@ export default {
             form:null,
             amendment: {
                 reason:'',
-                amendingApplication: false,
-                application: this.$store.getters.application_id,
+                amendingReturn: false,
+                a_return: null,
                 text:null,
                 activity_list:[]
             },
@@ -68,9 +70,9 @@ export default {
     },
     computed: {
         ...mapGetters([
-            'application_id',
-            'licenceActivities',
-            'hasRole',
+            'isReturnsLoaded',
+            'returns',
+            'is_external'
         ]),
         showError: function() {
             var vm = this;
@@ -99,7 +101,7 @@ export default {
             this.isModalOpen = false;
             this.amendment = {
                 reason: '',
-                application: this.application_id,
+                a_return: this.returns.id,
                 text:null,
                 licence_activity:null,
                 activity_list: [],
@@ -122,7 +124,7 @@ export default {
         },
         fetchAmendmentChoices: function(){
             let vm = this;
-            vm.$http.get('/api/amendment_request_reason_choices.json').then((response) => {
+            vm.$http.get('/api/return_amendment_request_reason_choices.json').then((response) => {
                 vm.reason_choices = response.body;
 
             },(error) => {
@@ -130,37 +132,28 @@ export default {
             } );
         },
         sendData:function(){
-            let vm = this;
-            vm.errors = false;
-            let amendment = JSON.parse(JSON.stringify(vm.amendment));
-            vm.$http.post('/api/amendment.json',JSON.stringify(amendment),{
+            const self = this;
+            self.errors = false;
+            self.amendment.a_return = this.returns
+            let amendment = JSON.parse(JSON.stringify(self.amendment));
+
+            self.$http.post('/api/returns_amendment.json',JSON.stringify(amendment),{
                         emulateJSON:true,
                     }).then((response)=>{
-                        //vm.$parent.loading.splice('processing contact',1);
+                       //let species_id = this.returns.sheet_species;
+                       //this.setReturns(response.body);
+                       //this.returns.sheet_species = species_id;
                         swal(
                              'Sent',
-                             'An email has been sent to applicant with the request to amend this Application',
+                             'An email has been sent to the Licensee with the request to amend this Return.',
                              'success'
                         );
-                        vm.amendingApplication = true;
-                        vm.close();
-                        //vm.$emit('refreshFromResponse',response);
-                        Vue.http.get(`/api/application/${vm.application_id}/internal_application.json`).then((res)=>
-                        {
-                            vm.$emit('refreshFromResponse',res);
-
-                        },(error)=>{
-                            console.log(error);
-                        });
-
+                        self.close();
                     },(error)=>{
                         console.log(error);
                         vm.errors = true;
                         vm.errorString = helpers.apiVueResourceError(error);
-                        vm.amendingApplication = true;
-
-                    });
-
+            });
         },
         addFormValidations: function() {
             let vm = this;

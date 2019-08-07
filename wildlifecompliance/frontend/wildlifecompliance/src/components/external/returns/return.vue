@@ -71,6 +71,11 @@ export default {
     isSubmittable() {
       return this.returns.format !== 'sheet' && this.returns.lodgement_date == null
     },
+    requiresCheckout: function() {
+      return this.returns.return_fee > 0 && [
+        'draft', 'awaiting_payment'
+      ]
+    },
   },
   methods: {
     ...mapActions({
@@ -93,8 +98,8 @@ export default {
         data.append(speciesID, speciesJSON)
       };
       var speciesJSON = []
+      let cnt = 0;
       for (const speciesID in self.species_transfer) { // Running Sheet Transfers
-        let cnt = 0;
         Object.keys(self.species_transfer[speciesID]).forEach(function(key) {
           speciesJSON[cnt] = JSON.stringify(self.species_transfer[speciesID][key])
           cnt++;
@@ -112,9 +117,13 @@ export default {
                             'success'
                        );
                     },(error)=>{
-                        console.log(error);
-      });
+                       console.log(error);
+                       swal('Error',
+                            'There was an error saving your return details.<br/>' + error.body,
+                            'error'
+                       )
 
+                    });
     },
     submit: function(e) {
       const self = this;

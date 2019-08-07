@@ -117,8 +117,8 @@ class OrderCreator(CoreOrderCreator):
             'unit_price_excl_tax': basket_line.unit_price_excl_tax,
             'unit_retail_price': stockrecord.price_retail if stockrecord else basket_line.unit_price_incl_tax,
             # Shipping details
-            'est_dispatch_date':
-            basket_line.purchase_info.availability.dispatch_date if not custom_ledger else None
+            'est_dispatch_date': basket_line.purchase_info.availability.dispatch_date if not custom_ledger else None,
+            'line_status':  basket_line.line_status
         }
         extra_line_fields = extra_line_fields or {}
         if hasattr(settings, 'OSCAR_INITIAL_LINE_STATUS'):

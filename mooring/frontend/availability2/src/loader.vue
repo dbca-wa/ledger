@@ -32,7 +32,8 @@ export default {
     text-align: center;
     padding: 1em 0;
     position:absolute; 
-    margin-top: 170px;
+    margin-top: -30px;
+    z-index: 5;
   }
 </style>
 

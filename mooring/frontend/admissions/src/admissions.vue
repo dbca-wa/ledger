@@ -158,7 +158,7 @@
                                     <div class="row"> 
                                         <div class="col-md-8 col-md-offset-5">
                                             <div class="checkbox">
-                                                <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" href="{{EXPLORE_PARKS_TERMS}}">terms and conditions</a></label>
+                                                <label><input type="checkbox" value="" v-model="toc">I agree to the <a target="_blank" id='terms-link' href="javascript:void(0);" v-on:click="loadTerms();">terms and conditions</a></label>
                                             </div>
                                             <button :disabled="!validToProceed" type="submit" class="btn btn-primary" style="width:180px;background-color:#4286f4;font-weight:bold;">Proceed to Payment</button>
                                         </div>
@@ -251,6 +251,7 @@ export default {
         toc: false,
         message: null,
         noPayment: false,
+        terms: '',
         errors: {
             arrivalDate: false,
             overnightStay: false,
@@ -271,7 +272,7 @@ export default {
         validToProceed: {
             cache: false,
             get: function(){
-                if (this.toc && !this.errorMsg && !this.errorMsgPersonal &&!this.noPayment){
+                if (this.toc && !this.errorMsg && !this.errorMsgPersonal &&!this.noPayment ){
                     return true;
                 } else {
                     return false;
@@ -336,6 +337,7 @@ export default {
             this.validateNoOfPeople();
             var warningRefNo = this.warningRefNo;
             this.validateWarningRefNo();
+            
             var errs = this.errors
             if(errs.arrivalDate === true || errs.overnightStay === true || errs.givenName === true || errs.lastName === true || errs.email === true || errs.noOfAdults === true || errs.noOfChildren === true || errs.noOfInfants === true){
                 formInvalid = true;
@@ -357,7 +359,7 @@ export default {
                     lastName: lastName,
                     email: email,
                     location: location,
-                    mooring_group: mooring_group
+                    // mooring_group: mooring_group
                 }
                 $.ajax({
                     url: vm.mooringUrl + "/api/create_admissions_booking",
@@ -499,8 +501,9 @@ export default {
                 }
             }
         },
-        validateVesselReg: function(){
+        validateVesselReg: function() {
             let vm = this;
+            vm.vesselReg = vm.vesselReg.replace(/ /g, ""); 
             var reg = vm.vesselReg;
             var data = {
                 'rego': reg
@@ -559,7 +562,7 @@ export default {
                 }
             }
         },
-        validateNoOfPeople: function(){
+        validateNoOfPeople: function() {
             var error1 = "Please enter at least 1 person for admission booking.";
             var error2 = "Cannot purchase for a negative value for people.";
             var totalP = parseInt(this.noOfAdults) + parseInt(this.noOfConcessions) + parseInt(this.noOfChildren) + parseInt(this.noOfInfants);
@@ -601,7 +604,6 @@ export default {
         getPrices: function(callback){
             console.log(this.arrivalDate);
             var date = moment(this.arrivalDate).format('YYYY-MM-DD');
-            console.log(date);
             var location = $('#location').val();
             var data = {
                 'date': date,
@@ -613,7 +615,6 @@ export default {
                 data: data,
                 dataType: 'json',
                 success: (function(data){
-                    console.log(data.price);
                     if(data.price.period_end == 'null'){
                         var temp = new Date();
                         this.currentCostDateEnd = (temp.getDate + 1000);
@@ -643,6 +644,12 @@ export default {
                 }).bind(this)
             }); 
         },
+        loadTerms: function() { 
+           var terms = $('#terms').val();
+           console.log(terms);
+           window.open(terms,'_terms');
+
+	},
         calculateTotal: function(){
             var date = new Date(this.arrivalDate);
             var temp = date.toISOString().substring(0,10);
@@ -655,11 +662,12 @@ export default {
         },
         prepareTotal: function(){
             var family = 0;
-            var adults = this.noOfAdults;
-            var children = this.noOfChildren;
-            if (adults > 1 && children > 1){
-                if (adults == children){
-                    if (adults % 2 == 0){
+            var adults = parseInt(this.noOfAdults);
+            var children = parseInt(this.noOfChildren);
+
+            if (adults > 1 && children > 1) {
+                if (adults == children) {
+                    if (adults % 2 == 0) {
                         family = adults/2
                         adults = 0
                         children = 0
@@ -670,7 +678,7 @@ export default {
                         children = 1
                     }
                 }
-                else if (adults > children){
+                else if (adults > children) {
                     if (children % 2 == 0){
                         family = children/2
                         adults -= children
@@ -731,7 +739,8 @@ export default {
         this.arrivalData.fill();
 
         //Get the user to autofill the boxes.
-       
+        // this.terms = $('#terms').val(); 
+        // $('#terms-link').val(this.terms);
         $.ajax({
             url: vm.mooringUrl + "/api/profile",
             method: 'GET',

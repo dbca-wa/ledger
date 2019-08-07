@@ -278,8 +278,10 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12" style="display:flex;">
-                <div class="well col-lg-6" style="flex:1;margin-right:1%;">
+            
+            <div class="col-lg-12"> 
+                <div class='col-lg-6 col-xs-12 col-sm-12' style='padding:0px; padding-left: 1px;' >
+                <div class="well col-lg-12 col-xs-12 col-sm-12 ml-1" style='min-height: 450px;' >
                     <div class="row">
                         <div class="col-lg-12">
                             <h3 class="text-primary">Personal Details</h3>
@@ -342,7 +344,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="well col-lg-6" style="flex:1; margin-left:1%;">
+                </div>
+                <div class='col-lg-6 col-xs-12 col-sm-12' style='padding:0px; padding-left: 1px;'>
+                <div class="well col-lg-12 col-xs-12 col-sm-12 " style='min-height: 450px;'>
                     <div class="row">
                         <div class="col-lg-12">
                             <h3 class="text-primary">Vessels</h3>
@@ -405,7 +409,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="vessel_weight" class="text-right">Vessel Weight (Tons)</label>
+                                <label for="vessel_weight" class="text-right">Vessel Weight (Tonnes)</label>
                                 <input type="number" class="form-control" id="vessel_weight" name="draft" v-model="weight" readonly/>
                             </div>
                         </div>
@@ -466,6 +470,7 @@
                                 </div>
                             </div>
                         </div>
+                     </div>
                     </div>
                     <template v-if="pricing.vehicle">
                         <div class="row" v-cloak>
@@ -509,7 +514,7 @@
                             {% if request.user.is_staff %}
                                     <div class="row">
                                         <div class="col-md-4">
-                                            <label>Non-Online Booking:</label>
+                                            <label>Phone Booking Fee:</label>
                                         </div>
                                         <div class="col-md-2">
                                             <input type="checkbox" id="nononline" name="nononline" v-model="nononline" @change="calculateTotal()" checked/>
@@ -595,9 +600,9 @@
             entryFee: 0,
             total: 0,
             concessionWarning: false,
-            numAdults: {{ details.num_adult }},
-            numChildren: {{ details.num_children }},
-            numInfants: {{ details.num_infant }},
+            numAdults: {% if details.num_adult > 0 %}{{ details.num_adult }}{% else %}0{% endif %},
+            numChildren: {% if details.num_children > 0 %}{{ details.num_children }}{% else %}0{% endif %},
+            numInfants: {% if details.num_infant > 0 %}{{ details.num_infant }}{% else %}0{% endif %},
             linesAdmissions: {{ lines|safe }},
             admissionsLines: [],
             numConcessions: 0,
@@ -817,7 +822,7 @@
                 vm.entryFee = 0;
                 vm.total = 0;
                 vm.total = '{{ booking_total }}';
-                vm.total = parseInt(vm.total);
+                vm.total = parseFloat(vm.total);
                 vm.admissionFee = 0;
 
                 if (vm.nononline){
@@ -884,8 +889,8 @@
                             thisAdmission += (family * parseFloat(vm.linesAdmissions[i].family));
                         }
                         vm.linesAdmissions[i].admissionFee = parseFloat(thisAdmission).toFixed(2);
-                        vm.admissionFee += parseInt(thisAdmission);
-                        vm.total += parseInt(thisAdmission);
+                        vm.admissionFee += parseFloat(thisAdmission);
+                        vm.total += parseFloat(thisAdmission);
 
                     }
                     vm.admissionsLines = JSON.stringify(vm.linesAdmissions);
@@ -1076,8 +1081,35 @@
                 });
             }
             vm.calculateTotal();
-            console.log("FEE CHANGE");
-	    console.log(vm.booking_change_fees);
+            // console.log("FEE CHANGE");
+	    // console.log(vm.booking_change_fees);
+
+            $( "#id_email" ).change(function() {
+                var email = this.value;
+                $.ajax({
+                    url: "/api/profile-admin?email_address="+email,
+                    dataType: 'json',
+                    data: data,
+                    async: true,
+                    method: "GET",
+                    success: function(data, stat, xhr){
+                        $('#id_confirm_email').val(data['email']);
+                        $('#id_first_name').val(data['first_name']);
+                        $('#id_last_name').val(data['last_name']);
+                        if (data['mobile_number'] > 5) {
+				$('#id_phone').val(data['mobile_number']);
+			} else {
+ 				$('#id_phone').val(data['phone_number']);
+			}
+                        if (data['residential_address'] != null) {
+				$('#id_postcode').val(data['residential_address']['postcode']);
+                                $('#id_country').val(data['residential_address']['country']);
+                                
+			}
+                        console.log(data);
+                    }
+                });
+            });
         }
     });
 </script>

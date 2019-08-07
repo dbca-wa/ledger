@@ -4,7 +4,7 @@ from ledger.settings_base import *
 ROOT_URLCONF = 'wildlifecompliance.urls'
 SITE_ID = 1
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_wc')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 INSTALLED_APPS += [
     'django.contrib.humanize',
@@ -140,4 +140,4 @@ EXT_USER_API_ROOT_URL = env('EXT_USER_API_ROOT_URL', None)
 EXCEL_OUTPUT_PATH = env('EXCEL_OUTPUT_PATH')
 ALLOW_EMAIL_ADMINS = env('ALLOW_EMAIL_ADMINS', False)  # Allows internal pages to be accessed via email authentication
 SYSTEM_APP_LABEL = env('SYSTEM_APP_LABEL', 'wildlifecompliance')  # global app_label for group permissions filtering
-RENEWAL_PERIOD_DAYS = env('RENEWAL_PERIOD_DAYS', 7)
+RENEWAL_PERIOD_DAYS = env('RENEWAL_PERIOD_DAYS', 30)

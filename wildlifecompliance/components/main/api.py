@@ -38,7 +38,7 @@ def process_generic_document(request, instance, document_type=None, *args, **kwa
             action = request.data.get('action')
             comms_log_id = request.data.get('comms_log_id')
             comms_instance = None
-            returned_file_data = None
+            # returned_file_data = None
 
             if document_type == 'comms_log' and comms_log_id and comms_log_id is not 'null':
                 comms_instance = instance.comms_logs.get(

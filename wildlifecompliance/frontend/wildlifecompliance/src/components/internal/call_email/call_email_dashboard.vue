@@ -123,6 +123,12 @@
                             d.date_to = vm.filterLodgedTo != '' && vm.filterLodgedTo != null ? moment(vm.filterLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         }
                     },
+                    dom: 'lBfrtip',
+                    //dom: 'B',
+                    buttons: [
+                        'excel',
+                        'csv',
+                        ],
                     columns: [
                         {
                             data: "number",

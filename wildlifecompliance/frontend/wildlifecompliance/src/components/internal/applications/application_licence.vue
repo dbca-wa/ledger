@@ -13,10 +13,10 @@
                     <ul>
                         <li v-for="(activity, index) in finalisedActivities" v-bind:key="`licence_row_${index}`" :id="`licence_${activity.id}`">
                             <div v-if="activity.processing_status.id=='accepted'">
-                                <b>{{activity.name}}:</b> issued ({{format(activity.start_date)}} - {{format(activity.expiry_date)}}).
+                                <b>{{activity.name}}:</b> Issued (valid for {{format(activity.start_date)}} - {{format(activity.expiry_date)}})
                             </div>
                             <div v-if="activity.processing_status.id=='declined'">
-                                <b>{{activity.name}}:</b> declined.
+                                <b>{{activity.name}}:</b> Declined
                             </div>
                         </li>
                     </ul>

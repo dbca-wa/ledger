@@ -204,10 +204,10 @@
             
                           <FormSection :formCollapse="true" label="Details" Index="2">
                             <div class="col-sm-12 form-group"><div class="row">
-                                <label class="col-sm-2">Date of call</label>
-                                <div class="col-sm-4">
+                                <label class="col-sm-3">Date of call</label>
+                                <div class="col-sm-3">
                                     <div class="input-group date" ref="dateOfCallPicker">
-                                        <input :disabled="readonlyForm" type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.date_of_call" />
+                                        <input :disabled="readonlyForm" type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="call_email.date_of_call"/>
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
@@ -296,14 +296,24 @@
                                 </select>
                             </div></div>
             
-                            <div class="col-sm-12 form-group"><div class="row">
-                              <label class="col-sm-4">Report Type</label>
-                              <select :disabled="readonlyForm" @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
-                                      <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
-                                        {{ option.report_type }} 
-                                      </option>
-                              </select>
-                            </div></div>
+                            <div class="row">
+                                <div class="col-sm-9 form-group">
+                                  <label class="col-sm-4">Report Type</label>
+                                  <select :disabled="readonlyForm" @change.prevent="loadSchema" class="form-control" v-model="call_email.report_type_id">
+                                          <option v-for="option in report_types" :value="option.id" v-bind:key="option.id">
+                                            {{ option.report_type }} 
+                                          </option>
+                                  </select>
+                                </div>
+                                <div class="col-sm-3 form-group">
+                                    <div class="row">
+                                        <label class="col-sm-2 advice-url-label">None </label>
+                                    </div>
+                                    <div class="row">
+                                        <a class="advice-url" :href="this.reportAdviceUrl" target="_blank" >Click for advice</a>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <div v-for="(item, index) in current_schema">
                               <compliance-renderer-block
@@ -364,7 +374,9 @@
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadCallEmail"/>
         </div>
-        <Inspection ref="inspection" :parent_update_function="loadCallEmail"/>
+        <div v-if="inspectionInitialised">
+            <Inspection ref="inspection" :parent_update_function="loadCallEmail"/>
+        </div>
     </div>
 </template>
 <script>
@@ -518,6 +530,13 @@ export default {
         // return false if no related item is an Offence
         return false
     },
+    reportAdviceUrl: function() {
+        if (this.call_email.report_type) {
+            return this.call_email.report_type.advice_url;
+        } else {
+            return null;
+        }
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -535,6 +554,7 @@ export default {
       setOccurrenceTimeStart: 'setOccurrenceTimeStart',
       setOccurrenceTimeEnd: 'setOccurrenceTimeEnd',
       setTimeOfCall: 'setTimeOfCall',
+      setDateOfCall: 'setDateOfCall',
     }),
     ...mapActions({
       saveFormData: "saveFormData",
@@ -708,7 +728,8 @@ export default {
       el_date_of_call.datetimepicker({
         format: "DD/MM/YYYY",
         maxDate: "now",
-        showClear: true
+        //useCurrent: true,
+        //showClear: true
       });
       el_date_of_call.on("dp.change", function(e) {
         if (el_date_of_call.data("DateTimePicker").date()) {
@@ -787,16 +808,15 @@ export default {
       api_endpoints.region_district
       );
     Object.assign(this.regionDistricts, returned_region_districts);
-
-    // load volunteer group list
-    //let url = helpers.add_endpoint_join(
-      //          api_endpoints.call_email, 
-        //        this.call_email.id + '/get_allocated_group/'
-          //      );
-//    let returned_volunteer_list = await Vue.http.get(url);
-  //  if (returned_volunteer_list.body.allocated_group) {
-    //  this.setAllocatedGroupList(returned_volunteer_list.body.allocated_group.members);
-    //}
+    
+    // Apply current timestamp to date and time of call
+    if (!this.call_email.date_of_call && this.call_email.can_user_edit_form) {
+        this.setDateOfCall(moment().format('DD/MM/YYYY'));
+    }
+    if (!this.call_email.time_of_call && this.call_email.can_user_edit_form) {
+        this.setTimeOfCall(moment().format('LT'));
+    }
+    
   },
   mounted: function() {
       let vm = this;
@@ -867,5 +887,11 @@ export default {
 .nav-item {
   background-color: hsla(0, 0%, 78%, .8) !important;
   margin-bottom: 2px;
+}
+.advice-url-label {
+  visibility: hidden;
+}
+.advice-url {
+  padding-left: 20%;
 }
 </style>
