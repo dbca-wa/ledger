@@ -378,21 +378,23 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         basket.strategy = selector.strategy(user=owner)
         basket.custom_ledger = True
         # Check if there are products to be added to the cart and if they are valid products
-        ledger_custom_product_list = env('LEDGER_CUSTOM_PRODUCT_LIST', None)
-        defaults = ('ledger_description','quantity','price_incl_tax','oracle_code')
+        # EXAMPLE config for settings.py: os.environ['LEDGER_CUSTOM_PRODUCT_LIST'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code','line_status')"
+        # you can import def calculate_excl_gst and use this funcation to calculate the mount with out gst on line items that have gst component.
+        ledger_product_custom_fields = env('LEDGER_PRODUCT_CUSTOM_FIELDS', None)
+        ledger_product_default_fields = ('ledger_description','quantity','price_incl_tax','oracle_code')
 
         UPDATE_PAYMENT_ALLOCATION = env('UPDATE_PAYMENT_ALLOCATION', False)
         if UPDATE_PAYMENT_ALLOCATION is True:
-             defaults = ('ledger_description','quantity','price_incl_tax','oracle_code','line_status')
+             ledger_product_default_fields = ('ledger_description','quantity','price_incl_tax','oracle_code','line_status')
 
-        if ledger_custom_product_list:
-                defaults = ledger_custom_product_list 
+        if ledger_product_custom_fields:
+                ledger_product_default_fields = ledger_product_custom_fields
 
         for p in product_list:
-            if not all(d in p for d in defaults):
+            if not all(d in p for d in ledger_product_default_fields):
                 raise ValidationError('Please make sure that the product format is valid')
-            if ledger_custom_product_list:
-                 if 'price_excl_tax' in ledger_custom_product_list:
+            if ledger_product_custom_fields:
+                 if 'price_excl_tax' in ledger_product_custom_fields:
                      # dont calculate tax as this should be included in the product list
                      pass
                  else:
