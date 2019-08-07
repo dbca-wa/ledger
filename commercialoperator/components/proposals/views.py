@@ -99,3 +99,18 @@ class HelpPageHistoryCompareView(HistoryCompareDetailView):
     template_name = 'commercialoperator/reversion_history.html'
 
 
+class PreviewLicencePDFView(View):
+    def post(self, request, *args, **kwargs):
+        import ipdb; ipdb.set_trace()
+        response = HttpResponse(content_type='application/pdf')
+
+        proposal = self.get_object()
+        details = json.loads(request.POST.get('formData'))
+
+        response.write(proposal.preview_approval(request, details))
+        #response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
+        return response
+
+    def get_object(self):
+        return get_object_or_404(Proposal, id=self.kwargs['proposal_pk'])
+

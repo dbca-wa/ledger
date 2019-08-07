@@ -74,6 +74,8 @@
                 </div>
             </div>
             <div slot="footer">
+                <button type="button" class="btn btn-default" @click.prevent="preview">Preview Licence</button>
+
                 <button type="button" v-if="issuingApproval" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Processing</button>
                 <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
@@ -134,6 +136,9 @@ export default {
         }
     },
     computed: {
+		csrf_token: function() {
+		  return helpers.getCookie('csrftoken')
+		},
         showError: function() {
             var vm = this;
             return vm.errors;
@@ -152,10 +157,47 @@ export default {
         is_amendment: function(){
             return this.proposal_type == 'Amendment' ? true : false;
         },
+		preview_licence_url: function() {
+		  return (this.proposal_id) ? `/preview/licence-pdf/${this.proposal_id}` : '';
+		},
         
 
     },
     methods:{
+        preview:function () {
+            let vm =this;
+
+			let formData = new FormData(vm.form)
+			let jsonObject = {};
+			for (const [key, value] of formData.entries()) {
+				jsonObject[key] = value;
+			}
+
+            //vm.$http.get(vm.preview_licence_url)
+			vm.post_and_redirect(vm.preview_licence_url, {'csrfmiddlewaretoken' : vm.csrf_token, 'formData': JSON.stringify(jsonObject)});
+			//vm.post_and_redirect(vm.preview_licence_url, {'csrfmiddlewaretoken' : vm.csrf_token, 'formData': formData});
+
+        },
+
+		post_and_redirect: function(url, postData) {
+			/* http.post and ajax do not allow redirect from Django View (post method),
+			   this function allows redirect by mimicking a form submit.
+
+			   usage:  vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
+			*/
+			var postFormStr = "<form method='POST' action='" + url + "'>";
+
+			for (var key in postData) {
+				if (postData.hasOwnProperty(key)) {
+					postFormStr += "<input type='hidden' name='" + key + "' value='" + postData[key] + "'>";
+				}
+			}
+			postFormStr += "</form>";
+			var formElement = $(postFormStr);
+			$('body').append(formElement);
+			$(formElement).submit();
+		},
+
         ok:function () {
             let vm =this;
             if($(vm.form).valid()){
