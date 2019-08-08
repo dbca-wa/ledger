@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'ledger.payments.cash',
     'ledger.payments.invoice',
     'ledger.taxonomy',
+    'ledger.fdw_manager',
 ]
 
 MIDDLEWARE_CLASSES = [
