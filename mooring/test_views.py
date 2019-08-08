@@ -113,23 +113,34 @@ class AvailabilityTestCase(TestSetup):
         """Test that the availability view will load whilst not logged in.
         """
         url = '/availability2/'
-        response = self.client.get(url, HTTP_HOST="website.domain")
+        arrival = datetime.now().date().strftime('%Y/%m/%d')
+        departure = datetime.now()+timedelta(days=2)
+        departure = departure.date().strftime('%Y/%m/%d')
+        response = self.client.get(url, {'arrival': arrival, 'departure': departure, 'site_id': self.area.id}, HTTP_HOST="website.domain")
         self.assertEqual(response.status_code, 200)
 
     def test_logged_in_admin(self):
         """Test that the availability view will load whilst logged in as admin.
         """
         url = '/availability2/'
+        arrival = datetime.now().date().strftime('%Y/%m/%d')
+        departure = datetime.now()+timedelta(days=2)
+        departure = departure.date().strftime('%Y/%m/%d')
+
         self.client.login(username=self.adminUN, password="pass")
-        response = self.client.get(url, HTTP_HOST="website.domain")
+        response = self.client.get(url, {'arrival': arrival, 'departure': departure, 'site_id': self.area.id}, HTTP_HOST="website.domain")
         self.assertEqual(response.status_code, 200)
 
     def test_logged_in_non_admin(self):
         """Test that the availability view will load whilst logged in as non-admin.
         """
         url = '/availability2/'
+        arrival = datetime.now().date().strftime('%Y/%m/%d')
+        departure = datetime.now()+timedelta(days=2)
+        departure = departure.date().strftime('%Y/%m/%d')
+
         self.client.login(username=self.nonAdminUN, password="pass")
-        response = self.client.get(url, HTTP_HOST="website.domain")
+        response = self.client.get(url, {'arrival': arrival, 'departure': departure, 'site_id': self.area.id}, HTTP_HOST="website.domain")
         self.assertEqual(response.status_code, 200)
 
 """Would have availability_admin tested here however it seems broken/not in use at the moment."""

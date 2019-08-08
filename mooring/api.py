@@ -149,6 +149,7 @@ from mooring import emails
 from mooring import exceptions
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance  
+from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 
 # API Views
 class MooringsiteBookingViewSet(viewsets.ModelViewSet):
@@ -584,7 +585,7 @@ def current_booking(request, *args, **kwargs):
     response_data['result'] = 'success'
     response_data['message'] = ''
     ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-    response_data['current_booking'] = get_current_booking(ongoing_booking)
+    response_data['current_booking'] = get_current_booking(ongoing_booking, request)
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 
@@ -606,6 +607,7 @@ def delete_booking(request, *args, **kwargs):
     response_data = {}
     response_data['result'] = 'success'
     response_data['message'] = ''
+    payments_officer_group = request.user.groups.filter(name__in=['Payments Officers']).exists()
     nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
     booking = None
     booking_item = request.POST['booking_item']
@@ -616,6 +618,8 @@ def delete_booking(request, *args, **kwargs):
             ms_booking = MooringsiteBooking.objects.get(id=booking_item,booking=booking)
             msb = datetime.strptime(str(ms_booking.from_dt.strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
             if msb > nowtime:
+                  ms_booking.delete()
+            elif payments_officer_group is True:
                   ms_booking.delete()
             else:
                  if msb.date() == nowtime.date():
@@ -1888,7 +1892,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items():
         # fetch availability map
 
-        cb = get_current_booking(ongoing_booking)
+        cb = get_current_booking(ongoing_booking, request)
         current_booking = cb['current_booking']
         total_price = cb['total_price']
 
@@ -2795,7 +2799,8 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
             
 #            recordsTotal = len(data)
 #            recordsTotal = AdmissionsBooking.objects.filter(booking_type__in=[0,1,4],`
-            search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
+            #search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
+            search = request.GET.get('search_keyword') if request.GET.get('search_keyword') else None
             start = request.GET.get('start') if request.GET.get('start') else 0
             length = request.GET.get('length') if request.GET.get('length') else len(data)
             date_from = datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y').date() if request.GET.get('arrival') else None
@@ -2810,7 +2815,7 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                 #    except:
                 #        pass
                 for row in data:
-                     if row.warningReferenceNo.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.vesselRegNo.lower().find(search.lower()) >= 0 or str(row.id) == search:
+                     if row.warningReferenceNo.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.vesselRegNo.lower().find(search.lower()) >= 0 or str(row.id) == search or str(row.customer.first_name.lower()+' '+row.customer.last_name.lower()).find(search.lower()) >= 0 or 'AD'+str(row.id) == search:
                           data_temp.append(row)
                      data = data_temp
                 #data = data.filter(Q(warningReferenceNo__icontains=search) | Q(vesselRegNo__icontains=search) | Q(customer__first_name__icontains=search) | Q(customer__last_name__icontains=search) | Q(id__icontains=search))
@@ -2908,7 +2913,8 @@ class BookingViewSet(viewsets.ModelViewSet):
         from django.db import connection, transaction
         try:
 
-            search = request.GET.get('search[value]')
+            #search = request.GET.get('search[value]')
+            search = request.GET.get('search_keyword')
             draw = request.GET.get('draw') if request.GET.get('draw') else None
             start = request.GET.get('start') if request.GET.get('draw') else 1
             length = request.GET.get('length') if request.GET.get('draw') else 'all'
@@ -3005,6 +3011,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                           string_found = False
                           if search == str(booking.id):
                                string_found = True
+                          if search == 'PS'+str(booking.id):
+                               string_found = True
                           if booking.customer:
                                 customer_email = booking.customer.email if booking.customer and booking.customer.email else ""
                                 if search.lower() in customer_email.lower():
@@ -3049,16 +3057,24 @@ class BookingViewSet(viewsets.ModelViewSet):
  
                 if show_row is True:
                     bk_list={}
-                    bk_list['editable']=booking.editable
+
+                    booking_editable = False
+                    if request.user.is_staff is True:
+                        booking_editable = True
+                    if request.user.is_superuser is True:
+                        booking_editable = True
+
+
+                    bk_list['editable'] = booking_editable
                     bk_list['id'] = booking.id
 
                     if booking.booking_type == 4:
                         bk_list['status'] = 'Cancelled'
                     else:
                         bk_list['status'] = booking.status
-
+                    booking_invoices= booking.invoices.all()
                     bk_list['booking_type'] = booking.booking_type
-                    bk_list['has_history'] = booking.has_history
+                    bk_list['has_history'] = 0 #booking.has_history
                     bk_list['cost_total'] = booking.cost_total
                     bk_list['amount_paid'] = booking.amount_paid
                     bk_list['invoice_status'] = booking.invoice_status
@@ -3069,10 +3085,29 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk_list['canceled_by'] = booking.canceled_by.get_full_name() if booking.canceled_by else ''
                     bk_list['cancelation_time'] = booking.cancelation_time if booking.cancelation_time else ''
                     bk_list['paid'] = booking.paid
-                    bk_list['invoices'] = [i.invoice_reference for i in booking.invoices.all()]
-                    bk_list['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
+                    bk_list['invoices'] = [i.invoice_reference for i in booking_invoices]
+                    bk_list['active_invoices'] = [ i.invoice_reference for i in booking_invoices if i.active]
                     bk_list['guests'] = booking.guests
                     bk_list['admissions'] = { 'id' :booking.admission_payment.id, 'amount': booking.admission_payment.totalCost } if booking.admission_payment else None
+
+                    vessel_beam = 0
+                    vessel_weight = 0
+                    vessel_size = 0
+                    vessel_draft = 0
+
+                    if 'vessel_beam' in booking.details:
+                         vessel_beam = booking.details['vessel_beam']
+                    if 'vessel_weight' in booking.details:
+                         vessel_weight = booking.details['vessel_weight']
+                    if 'vessel_size' in booking.details:
+                         vessel_size = booking.details['vessel_size']
+                    if 'vessel_draft' in booking.details:
+                         vessel_draft = booking.details['vessel_draft']
+
+
+
+ 
+                    bk_list['vessel_details'] = { 'vessel_beam': vessel_beam, 'vessel_weight': vessel_weight, 'vessel_size': vessel_size, 'vessel_draft': vessel_draft, } 
 
                     #bk_list['campsite_names'] = booking.campsite_name_list
                     bk_list['regos'] = [{'vessel':''}] 
@@ -4275,7 +4310,7 @@ class AdmissionsKeyFromURLView(views.APIView):
 
 
 
-def get_current_booking(ongoing_booking): 
+def get_current_booking(ongoing_booking, request): 
      #ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
      timer = None
      expiry = None
@@ -4283,6 +4318,7 @@ def get_current_booking(ongoing_booking):
          #expiry_time = ongoing_booking.expiry_time
          timer = (ongoing_booking.expiry_time-timezone.now()).seconds if ongoing_booking else -1
          expiry = ongoing_booking.expiry_time.isoformat() if ongoing_booking else ''
+     payments_officer_group = request.user.groups.filter(name__in=['Payments Officers']).exists()
 
      ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
      cb = {'current_booking':[], 'total_price': '0.00'}
@@ -4311,7 +4347,9 @@ def get_current_booking(ongoing_booking):
                  else:
                      row['past_booking'] = True              
               else:
-                  row['past_booking'] = True 
+                  row['past_booking'] = True
+              if payments_officer_group is True: 
+                  row['past_booking'] = False
 #           row['item'] = ms.campsite.name
          total_price = str(Decimal(total_price) +Decimal(ms.amount))
          current_booking.append(row)
@@ -4324,3 +4362,85 @@ def get_current_booking(ongoing_booking):
      cb['timer'] = timer
 
      return cb
+
+
+class CheckOracleCodeView(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, format='json'):
+        try:
+           oracle_code = request.GET.get('oracle_code','')
+           if OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() > 0:
+                 json_obj = {'found': True, 'code': oracle_code}
+           else:
+                 json_obj = {'found': False, 'code': oracle_code}
+           return Response(json_obj)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise
+
+#from rest_framework.decorators import api_view
+class RefundOracleView(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self, request, *args, **kwargs):
+
+    #def get(self, request, format='json'):
+        
+        try:
+           if request.user.is_superuser or request.user.groups.filter(name__in=['Payments Officers']).exists():
+ 
+                money_from = request.POST.get('money_from',[])
+                money_to = request.POST.get('money_to',[])
+                bpoint_trans_split= request.POST.get('bpoint_trans_split',[])
+                refund_method = request.POST.get('refund_method', None)
+                booking_id = request.POST.get('booking_id',None)
+                newest_booking_id = request.POST.get('newest_booking_id',None)
+                booking = Booking.objects.get(pk=newest_booking_id)
+                money_from_json = json.loads(money_from)
+                money_to_json = json.loads(money_to)
+                bpoint_trans_split_json = json.loads(bpoint_trans_split)
+                lines = []
+                failed_refund = False
+     
+                json_obj = {'found': False, 'code': money_from, 'money_to': money_to, 'failed_refund': failed_refund}
+     
+                for mf in money_from_json:
+                    if Decimal(mf['line-amount']) > 0: 
+                        money_from_total = (Decimal(mf['line-amount']) - Decimal(mf['line-amount']) - Decimal(mf['line-amount']))
+                        lines.append({'ledger_description':str(mf['line-text']),"quantity":1,"price_incl_tax":money_from_total,"oracle_code":str(mf['oracle-code']), 'line_status': 3})
+     
+                if int(refund_method) == 1:
+                    for bp_txn in bpoint_trans_split_json:
+                        bpoint_id = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
+                        info = {'amount': Decimal('{:.2f}'.format(float(bp_txn['line-amount']))), 'details' : 'Refund via system'}
+                        refund = None
+                        if info['amount'] > 0:
+                            try:
+                                bpoint = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
+                                refund = bpoint.refund(info,request.user)
+                            except:
+                                failed_refund = True
+                                bpoint_failed_amount = Decimal(bp_txn['line-amount'])
+                                lines.append({'ledger_description':str("Refund failed for txn "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":bpoint_failed_amount,"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
+         
+     
+                else:
+                    for mt in money_to_json:
+                        lines.append({'ledger_description':mt['line-text'],"quantity":1,"price_incl_tax":mt['line-amount'],"oracle_code":mt['oracle-code'], 'line_status': 1})
+     
+                utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                json_obj['failed_refund'] = failed_refund
+            
+                return Response(json_obj)
+           else:
+                raise serializers.ValidationError('Permission Denied.') 
+               
+        except Exception as e:
+           print(traceback.print_exc())
+           raise
+
+
+
