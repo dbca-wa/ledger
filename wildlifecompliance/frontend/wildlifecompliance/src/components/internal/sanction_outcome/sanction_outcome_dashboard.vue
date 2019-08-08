@@ -5,7 +5,7 @@
         <div class="row">
             <div class="col-md-3">
                 <label class="">Type:</label>
-                <select class="form-control" v-model="filterSanctionOutcomeType">
+                <select class="form-control" v-model="filterType">
                     <option v-for="option in sanction_outcome_types" :value="option.id" v-bind:key="option.id">
                         {{ option.display }}
                     </option>
@@ -13,7 +13,7 @@
             </div>
             <div class="col-md-3">
                 <label class="">Status:</label>
-                <select class="form-control" v-model="filterSanctionOutcomeStatus">
+                <select class="form-control" v-model="filterStatus">
                     <option v-for="option in sanction_outcome_statuses" :value="option.id" v-bind:key="option.id">
                         {{ option.display }}
                     </option>
@@ -21,7 +21,7 @@
             </div>
             <div class="col-md-3">
                 <label class="">Payment status:</label>
-                <select class="form-control" v-model="filterSanctionOutcomePaymentStatus">
+                <select class="form-control" v-model="filterPaymentStatus">
                     <option v-for="option in sanction_outcome_payment_statuses" :value="option.id" v-bind:key="option.id">
                         {{ option.display }}
                     </option>
@@ -32,7 +32,7 @@
             <div class="col-md-3">
                 <label class="">Issue date from:</label>
                 <div class="input-group date" ref="IssueDateFromPicker">
-                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterSanctionOutcomeDateFromPicker" />
+                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateFromPicker" />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
                     </span>
@@ -41,7 +41,7 @@
             <div class="col-md-3">
                 <label class="">Issue date to:</label>
                 <div class="input-group date" ref="IssueDateToPicker">
-                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterSanctionOutcomeDateToPicker" />
+                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateToPicker" />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
                     </span>
@@ -51,7 +51,7 @@
         <div class="row">
             <div class="col-md-3">
                 <label class="">Region:</label>
-                <select class="form-control" v-model="filterSanctionOutcomeRegion">
+                <select class="form-control" v-model="filterRegion">
                     <option v-for="option in sanction_outcome_regions" :value="option.id" v-bind:key="option.id">
                         {{ option.display }}
                     </option>
@@ -59,7 +59,7 @@
             </div>
             <div class="col-md-3">
                 <label class="">District:</label>
-                <select class="form-control" v-model="filterSanctionOutcomeDistrict">
+                <select class="form-control" v-model="filterDistrict">
                     <option v-for="option in sanction_outcome_districts" :value="option.id" v-bind:key="option.id">
                         {{ option.display }}
                     </option>
@@ -93,13 +93,13 @@ export default {
             sanction_outcome_regions: [],
             sanction_outcome_districts: [],
 
-            filterSanctionOutcomeType: 'all',
-            filterSanctionOutcomeStatus: 'all',
-            filterSanctionOutcomePaymentStatus: 'all',
-            filterSanctionOutcomeDateFromPicker: null,
-            filterSanctionOutcomeDateToPicker: null,
-            filterSanctionOutcomeRegion: 'all',
-            filterSanctionOutcomeDistrict: 'all',
+            filterType: 'all',
+            filterStatus: 'all',
+            filterPaymentStatus: 'all',
+            filterDateFromPicker: null,
+            filterDateToPicker: null,
+            filterRegion: 'all',
+            filterDistrict: 'all',
 
             dtOptions: {
                 serverSide: true,
@@ -117,9 +117,13 @@ export default {
                     url: '/api/sanction_outcome_paginated/get_paginated_datatable/?format=datatables',
                     dataSrc: 'data',
                     data: function(d) {
-                        console.log('data to be sent');
-                        d.sanction_outcome_type = vm.filterSanctionOutcomeType;
-                        console.log(d);
+                        d.type = vm.filterType;
+                        d.status = vm.filterStatus;
+                        d.payment_status = vm.filterPaymentStatus;
+                        d.date_from = vm.filterDateFromPicker;
+                        d.date_to = vm.filterDateToPicker;
+                        d.region = vm.filterRegion;
+                        d.district = vm.filterDistrict;
                     }
                 },
                 columns: [
@@ -207,6 +211,11 @@ export default {
                 'Action',
             ],
         }
+    },
+    watch: {
+        filterType: function () {
+            this.$refs.sanction_outcome_table.vmDataTable.draw();
+        },
     },
     created: async function() {
         this.constructOptionsType();

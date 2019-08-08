@@ -31,9 +31,38 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
     def filter_queryset(self, request, queryset, view):
         total_count = queryset.count()
 
-        sanction_outcome_type = request.GET.get('sanction_outcome_type')
-        q_type = Q(type=sanction_outcome_type)
+        # Storage for the filters
+        q_objects = Q()
 
+        type = request.GET.get('type',).lower()
+        if type and type != 'all':
+            q_objects &= Q(type=type)
+        #
+        # status = request.GET.get('status',).lower()
+        # if status and status != 'all':
+        #     q_objects &= Q(status=status)
+        #
+        # payment_status = request.GET.get('payment_status',).lower()
+        # if payment_status and payment_status != 'all':
+        #     q_objects &= Q(payment_status=payment_status)
+        #
+        # date_from = request.GET.get('date_from',).lower()
+        # if date_from:
+        #     q_objects &= Q(date_of_issue__gte=date_from)
+        #
+        # date_to = request.GET.get('date_to',).lower()
+        # if date_to:
+        #     q_objects &= Q(date_of_issue__lte=date_to)
+        #
+        # region = request.GET.get('region',).lower()
+        # if region and region != 'all':
+        #     q_objects &= Q(region=region)
+        #
+        # district = request.GET.get('district',).lower()
+        # if district and district != 'all':
+        #     q_objects &= Q(district=district)
+        #
+        queryset = queryset.filter(q_objects)
 
         getter = request.query_params.get
         fields = self.get_fields(getter)
