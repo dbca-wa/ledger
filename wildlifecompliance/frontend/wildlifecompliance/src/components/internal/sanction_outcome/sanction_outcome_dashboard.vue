@@ -31,7 +31,7 @@
         <div class="row">
             <div class="col-md-3">
                 <label class="">Issue date from:</label>
-                <div class="input-group date" ref="IssueDateFromPicker">
+                <div class="input-group date" ref="issueDateFromPicker">
                     <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateFromPicker" />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
@@ -40,7 +40,7 @@
             </div>
             <div class="col-md-3">
                 <label class="">Issue date to:</label>
-                <div class="input-group date" ref="IssueDateToPicker">
+                <div class="input-group date" ref="issueDateToPicker">
                     <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterDateToPicker" />
                     <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
@@ -96,8 +96,8 @@ export default {
             filterType: 'all',
             filterStatus: 'all',
             filterPaymentStatus: 'all',
-            filterDateFromPicker: null,
-            filterDateToPicker: null,
+            filterDateFromPicker: '',
+            filterDateToPicker: '',
             filterRegion: 'all',
             filterDistrict: 'all',
 
@@ -212,8 +212,32 @@ export default {
             ],
         }
     },
+    mounted(){
+        let vm = this;
+        vm.$nextTick(() => {
+            vm.addEventListeners();
+        });
+    },
     watch: {
         filterType: function () {
+            this.$refs.sanction_outcome_table.vmDataTable.draw();
+        },
+        filterStatus: function () {
+            this.$refs.sanction_outcome_table.vmDataTable.draw();
+        },
+        filterPaymentStatus: function () {
+            this.$refs.sanction_outcome_table.vmDataTable.draw();
+        },
+        filterDateFromPicker: function () {
+            this.$refs.sanction_outcome_table.vmDataTable.draw();
+        },
+        filterDateToPicker: function () {
+            this.$refs.sanction_outcome_table.vmDataTable.draw();
+        },
+        filterRegion: function () {
+            this.$refs.sanction_outcome_table.vmDataTable.draw();
+        },
+        filterDistrict: function () {
             this.$refs.sanction_outcome_table.vmDataTable.draw();
         },
     },
@@ -225,13 +249,48 @@ export default {
         this.constructOptionsDistrict();
     },
     methods: {
+        addEventListeners: function () {
+            this.attachFromDatePicker();
+            this.attachToDatePicker();
+        },
+        attachFromDatePicker: function(){
+            let vm = this;
+            let el_fr = $(vm.$refs.issueDateFromPicker);
+            let el_to = $(vm.$refs.issueDateToPicker);
+
+            el_fr.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
+            el_fr.on('dp.change', function (e) {
+                if (el_fr.data('DateTimePicker').date()) {
+                    vm.filterDateFromPicker = e.date.format('DD/MM/YYYY');
+                    el_to.data('DateTimePicker').minDate(e.date);
+                } else if (el_fr.data('date') === "") {
+                    vm.filterDateFromPicker = "";
+                }
+            });
+        },
+        attachToDatePicker: function(){
+            let vm = this;
+            let el_fr = $(vm.$refs.issueDateFromPicker);
+            let el_to = $(vm.$refs.issueDateToPicker);
+            el_to.datetimepicker({ format: 'DD/MM/YYYY', maxDate: 'now', showClear: true });
+            el_to.on('dp.change', function (e) {
+                if (el_to.data('DateTimePicker').date()) {
+                    vm.filterDateToPicker = e.date.format('DD/MM/YYYY');
+                    el_fr.data('DateTimePicker').maxDate(e.date);
+                } else if (el_to.data('date') === "") {
+                    vm.filterDateToPicker = "";
+                }
+            });
+        },
         constructOptionsType: async function() {
-            let returned_types = await cache_helper.getSetCacheList('SanctionOutcomeTypes', '/api/sanction_outcome/types.json');
-            Object.assign(this.sanction_outcome_types, returned_types);
+            let returned = await cache_helper.getSetCacheList('SanctionOutcomeTypes', '/api/sanction_outcome/types.json');
+            Object.assign(this.sanction_outcome_types, returned);
             this.sanction_outcome_types.splice(0, 0, {id: 'all', display: 'All'});
         },
         constructOptionsStatus: async function() {
-
+            let returned = await cache_helper.getSetCacheList('SanctionOutcomeStatuses', '/api/sanction_outcome/statuses.json');
+            Object.assign(this.sanction_outcome_statuses, returned);
+            this.sanction_outcome_statuses.splice(0, 0, {id: 'all', display: 'All'});
         },
         constructOptionsPaymentStatus: async function() {
 
