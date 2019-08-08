@@ -443,8 +443,8 @@ class BookingViewSetTestCase(TestSetup):
     start_date = datetime.now()
     end_date = datetime.now() + timedelta(days=3)
     data = {
-        'arrival' : "{}-{}-{}".format(start_date.year, start_date.month, start_date.day),
-        'departure' : "{}-{}-{}".format(end_date.year, end_date.month, end_date.day),
+        'arrival' : "{}/{}/{}".format(start_date.year, start_date.month, start_date.day),
+        'departure' : "{}/{}/{}".format(end_date.year, end_date.month, end_date.day),
         'guests' : {
             'adult' : 2,
             'concession' : 0,
