@@ -87,15 +87,24 @@ def send_approval_cancel_email_notification(approval):
     else:
         _log_user_email(msg, approval.submitter, proposal.submitter, sender=sender_user)
 
-def send_approval_suspend_email_notification(approval):
+def send_approval_suspend_email_notification(approval, request=None):
     email = ApprovalSuspendNotificationEmail()
     proposal = approval.current_proposal
 
+    if 'test-emails' in request.path_info:
+        details = 'This are my test details'
+        from_date = '01/01/1970'
+        to_date = '01/01/2070'
+    else:
+        details = approval.suspension_details['details'],
+        from_date = approval.suspension_details['from_date'],
+        to_date = approval.suspension_details['to_date']
+
     context = {
         'approval': approval,
-        'details': approval.suspension_details['details'],
-        'from_date': approval.suspension_details['from_date'],
-        'to_date': approval.suspension_details['to_date']
+        'details': details,
+        'from_date': from_date,
+        'to_date': to_date
     }
     sender = settings.DEFAULT_FROM_EMAIL
     try:
@@ -112,14 +121,21 @@ def send_approval_suspend_email_notification(approval):
     else:
         _log_user_email(msg, approval.submitter, proposal.submitter, sender=sender_user)
 
-def send_approval_surrender_email_notification(approval):
+def send_approval_surrender_email_notification(approval, request=None):
     email = ApprovalSurrenderNotificationEmail()
     proposal = approval.current_proposal
 
+    if 'test-emails' in request.path_info:
+        details = 'This are my test details'
+        surrender_date = '01/01/1970'
+    else:
+        details = approval.surrender_details['details'],
+        surrender_date = approval.surrender_details['surrender_date'],
+
     context = {
         'approval': approval,
-        'details': approval.surrender_details['details'],
-        'surrender_date': approval.surrender_details['surrender_date'],
+        'details': details,
+        'surrender_date': surrender_date,
     }
     sender = settings.DEFAULT_FROM_EMAIL
     try:
@@ -159,8 +175,8 @@ def send_approval_renewal_email_notification(approval):
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
     #attach renewal notice
-    renewal_document= approval.renewal_document._file
-    if renewal_document is not None:
+    if approval.renewal_document and approval.renewal_document._file is not None:
+        renewal_document= approval.renewal_document._file
         file_name = approval.renewal_document.name
         attachment = (file_name, renewal_document.file.read(), 'application/pdf')
         attachment = [attachment]
@@ -189,9 +205,9 @@ def send_approval_reinstate_email_notification(approval, request):
     _log_approval_email(msg, approval, sender=sender)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender)
     if approval.org_applicant:
-        _log_org_email(msg, approval.org_applicant, proposal.submitter, sender=sender_user)
+        _log_org_email(msg, approval.org_applicant, proposal.submitter, sender=sender)
     else:
-        _log_user_email(msg, approval.submitter, proposal.submitter, sender=sender_user)
+        _log_user_email(msg, approval.submitter, proposal.submitter, sender=sender)
 
 
 

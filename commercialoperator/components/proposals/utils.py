@@ -868,30 +868,40 @@ def proposal_submit(proposal,request):
 
 
 from commercialoperator.components.proposals.models import Proposal, Referral, AmendmentRequest, ProposalDeclinedDetails
-from commercialoperator.components.proposals import email
+from commercialoperator.components.approvals.models import Approval
+from commercialoperator.components.proposals import email as proposal_email
+from commercialoperator.components.approvals import email as approval_email
 def test_proposal_emails(request):
     # setup
     if not (settings.PRODUCTION_EMAIL):
         recipients = [request.user.email]
-        proposal = Proposal.objects.last()
+        #proposal = Proposal.objects.last()
+        approval = Approval.objects.filter(migrated=False).last()
+        proposal = approval.current_proposal
         referral = Referral.objects.last()
         amendment_request = AmendmentRequest.objects.last()
         reason = 'Not enough information'
         proposal_decline = ProposalDeclinedDetails.objects.last()
 
-        email.send_qaofficer_email_notification(proposal, recipients, request, reminder=False)
-        email.send_qaofficer_complete_email_notification(proposal, recipients, request, reminder=False)
-        email.send_referral_email_notification(referral,recipients,request,reminder=False)
-        email.send_referral_complete_email_notification(referral,request)
-        email.send_amendment_email_notification(amendment_request, request, proposal)
-        email.send_submit_email_notification(request, proposal)
-        email.send_external_submit_email_notification(request, proposal)
-        email.send_approver_decline_email_notification(reason, request, proposal)
-        email.send_approver_approve_email_notification(request, proposal)
-        email.send_proposal_decline_email_notification(proposal,request,proposal_decline)
-        email.send_proposal_approver_sendback_email_notification(request, proposal)
-        email.send_proposal_approval_email_notification(proposal,request)
+#        proposal_email.send_qaofficer_email_notification(proposal, recipients, request, reminder=False)
+#        proposal_email.send_qaofficer_complete_email_notification(proposal, recipients, request, reminder=False)
+#        proposal_email.send_referral_email_notification(referral,recipients,request,reminder=False)
+#        proposal_email.send_referral_complete_email_notification(referral,request)
+#        proposal_email.send_amendment_email_notification(amendment_request, request, proposal)
+#        proposal_email.send_submit_email_notification(request, proposal)
+#        proposal_email.send_external_submit_email_notification(request, proposal)
+#        proposal_email.send_approver_decline_email_notification(reason, request, proposal)
+#        proposal_email.send_approver_approve_email_notification(request, proposal)
+#        proposal_email.send_proposal_decline_email_notification(proposal,request,proposal_decline)
+#        proposal_email.send_proposal_approver_sendback_email_notification(request, proposal)
+#        proposal_email.send_proposal_approval_email_notification(proposal,request)
 
+        approval_email.send_approval_expire_email_notification(approval)
+        approval_email.send_approval_cancel_email_notification(approval)
+        approval_email.send_approval_suspend_email_notification(approval, request)
+        approval_email.send_approval_surrender_email_notification(approval, request)
+        approval_email.send_approval_renewal_email_notification(approval)
+        approval_email.send_approval_reinstate_email_notification(approval, request)
 
 
 
