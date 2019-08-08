@@ -35,6 +35,19 @@ Booking information below and refund or fees to pay in order to cancel booking. 
 <br>
 <BR>
 <div class="row"><div class="col-sm-12">
+     <div class='pull-right'>
+     {% if payments_officer_group is True %}
+     {% if occ == 'true' %}
+         <a href='?occ=false' class='btn btn-danger'>Remove Override</a>
+     {% else %}
+         <a href='?occ=true' class='btn btn-danger'>Override Cancellations Fees</a>
+     {% endif %}
+     {% endif %}
+     </div>
+     <div class='col-lg-12'>
+     &nbsp;
+     <br>
+     </div>
      <table cellspacing="0" width="100%" id="bookings-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
      <thead>
           <tr role="row"><th data-class="expand" class="expand sorting_asc" rowspan="1" colspan="1" aria-label=" Confirmation #"> Description</th><th class="sorting_disabled" rowspan="1" colspan="1" aria-label=" Amount"> Amount</th></tr>
@@ -61,6 +74,7 @@ Booking information below and refund or fees to pay in order to cancel booking. 
         </div>
         <div class="col-sm-12 col-md-12 col-lg-12">
 		<form method="post" action="{% url 'public_cancel_booking' booking.id %}" id="place_order_form">
+                <input type='hidden' value='{{ occ }}' name='occ'>
 		{% csrf_token %}
 		<BR><BR>
 		<button id='cancel-booking' type='button' class="btn btn-info btn-lg" target="_blank" >Proceed with Cancellation</button>

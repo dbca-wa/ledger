@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_DIR = os.path.join(BASE_DIR, 'ledger')
 
 # Application definitions
-SECRET_KEY = env('SECRET_KEY', 'Placeholder_Secret_Key')
+SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG', False)
 CSRF_COOKIE_SECURE = env('CSRF_COOKIE_SECURE', False)
 SESSION_COOKIE_SECURE = env('SESSION_COOKIE_SECURE', False)
@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'ledger.payments.cash',
     'ledger.payments.invoice',
     'ledger.taxonomy',
+    'ledger.fdw_manager',
 ]
 
 MIDDLEWARE_CLASSES = [
