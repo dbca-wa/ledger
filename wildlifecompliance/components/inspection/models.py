@@ -22,6 +22,9 @@ def update_inspection_comms_log_filename(instance, filename):
     return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
         instance.log_entry.inspection.id, instance.id, filename)
 
+def update_inspection_report_filename(instance, filename):
+    return 'wildlifecompliance/compliance/{}/report/{}'.format(
+        instance.id, filename)
 
 class Inspection(RevisionedMixin):
     PARTY_CHOICES = (
@@ -129,6 +132,16 @@ class Inspection(RevisionedMixin):
     def get_related_items_descriptor(self):
         return '{0}, {1}'.format(self.title, self.details)
     
+
+class InspectionReportDocument(Document):
+    log_entry = models.ForeignKey(
+        'Inspection',
+        related_name='report')
+    _file = models.FileField(max_length=255, upload_to=update_inspection_report_filename)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
 
 class InspectionCommsLogDocument(Document):
     log_entry = models.ForeignKey(
