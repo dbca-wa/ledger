@@ -108,6 +108,8 @@
                 <div class="container-fluid">
                     <ul class="nav nav-pills aho2">
                         <li class="nav-item active"><a data-toggle="tab" :href="'#'+iTab">Inspection</a></li>
+                        <li class="nav-item"><a data-toggle="tab" :href="'#'+cTab">Checklist</a></li>
+                        <li class="nav-item"><a data-toggle="tab" :href="'#'+oTab">Outcomes</a></li>
                         <li class="nav-item"><a data-toggle="tab" :href="'#'+rTab">Related Items</a></li>
                     </ul>
                     <div class="tab-content">
@@ -241,10 +243,17 @@
                             </FormSection>
                         </div>
                         <div :id="oTab" class="tab-pane fade in">
-                            <FormSection :formCollapse="false" label="Outcomes">
+                            <FormSection :formCollapse="false" label="Inspection report">
                                 <div class="col-sm-12 form-group"><div class="row">
                                     <div class="col-sm-12">
-                                        Outcomes
+                                        
+                                    </div>
+                                </div></div>
+                            </FormSection>
+                            <FormSection :formCollapse="false" label="Sanction Outcomes">
+                                <div class="col-sm-12 form-group"><div class="row">
+                                    <div class="col-sm-12">
+                                        
                                     </div>
                                 </div></div>
                             </FormSection>

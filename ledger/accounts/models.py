@@ -9,6 +9,7 @@ from django.db import models, IntegrityError, transaction
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
+from django.db.models import Q
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.core.exceptions import ValidationError
 
@@ -23,6 +24,13 @@ from datetime import datetime, date
 from ledger.accounts.signals import name_changed, post_clean
 from ledger.accounts.utils import get_department_user_compact, in_dbca_domain, get_app_label
 from ledger.address.models import UserAddress, Country
+
+
+def unicode_compatible(value):
+    try: 
+        return unicode(value)
+    except:
+        return str(value)
 
 
 class EmailUserManager(BaseUserManager):
@@ -197,7 +205,7 @@ class BaseAddress(models.Model):
         #for f in fields:
         #    print unicode(f).encode('utf-8').decode('unicode-escape').strip()
         #fields = [str(f).strip() for f in fields if f]
-        fields = [unicode(f).encode('utf-8').decode('unicode-escape').strip() for f in fields if f]
+        fields = [unicode_compatible(f).encode('utf-8').decode('unicode-escape').strip() for f in fields if f]
         
         return fields
 

@@ -15,6 +15,8 @@ from ledger.payments.cash.models import REGION_CHOICES
 from ledger.payments.models import Invoice
 from ledger.payments.mixins import InvoiceOwnerMixin 
 #
+from confy import env
+#
 
 class InvoicePDFView(InvoiceOwnerMixin,generic.View):
     def get(self, request, *args, **kwargs):
@@ -69,6 +71,8 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super(InvoicePaymentView, self).get_context_data(**kwargs)
         invoices = []
+        UPDATE_PAYMENT_ALLOCATION = env('UPDATE_PAYMENT_ALLOCATION', False)
+        ctx['payment_allocation'] = UPDATE_PAYMENT_ALLOCATION
         ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['months'] = self.month_choices
         ctx['years'] = self.year_choices
