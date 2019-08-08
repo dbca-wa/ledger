@@ -73,9 +73,10 @@
                     </form>
                 </div>
             </div>
-            <div slot="footer">
-                <button type="button" class="btn btn-default" @click.prevent="preview">Preview Licence</button>
 
+            <p v-if="can_preview">Click <a href="#" @click.prevent="preview">here</a> to preview the licence document.</p>
+
+            <div slot="footer">
                 <button type="button" v-if="issuingApproval" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Processing</button>
                 <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
@@ -136,9 +137,9 @@ export default {
         }
     },
     computed: {
-		csrf_token: function() {
-		  return helpers.getCookie('csrftoken')
-		},
+        csrf_token: function() {
+          return helpers.getCookie('csrftoken')
+        },
         showError: function() {
             var vm = this;
             return vm.errors;
@@ -157,9 +158,12 @@ export default {
         is_amendment: function(){
             return this.proposal_type == 'Amendment' ? true : false;
         },
-		preview_licence_url: function() {
-		  return (this.proposal_id) ? `/preview/licence-pdf/${this.proposal_id}` : '';
-		},
+        can_preview: function(){
+            return this.processing_status == 'With Approver' ? true : false;
+        },
+        preview_licence_url: function() {
+          return (this.proposal_id) ? `/preview/licence-pdf/${this.proposal_id}` : '';
+        },
         
 
     },
@@ -167,36 +171,35 @@ export default {
         preview:function () {
             let vm =this;
 
-			let formData = new FormData(vm.form)
-			let jsonObject = {};
-			for (const [key, value] of formData.entries()) {
-				jsonObject[key] = value;
-			}
+            let formData = new FormData(vm.form)
 
-            //vm.$http.get(vm.preview_licence_url)
-			vm.post_and_redirect(vm.preview_licence_url, {'csrfmiddlewaretoken' : vm.csrf_token, 'formData': JSON.stringify(jsonObject)});
-			//vm.post_and_redirect(vm.preview_licence_url, {'csrfmiddlewaretoken' : vm.csrf_token, 'formData': formData});
+            // convert formData to json
+            let jsonObject = {};
+            for (const [key, value] of formData.entries()) {
+                jsonObject[key] = value;
+            }
 
+            vm.post_and_redirect(vm.preview_licence_url, {'csrfmiddlewaretoken' : vm.csrf_token, 'formData': JSON.stringify(jsonObject)});
         },
 
-		post_and_redirect: function(url, postData) {
-			/* http.post and ajax do not allow redirect from Django View (post method),
-			   this function allows redirect by mimicking a form submit.
+        post_and_redirect: function(url, postData) {
+            /* http.post and ajax do not allow redirect from Django View (post method),
+               this function allows redirect by mimicking a form submit.
 
-			   usage:  vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
-			*/
-			var postFormStr = "<form method='POST' action='" + url + "'>";
+               usage:  vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
+            */
+            var postFormStr = "<form method='POST' target='_blank' name='Preview Licence' action='" + url + "'>";
 
-			for (var key in postData) {
-				if (postData.hasOwnProperty(key)) {
-					postFormStr += "<input type='hidden' name='" + key + "' value='" + postData[key] + "'>";
-				}
-			}
-			postFormStr += "</form>";
-			var formElement = $(postFormStr);
-			$('body').append(formElement);
-			$(formElement).submit();
-		},
+            for (var key in postData) {
+                if (postData.hasOwnProperty(key)) {
+                    postFormStr += "<input type='hidden' name='" + key + "' value='" + postData[key] + "'>";
+                }
+            }
+            postFormStr += "</form>";
+            var formElement = $(postFormStr);
+            $('body').append(formElement);
+            $(formElement).submit();
+        },
 
         ok:function () {
             let vm =this;

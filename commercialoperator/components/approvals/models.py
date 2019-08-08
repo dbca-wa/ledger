@@ -262,7 +262,7 @@ class Approval(RevisionedMixin):
 
 
     def generate_doc(self, user, preview=False):
-        from commercialoperator.components.approvals.pdf import create_approval_doc
+        from commercialoperator.components.approvals.pdf import create_approval_doc, create_approval_pdf_bytes
         copied_to_permit = self.copiedToPermit_fields(self.current_proposal) #Get data related to isCopiedToPermit tag
 
         if preview:

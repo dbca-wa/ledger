@@ -101,16 +101,22 @@ class HelpPageHistoryCompareView(HistoryCompareDetailView):
 
 class PreviewLicencePDFView(View):
     def post(self, request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
         response = HttpResponse(content_type='application/pdf')
 
         proposal = self.get_object()
         details = json.loads(request.POST.get('formData'))
 
         response.write(proposal.preview_approval(request, details))
-        #response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
         return response
 
     def get_object(self):
         return get_object_or_404(Proposal, id=self.kwargs['proposal_pk'])
+
+
+from commercialoperator.components.proposals.utils import test_proposal_emails
+class TestEmailView(View):
+    def get(self, request, *args, **kwargs):
+        test_proposal_emails(request)
+        return HttpResponse('Test Email Script Completed')
+
 

@@ -2,6 +2,7 @@ import re
 from django.db import transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails, ProposalAccreditation, ProposalUserAction, ProposalAssessment, ProposalAssessmentAnswer, ChecklistQuestion
@@ -866,6 +867,32 @@ def proposal_submit(proposal,request):
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
 
-   
+from commercialoperator.components.proposals.models import Proposal, Referral, AmendmentRequest, ProposalDeclinedDetails
+from commercialoperator.components.proposals import email
+def test_proposal_emails(request):
+    # setup
+    if not (settings.PRODUCTION_EMAIL):
+        recipients = [request.user.email]
+        proposal = Proposal.objects.last()
+        referral = Referral.objects.last()
+        amendment_request = AmendmentRequest.objects.last()
+        reason = 'Not enough information'
+        proposal_decline = ProposalDeclinedDetails.objects.last()
+
+        email.send_qaofficer_email_notification(proposal, recipients, request, reminder=False)
+        email.send_qaofficer_complete_email_notification(proposal, recipients, request, reminder=False)
+        email.send_referral_email_notification(referral,recipients,request,reminder=False)
+        email.send_referral_complete_email_notification(referral,request)
+        email.send_amendment_email_notification(amendment_request, request, proposal)
+        email.send_submit_email_notification(request, proposal)
+        email.send_external_submit_email_notification(request, proposal)
+        email.send_approver_decline_email_notification(reason, request, proposal)
+        email.send_approver_approve_email_notification(request, proposal)
+        email.send_proposal_decline_email_notification(proposal,request,proposal_decline)
+        email.send_proposal_approver_sendback_email_notification(request, proposal)
+        email.send_proposal_approval_email_notification(proposal,request)
+
+
+
 
 

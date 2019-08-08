@@ -598,11 +598,11 @@ def create_approval_doc(approval,proposal, copied_to_permit, user):
 def create_approval_pdf_bytes(approval,proposal, copied_to_permit, user):
     """ Essentially the same as create_approval_doc() - but used to preview the licence without creation """
     licence_buffer = BytesIO()
-    _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit, user)
+    _create_approval_cols(licence_buffer, approval, proposal, copied_to_permit, user)
 
     # Get the value of the BytesIO buffer
     value = licence_buffer.getvalue()
-    approval_buffer.close()
+    licence_buffer.close()
     return value
 
 def create_renewal_doc(approval,proposal):

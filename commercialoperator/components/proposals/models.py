@@ -1551,31 +1551,23 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 if not self.applicant_address:
                     raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
 
-                self.proposed_issuance_approval = {
-                    'start_date' : details.get('start_date').strftime('%d/%m/%Y'),
-                    'expiry_date' : details.get('expiry_date').strftime('%d/%m/%Y'),
-                    'details': details.get('details'),
-                    'cc_email':details.get('cc_email')
-                }
-                self.proposed_decline_status = False
-                self.processing_status = 'approved'
-                self.customer_status = 'approved'
-
-                preview_approval,created = PreviewTempApproval.objects.update_or_create(
+                preview_approval = PreviewTempApproval.objects.create(
                     current_proposal = self,
-                    defaults = {
-                        'issue_date' : timezone.now(),
-                        'expiry_date' : details.get('expiry_date'),
-                        'start_date' : details.get('start_date'),
-                        'submitter': self.submitter,
-                        'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                        'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
-                    }
+                    issue_date = timezone.now(),
+                    expiry_date = datetime.datetime.strptime(details.get('due_date'), '%d/%m/%Y').date(),
+                    start_date = datetime.datetime.strptime(details.get('start_date'), '%d/%m/%Y').date(),
+                    submitter = self.submitter,
+                    org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
+                    proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
                 )
 
                 # Generate the preview document - get the value of the BytesIO buffer
-                return preview_approval.generate_doc(request.user, preview=True)
+                licence_buffer = preview_approval.generate_doc(request.user, preview=True)
 
+                # clean temp preview licence object
+                transaction.set_rollback(True)
+
+                return licence_buffer
             except:
                 raise
 
