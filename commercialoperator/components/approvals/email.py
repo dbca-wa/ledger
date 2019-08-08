@@ -12,33 +12,33 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 class ApprovalExpireNotificationEmail(TemplateEmailBase):
-    subject = 'Your Approval has been expired.'
+    subject = 'Your Licence has been expired.'
     html_template = 'commercialoperator/emails/approval_expire_notification.html'
     txt_template = 'commercialoperator/emails/approval_expire_notification.txt'
 
 
 class ApprovalCancelNotificationEmail(TemplateEmailBase):
-    subject = 'Your Approval has been cancelled.'
+    subject = 'Your Licence has been cancelled.'
     html_template = 'commercialoperator/emails/approval_cancel_notification.html'
     txt_template = 'commercialoperator/emails/approval_cancel_notification.txt'
 
 class ApprovalSuspendNotificationEmail(TemplateEmailBase):
-    subject = 'Your Approval has been suspended.'
+    subject = 'Your Licence has been suspended.'
     html_template = 'commercialoperator/emails/approval_suspend_notification.html'
     txt_template = 'commercialoperator/emails/approval_suspend_notification.txt'
 
 class ApprovalSurrenderNotificationEmail(TemplateEmailBase):
-    subject = 'Your Approval has been surrendered.'
+    subject = 'Your Licence has been surrendered.'
     html_template = 'commercialoperator/emails/approval_surrender_notification.html'
     txt_template = 'commercialoperator/emails/approval_surrender_notification.txt'
 
 class ApprovalReinstateNotificationEmail(TemplateEmailBase):
-    subject = 'Your Approval has been reinstated.'
+    subject = 'Your Licence has been reinstated.'
     html_template = 'commercialoperator/emails/approval_reinstate_notification.html'
     txt_template = 'commercialoperator/emails/approval_reinstate_notification.txt'
 
 class ApprovalRenewalNotificationEmail(TemplateEmailBase):
-    subject = 'Your Approval is due for renewal.'
+    subject = 'Your Licence is due for renewal.'
     html_template = 'commercialoperator/emails/approval_renewal_notification.html'
     txt_template = 'commercialoperator/emails/approval_renewal_notification.txt'
 
