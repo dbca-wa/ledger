@@ -36,6 +36,17 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
         # Storage for the filters
         q_objects = Q()
 
+        search_text = request.GET.get('search[value]')
+        if search_text:
+            q_objects &= Q(lodgement_number__icontains=search_text) | \
+                         Q(identifier__icontains=search_text) | \
+                         Q(offender__person__first_name__icontains=search_text) | \
+                         Q(offender__person__last_name__icontains=search_text) | \
+                         Q(offender__person__email__icontains=search_text) | \
+                         Q(offender__organisation__name__icontains=search_text) | \
+                         Q(offender__organisation__abn__icontains=search_text) | \
+                         Q(offender__organisation__trading_name__icontains=search_text)
+
         type = request.GET.get('type',).lower()
         if type and type != 'all':
             q_objects &= Q(type=type)
@@ -66,6 +77,7 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
         if district_id and district_id != 'all':
             q_objects &= Q(district__id=district_id)
 
+        # perform filters
         queryset = queryset.filter(q_objects)
 
         getter = request.query_params.get
