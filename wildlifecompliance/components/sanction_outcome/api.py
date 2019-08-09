@@ -34,8 +34,11 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
         total_count = queryset.count()
 
         # Storage for the filters
+        # Required filters are accumulated here
+        # Then issue a query once at last
         q_objects = Q()
 
+        # Filter by the search_text
         search_text = request.GET.get('search[value]')
         if search_text:
             q_objects &= Q(lodgement_number__icontains=search_text) | \
