@@ -8,8 +8,6 @@ from wildlifecompliance.components.inspection.models import (
     Inspection,
     InspectionUserAction,
     InspectionCommsLogEntry,
-    )
-from wildlifecompliance.components.main.models import (
     InspectionType,
     )
 from wildlifecompliance.components.main.models import get_related_items
@@ -122,6 +120,7 @@ class InspectionSerializer(serializers.ModelSerializer):
     organisation_inspected = OrganisationSerializer(read_only=True)
     #inspection_type = InspectionTypeSerializer()
     related_items = serializers.SerializerMethodField()
+    inspection_report = serializers.SerializerMethodField()
 
     class Meta:
         model = Inspection
@@ -150,6 +149,8 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'related_items',
                 'inform_party_being_inspected',
                 'call_email_id',
+                'inspection_report',
+                'schema',
                 )
         read_only_fields = (
                 'id',
@@ -202,6 +203,8 @@ class InspectionSerializer(serializers.ModelSerializer):
 
         return allocated_group
 
+    def get_inspection_report(self, obj):
+        return [[r.name, r._file.url] for r in obj.report.all()]
 
 class SaveInspectionSerializer(serializers.ModelSerializer):
     assigned_to_id = serializers.IntegerField(
@@ -328,3 +331,17 @@ class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
             'assigned_to_id',
         )
 
+class InspectionTypeSchemaSerializer(serializers.ModelSerializer):
+    inspection_type_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)        
+
+    class Meta:
+        model = Inspection
+        fields = (
+            'id',
+            'schema',
+            'inspection_type_id',
+        )
+        read_only_fields = (
+            'id', 
+            )
