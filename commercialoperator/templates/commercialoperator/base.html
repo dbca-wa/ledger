@@ -6,6 +6,7 @@
 {% load utils %}
 {% is_internal as is_internal_login %}
 {% is_commercialoperator_admin as is_commercialoperator_admin_user %}
+{% can_show_tests as show_tests %}
 {% system_maintenance_due as system_maintenance_due %}
 {% system_name_short as short_name %}
 {% dept_name as department_name %}
@@ -99,6 +100,8 @@
                                                 {% endif %}
                                                 {% if request.user.is_superuser %}
                                                     <li><a href="{% url 'mgt-commands' %}">Management Commands</a></li>
+                                                {% endif %}
+                                                {% if show_tests and request.user.is_superuser %}
                                                     <li><a href="{% url 'test-emails' %}">Test Emails</a></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
