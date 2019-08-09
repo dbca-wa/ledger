@@ -227,8 +227,8 @@
             :readonly="is_readonly"
             :help_text="help_text"
             :docsUrl="documents_url"
-            :call_email_id="call_email.id"
             :isRequired="component.isRequired"
+            :createDocumentActionUrl="createDocumentActionUrl"  
             :help_text_url="help_text_url"/>
 
         <DateField v-if="component.type === 'date'"
@@ -269,7 +269,8 @@ import Conditions from '@/components/forms/conditions.vue'
 // import SelectConditions from '@/components/forms/select-conditions.vue'
 import Checkbox from '@/components/forms/checkbox.vue'
 import Declaration from '@/components/forms/declarations.vue'
-import File from '@/components/forms/call_email_file.vue'
+//import File from '@/components/forms/call_email_file.vue'
+import File from '@/components/common/compliance_file.vue'
 import SelectBlock from '@/components/forms/select.vue'
 import DateField from '@/components/forms/date-field.vue'
 import TextField from '@/components/forms/text.vue'
@@ -318,6 +319,7 @@ const ComplianceRendererBlock = {
           type: String,
           default: null
       },
+      createDocumentActionUrl: Function,
   },
   computed: {
     ...mapGetters([

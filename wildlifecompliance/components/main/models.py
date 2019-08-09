@@ -6,6 +6,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser
 import os
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.postgres.fields.jsonb import JSONField
 
 
 @python_2_unicode_compatible
@@ -28,18 +29,6 @@ class Sequence(models.Model):
     def __str__(self):
         return "Sequence(name={}, last={})".format(
             repr(self.name), repr(self.last))
-
-
-class InspectionType(models.Model):
-   description = models.CharField(max_length=255, null=True, blank=True)
-
-   class Meta:
-       app_label = 'wildlifecompliance'
-       verbose_name = 'CM_InspectionType'
-       verbose_name_plural = 'CM_InspectionTypes'
-
-   def __str__(self):
-       return self.description
 
 
 @python_2_unicode_compatible

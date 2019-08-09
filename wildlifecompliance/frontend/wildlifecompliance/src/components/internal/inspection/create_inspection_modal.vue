@@ -55,7 +55,7 @@
                             <div class="col-sm-9">
                               <select class="form-control" v-model="inspection_type_id">
                                 <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
-                                  {{ option.description }}
+                                  {{ option.inspection_type }}
                                 </option>
                               </select>
                             </div>
@@ -313,9 +313,11 @@ export default {
           
       },
       createDocumentActionUrl: async function() {
-        // create inspection and get id
-        let returned_inspection = await Vue.http.post(api_endpoints.inspection);
-        this.inspection.id = returned_inspection.body.id;
+        if (!this.inspection.id) {
+            // create inspection and get id
+            let returned_inspection = await Vue.http.post(api_endpoints.inspection);
+            this.inspection.id = returned_inspection.body.id;
+        }
     
         return helpers.add_endpoint_join(
             api_endpoints.inspection,

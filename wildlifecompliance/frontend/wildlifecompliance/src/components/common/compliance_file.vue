@@ -23,16 +23,13 @@
                         <span v-if="!readonly">
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
-                        <!--span v-else>
-                            <i class="fa fa-info-circle" aria-hidden="true" title="Previously submitted documents cannot be deleted" style="cursor: pointer;"></i>
-                        </span-->
                     </p>
                 </div>
-                <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
+                <div v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></div>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
-                    <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange"/>
+                    <input :name="name" type="file" :data-que="n" :accept="fileTypes" @change="handleChange"/>
                 </div>
             </div>
 
@@ -94,25 +91,19 @@ export default {
         csrf_token: function() {
             return helpers.getCookie('csrftoken')
         },
-        //application_document_action: function() {
-          //return (this.application_id) ? `/api/application/${this.application_id}/process_document/` : '';
-        //},
-        //value: function() {
-          //  return this.field_data.value;
-       // }
     },
 
     methods:{
-        handleChange: async function (e) {
+        handleChange: function (e) {
             let vm = this;
 
-            vm.show_spinner = true;
             if (vm.isRepeatable && e.target.files) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
                 avail = [...avail.map(id => {
                     return $(avail[id]).attr('data-que');
                 })];
+                console.log(avail);
                 avail.pop();
                 if (vm.repeat == 1) {
                     vm.repeat+=1;
@@ -130,20 +121,13 @@ export default {
 
             if (e.target.files.length > 0) {
                 //vm.upload_file(e)
-                await vm.save_document(e);
+                vm.save_document(e);
             }
 
-            vm.show_spinner = false;
         },
-
-        /*
-        upload_file: function(e) {
-            let vm = this;
-            $("[id=save_and_continue_btn][value='Save Without Confirmation']").trigger( "click" );
-        },
-		*/
 
         get_documents: async function() {
+            this.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'list');
@@ -152,11 +136,12 @@ export default {
             }
             formData.append('input_name', this.name);
             formData.append('csrfmiddlewaretoken', this.csrf_token);
-            if (this.documentActionUrl) {
-                let res = await Vue.http.post(this.documentActionUrl, formData)
-                this.documents = res.body.filedata;
-                this.commsLogId = res.body.comms_instance_id;
+            if (!this.documentActionUrl) {
+                this.documentActionUrl = await this.createDocumentActionUrl()
             }
+            let res = await Vue.http.post(this.documentActionUrl, formData)
+            this.documents = res.body.filedata;
+            this.commsLogId = res.body.comms_instance_id;
             //console.log(vm.documents);
             this.show_spinner = false;
 
@@ -211,6 +196,7 @@ export default {
         },
 
         save_document: async function(e) {
+            this.show_spinner = true;
 
             var formData = new FormData();
             formData.append('action', 'save');
@@ -228,6 +214,7 @@ export default {
             
             this.documents = res.body.filedata;
             this.commsLogId = res.body.comms_instance_id;
+            this.show_spinner = false;
 
         },
 
