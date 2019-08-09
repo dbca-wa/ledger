@@ -204,9 +204,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
                     _file = request.FILES.get('_file')
 
                 document = instance.qaofficer_documents.get_or_create(input_name=section, name=filename)[0]
-                #path = default_storage.save('proposals/{}/qaofficer/{}'.format(proposal_id, filename), ContentFile(_file.read()))
-                #path = default_storage.save('approvals/{}/documents/{}'.format(approval_id, filename), ContentFile(_file.read()))
-                path = default_storage.save('proposals/{}/approvals/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('{}/proposals/{}/approvals/{}'.format(settings.MEDIA_APP_DIR, proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()

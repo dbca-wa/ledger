@@ -28,7 +28,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from commercialoperator.components.proposals.utils import save_proponent_data,save_assessor_data, proposal_submit
 from commercialoperator.components.proposals.models import searchKeyWords, search_reference, ProposalUserAction
-from commercialoperator.utils import missing_required_fields, search_tenure
+from commercialoperator.utils import missing_required_fields
 
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -468,7 +468,6 @@ class ProposalSubmitViewSet(viewsets.ModelViewSet):
             #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             #instance.submit(request,self)
-            #instance.tenure = search_tenure(instance)
             #instance.save()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
@@ -575,7 +574,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     _file = request.FILES.get('_file')
 
                 document = instance.documents.get_or_create(input_name=section, name=filename)[0]
-                path = default_storage.save('proposals/{}/documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('{}/proposals/{}/documents/{}'.format(settings.MEDIA_APP_DIR, proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
@@ -635,7 +634,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     _file = request.FILES.get('_file')
 
                 document = instance.onhold_documents.get_or_create(input_name=section, name=filename)[0]
-                path = default_storage.save('proposals/{}/onhold/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('{}/proposals/{}/onhold/{}'.format(settings.MEDIA_APP_DIR, proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
@@ -683,7 +682,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                     _file = request.FILES.get('_file')
 
                 document = instance.qaofficer_documents.get_or_create(input_name=section, name=filename)[0]
-                path = default_storage.save('proposals/{}/qaofficer/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('{}/proposals/{}/qaofficer/{}'.format(settings.MEDIA_APP_DIR, proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
@@ -936,8 +935,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
                 required_doc_instance=RequiredDocument.objects.get(id=required_doc_id)
                 document = instance.required_documents.get_or_create(input_name=section, name=filename, required_doc=required_doc_instance)[0]
-                #path = default_storage.save('proposals/{}/required_documents/{}/{}'.format(proposal_id,required_doc_id, filename), ContentFile(_file.read()))
-                path = default_storage.save('proposals/{}/required_documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
+                path = default_storage.save('{}/proposals/{}/required_documents/{}'.format(settings.MEDIA_APP_DIR, proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
                 document.save()
@@ -1011,7 +1009,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             #instance.submit(request,self)
             proposal_submit(instance, request)
-            instance.tenure = search_tenure(instance)
             instance.save()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
