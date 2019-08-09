@@ -274,10 +274,16 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if(vm.check_assessor(full)){
+                                //if(vm.check_assessor(full)){
+                                if(full.is_approver){
                                     if(full.can_reissue){
                                         links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
                                     }
+                                }
+                                if(full.is_assessor){
+                                    // if(full.can_reissue){
+                                    //     links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
+                                    // }
                                     if(full.application_type=='E Class' && (full.status=='Current' || full.status=='Suspended')){
                                         if(full.can_extend){
                                             links +=  `<a href='#${full.id}' data-extend-approval='${full.id}'>Extend</a><br/>`;
@@ -306,7 +312,7 @@ export default {
 
                                 }
                             }
-                            else{
+                            else{//External Dashboard actions.
                                 if (full.can_reissue) {
                                     links +=  `<a href='/external/approval/${full.id}'>View</a><br/>`;
                                     if(full.can_action){

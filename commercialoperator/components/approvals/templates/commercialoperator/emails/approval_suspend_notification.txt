@@ -1,9 +1,9 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Approval has been suspended:
+    Your Licence has been suspended:
 
-    Approval : {{ approval.lodgement_number}}
+    Licence : {{ approval.lodgement_number}}
 
     Suspension Details : {{details}}    
 
