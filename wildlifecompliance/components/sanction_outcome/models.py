@@ -99,6 +99,10 @@ class SanctionOutcome(models.Model):
     #         self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(new_lodgement_number_int)
 
     def delete(self):
+        """
+        This function ...
+        :return: string
+        """
         if self.lodgement_number:
             raise ValidationError('Sanction outcome saved in the database with the logement number cannot be deleted.')
 
@@ -114,6 +118,8 @@ class SanctionOutcome(models.Model):
         if not self.lodgement_number:
             self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(self.pk)
             self.save()
+
+        # TODO: add date_of_issue and time_of_issue
 
     def __str__(self):
         return 'Type : {}, Identifier: {}'.format(self.type, self.identifier)

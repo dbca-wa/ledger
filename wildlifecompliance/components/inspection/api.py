@@ -149,17 +149,21 @@ class InspectionFilterBackend(DatatablesFilterBackend):
         if len(ordering):
             for num, item in enumerate(ordering):
                 if item == 'planned_for':
-                    ordering.pop(num)
-                    ordering.insert(num, 'planned_for_date')
-                if item == '-planned_for':
-                    ordering.pop(num)
-                    ordering.insert(num, '-planned_for_date')
-                if item == 'status__name':
-                    ordering.pop(num)
-                    ordering.insert(num, 'status')
-                if item == '-status__name':
-                    ordering.pop(num)
-                    ordering.insert(num, '-status')
+                    # ordering.pop(num)
+                    # ordering.insert(num, 'planned_for_date')
+                    ordering[num] = 'planned_for_date'
+                elif item == '-planned_for':
+                    # ordering.pop(num)
+                    # ordering.insert(num, '-planned_for_date')
+                    ordering[num] = '-planned_for_date'
+                elif item == 'status__name':
+                    # ordering.pop(num)
+                    # ordering.insert(num, 'status')
+                    ordering[num] = 'status'
+                elif item == '-status__name':
+                    # ordering.pop(num)
+                    # ordering.insert(num, '-status')
+                    ordering[num] = '-status'
 
             queryset = queryset.order_by(*ordering)
 
