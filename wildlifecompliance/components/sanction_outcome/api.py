@@ -1,10 +1,13 @@
 import json
 import traceback
 
+from datetime import datetime
+
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse
 
 from rest_framework import viewsets, serializers
@@ -30,6 +33,53 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
     def filter_queryset(self, request, queryset, view):
         total_count = queryset.count()
 
+        # Storage for the filters
+        q_objects = Q()
+
+        search_text = request.GET.get('search[value]')
+        if search_text:
+            q_objects &= Q(lodgement_number__icontains=search_text) | \
+                         Q(identifier__icontains=search_text) | \
+                         Q(offender__person__first_name__icontains=search_text) | \
+                         Q(offender__person__last_name__icontains=search_text) | \
+                         Q(offender__person__email__icontains=search_text) | \
+                         Q(offender__organisation__name__icontains=search_text) | \
+                         Q(offender__organisation__abn__icontains=search_text) | \
+                         Q(offender__organisation__trading_name__icontains=search_text)
+
+        type = request.GET.get('type',).lower()
+        if type and type != 'all':
+            q_objects &= Q(type=type)
+
+        status = request.GET.get('status',).lower()
+        if status and status != 'all':
+            q_objects &= Q(status=status)
+
+        # payment_status = request.GET.get('payment_status',).lower()
+        # if payment_status and payment_status != 'all':
+        #     q_objects &= Q(payment_status=payment_status)
+
+        date_from = request.GET.get('date_from',).lower()
+        if date_from:
+            date_from = datetime.strptime(date_from, '%d/%m/%Y')
+            q_objects &= Q(date_of_issue__gte=date_from)
+
+        date_to = request.GET.get('date_to',).lower()
+        if date_to:
+            date_to = datetime.strptime(date_to, '%d/%m/%Y')
+            q_objects &= Q(date_of_issue__lte=date_to)
+
+        region_id = request.GET.get('region_id',).lower()
+        if region_id and region_id != 'all':
+            q_objects &= Q(region__id=region_id)
+
+        district_id = request.GET.get('district_id',).lower()
+        if district_id and district_id != 'all':
+            q_objects &= Q(district__id=district_id)
+
+        # perform filters
+        queryset = queryset.filter(q_objects)
+
         getter = request.query_params.get
         fields = self.get_fields(getter)
         ordering = self.get_ordering(getter, fields)
@@ -50,7 +100,7 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
                 elif item == 'user_action':
                     pass
 
-            queryset = queryset.order_by(*ordering)
+            queryset = queryset.order_by(*ordering).distinct()
 
         setattr(view, '_datatables_total_count', total_count)
         return queryset
@@ -97,6 +147,14 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
     def types(self, request, *args, **kwargs):
         res_obj = []
         for choice in SanctionOutcome.TYPE_CHOICES:
+            res_obj.append({'id': choice[0], 'display': choice[1]});
+        res_json = json.dumps(res_obj)
+        return HttpResponse(res_json, content_type='application/json')
+
+    @list_route(methods=['GET', ])
+    def statuses(self, request, *args, **kwargs):
+        res_obj = []
+        for choice in SanctionOutcome.STATUS_CHOICES:
             res_obj.append({'id': choice[0], 'display': choice[1]});
         res_json = json.dumps(res_obj)
         return HttpResponse(res_json, content_type='application/json')

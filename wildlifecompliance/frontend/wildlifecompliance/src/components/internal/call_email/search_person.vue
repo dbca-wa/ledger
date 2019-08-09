@@ -276,27 +276,21 @@ export default {
         },
         applications_url: function(){
             if (this.call_email.email_user && this.call_email.email_user.id){
-                console.log('applications_url2: ' + this.call_email.email_user.id);
                 return api_endpoints.applications_paginated+'internal_datatable_list?user_id=' + this.call_email.email_user.id;
             }
-            console.log('applications_url');
-            return api_endpoints.applications_paginated+'internal_datatable_list?user_id=-1';
+            return api_endpoints.applications_paginated+'internal_datatable_list';
         },
         licences_url: function(){
-            console.log('licences_url');
             if (this.call_email.email_user && this.call_email.email_user.id){
-                console.log('licences_url2: ' + this.call_email.email_user.id);
                 return api_endpoints.licences_paginated+'internal_datatable_list?user_id=' + this.call_email.email_user.id;
             }
-            return api_endpoints.licences_paginated+'internal_datatable_list?user_id=-1';
+            return api_endpoints.licences_paginated+'internal_datatable_list';
         },
         returns_url: function(){
-            console.log('returns_url');
             if (this.call_email.email_user && this.call_email.email_user.id){
-                console.log('returns_url2: ' + this.call_email.email_user.id);
-                return api_endpoints.returns+'?user_id=' + this.call_email.email_user.id;
+                return api_endpoints.returns_paginated+'?user_id=' + this.call_email.email_user.id;
             }
-            return api_endpoints.returns+'?user_id=-1';
+            return api_endpoints.returns_paginated;
         }
     },
     mounted: function(){
@@ -323,7 +317,6 @@ export default {
             vm.$refs.person_search.clearInput();
         },
         updateContact: function() {
-            console.log('aho');
             let vm = this;
             vm.updatingContact = true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.call_email.email_user.id+'/update_contact')),JSON.stringify(vm.call_email.email_user),{
