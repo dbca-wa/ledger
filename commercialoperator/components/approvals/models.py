@@ -261,12 +261,20 @@ class Approval(RevisionedMixin):
                 return False
 
 
-    def generate_doc(self, user):
-        from commercialoperator.components.approvals.pdf import create_approval_doc
+    def generate_doc(self, user, preview=False):
+        from commercialoperator.components.approvals.pdf import create_approval_doc, create_approval_pdf_bytes
         copied_to_permit = self.copiedToPermit_fields(self.current_proposal) #Get data related to isCopiedToPermit tag
+
+        if preview:
+            return create_approval_pdf_bytes(self,self.current_proposal, copied_to_permit, user)
+
         self.licence_document = create_approval_doc(self,self.current_proposal, copied_to_permit, user)
         self.save(version_comment='Created Approval PDF: {}'.format(self.licence_document.name))
         self.current_proposal.save(version_comment='Created Approval PDF: {}'.format(self.licence_document.name))
+
+#    def generate_preview_doc(self, user):
+#        from commercialoperator.components.approvals.pdf import create_approval_pdf_bytes
+#        copied_to_permit = self.copiedToPermit_fields(self.current_proposal) #Get data related to isCopiedToPermit tag
 
     def generate_renewal_doc(self):
         from commercialoperator.components.approvals.pdf import create_renewal_doc
@@ -462,6 +470,12 @@ class Approval(RevisionedMixin):
                 self.current_proposal.log_user_action(ProposalUserAction.ACTION_SURRENDER_APPROVAL.format(self.current_proposal.id),request)
             except:
                 raise
+
+
+class PreviewTempApproval(Approval):
+    class Meta:
+        app_label = 'commercialoperator'
+        #unique_together= ('lodgement_number', 'issue_date')
 
 
 class ApprovalLogEntry(CommunicationsLogEntry):

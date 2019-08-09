@@ -101,9 +101,11 @@ urlpatterns = [
     url(r'^profiles/', views.ExternalView.as_view(), name='manage-profiles'),
     url(r'^help/(?P<application_type>[^/]+)/(?P<help_type>[^/]+)/$', views.HelpView.as_view(), name='help'),
     url(r'^mgt-commands/$', views.ManagementCommandsView.as_view(), name='mgt-commands'),
+    url(r'test-emails/$', proposal_views.TestEmailView.as_view(), name='test-emails'),
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     #following url is used to include url path when sending Proposal amendment request to user.
     url(r'^proposal/$', proposal_views.ProposalView.as_view(), name='proposal'),
+    url(r'^preview/licence-pdf/(?P<proposal_pk>\d+)',proposal_views.PreviewLicencePDFView.as_view(), name='preview_licence_pdf'),
 
     # payment related urls
     url(r'^application_fee/(?P<proposal_pk>\d+)/$', booking_views.ApplicationFeeView.as_view(), name='application_fee'),
