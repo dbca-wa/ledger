@@ -83,6 +83,8 @@ class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
 class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
     offence_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
     offender_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    region_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    district_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
     allocated_group_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
 
     class Meta:
@@ -93,6 +95,8 @@ class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
             'identifier',
             'offence_id',
             'offender_id',
+            'region_id',
+            'district_id',
             'allocated_group_id',
             # 'alleged_offences',
             'issued_on_paper',

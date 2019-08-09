@@ -58,14 +58,14 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
             date_to = datetime.strptime(date_to, '%d/%m/%Y')
             q_objects &= Q(date_of_issue__lte=date_to)
 
-        # region = request.GET.get('region',).lower()
-        # if region and region != 'all':
-        #     q_objects &= Q(region=region)
-        #
-        # district = request.GET.get('district',).lower()
-        # if district and district != 'all':
-        #     q_objects &= Q(district=district)
-        #
+        region_id = request.GET.get('region_id',).lower()
+        if region_id and region_id != 'all':
+            q_objects &= Q(region__id=region_id)
+
+        district_id = request.GET.get('district_id',).lower()
+        if district_id and district_id != 'all':
+            q_objects &= Q(district__id=district_id)
+
         queryset = queryset.filter(q_objects)
 
         getter = request.query_params.get
@@ -88,7 +88,7 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
                 elif item == 'user_action':
                     pass
 
-            queryset = queryset.order_by(*ordering)
+            queryset = queryset.order_by(*ordering).distinct()
 
         setattr(view, '_datatables_total_count', total_count)
         return queryset

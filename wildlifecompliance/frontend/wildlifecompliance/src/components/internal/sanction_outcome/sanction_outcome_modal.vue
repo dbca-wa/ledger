@@ -535,7 +535,6 @@ export default {
       vm.clearTableRemediationActions();
     },
     currentRegionIdChanged: function() {
-      console.log('currentRegionIdChanged');
       this.updateDistricts();
     },
     addRemediationActionClicked: function() {
@@ -825,7 +824,6 @@ export default {
       },
     },
   created: async function() {
-    console.log("In created");
     let vm = this;
 
     // Load all the types for the sanction outcome

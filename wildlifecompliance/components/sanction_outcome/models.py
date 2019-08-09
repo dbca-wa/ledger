@@ -31,9 +31,7 @@ class SanctionOutcome(models.Model):
     type = models.CharField(max_length=30, choices=TYPE_CHOICES, blank=True,)
     status = models.CharField(max_length=40, choices=STATUS_CHOICES, default='draft',)
 
-    # We may not need this field
     region = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_region', null=True,)
-    # We may not need this field
     district = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_district', null=True,)
 
     identifier = models.CharField(max_length=50, blank=True,)

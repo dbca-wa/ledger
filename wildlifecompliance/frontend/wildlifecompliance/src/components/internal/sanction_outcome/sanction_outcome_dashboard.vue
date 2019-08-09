@@ -51,17 +51,27 @@
         <div class="row">
             <div class="col-md-3">
                 <label class="">Region:</label>
-                <select class="form-control" v-model="filterRegion">
+                                  <!-- <select class="form-control col-sm-9" v-on:change.prevent="sanction_outcome.region_id=$event.target.value; updateDistricts('updatefromUI')" v-bind:value="sanction_outcome.region_id">
+                                    <option  v-for="option in regions" :value="option.id" v-bind:key="option.id">
+                                      {{ option.display_name }} 
+                                    </option>
+                                  </select> -->
+                <select class="form-control" v-on:change.prevent="filterRegionId=$event.target.value; updateDistricts('updatefromUI')" v-bind:value="filterRegionId">
                     <option v-for="option in sanction_outcome_regions" :value="option.id" v-bind:key="option.id">
-                        {{ option.display }}
+                        {{ option.display_name }}
                     </option>
                 </select>
             </div>
             <div class="col-md-3">
                 <label class="">District:</label>
-                <select class="form-control" v-model="filterDistrict">
-                    <option v-for="option in sanction_outcome_districts" :value="option.id" v-bind:key="option.id">
-                        {{ option.display }}
+                                  <!-- <select class="form-control" v-model="sanction_outcome.district_id">
+                                    <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
+                                      {{ option.display_name }} 
+                                    </option>
+                                  </select> -->
+                <select class="form-control" v-model="filterDistrictId">
+                    <option v-for="option in sanction_outcome_availableDistricts" :value="option.id" v-bind:key="option.id">
+                        {{ option.display_name }}
                     </option>
                 </select>
             </div>
@@ -90,16 +100,17 @@ export default {
             sanction_outcome_types: [],
             sanction_outcome_statuses: [],
             sanction_outcome_payment_statuses: [],
-            sanction_outcome_regions: [],
-            sanction_outcome_districts: [],
+            sanction_outcome_regions: [],  //this is the list of options
+            sanction_outcome_regionDistricts: [],
+            sanction_outcome_availableDistricts: [], // this is generated from the regionDistricts[] above
 
             filterType: 'all',
             filterStatus: 'all',
             filterPaymentStatus: 'all',
             filterDateFromPicker: '',
             filterDateToPicker: '',
-            filterRegion: 'all',
-            filterDistrict: 'all',
+            filterRegionId: 'all',
+            filterDistrictId: 'all',
 
             dtOptions: {
                 serverSide: true,
@@ -122,8 +133,8 @@ export default {
                         d.payment_status = vm.filterPaymentStatus;
                         d.date_from = vm.filterDateFromPicker;
                         d.date_to = vm.filterDateToPicker;
-                        d.region = vm.filterRegion;
-                        d.district = vm.filterDistrict;
+                        d.region_id = vm.filterRegionId;
+                        d.district_id = vm.filterDistrictId;
                     }
                 },
                 columns: [
@@ -218,7 +229,15 @@ export default {
             vm.addEventListeners();
         });
     },
+    computed: {
+        current_region_id: function() {
+            return this.filterRegionId;
+        },
+    },
     watch: {
+        current_region_id: function() {
+            this.updateDistricts();
+        },
         filterType: function () {
             this.$refs.sanction_outcome_table.vmDataTable.draw();
         },
@@ -234,10 +253,10 @@ export default {
         filterDateToPicker: function () {
             this.$refs.sanction_outcome_table.vmDataTable.draw();
         },
-        filterRegion: function () {
+        filterRegionId: function () {
             this.$refs.sanction_outcome_table.vmDataTable.draw();
         },
-        filterDistrict: function () {
+        filterDistrictId: function () {
             this.$refs.sanction_outcome_table.vmDataTable.draw();
         },
     },
@@ -249,6 +268,35 @@ export default {
         this.constructOptionsDistrict();
     },
     methods: {
+        updateDistricts: function(updateFromUI) {
+            console.log('updateDistricts');
+            // if (updateFromUI) {
+            //     // We don't want to clear the default district selection when initially loaded, which derived from the call_email
+            //     this.sanction_outcome.district_id = null;
+            // }
+            this.sanction_outcome_availableDistricts = []; // This is a list of options for district
+            for (let record of this.sanction_outcome_regionDistricts) {
+                if (this.filterRegionId == record.id) {
+                    for (let district_id of record.districts) {
+                        for (let district_record of this.sanction_outcome_regionDistricts) {
+                            if (district_record.id == district_id) {
+                                this.sanction_outcome_availableDistricts.push(district_record);
+                            }
+                        }
+                    }
+                }
+            }
+
+            this.sanction_outcome_availableDistricts.splice(0, 0, {
+                id: "all",
+                display_name: "All",
+                district: "",
+                districts: [],
+                region: null
+            });
+
+            this.filterDistrictId = 'all';
+        },
         addEventListeners: function () {
             this.attachFromDatePicker();
             this.attachToDatePicker();
@@ -296,10 +344,29 @@ export default {
 
         },
         constructOptionsRegion: async function() {
-
+            console.log('constructOptionsRegion()')
+            let returned_regions = await cache_helper.getSetCacheList(
+                "CallEmail_Regions",
+                "/api/region_district/get_regions/"
+            );
+            Object.assign(this.sanction_outcome_regions, returned_regions);
+            this.sanction_outcome_regions.splice(0, 0, {
+                id: "all",
+                display_name: "All",
+                district: "",
+                districts: [],
+                region: null
+            });
         },
         constructOptionsDistrict: async function() {
-
+            console.log('constructOptionsDistrict()')
+            let returned_region_districts = await cache_helper.getSetCacheList(
+                "CallEmail_RegionDistricts",
+                api_endpoints.region_district
+            );
+            Object.assign(this.sanction_outcome_regionDistricts, returned_region_districts);
+            console.log(this.sanction_outcome_regionDistricts);
+            this.updateDistricts();
         },
     },
     components: {
