@@ -34,7 +34,3 @@ class CallEmailAdmin(admin.ModelAdmin):
 class CasePriorityAdmin(admin.ModelAdmin):
     pass
 
-
-@admin.register(models.InspectionType)
-class InspectionTypeAdmin(admin.ModelAdmin):
-    pass

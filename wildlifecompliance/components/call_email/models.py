@@ -12,7 +12,7 @@ from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document, get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
-from wildlifecompliance.components.main.models import InspectionType
+#from wildlifecompliance.components.main.models import InspectionType
 
 logger = logging.getLogger(__name__)
 
@@ -260,11 +260,11 @@ class CallEmail(RevisionedMixin):
         related_name='callemail_case_priority', 
         null=True
     )
-    inspection_type = models.ForeignKey(
-        InspectionType,
-        related_name='callemail_inspection_type', 
-        null=True
-    )
+    #inspection_type = models.ForeignKey(
+     #   InspectionType,
+      #  related_name='callemail_inspection_type', 
+       # null=True
+    #)
     
     class Meta:
         app_label = 'wildlifecompliance'

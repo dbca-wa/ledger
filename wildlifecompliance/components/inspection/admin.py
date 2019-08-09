@@ -7,3 +7,7 @@ from reversion.admin import VersionAdmin
 @admin.register(models.Inspection)
 class InspectionAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(models.InspectionType)
+class InspectionTypeAdmin(admin.ModelAdmin):
+    pass

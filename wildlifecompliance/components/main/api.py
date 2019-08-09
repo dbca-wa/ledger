@@ -53,13 +53,13 @@ def process_generic_document(request, instance, document_type=None, *args, **kwa
             pass
 
         elif action == 'delete':
-            delete_document(request, instance, comms_instance)
+            delete_document(request, instance, comms_instance, document_type)
 
         elif action == 'cancel':
-            deleted = cancel_document(request, instance, comms_instance)
+            deleted = cancel_document(request, instance, comms_instance, document_type)
 
         elif action == 'save':
-            save_document(request, instance, comms_instance)
+            save_document(request, instance, comms_instance, document_type)
 
         # HTTP Response varies by action and instance type
         if comms_instance and action == 'cancel' and deleted:
@@ -72,6 +72,14 @@ def process_generic_document(request, instance, document_type=None, *args, **kwa
                         ) for d in comms_instance.documents.all() if d._file]
             return {'filedata': returned_file_data,
                     'comms_instance_id': comms_instance.id}
+        elif document_type == 'inspection_report':
+            returned_file_data = [dict(
+                        file=d._file.url,
+                        id=d.id,
+                        name=d.name,
+                        ) for d in instance.report.all() if d._file]
+            return {'filedata': returned_file_data}
+
         else:
             returned_file_data = [dict(
                         file=d._file.url,
@@ -84,9 +92,9 @@ def process_generic_document(request, instance, document_type=None, *args, **kwa
         print(traceback.print_exc())
         raise e
 
-def delete_document(request, instance, comms_instance=None):
+def delete_document(request, instance, comms_instance, document_type):
     # inspection report delete
-    if request.data.get('inspection_report') and 'document_id' in request.data:
+    if document_type == 'inspection_report' and 'document_id' in request.data:
         document_id = request.data.get('document_id')
         document = instance.report.get(id=document_id)
 
@@ -106,9 +114,9 @@ def delete_document(request, instance, comms_instance=None):
 
     document.delete()
 
-def cancel_document(request, instance, comms_instance=None):
+def cancel_document(request, instance, comms_instance, document_type):
         # inspection report cancel
-        if request.data.get('inspection_report'):
+        if document_type == 'inspection_report':
             document_list = instance.report.all()
 
             for document in document_list:
@@ -138,9 +146,9 @@ def cancel_document(request, instance, comms_instance=None):
                     os.remove(document._file.path)
                 document.delete()
 
-def save_document(request, instance, comms_instance=None):
+def save_document(request, instance, comms_instance, document_type):
         # inspection report save
-        if request.data.get('inspection_report') and 'filename' in request.data:
+        if document_type == 'inspection_report' and 'filename' in request.data:
             filename = request.data.get('filename')
             _file = request.data.get('_file')
 

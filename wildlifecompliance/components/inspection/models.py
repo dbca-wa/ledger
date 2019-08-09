@@ -13,7 +13,7 @@ from wildlifecompliance.components.call_email.models import CallEmail
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document, get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
-from wildlifecompliance.components.main.models import InspectionType
+#from wildlifecompliance.components.main.models import InspectionType
 from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -25,6 +25,26 @@ def update_inspection_comms_log_filename(instance, filename):
 def update_inspection_report_filename(instance, filename):
     return 'wildlifecompliance/compliance/{}/report/{}'.format(
         instance.id, filename)
+
+
+class InspectionType(models.Model):
+    inspection_type = models.CharField(max_length=50)
+    schema = JSONField(null=True)
+    version = models.SmallIntegerField(default=1, blank=False, null=False)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    replaced_by = models.ForeignKey(
+        'self', on_delete=models.PROTECT, blank=True, null=True)
+    date_created = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_InspectionType'
+        verbose_name_plural = 'CM_InspectionTypes'
+        unique_together = ('inspection_type', 'version')
+
+    def __str__(self):
+        return '{0}, v.{1}'.format(self.inspection_type, self.version)
+
 
 class Inspection(RevisionedMixin):
     PARTY_CHOICES = (
@@ -93,7 +113,7 @@ class Inspection(RevisionedMixin):
     )
     inspection_type = models.ForeignKey(
             InspectionType,
-            related_name='inspection_type',
+            related_name='inspection_inspection_type',
             null=True
             )
 
@@ -131,7 +151,12 @@ class Inspection(RevisionedMixin):
     @property
     def get_related_items_descriptor(self):
         return '{0}, {1}'.format(self.title, self.details)
-    
+
+    @property
+    def schema(self):
+        
+        if self.inspection_type:
+            return self.inspection_type.schema
 
 class InspectionReportDocument(Document):
     log_entry = models.ForeignKey(
