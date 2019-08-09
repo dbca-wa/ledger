@@ -91,7 +91,7 @@
                         <!-- <div class="row action-button"> -->
 
                           <div class="col-sm-12">
-                                <a @click="offence()" class="btn btn-primary btn-block">
+                                <a @click="openOffence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
                           </div>
@@ -99,7 +99,7 @@
 
                         <div v-if="statusId ==='open_followup' && this.call_email.can_user_action && this.offenceExists" class="row action-button">
                           <div class="col-sm-12">
-                                <a @click="sanction_outcome()" class="btn btn-primary btn-block">
+                                <a @click="openSanctionOutcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
                           </div>
@@ -120,7 +120,7 @@
                         <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
                           <div class="col-sm-12">
                                 <!--a ref="allocateForInspection" @click="addWorkflow('allocate_for_inspection')" class="btn btn-primary btn-block"-->
-                                <a ref="allocateForInspection" @click="inspection()" class="btn btn-primary btn-block" >
+                                <a ref="allocateForInspection" @click="allocateForInspection()" class="btn btn-primary btn-block" >
                                   Allocate for Inspection
                                 </a>
                           </div>
@@ -602,18 +602,18 @@ export default {
       });
       // this.$refs.add_workflow.isModalOpen = true;
     },
-    sanction_outcome(){
+    openSanctionOutcome(){
       console.log('sanction_outcome');
       this.sanctionOutcomeInitialised = true;
       this.$nextTick(() => {
           this.$refs.sanction_outcome.isModalOpen = true;
       });
     },
-    offence(){
+    openOffence(){
       this.offenceInitialised = true;
       this.$refs.offence.isModalOpen = true;
     },
-    inspection() {
+    allocateForInspection() {
       this.inspectionInitialised = true;
       this.$refs.inspection.isModalOpen = true;
     },
