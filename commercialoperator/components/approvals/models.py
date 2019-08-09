@@ -206,6 +206,15 @@ class Approval(RevisionedMixin):
     def allowed_assessors(self):
         return self.current_proposal.allowed_assessors
 
+    
+    def is_assessor(self,user):
+        return self.current_proposal.is_assessor(user)
+
+    
+    def is_approver(self,user):
+        return self.current_proposal.is_approver(user)
+
+
     @property
     def is_issued(self):
         return self.licence_number is not None and len(self.licence_number) > 0

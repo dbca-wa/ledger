@@ -867,6 +867,18 @@ def proposal_submit(proposal,request):
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
 
+def is_payment_officer(user):
+    from commercialoperator.components.proposals.models import PaymentOfficerGroup
+    try:
+        group= PaymentOfficerGroup.objects.get(default=True)
+    except PaymentOfficerGroup.DoesNotExist:
+        group= None
+    if group:
+        if user in group.members.all():
+            return True
+    return False
+
+
 from commercialoperator.components.proposals.models import Proposal, Referral, AmendmentRequest, ProposalDeclinedDetails
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.compliances.models import Compliance
@@ -877,6 +889,7 @@ from commercialoperator.components.approvals import email as approval_email
 from commercialoperator.components.compliances import email as compliance_email
 from commercialoperator.components.bookings import email as booking_email
 def test_proposal_emails(request):
+    """ Script to test all emails (listed below) from the models """
     # setup
     if not (settings.PRODUCTION_EMAIL):
         recipients = [request.user.email]
@@ -929,4 +942,6 @@ def test_proposal_emails(request):
         booking_email.send_application_fee_confirmation_tclass_email_notification(request, application_fee, api, recipients, is_test=True)
         booking_email.send_invoice_tclass_email_notification(request, booking, bi, recipients, is_test=True)
         booking_email.send_confirmation_tclass_email_notification(request, booking, bi, recipients, is_test=True)
+
+   
 
