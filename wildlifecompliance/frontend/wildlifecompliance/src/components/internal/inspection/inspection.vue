@@ -317,7 +317,7 @@ import moment from 'moment';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 import Offence from '../offence/offence';
-import SanctionOutcome from '../sanction_outcome/sanction_outcome';
+import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
 
 
