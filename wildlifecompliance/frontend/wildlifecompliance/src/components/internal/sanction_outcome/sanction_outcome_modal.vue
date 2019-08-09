@@ -1,3 +1,4 @@
+
 <template lang="html">
     <div>
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large force>
@@ -534,7 +535,6 @@ export default {
       vm.clearTableRemediationActions();
     },
     currentRegionIdChanged: function() {
-      console.log('currentRegionIdChanged');
       this.updateDistricts();
     },
     addRemediationActionClicked: function() {
@@ -803,12 +803,11 @@ export default {
       let returned = null;
       if (this.$parent.call_email) {
           returned = await Vue.http.get("/api/offence/filter_by_call_email.json", {
-          params: { call_email_id: this.$parent.call_email.id }
+              params: { call_email_id: this.$parent.call_email.id }
           });
-      }
-      if (this.$parent.inspection) {
+      } else if (this.$parent.inspection) {
           returned = await Vue.http.get("/api/offence/filter_by_inspection.json", {
-          params: { inspection_id: this.$parent.inspection.id }
+              params: { inspection_id: this.$parent.inspection.id }
           });
       }
       this.options_for_offences = returned.body;
@@ -825,7 +824,6 @@ export default {
       },
     },
   created: async function() {
-    console.log("In created");
     let vm = this;
 
     // Load all the types for the sanction outcome
@@ -852,43 +850,6 @@ export default {
 };
 </script>
 
-<style lang="css" scoped>
-.btn-file {
-  position: relative;
-  overflow: hidden;
-}
-.btn-file input[type="file"] {
-  position: absolute;
-  top: 0;
-  right: 0;
-  min-width: 100%;
-  min-height: 100%;
-  font-size: 100px;
-  text-align: right;
-  filter: alpha(opacity=0);
-  opacity: 0;
-  outline: none;
-  background: white;
-  cursor: inherit;
-  display: block;
-}
-.top-buffer {
-  margin-top: 5px;
-}
-.top-buffer-2x {
-  margin-top: 10px;
-}
-.radio-button-label {
-  padding-left: 0;
-}
-.tab-content {
-  background: white;
-  padding: 10px;
-  border: solid 1px lightgray;
-}
-#DataTable {
-  padding: 10px 5px;
-  border: 1px solid lightgray;
-}
-</style>
+<style>
 
+</style>

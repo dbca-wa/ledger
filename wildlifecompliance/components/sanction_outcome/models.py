@@ -31,9 +31,7 @@ class SanctionOutcome(models.Model):
     type = models.CharField(max_length=30, choices=TYPE_CHOICES, blank=True,)
     status = models.CharField(max_length=40, choices=STATUS_CHOICES, default='draft',)
 
-    # We may not need this field
     region = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_region', null=True,)
-    # We may not need this field
     district = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_district', null=True,)
 
     identifier = models.CharField(max_length=50, blank=True,)
@@ -99,6 +97,10 @@ class SanctionOutcome(models.Model):
     #         self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(new_lodgement_number_int)
 
     def delete(self):
+        """
+        This function ...
+        :return: string
+        """
         if self.lodgement_number:
             raise ValidationError('Sanction outcome saved in the database with the logement number cannot be deleted.')
 
@@ -114,6 +116,8 @@ class SanctionOutcome(models.Model):
         if not self.lodgement_number:
             self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(self.pk)
             self.save()
+
+        # TODO: add date_of_issue and time_of_issue
 
     def __str__(self):
         return 'Type : {}, Identifier: {}'.format(self.type, self.identifier)

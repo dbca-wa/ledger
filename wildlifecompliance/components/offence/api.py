@@ -7,8 +7,8 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from ledger.accounts.models import EmailUser, Organisation
-from wildlifecompliance.components.call_email.models import Location, CallEmailUserAction
-from wildlifecompliance.components.inspection.models import InspectionUserAction
+from wildlifecompliance.components.call_email.models import Location, CallEmailUserAction, CallEmail
+from wildlifecompliance.components.inspection.models import InspectionUserAction, Inspection
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
 from wildlifecompliance.components.main.api import save_location
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation
@@ -30,7 +30,12 @@ class OffenceViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def filter_by_call_email(self, request, *args, **kwargs):
         call_email_id = self.request.query_params.get('call_email_id', None)
-        queryset = self.get_queryset().filter(call_email_id__exact=call_email_id)
+
+        try:
+            call_email = CallEmail.objects.get(id=call_email_id)
+            queryset = self.get_queryset().filter(call_email__exact=call_email)
+        except:
+            queryset = self.get_queryset()
 
         serializer = OffenceSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -38,7 +43,12 @@ class OffenceViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET', ])
     def filter_by_inspection(self, request, *args, **kwargs):
         inspection_id = self.request.query_params.get('inspection_id', None)
-        queryset = self.get_queryset().filter(inspection_id__exact=inspection_id)
+
+        try:
+            inspection = Inspection.objects.get(id=inspection_id)
+            queryset = self.get_queryset().filter(inspection__exact=inspection)
+        except:
+            queryset = self.get_queryset()
 
         serializer = OffenceSerializer(queryset, many=True)
         return Response(serializer.data)

@@ -320,6 +320,7 @@ import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome';
 import filefield from '@/components/common/compliance_file.vue';
 
+
 export default {
   name: "ViewInspection",
   data: function() {
