@@ -239,8 +239,7 @@
                                     <div v-for="(item, index) in current_schema">
                                       <compliance-renderer-block
                                          :component="item"
-                                         :createDocumentActionUrl="createDocumentActionUrl"
-                                         v-bind:key="`compliance_renderer_block_${index}`"
+                                         v-bind:key="`compliance_renderer_block${index}`"
                                         />
                                     </div>
                                 </div></div>
@@ -317,7 +316,7 @@ import moment from 'moment';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 import Offence from '../offence/offence';
-import SanctionOutcome from '../sanction_outcome/sanction_outcome';
+import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
 
 
@@ -483,6 +482,7 @@ export default {
       setPlannedForTime: 'setPlannedForTime',
       modifyInspectionTeam: 'modifyInspectionTeam',
       setPartyInspected: 'setPartyInspected',
+      createDocumentActionUrl: 'createDocumentActionUrl',
     }),
     newPersonCreated: function(obj) {
         console.log(obj);
@@ -516,12 +516,12 @@ export default {
         
       });
     },
-    createDocumentActionUrl: async function() {
-      return helpers.add_endpoint_join(
-          api_endpoints.inspection,
-          this.inspection.id + "/process_inspection_report_document/"
-          )
-    },
+    //createDocumentActionUrl: async function() {
+      //return helpers.add_endpoint_join(
+        //  api_endpoints.inspection,
+          //this.inspection.id + "/process_inspection_report_document/"
+          //)
+    //},
     sanction_outcome(){
       console.log('sanction_outcome');
       this.sanctionOutcomeInitialised = true;

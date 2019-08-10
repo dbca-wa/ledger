@@ -319,7 +319,9 @@ const ComplianceRendererBlock = {
           type: String,
           default: null
       },
-      createDocumentActionUrl: Function,
+      callingComponent: {
+          type: Object,
+      },
   },
   computed: {
     ...mapGetters([
@@ -329,9 +331,26 @@ const ComplianceRendererBlock = {
     ...mapGetters('callemailStore', {
         call_email: 'call_email',
     }),
+    ...mapGetters('inspectionStore', {
+        inspection: 'inspection',
+    }),
+    //createDocumentActionUrl: function() {
+      //  if (this.call_email && this.call_email.id) {
+        //    return this.call_email.createDocumentActionUrl;
+       // } else if (this.inspection && this.inspection.id) {
+         //   return this.inspection.createDocumentActionUrl;
+        //}
+    //},
     is_readonly: function() {
         // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
-        return this.component.readonly ? this.component.readonly : !this.call_email.can_user_edit_form;
+        if (this.call_email && this.call_email.id) {
+            return this.component.readonly ? this.component.readonly : !this.call_email.can_user_edit_form;
+        } else if (this.inspection && this.inspection.id) {
+            console.log(this.inspection);
+            console.log(this.component.readonly);
+            return this.component.readonly ? this.component.readonly : !this.inspection.can_user_action;
+        }
+        //return this.component.readonly ? this.component.readonly : !this.callingComponent.can_user_action;
     },
     comment_data: function() {
         return this.call_email.comment_data;
@@ -392,6 +411,19 @@ const ComplianceRendererBlock = {
         'setFormValue',
         //'refreshApplicationFees',
     ]),
+    ...mapActions('callemailStore', {
+        createDocumentActionUrl: 'createDocumentActionUrl',
+    }),
+    ...mapActions('inspectionStore', {
+        createDocumentActionUrl: 'createDocumentActionUrl',
+    }),
+    //createDocumentActionUrl: function() {
+      //  if (this.call_email && this.call_email.id) {
+        //    return this.call_email.createDocumentActionUrl;
+        //} else if (this.inspection && this.inspection.id) {
+          //  return this.inspection.createDocumentActionUrl;
+       // }
+    //},
     strToBool: strToBool,
     element_id: function(depth=0) {
         return `id_${this.component_name}${(depth) ? `_${depth}` : ''}${this.instance !== null ? `__instance${this.instance}`: ''}`;
@@ -429,7 +461,7 @@ const ComplianceRendererBlock = {
             //this.refreshApplicationFees();
         }
     },
-  }
+  },
 }
 
 export default ComplianceRendererBlock;
