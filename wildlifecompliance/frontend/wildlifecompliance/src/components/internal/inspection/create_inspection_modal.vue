@@ -78,7 +78,7 @@
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
             			        <div class="col-sm-9">
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :createDocumentActionUrl="createDocumentActionUrl" />
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl.sync="documentActionUrl" @create-parent="createDocumentActionUrl"/>
                                 </div>
                             </div>
                         </div>
@@ -313,16 +313,20 @@ export default {
           
       },
       createDocumentActionUrl: async function() {
+        console.log("v-on")
         if (!this.inspection.id) {
             // create inspection and get id
             let returned_inspection = await Vue.http.post(api_endpoints.inspection);
             this.inspection.id = returned_inspection.body.id;
         }
     
-        return helpers.add_endpoint_join(
+        this.documentActionUrl = await helpers.add_endpoint_join(
             api_endpoints.inspection,
             this.inspection.id + "/create_modal_process_comms_log_document/"
             )
+        console.log("v off");
+        return true;
+        //this.$ref.comms_log_file.
       },
 
     },
@@ -345,8 +349,6 @@ export default {
             api_endpoints.region_district
             );
         Object.assign(this.regionDistricts, returned_region_districts);
-
-        await this.updateAllocatedGroup();
 
         // case_priorities
         let returned_case_priorities = await cache_helper.getSetCacheList(
@@ -383,6 +385,15 @@ export default {
               id: "", 
               name: "",
             });
+        
+        // initialise region as Kensington
+        for (let record of this.regionDistricts) {
+            if (record.district === 'KENSINGTON') {
+                this.district_id = null;
+                this.region_id = record.id;
+            }
+        }
+        await this.updateAllocatedGroup();
     },
     mounted: function() {
         this.form = document.forms.forwardForm;

@@ -22,8 +22,9 @@ def update_compliance_doc_filename(instance, filename):
     pass
 
 def update_call_email_doc_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/documents/{}'.format(
-        instance.call_email.id, filename)
+    # return 'wildlifecompliance/compliance/{}/documents/{}'.format(
+      #  instance.call_email.id, filename)
+    pass
 
 def update_compliance_comms_log_filename(instance, filename):
     #return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
@@ -31,8 +32,9 @@ def update_compliance_comms_log_filename(instance, filename):
     pass
 
 def update_call_email_comms_log_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
-        instance.log_entry.call_email.id, instance.id, filename)
+    #return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
+     #   instance.log_entry.call_email.id, instance.id, filename)
+    pass
 
 def update_compliance_workflow_log_filename(instance, filename):
     #return 'wildlifecompliance/compliance/{}/workflow/{}/{}'.format(
@@ -428,7 +430,8 @@ class ComplianceFormDataRecord(models.Model):
 
 class CallEmailDocument(Document):
     call_email = models.ForeignKey('CallEmail', related_name='documents')
-    _file = models.FileField(max_length=255, upload_to=update_call_email_doc_filename)
+    #_file = models.FileField(max_length=255, upload_to=update_call_email_doc_filename)
+    _file = models.FileField(max_length=255)
     input_name = models.CharField(max_length=255, blank=True, null=True)
     # after initial submit prevent document from being deleted
     can_delete = models.BooleanField(default=True)
@@ -455,7 +458,8 @@ class CallEmailLogDocument(Document):
         related_name='documents')
     #input_name = models.CharField(max_length=255, blank=True, null=True)
     #version_comment = models.CharField(max_length=255, blank=True, null=True)
-    _file = models.FileField(max_length=255, upload_to=update_call_email_comms_log_filename)
+    #_file = models.FileField(max_length=255, upload_to=update_call_email_comms_log_filename)
+    _file = models.FileField(max_length=255)
 
     class Meta:
         app_label = 'wildlifecompliance'

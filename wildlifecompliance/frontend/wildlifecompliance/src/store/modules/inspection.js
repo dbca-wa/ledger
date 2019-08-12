@@ -26,6 +26,16 @@ export const inspectionStore = {
             if (state.inspection.planned_for_date) {
                 state.inspection.planned_for_date = moment(state.inspection.planned_for_date, 'YYYY-MM-DD').format('DD/MM/YYYY');
             }
+            let inspectionReportDocumentUrl = helpers.add_endpoint_join(
+                api_endpoints.inspection,
+                state.inspection.id + "/process_inspection_report_document/"
+                )
+            Vue.set(state.inspection, 'inspectionReportDocumentUrl', inspectionReportDocumentUrl); 
+            let rendererDocumentUrl = helpers.add_endpoint_join(
+                api_endpoints.inspection,
+                state.inspection.id + "/process_renderer_document/"
+                )
+            Vue.set(state.inspection, 'rendererDocumentUrl', rendererDocumentUrl); 
         },
         updatePlannedForTime(state, time) {
             Vue.set(state.inspection, 'planned_for_time', time);
@@ -47,7 +57,7 @@ export const inspectionStore = {
         
     },
     actions: {
-        async loadInspection({ dispatch, }, { inspection_id }) {
+        async loadInspection({ dispatch, commit }, { inspection_id }) {
             console.log("loadInspection");
             try {
                 const returnedInspection = await Vue.http.get(
@@ -57,7 +67,8 @@ export const inspectionStore = {
                     );
 
                 /* Set Inspection object */
-                await dispatch("setInspection", returnedInspection.body);
+                //await dispatch("setInspection", returnedInspection.body);
+                commit("updateInspection", returnedInspection.body);
 
             } catch (err) {
                 console.log(err);
@@ -152,11 +163,12 @@ export const inspectionStore = {
         setPartyInspected({ commit, }, data) {
             commit("updatePartyInspected", data);
         },
-        async createDocumentActionUrl({state}) {
-          return helpers.add_endpoint_join(
-              api_endpoints.inspection,
-              state.inspection.id + "/process_inspection_report_document/"
-              )
+        createDocumentActionUrl({state}) {
+            //let inspectionId = await state.inspection.id;
+            return helpers.add_endpoint_join(
+                api_endpoints.inspection,
+                state.inspection.id + "/process_inspection_report_document/"
+                )
         },
     },
 };

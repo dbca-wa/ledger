@@ -218,7 +218,7 @@
                 :data="value"/>
         </div>
 
-        <File v-if="component.type === 'file'"
+        <File v-if="component.type === 'file' && parent_id"
             :name="component_name"
             :label="component.label"
             :field_data="value"
@@ -228,7 +228,7 @@
             :help_text="help_text"
             :docsUrl="documents_url"
             :isRequired="component.isRequired"
-            :createDocumentActionUrl="createDocumentActionUrl"  
+            :documentActionUrl="documentActionUrl"  
             :help_text_url="help_text_url"/>
 
         <DateField v-if="component.type === 'date'"
@@ -334,6 +334,22 @@ const ComplianceRendererBlock = {
     ...mapGetters('inspectionStore', {
         inspection: 'inspection',
     }),
+    parent_id: function() {
+        if (this.call_email && this.call_email.id) {
+            return true;
+        } else if (this.inspection && this.inspection.id) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+    documentActionUrl: function() {
+        if (this.call_email && this.call_email.id) {
+            return this.call_email.rendererDocumentUrl;
+        } else if (this.inspection && this.inspection.id) {
+            return this.inspection.rendererDocumentUrl;
+        }
+    },
     is_readonly: function() {
         // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
         if (this.call_email && this.call_email.id) {
@@ -404,9 +420,9 @@ const ComplianceRendererBlock = {
         'setFormValue',
         //'refreshApplicationFees',
     ]),
-    ...mapActions('complianceRendererStore', {
-        createDocumentActionUrl: 'createDocumentActionUrl',
-    }),
+    //...mapActions('complianceRendererStore', {
+      //  createDocumentActionUrl: 'createDocumentActionUrl',
+    //}),
     strToBool: strToBool,
     element_id: function(depth=0) {
         return `id_${this.component_name}${(depth) ? `_${depth}` : ''}${this.instance !== null ? `__instance${this.instance}`: ''}`;

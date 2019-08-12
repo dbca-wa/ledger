@@ -235,7 +235,7 @@
                         </div>  
                         <div :id="cTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Checklist">
-                                <div class="col-sm-12 form-group"><div class="row">
+                                <div class="col-sm-12 form-group" v-if="inspection.schema"><div class="row">
                                     <div v-for="(item, index) in current_schema">
                                       <compliance-renderer-block
                                          :component="item"
@@ -252,8 +252,8 @@
                                         <div class="col-sm-3">
                                             <label class="control-label pull-left"  for="Name">Inspection Report</label>
                                         </div>
-                                        <div class="col-sm-9">
-                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :createDocumentActionUrl="createDocumentActionUrl" />
+                                        <div class="col-sm-9" v-if="inspection.inspectionReportDocumentUrl">
+                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :documentActionUrl="inspection.inspectionReportDocumentUrl" />
                                         </div>
                                     </div>
                                 </div>
@@ -685,14 +685,17 @@ export default {
         await this.setInspection(res.body); 
     },
   },
-  beforeRouteEnter: function(to, from, next) {
-      console.log(to);
-            next(async (vm) => {
-                await vm.loadInspection({ inspection_id: to.params.inspection_id });
-                
-            });
-  },
+  //beforeRouteEnter: function(to, from, next) {
+  //    console.log(to);
+  //          next((vm) => {
+  //              vm.loadInspection({ inspection_id: to.params.inspection_id });
+  //              
+  //          });
+  //},
   created: async function() {
+      if (this.$route.params.inspection_id) {
+          await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
+      }
       console.log(this)
 
       // inspection_types
@@ -727,11 +730,11 @@ export default {
           this.$refs.search_person.setInput(value);
       }
       // load Inspection report
-      await this.$refs.inspection_report_file.get_documents();
-    // load current Inspection renderer schema
-    if (this.inspection.inspection_type_id) {
-      await this.loadSchema();
-    }
+      //await this.$refs.inspection_report_file.get_documents();
+      // load current Inspection renderer schema
+      if (this.inspection.inspection_type_id) {
+          await this.loadSchema();
+      }
   },
   mounted: function() {
       let vm = this;
@@ -750,7 +753,7 @@ export default {
           vm.setPlannedForTime(e.date.format('LT'));
       });
       
-      this.$nextTick(() => {
+      this.$nextTick(async () => {
           this.addEventListeners();
       });
   }

@@ -155,7 +155,7 @@ def save_document(request, instance, comms_instance, document_type):
             document = instance.report.get_or_create(
                 name=filename)[0]
             path = default_storage.save(
-                'wildlifecompliance/compliance/{}/{}/report/{}'.format(
+                'wildlifecompliance/{}/{}/report/{}'.format(
                     instance._meta.model_name, instance.id, filename), ContentFile(
                     _file.read()))
 
@@ -169,7 +169,7 @@ def save_document(request, instance, comms_instance, document_type):
             document = comms_instance.documents.get_or_create(
                 name=filename)[0]
             path = default_storage.save(
-                'wildlifecompliance/compliance/{}/{}/communications/{}/documents/{}'.format(
+                'wildlifecompliance/{}/{}/communications/{}/documents/{}'.format(
                     instance._meta.model_name, instance.id, comms_instance.id, filename), ContentFile(
                     _file.read()))
 
@@ -184,7 +184,7 @@ def save_document(request, instance, comms_instance, document_type):
             document = instance.documents.get_or_create(
                 name=filename)[0]
             path = default_storage.save(
-                'wildlifecompliance/compliance/{}/{}/documents/{}'.format(
+                'wildlifecompliance/{}/{}/documents/{}'.format(
                     instance._meta.model_name, instance.id, filename), ContentFile(
                     _file.read()))
 

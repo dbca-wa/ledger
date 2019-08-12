@@ -29,7 +29,7 @@
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
-                    <input :name="name" type="file" :data-que="n" :accept="fileTypes" @change="handleChange"/>
+                    <input :name="name" type="file" :data-que="n" :accept="fileTypes" @change="handleChangeWrapper"/>
                 </div>
             </div>
 
@@ -72,7 +72,9 @@ export default {
         },
         isRepeatable:Boolean,
         readonly:Boolean,
-        createDocumentActionUrl: Function,
+        documentActionUrl: String,
+        //createDocumentActionUrl: Function,
+        parent_id: Number,
     },
     //components: {CommentBlock, HelpText},
     data:function(){
@@ -84,7 +86,8 @@ export default {
             filename:null,
             help_text_url:'',
             commsLogId: null,
-            documentActionUrl: null,
+            documentActionUrlUpdated: null,
+            //documentActionUrl: null,
         }
     },
     computed: {
@@ -93,6 +96,9 @@ export default {
         },
     },
 
+    watch: {
+        documentActionUrl: function() {},
+    },
     methods:{
         handleChange: function (e) {
             let vm = this;
@@ -129,20 +135,20 @@ export default {
         get_documents: async function() {
             this.show_spinner = true;
 
-            var formData = new FormData();
-            formData.append('action', 'list');
-            if (this.commsLogId) {
-                formData.append('comms_log_id', this.commsLogId);
+            if (this.documentActionUrl) {
+                var formData = new FormData();
+                formData.append('action', 'list');
+                if (this.commsLogId) {
+                    formData.append('comms_log_id', this.commsLogId);
+                }
+                formData.append('input_name', this.name);
+                formData.append('csrfmiddlewaretoken', this.csrf_token);
+                let res = await Vue.http.post(this.documentActionUrl, formData)
+                //let res = await Vue.http.post(this.documentActionUrl, formData)
+                this.documents = res.body.filedata;
+                this.commsLogId = res.body.comms_instance_id;
+                //console.log(vm.documents);
             }
-            formData.append('input_name', this.name);
-            formData.append('csrfmiddlewaretoken', this.csrf_token);
-            if (!this.documentActionUrl) {
-                this.documentActionUrl = await this.createDocumentActionUrl()
-            }
-            let res = await Vue.http.post(this.documentActionUrl, formData)
-            this.documents = res.body.filedata;
-            this.commsLogId = res.body.comms_instance_id;
-            //console.log(vm.documents);
             this.show_spinner = false;
 
         },
@@ -159,7 +165,8 @@ export default {
             formData.append('csrfmiddlewaretoken', this.csrf_token);
             if (this.documentActionUrl) {
                 let res = await Vue.http.post(this.documentActionUrl, formData)
-                this.documents = this.get_documents()
+                //this.documents = await this.get_documents()
+                this.documents = await this.get_documents()
                 this.commsLogId = res.body.comms_instance_id;
             }
             //vm.documents = res.body;
@@ -195,26 +202,52 @@ export default {
             return _file
         },
 
+        handleChangeWrapper: async function(e) {
+            if (!this.parent_id && !this.documentActionUrl) {
+                await this.create_parent();
+                this.handleChange(e);
+            }
+            //this.documentActionUrlUpdated = await this.$emit('create-parent');
+            //return this.documentActionUrlUpdated;
+        },
+        create_parent: function(e) {
+            this.$emit('create-parent');
+        },
+
+
+
         save_document: async function(e) {
             this.show_spinner = true;
+            if (!this.parent_id && !this.documentActionUrl) {
+               //await this.$emit('create-parent');
+               //await this.create_parent();
+               // this.$emit('create-parent', (res) => { 
+               //     console.log("emit fn")
+               //     this.DocumentActionUrlUpdated = res
+               // });
+            }
 
-            var formData = new FormData();
-            formData.append('action', 'save');
-            if (this.commsLogId) {
-                formData.append('comms_log_id', this.commsLogId);
+            if (this.documentActionUrl) {
+                var formData = new FormData();
+                formData.append('action', 'save');
+                if (this.commsLogId) {
+                    formData.append('comms_log_id', this.commsLogId);
+                }
+                formData.append('input_name', this.name);
+                formData.append('filename', e.target.files[0].name);
+                formData.append('_file', this.uploadFile(e));
+                formData.append('csrfmiddlewaretoken', this.csrf_token);
+                //if (!this.documentActionUrl) {
+                //    this.documentActionUrl = await this.createDocumentActionUrl()
+                //}
+                let res = await Vue.http.post(this.documentActionUrl, formData)
+                
+                this.documents = res.body.filedata;
+                this.commsLogId = res.body.comms_instance_id;
+                this.show_spinner = false;
+            } else {
+                console.log("no documentActionUrl");
             }
-            formData.append('input_name', this.name);
-            formData.append('filename', e.target.files[0].name);
-            formData.append('_file', this.uploadFile(e));
-            formData.append('csrfmiddlewaretoken', this.csrf_token);
-            if (!this.documentActionUrl) {
-                this.documentActionUrl = await this.createDocumentActionUrl()
-            }
-            let res = await Vue.http.post(this.documentActionUrl, formData)
-            
-            this.documents = res.body.filedata;
-            this.commsLogId = res.body.comms_instance_id;
-            this.show_spinner = false;
 
         },
 
@@ -238,11 +271,20 @@ export default {
             }
         }
         this.$nextTick(async () => {
-            this.documentActionUrl = await this.createDocumentActionUrl()
-            console.log(this.documentActionUrl)
-            //await this.get_documents();
+            //if (!this.parent_id) {
+            //    console.log(this.$parent)
+            //    await this.$parent.createDocumentActionUrl();
+            //}
+            console.log(this.documentActionUrl);
+            await this.get_documents();
         });
-    }
+    },
+    //updated: function() {
+    //    this.$nextTick(async () => {
+    //        await this.get_documents();
+    //    });
+    //},
+
 }
 
 </script>

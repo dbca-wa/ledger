@@ -323,64 +323,16 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
         raise serializers.ValidationError(str(e))
     
-    #@detail_route(methods=['POST'])
-    #@renderer_classes((JSONRenderer,))
-    #def process_renderer_document(self, request, *args, **kwargs):
-
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
-    def process_document(self, request, *args, **kwargs):
+    def process_renderer_document(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            action = request.data.get('action')
-            section = request.data.get('input_name')
-            if action == 'list' and 'input_name' in request.data:
-                pass
-
-            elif action == 'delete' and 'document_id' in request.data:
-                document_id = request.data.get('document_id')
-                document = instance.documents.get(id=document_id)
-
-                if document._file and os.path.isfile(
-                        document._file.path) and document.can_delete:
-                    os.remove(document._file.path)
-
-                document.delete()
-                instance.save(version_comment='Approval File Deleted: {}'.format(
-                    document.name))  # to allow revision to be added to reversion history
-
-            elif action == 'save' and 'input_name' in request.data and 'filename' in request.data:
-                call_email_id = request.data.get('call_email_id')
-                filename = request.data.get('filename')
-                _file = request.data.get('_file')
-                if not _file:
-                    _file = request.data.get('_file')
-
-                document = instance.documents.get_or_create(
-                    input_name=section, name=filename)[0]
-                if request.data.get('save_to_path'):
-                    path = instance.update_compliance_doc_filename(request.data.get('filename'))
-                else:
-                    path = default_storage.save(
-                        'wildlifecompliance/call_email/{}/documents/{}'.format(
-                            call_email_id, filename), ContentFile(
-                            _file.read()))
-
-                document._file = path
-                document.save()
-                # to allow revision to be added to reversion history
-                instance.save(
-                    version_comment='File Added: {}'.format(filename))
-
-            return Response(
-                [
-                    dict(
-                        input_name=d.input_name,
-                        name=d.name,
-                        file=d._file.url,
-                        id=d.id,
-                        can_delete=d.can_delete) for d in instance.documents.filter(
-                        input_name=section) if d._file])
+            returned_data = process_generic_document(request, instance)
+            if returned_data:
+                return Response(returned_data)
+            else:
+                return Response()
 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -393,6 +345,73 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+   # @detail_route(methods=['POST'])
+   # @renderer_classes((JSONRenderer,))
+   # def process_document(self, request, *args, **kwargs):
+   #     try:
+   #         instance = self.get_object()
+   #         action = request.data.get('action')
+   #         section = request.data.get('input_name')
+   #         if action == 'list' and 'input_name' in request.data:
+   #             pass
+
+   #         elif action == 'delete' and 'document_id' in request.data:
+   #             document_id = request.data.get('document_id')
+   #             document = instance.documents.get(id=document_id)
+
+   #             if document._file and os.path.isfile(
+   #                     document._file.path) and document.can_delete:
+   #                 os.remove(document._file.path)
+
+   #             document.delete()
+   #             instance.save(version_comment='Approval File Deleted: {}'.format(
+   #                 document.name))  # to allow revision to be added to reversion history
+
+   #         elif action == 'save' and 'input_name' in request.data and 'filename' in request.data:
+   #             call_email_id = request.data.get('call_email_id')
+   #             filename = request.data.get('filename')
+   #             _file = request.data.get('_file')
+   #             if not _file:
+   #                 _file = request.data.get('_file')
+
+   #             document = instance.documents.get_or_create(
+   #                 input_name=section, name=filename)[0]
+   #             if request.data.get('save_to_path'):
+   #                 path = instance.update_compliance_doc_filename(request.data.get('filename'))
+   #             else:
+   #                 path = default_storage.save(
+   #                     'wildlifecompliance/call_email/{}/documents/{}'.format(
+   #                         call_email_id, filename), ContentFile(
+   #                         _file.read()))
+
+   #             document._file = path
+   #             document.save()
+   #             # to allow revision to be added to reversion history
+   #             instance.save(
+   #                 version_comment='File Added: {}'.format(filename))
+
+   #         return Response(
+   #             [
+   #                 dict(
+   #                     input_name=d.input_name,
+   #                     name=d.name,
+   #                     file=d._file.url,
+   #                     id=d.id,
+   #                     can_delete=d.can_delete) for d in instance.documents.filter(
+   #                     input_name=section) if d._file])
+
+   #     except serializers.ValidationError:
+   #         print(traceback.print_exc())
+   #         raise
+   #     except ValidationError as e:
+   #         if hasattr(e, 'error_dict'):
+   #             raise serializers.ValidationError(repr(e.error_dict))
+   #         else:
+   #             raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+   #     except Exception as e:
+   #         print(traceback.print_exc())
+   #         raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))

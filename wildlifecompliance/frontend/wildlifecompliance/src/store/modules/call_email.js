@@ -138,6 +138,11 @@ export const callemailStore = {
             if (!state.call_email.volunteer_id) {
                 state.call_email.volunteer_id = state.call_email.current_user_id;
             }
+            let rendererDocumentUrl = helpers.add_endpoint_join(
+                api_endpoints.call_email,
+                state.call_email.id + "/process_renderer_document/"
+                )
+            Vue.set(state.call_email, 'rendererDocumentUrl', rendererDocumentUrl); 
         },
         updateSchema(state, schema) {
             //state.call_email.schema = schema;
