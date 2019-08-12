@@ -475,5 +475,11 @@ export const callemailStore = {
         setDateOfCall({ commit }, date ) {
             commit("updateDateOfCall", date);
         },
+        async createDocumentActionUrl({state}) {
+          return helpers.add_endpoint_join(
+              api_endpoints.call_email,
+              state.call_email.id + "/process_comms_log_document/"
+              )
+        },
     },
 };

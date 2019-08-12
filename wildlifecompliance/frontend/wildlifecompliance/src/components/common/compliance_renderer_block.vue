@@ -334,13 +334,6 @@ const ComplianceRendererBlock = {
     ...mapGetters('inspectionStore', {
         inspection: 'inspection',
     }),
-    //createDocumentActionUrl: function() {
-      //  if (this.call_email && this.call_email.id) {
-        //    return this.call_email.createDocumentActionUrl;
-       // } else if (this.inspection && this.inspection.id) {
-         //   return this.inspection.createDocumentActionUrl;
-        //}
-    //},
     is_readonly: function() {
         // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
         if (this.call_email && this.call_email.id) {
@@ -411,19 +404,9 @@ const ComplianceRendererBlock = {
         'setFormValue',
         //'refreshApplicationFees',
     ]),
-    ...mapActions('callemailStore', {
+    ...mapActions('complianceRendererStore', {
         createDocumentActionUrl: 'createDocumentActionUrl',
     }),
-    ...mapActions('inspectionStore', {
-        createDocumentActionUrl: 'createDocumentActionUrl',
-    }),
-    //createDocumentActionUrl: function() {
-      //  if (this.call_email && this.call_email.id) {
-        //    return this.call_email.createDocumentActionUrl;
-        //} else if (this.inspection && this.inspection.id) {
-          //  return this.inspection.createDocumentActionUrl;
-       // }
-    //},
     strToBool: strToBool,
     element_id: function(depth=0) {
         return `id_${this.component_name}${(depth) ? `_${depth}` : ''}${this.instance !== null ? `__instance${this.instance}`: ''}`;

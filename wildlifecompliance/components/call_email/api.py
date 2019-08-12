@@ -322,6 +322,10 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
         raise serializers.ValidationError(str(e))
+    
+    #@detail_route(methods=['POST'])
+    #@renderer_classes((JSONRenderer,))
+    #def process_renderer_document(self, request, *args, **kwargs):
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
