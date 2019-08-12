@@ -6,8 +6,9 @@ from django.core.exceptions import ValidationError
 from datetime import datetime, timedelta
 from commercialoperator.components.main.models import Park
 from commercialoperator.components.proposals.models import Proposal
-from ledger.checkout.utils import create_basket_session, create_checkout_session
+from ledger.checkout.utils import create_basket_session, create_checkout_session, calculate_excl_gst
 from ledger.payments.models import Invoice
+from ledger.payments.utils import oracle_parser
 import json
 from decimal import Decimal
 
@@ -20,8 +21,7 @@ logger = logging.getLogger('payment_checkout')
 def create_booking(request, proposal_id):
     """ Create the ledger lines - line items for invoice sent to payment system """
 
-    #import ipdb; ipdb.set_trace()
-    booking = Booking.objects.create(proposal_id=proposal_id)
+    booking = Booking.objects.create(proposal_id=proposal_id, created_by=request.user, booking_type=3)
 
     tbody = json.loads(request.POST['payment'])['tbody']
     for row in tbody:
@@ -97,25 +97,37 @@ def delete_session_application_invoice(session):
 def create_fee_lines(proposal, invoice_text=None, vouchers=[], internal=False):
     """ Create the ledger lines - line item for application fee sent to payment system """
 
-    #import ipdb; ipdb.set_trace()
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
-    return [{
-            'ledger_description': 'Application Fee - {} - {}'.format(now, proposal.lodgement_number),
-            'oracle_code': proposal.application_type.oracle_code,
-            'price_incl_tax':  proposal.application_type.application_fee,
-            'quantity': 1
-        }]
+    application_price = proposal.application_type.application_fee
+    licence_price = proposal.licence_fee_amount
+    line_items = [
+        {   'ledger_description': 'Application Fee - {} - {}'.format(now, proposal.lodgement_number),
+            'oracle_code': proposal.application_type.oracle_code_application,
+            'price_incl_tax':  application_price,
+            'price_excl_tax':  application_price if proposal.application_type.is_gst_exempt else calculate_excl_gst(application_price),
+            'quantity': 1,
+        },
+        {   'ledger_description': 'Licence Fee {} - {} - {}'.format(proposal.other_details.get_preferred_licence_period_display(), now, proposal.lodgement_number),
+            'oracle_code': proposal.application_type.oracle_code_licence,
+            'price_incl_tax':  licence_price,
+            'price_excl_tax':  licence_price if proposal.application_type.is_gst_exempt else calculate_excl_gst(licence_price),
+            'quantity': 1,
+        }
+    ]
+    logger.info('{}'.format(line_items))
+    return line_items
 
 def create_lines(request, invoice_text=None, vouchers=[], internal=False):
     """ Create the ledger lines - line items for invoice sent to payment system """
 
-    #import ipdb; ipdb.set_trace()
-    def add_line_item(park_name, arrival, oracle_code, age_group, price, no_persons):
+    def add_line_item(park, arrival, age_group, price, no_persons):
+        price = Decimal(price)
         if no_persons > 0:
             return {
-                'ledger_description': '{} - {} - {}'.format(park_name, arrival, age_group),
-                'oracle_code': oracle_code,
-                'price_incl_tax':  Decimal(price),
+                'ledger_description': '{} - {} - {}'.format(park.name, arrival, age_group),
+                'oracle_code': park.oracle_code,
+                'price_incl_tax':  price,
+                'price_excl_tax':  price if park.is_gst_exempt else calculate_excl_gst(price),
                 'quantity': no_persons,
             }
         return None
@@ -129,32 +141,30 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
         no_children = int(row[3]) if row[3] else 0
         no_free_of_charge = int(row[4]) if row[4] else 0
         park= Park.objects.get(id=park_id)
-        oracle_code = 'ABC123 GST'
 
         if no_adults > 0:
-            lines.append(add_line_item(park.name, arrival, oracle_code, 'Adult', price=park.adult_price, no_persons=no_adults))
+            lines.append(add_line_item(park, arrival, 'Adult', price=park.adult_price, no_persons=no_adults))
 
         if no_children > 0:
-            lines.append(add_line_item(park.name, arrival, oracle_code, 'Child', price=park.child_price, no_persons=no_children))
+            lines.append(add_line_item(park, arrival, 'Child', price=park.child_price, no_persons=no_children))
 
         if no_free_of_charge > 0:
-            lines.append(add_line_item(park.name, arrival, oracle_code, 'Free', price=0.0, no_persons=no_free_of_charge))
+            lines.append(add_line_item(park, arrival, 'Free', price=0.0, no_persons=no_free_of_charge))
 
     return lines
 
 def checkout(request, proposal, lines, return_url_ns='public_booking_success', return_preload_url_ns='public_booking_success', invoice_text=None, vouchers=[], internal=False):
-    #import ipdb; ipdb.set_trace()
     basket_params = {
         'products': lines,
         'vouchers': vouchers,
-        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'system': settings.PAYMENT_SYSTEM_ID,
         'custom_basket': True,
     }
 
     basket, basket_hash = create_basket_session(request, basket_params)
     #fallback_url = request.build_absolute_uri('/')
     checkout_params = {
-        'system': settings.PS_PAYMENT_SYSTEM_ID,
+        'system': settings.PAYMENT_SYSTEM_ID,
         'fallback_url': request.build_absolute_uri('/'),                                      # 'http://mooring-ria-jm.dbca.wa.gov.au/'
         'return_url': request.build_absolute_uri(reverse(return_url_ns)),          # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
         'return_preload_url': request.build_absolute_uri(reverse(return_url_ns)),  # 'http://mooring-ria-jm.dbca.wa.gov.au/success/'
@@ -204,5 +214,10 @@ def checkout(request, proposal, lines, return_url_ns='public_booking_success', r
 #        )
 
     return response
+
+
+def oracle_integration(date,override):
+    system = '0557'
+    oracle_codes = oracle_parser(date, system, 'Commercial Operator Licensing', override=override)
 
 

@@ -219,6 +219,7 @@ class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
     insurance_expiry = serializers.DateField(format="%d/%m/%Y",input_formats=['%d/%m/%Y'],required=False,allow_null=True)
     accreditations = ProposalAccreditationSerializer(many=True, read_only=True)
     preferred_licence_period = serializers.CharField(allow_blank=True, allow_null=True)
+    proposed_end_date = serializers.DateField(format="%d/%m/%Y",read_only=True)
 
     class Meta:
         model = ProposalOtherDetails
@@ -235,7 +236,8 @@ class ProposalOtherDetailsSerializer(serializers.ModelSerializer):
                 'credit_fees',
                 'credit_docket_books',
                 'docket_books_number',
-                'mooring'
+                'mooring',
+                'proposed_end_date',
                 )
     # def get_accreditation_type(self,obj):
     #     return obj.get_accreditation_type_display()
@@ -263,6 +265,7 @@ class ChecklistQuestionSerializer(serializers.ModelSerializer):
         #fields = '__all__'
         fields=('id',
                 'text',
+                'answer_type',
                 )
 class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
     question=ChecklistQuestionSerializer(read_only=True)
@@ -271,6 +274,7 @@ class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
         fields = ('id',
                 'question',
                 'answer',
+                'text_answer',
                 )
 
 class ProposalAssessmentSerializer(serializers.ModelSerializer):
@@ -375,7 +379,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
         read_only_fields=('documents',)
 
     def get_documents_url(self,obj):
-        return '/media/proposals/{}/documents/'.format(obj.id)
+        return '/media/{}/proposals/{}/documents/'.format(settings.MEDIA_APP_DIR, obj.id)
 
     def get_readonly(self,obj):
         return False

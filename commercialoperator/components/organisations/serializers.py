@@ -18,6 +18,7 @@ from commercialoperator.components.organisations.utils import (
                                 can_relink,
                                 is_last_admin,
                             )
+from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
 
@@ -89,12 +90,14 @@ class OrganisationSerializer(serializers.ModelSerializer):
     pins = serializers.SerializerMethodField(read_only=True)
     delegates = DelegateSerializer(many=True, read_only=True)
     organisation = LedgerOrganisationSerializer()
+    trading_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Organisation
         fields = (
             'id',
             'name',
+            'trading_name',
             'abn',
             'address',
             'email',
@@ -103,6 +106,9 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'pins',
             'delegates'
         )
+
+    def get_trading_name(self, obj):
+        return obj.organisation.trading_name
 
     def get_pins(self, obj):
         try:
@@ -170,7 +176,7 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
 class DetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ledger_organisation
-        fields = ('id','name')
+        fields = ('id','name', 'trading_name')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
     user_status= serializers.SerializerMethodField()
@@ -258,6 +264,18 @@ class OrganisationCommsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganisationLogEntry
         fields = '__all__'
+
+class OrganisationLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = OrganisationLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
 
 class OrganisationUnlinkUserSerializer(serializers.Serializer):
     user = serializers.IntegerField()

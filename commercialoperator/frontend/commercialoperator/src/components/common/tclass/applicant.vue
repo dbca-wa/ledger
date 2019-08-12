@@ -16,13 +16,19 @@
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label">Name</label>
                                             <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="proposal.org_applicant.name">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="proposal.org_applicant.name" style="width: 100%">
+                                            </div>
+                                          </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label">Trading Name</label>
+                                            <div class="col-sm-6">
+                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="proposal.org_applicant.trading_name" style="width: 100%">
                                             </div>
                                           </div>
                                           <div class="form-group">
                                             <label for="" class="col-sm-3 control-label" >ABN/ACN</label>
                                             <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="proposal.org_applicant.abn">
+                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="proposal.org_applicant.abn" style="width: 100%">
                                             </div>
                                           </div>
                                       </form>

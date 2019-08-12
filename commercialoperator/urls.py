@@ -78,6 +78,11 @@ api_patterns = [
     url(r'^api/accreditation_choices',proposal_api.AccreditationTypeView.as_view(),name='accreditation_choices'),
     url(r'^api/licence_period_choices',proposal_api.LicencePeriodChoicesView.as_view(),name='licence_period_choices'),
 
+    url(r'^api/oracle_job$',main_api.OracleJob.as_view(), name='get-oracle'),
+    #url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
+
+
+    url(r'^api/reports/booking_settlements$', main_api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
 ]
 
 # URL Patterns
@@ -96,9 +101,11 @@ urlpatterns = [
     url(r'^profiles/', views.ExternalView.as_view(), name='manage-profiles'),
     url(r'^help/(?P<application_type>[^/]+)/(?P<help_type>[^/]+)/$', views.HelpView.as_view(), name='help'),
     url(r'^mgt-commands/$', views.ManagementCommandsView.as_view(), name='mgt-commands'),
+    url(r'test-emails/$', proposal_views.TestEmailView.as_view(), name='test-emails'),
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     #following url is used to include url path when sending Proposal amendment request to user.
     url(r'^proposal/$', proposal_views.ProposalView.as_view(), name='proposal'),
+    url(r'^preview/licence-pdf/(?P<proposal_pk>\d+)',proposal_views.PreviewLicencePDFView.as_view(), name='preview_licence_pdf'),
 
     # payment related urls
     url(r'^application_fee/(?P<proposal_pk>\d+)/$', booking_views.ApplicationFeeView.as_view(), name='application_fee'),
@@ -124,6 +131,7 @@ urlpatterns = [
     url(r'^history/proposaltype/(?P<pk>\d+)/$', proposal_views.ProposalTypeHistoryCompareView.as_view(), name='proposaltype_history'),
     url(r'^history/helppage/(?P<pk>\d+)/$', proposal_views.HelpPageHistoryCompareView.as_view(), name='helppage_history'),
     url(r'^history/organisation/(?P<pk>\d+)/$', organisation_views.OrganisationHistoryCompareView.as_view(), name='organisation_history'),
+
 
 ] + ledger_patterns
 

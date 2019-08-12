@@ -39,7 +39,16 @@
                                 </select>
                             </div>
                         </div>
-                        <div v-if="is_external" class="col-md-3">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="">Submitter</label>
+                                <select class="form-control" v-model="filterProposalSubmitter">
+                                    <option value="All">All</option>
+                                    <option v-for="s in proposal_submitters" :value="s.email">{{s.search_term}}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div v-if="is_external" class="col-md-6">
                             <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Application</router-link>
                         </div>
                     </div>
@@ -62,7 +71,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <!-- <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Submitter</label>
                                 <select class="form-control" v-model="filterProposalSubmitter">
@@ -70,7 +79,7 @@
                                     <option v-for="s in proposal_submitters" :value="s.email">{{s.search_term}}</option>
                                 </select>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -117,6 +126,7 @@ export default {
             datatable_id: 'proposal-datatable-'+vm._uid,
             //Profile to check if user has access to process Proposal
             profile: {},
+            is_payment_officer: false,
             // Filters for Proposals
             filterProposalStatus: 'All',
             filterProposalLodgedFrom: '',
@@ -375,7 +385,9 @@ export default {
                                 }
                             }
                             if (full.fee_paid){
+                                if(vm.is_payment_officer){
                                 links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                            }
                                 links +=  `<a href='/cols/payments/invoice-pdf/${full.fee_invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${full.fee_invoice_reference}</a><br/>`;
                             }
                             return links;
@@ -582,7 +594,8 @@ export default {
         fetchProfile: function(){
             let vm = this;
             Vue.http.get(api_endpoints.profile).then((response) => {
-                vm.profile = response.body
+                vm.profile = response.body;
+                vm.is_payment_officer=response.body.is_payment_officer;
                               
             },(error) => {
                 console.log(error);

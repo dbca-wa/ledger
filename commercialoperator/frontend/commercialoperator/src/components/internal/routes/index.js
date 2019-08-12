@@ -14,6 +14,7 @@ import Approval from '../approvals/approval.vue'
 //import PaymentOrder from '@/components/common/tclass/payment_order.vue'
 import PaymentOrder from '@/components/common/tclass/payment_order.vue'
 import PaymentDash from '@/components/common/payments_dashboard.vue'
+import Reports from '@/components/reports/reports.vue'
 export default
 {
     path: '/internal',
@@ -64,6 +65,11 @@ export default
             path: 'payment_order',
             component: PaymentOrder,
             name:"payment_order"
+        },
+        {
+            path:'reports',
+            name:'reports',
+            component:Reports
         },
 
         {

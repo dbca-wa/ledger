@@ -56,7 +56,11 @@ export default {
         disable_add_entry: {
             type: Boolean,
             default: true
-        }
+        },
+        is_user_log:{
+              type: Boolean,              
+              default: false
+        },
     },
     data() {
         let vm = this;
@@ -130,7 +134,11 @@ export default {
                     },
                     {
                         title: 'Type',
-                        data: 'type'
+                        //data: 'type'
+                        data: '',
+                        mRender:function(data,type,full){
+                           return vm.is_user_log  ? full.log_type: full.type;
+                        },
                     },
                     /*{
                         title: 'Reference',

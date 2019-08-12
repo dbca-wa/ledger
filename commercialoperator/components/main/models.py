@@ -140,6 +140,10 @@ class Park(models.Model):
     #senior = models.DecimalField('Senior (price per senior)', max_digits=5, decimal_places=2)
     oracle_code = models.CharField(max_length=50)
 
+    # editable=False --> related to invoice PDF generation, currently GST is computed assuming GST is payable for ALL parks.
+    # Must fix invoice calc. GST per park in pdf line_items, for net GST if editable is to be set to True
+    is_gst_exempt = models.BooleanField(default=False, editable=False)
+
     class Meta:
         ordering = ['name']
         app_label = 'commercialoperator'
@@ -242,7 +246,11 @@ class ApplicationType(models.Model):
     max_renewals = models.PositiveSmallIntegerField('Maximum number of times an Approval can be renewed', null=True, blank=True)
     max_renewal_period = models.PositiveSmallIntegerField('Maximum period of each Approval renewal (Years)', null=True, blank=True)
     application_fee = models.DecimalField(max_digits=6, decimal_places=2)
-    oracle_code = models.CharField(max_length=50)
+    licence_fee_2mth = models.DecimalField('Licence Fee (2 Months)', max_digits=6, decimal_places=2)
+    licence_fee_1yr = models.DecimalField('Licence Fee (1 Year)', max_digits=6, decimal_places=2)
+    oracle_code_application = models.CharField(max_length=50)
+    oracle_code_licence = models.CharField(max_length=50)
+    is_gst_exempt = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['order', 'name']
@@ -395,7 +403,7 @@ class GlobalSettings(models.Model):
         ('credit_facility_link', 'Credit Facility Link'),
         ('deed_poll', 'Deed poll'),
         ('online_training_document', 'Online Training Document'),
-        
+
     )
     key = models.CharField(max_length=255, choices=keys, blank=False, null=False,)
     value = models.CharField(max_length=255)

@@ -5,7 +5,7 @@
         <div class="row">
             <h3>{{ user.first_name }} {{ user.last_name  }} - {{ user.dob }} ({{ user.email }})</h3>
             <div class="col-md-3">
-                <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
+                <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :is_user_log="true" :disable_add_entry="false"/>
             </div>
             <div class="col-md-9">
                 <ul class="nav nav-tabs">
@@ -273,6 +273,7 @@ export default {
             activate_tables: false,
             comms_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/comms_log'),
             logs_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/action_log'),
+            comms_add_url: helpers.add_endpoint_json(api_endpoints.users,vm.$route.params.user_id+'/add_comms_log'),
             proposals_url: api_endpoints.proposals_paginated_external+'&submitter_id='+vm.$route.params.user_id,
             approvals_url: api_endpoints.approvals_paginated_external+'&submitter_id='+vm.$route.params.user_id,
             compliance_url: api_endpoints.compliances_paginated_external+'&submitter_id='+vm.$route.params.user_id,

@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import json
 import os
 import datetime
+import string
+from dateutil.relativedelta import relativedelta
 from django.db import models,transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
@@ -11,15 +13,18 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
+from django.conf import settings
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
+from ledger.accounts.models import OrganisationAddress
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.payments.models import Invoice
 #from ledger.accounts.models import EmailUser
 from ledger.licence.models import  Licence
+from ledger.address.models import Country
 from commercialoperator import exceptions
-from commercialoperator.components.organisations.models import Organisation
+from commercialoperator.components.organisations.models import Organisation, OrganisationContact, UserDelegation
 from commercialoperator.components.main.models import CommunicationsLogEntry, UserAction, Document, Region, District, Tenure, ApplicationType, Park, Activity, ActivityCategory, AccessType, Trail, Section, Zone, RequiredDocument#, RevisionedMixin
 from commercialoperator.components.main.utils import get_department_user
 from commercialoperator.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
@@ -38,30 +43,25 @@ logger = logging.getLogger(__name__)
 
 
 def update_proposal_doc_filename(instance, filename):
-    return 'proposals/{}/documents/{}'.format(instance.proposal.id,filename)
+    return '{}/proposals/{}/documents/{}'.format(settings.MEDIA_APP_DIR, instance.proposal.id,filename)
 
 def update_onhold_doc_filename(instance, filename):
-    #return 'proposals/{}/on_hold/{}'.format(instance.proposal.id,filename)
-    return 'proposals/{}/on_hold/{}'.format(instance.proposal.id,filename)
+    return '{}/proposals/{}/on_hold/{}'.format(settings.MEDIA_APP_DIR, instance.proposal.id,filename)
 
 def update_qaofficer_doc_filename(instance, filename):
-    return 'proposals/{}/qaofficer/{}'.format(instance.proposal.id,filename)
+    return '{}/proposals/{}/qaofficer/{}'.format(settings.MEDIA_APP_DIR, instance.proposal.id,filename)
 
 def update_referral_doc_filename(instance, filename):
-    #return 'proposals/{}/referral/{}/documents/{}'.format(instance.referral.proposal.id,instance.referral.id,filename)
-    return 'proposals/{}/referral/{}'.format(instance.referral.proposal.id,filename)
+    return '{}/proposals/{}/referral/{}'.format(settings.MEDIA_APP_DIR, instance.referral.proposal.id,filename)
 
 def update_proposal_required_doc_filename(instance, filename):
-    #return 'proposals/{}/required_documents/{}/{}'.format(instance.proposal.id,instance.required_doc.id,filename)
-    return 'proposals/{}/required_documents/{}'.format(instance.proposal.id,filename)
+    return '{}/proposals/{}/required_documents/{}'.format(settings.MEDIA_APP_DIR, instance.proposal.id,filename)
 
 def update_requirement_doc_filename(instance, filename):
-    #return 'proposals/{}/requirement_documents/{}/{}'.format(instance.requirement.proposal.id, instance.requirement.id,filename)
-    return 'proposals/{}/requirement_documents/{}'.format(instance.requirement.proposal.id,filename)
+    return '{}/proposals/{}/requirement_documents/{}'.format(settings.MEDIA_APP_DIR, instance.requirement.proposal.id,filename)
 
 def update_proposal_comms_log_filename(instance, filename):
-    #return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
-    return 'proposals/{}/communications/{}'.format(instance.log_entry.proposal.id,filename)
+    return '{}/proposals/{}/communications/{}'.format(settings.MEDIA_APP_DIR, instance.log_entry.proposal.id,filename)
 
 def application_type_choicelist():
     try:
@@ -588,6 +588,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         return Invoice.objects.get(reference=self.fee_invoice_reference).amount if self.fee_paid else None
 
     @property
+    def licence_fee_amount(self):
+        period = self.other_details.preferred_licence_period
+        if period.split('_')[1].endswith('months'):
+            return self.application_type.licence_fee_2mth
+        else:
+            return int(period.split('_')[0]) * self.application_type.licence_fee_1yr
+
+    @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
 
@@ -858,18 +866,21 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             if p.park.park_type=='land':
                 for a in p.activities.all():
                     park_activities.append(a.activity_name)
+                selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
             if p.park.park_type=='marine':
+                zone_activities=[]
                 for z in p.zones.all():
                     for a in z.park_activities.all():
-                        park_activities.append(a.activity_name)
-            selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
+                        zone_activities.append(a.activity_name)
+                    selected_parks_activities.append({'park': '{} - {}'.format(p.park.name, z.zone.name), 'activities': park_activities})
         for t in self.trails.all():
             #trails.append(t.trail.name)
-            trail_activities=[]
+            #trail_activities=[]
             for s in t.sections.all():
+                trail_activities=[]
                 for ts in s.trail_activities.all():
                   trail_activities.append(ts.activity_name)
-            selected_parks_activities.append({'park': t.trail.name, 'activities': trail_activities})
+                selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
         return selected_parks_activities
 
     def __assessor_group(self):
@@ -945,6 +956,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         #if self.submitter.email not in recipients:
         #    recipients.append(self.submitter.email)
         return recipients
+
+    #Check if the user is member of assessor group for the Proposal
+    def is_assessor(self,user):
+            return self.__assessor_group() in user.proposalassessorgroup_set.all() 
+
+    #Check if the user is member of assessor group for the Proposal
+    def is_approver(self,user):
+            return self.__approver_group() in user.proposalapprovergroup_set.all() 
 
 
     def can_assess(self,user):
@@ -1528,6 +1547,38 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             except:
                 raise
 
+    def preview_approval(self,request,details):
+        from commercialoperator.components.approvals.models import PreviewTempApproval
+        with transaction.atomic():
+            try:
+                if self.processing_status != 'with_approver':
+                    raise ValidationError('Licence preview only available when processing status is with_approver. Current status {}'.format(self.processing_status))
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                #if not self.applicant.organisation.postal_address:
+                if not self.applicant_address:
+                    raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
+
+                preview_approval = PreviewTempApproval.objects.create(
+                    current_proposal = self,
+                    issue_date = timezone.now(),
+                    expiry_date = datetime.datetime.strptime(details.get('due_date'), '%d/%m/%Y').date(),
+                    start_date = datetime.datetime.strptime(details.get('start_date'), '%d/%m/%Y').date(),
+                    submitter = self.submitter,
+                    org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
+                    proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                )
+
+                # Generate the preview document - get the value of the BytesIO buffer
+                licence_buffer = preview_approval.generate_doc(request.user, preview=True)
+
+                # clean temp preview licence object
+                transaction.set_rollback(True)
+
+                return licence_buffer
+            except:
+                raise
+
 
     def final_approval(self,request,details):
         from commercialoperator.components.approvals.models import Approval
@@ -1558,7 +1609,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
                 if self.processing_status == 'approved':
                     # TODO if it is an ammendment proposal then check appropriately
-                    #import ipdb; ipdb.set_trace()
                     checking_proposal = self
                     if self.proposal_type == 'renewal':
                         if self.previous_application:
@@ -1566,19 +1616,13 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    #'activity' : self.activity,
-                                    #'region' : self.region,
-                                    #'tenure' : self.tenure,
-                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    #'applicant' : self.applicant,
                                     'submitter': self.submitter,
                                     'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
                                     'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                     'lodgement_number': previous_approval.lodgement_number
-                                    #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
                             )
                             if created:
@@ -1591,44 +1635,31 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    #'activity' : self.activity,
-                                    #'region' : self.region,
-                                    #'tenure' : self.tenure,
-                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    #'applicant' : self.applicant,
                                     'submitter': self.submitter,
                                     'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
                                     'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                     'lodgement_number': previous_approval.lodgement_number
-                                    #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
                             )
                             if created:
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
                     else:
-                        #import ipdb; ipdb.set_trace()
                         approval,created = Approval.objects.update_or_create(
                             current_proposal = checking_proposal,
                             defaults = {
-                                #'activity' : self.activity,
-                                #'region' : self.region.name,
-                                #'tenure' : self.tenure.name,
-                                #'title' : self.title,
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
                                 'submitter': self.submitter,
                                 'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
                                 'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
-                                #'extracted_fields' = JSONField(blank=True, null=True)
                             }
                         )
                     # Generate compliances
-                    #self.generate_compliances(approval, request)
                     from commercialoperator.components.compliances.models import Compliance, ComplianceUserAction
                     if created:
                         if self.proposal_type == 'amendment':
@@ -1665,40 +1696,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
             except:
                 raise
-
-
-
-    '''def generate_compliances(self,approval):
-        from commercialoperator.components.compliances.models import Compliance
-        today = timezone.now().date()
-        timedelta = datetime.timedelta
-
-        for req in self.requirements.all():
-            if req.recurrence and req.due_date > today:
-                current_date = req.due_date
-                while current_date < approval.expiry_date:
-                    for x in range(req.recurrence_schedule):
-                    #Weekly
-                        if req.recurrence_pattern == 1:
-                            current_date += timedelta(weeks=1)
-                    #Monthly
-                        elif req.recurrence_pattern == 2:
-                            current_date += timedelta(weeks=4)
-                            pass
-                    #Yearly
-                        elif req.recurrence_pattern == 3:
-                            current_date += timedelta(days=365)
-                    # Create the compliance
-                    if current_date <= approval.expiry_date:
-                        Compliance.objects.create(
-                            proposal=self,
-                            due_date=current_date,
-                            processing_status='future',
-                            approval=approval,
-                            requirement=req.requirement,
-                        )
-                        #TODO add logging for compliance'''
-
 
     def generate_compliances(self,approval, request):
         today = timezone.now().date()
@@ -1793,11 +1790,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.schema = ptype.schema
                 proposal.submitter = request.user
                 proposal.previous_application = self
+                proposal.proposed_issuance_approval= None
                 try:
-                    ProposalOtherDetails.objects.get(proposal=proposal)                    
+                    ProposalOtherDetails.objects.get(proposal=proposal)
                 except ProposalOtherDetails.DoesNotExist:
                     ProposalOtherDetails.objects.create(proposal=proposal)
                 # Create a log entry for the proposal
+                proposal.other_details.nominated_start_date=self.approval.expiry_date+ datetime.timedelta(days=1)
+                proposal.other_details.save()
                 self.log_user_action(ProposalUserAction.ACTION_RENEW_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
                 applicant_field=getattr(self, self.applicant_field)
@@ -1831,7 +1831,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 try:
-                    ProposalOtherDetails.objects.get(proposal=proposal)                    
+                    ProposalOtherDetails.objects.get(proposal=proposal)
                 except ProposalOtherDetails.DoesNotExist:
                     ProposalOtherDetails.objects.create(proposal=proposal)
                 #copy all the requirements from the previous proposal
@@ -1845,7 +1845,15 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         r.copied_from=old_r
                         r.id = None
                         r.save()
-                # Create a log entry for the proposal
+                #copy all the requirement documents from previous proposal
+                for requirement in proposal.requirements.all():
+                    for requirement_document in RequirementDocument.objects.filter(requirement=requirement.copied_from):
+                        requirement_document.requirement = requirement
+                        requirement_document.id = None
+                        requirement_document._file.name = u'{}/proposals/{}/requirement_documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, requirement_document.name)
+                        requirement_document.can_delete = True
+                        requirement_document.save()
+                            # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_AMEND_PROPOSAL.format(self.id),request)
                 # Create a log entry for the organisation
                 applicant_field=getattr(self, self.applicant_field)
@@ -1925,6 +1933,26 @@ class ProposalOtherDetails(models.Model):
 
     class Meta:
         app_label = 'commercialoperator'
+
+    @property
+    def proposed_end_date(self):
+        end_date=None
+        if self.preferred_licence_period and self.nominated_start_date:
+            if self.preferred_licence_period=='2_months':
+                end_date=self.nominated_start_date + relativedelta(months=+2) - relativedelta(days=1)
+            if self.preferred_licence_period=='1_year':
+                end_date=self.nominated_start_date + relativedelta(months=+12)- relativedelta(days=1)
+            if self.preferred_licence_period=='3_year':
+                end_date=self.nominated_start_date + relativedelta(months=+36)- relativedelta(days=1)
+            if self.preferred_licence_period=='5_year':
+                end_date=self.nominated_start_date + relativedelta(months=+60)- relativedelta(days=1)
+            if self.preferred_licence_period=='7_year':
+                end_date=self.nominated_start_date + relativedelta(months=+84)- relativedelta(days=1)
+            if self.preferred_licence_period=='10_year':
+                end_date=self.nominated_start_date + relativedelta(months=+120)- relativedelta(days=1)
+        return end_date
+
+
 
 
 class ProposalAccreditation(models.Model):
@@ -2432,6 +2460,31 @@ class QAOfficerGroup(models.Model):
         return Proposal.objects.filter(processing_status__in=assessable_states)
 
 
+class PaymentOfficerGroup(models.Model):
+    #site = models.OneToOneField(Site, default='1')
+    name = models.CharField(max_length=30, unique=True)
+    members = models.ManyToManyField(EmailUser)
+    default = models.BooleanField(default=False)
+
+    def __str__(self):
+        return 'Payment Officer Group'
+
+    
+    class Meta:
+        app_label = 'commercialoperator'
+        verbose_name = "Payment Officer Group"
+        verbose_name_plural = "Payment Officer group"
+
+
+    def _clean(self):
+        try:
+            default = PaymentOfficerGroup.objects.get(default=True)
+        except PaymentOfficerGroup.DoesNotExist:
+            default = None
+
+        if default and self.default:
+            raise ValidationError('There can only be one default Payment Officer group')
+
 #
 #class ReferralRequestUserAction(UserAction):
 #    ACTION_LODGE_REQUEST = "Lodge request {}"
@@ -2789,9 +2842,15 @@ class ChecklistQuestion(RevisionedMixin):
         ('assessor_list','Assessor Checklist'),
         ('referral_list','Referral Checklist')
     )
+    ANSWER_TYPE_CHOICES = (
+        ('yes_no','Yes/No type'),
+        ('free_text','Free text type')
+    )
     text = models.TextField()
     list_type = models.CharField('Checklist type', max_length=30, choices=TYPE_CHOICES,
                                          default=TYPE_CHOICES[0][0])
+    answer_type = models.CharField('Answer type', max_length=30, choices=ANSWER_TYPE_CHOICES,
+                                         default=ANSWER_TYPE_CHOICES[0][0])
     #correct_answer= models.BooleanField(default=False)
     obsolete = models.BooleanField(default=False)
 
@@ -2832,6 +2891,7 @@ class ProposalAssessmentAnswer(RevisionedMixin):
     question=models.ForeignKey(ChecklistQuestion, related_name='answers')
     answer = models.NullBooleanField()
     assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
+    text_answer= models.CharField(max_length=256, blank=True, null=True)
 
     def __str__(self):
         return self.question.text
@@ -3079,15 +3139,15 @@ def clone_proposal_with_status_reset(proposal):
     with transaction.atomic():
         try:
             original_proposal = copy.deepcopy(proposal)
-            proposal = duplicate_object(proposal) # clone object and related objects
-
+            #proposal = duplicate_object(proposal) # clone object and related objects
+            proposal=duplicate_tclass(proposal)
             # manually duplicate the comms logs -- hck, not hndled by duplicate object (maybe due to inheritance?)
-            proposal.comms_logs.create(text='cloning proposal reset (original proposal {}, new proposal {})'.format(original_proposal.id, proposal.id))
-            for comms_log in proposal.comms_logs.all():
-                comms_log.id=None
-                comms_log.communicationslogentry_ptr_id=None
-                comms_log.proposal_id=original_proposal.id
-                comms_log.save()
+            # proposal.comms_logs.create(text='cloning proposal reset (original proposal {}, new proposal {})'.format(original_proposal.id, proposal.id))
+            # for comms_log in proposal.comms_logs.all():
+            #     comms_log.id=None
+            #     comms_log.communicationslogentry_ptr_id=None
+            #     comms_log.proposal_id=original_proposal.id
+            #     comms_log.save()
 
             # reset some properties
             proposal.customer_status = 'draft'
@@ -3108,41 +3168,42 @@ def clone_proposal_with_status_reset(proposal):
 
             proposal.save(no_revision=True)
 
-            clone_documents(proposal, original_proposal, media_prefix='media')
+            #clone_documents(proposal, original_proposal, media_prefix='media')
+            _clone_documents(proposal, original_proposal, media_prefix='media')
             return proposal
         except:
             raise
 
 def clone_documents(proposal, original_proposal, media_prefix):
     for proposal_document in ProposalDocument.objects.filter(proposal_id=proposal.id):
-        proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
+        proposal_document._file.name = u'{}/proposals/{}/documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, proposal_document.name)
         proposal_document.can_delete = True
         proposal_document.save()
 
     for proposal_required_document in ProposalRequiredDocument.objects.filter(proposal_id=proposal.id):
-        proposal_required_document._file.name = u'proposals/{}/required_documents/{}'.format(proposal.id, proposal_required_document.name)
+        proposal_required_document._file.name = u'{}/proposals/{}/required_documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, proposal_required_document.name)
         proposal_required_document.can_delete = True
         proposal_required_document.save()
 
     for referral in proposal.referrals.all():
         for referral_document in ReferralDocument.objects.filter(referral=referral):
-            referral_document._file.name = u'proposals/{}/referral/{}'.format(proposal.id, referral_document.name)
+            referral_document._file.name = u'{}/proposals/{}/referral/{}'.format(settings.MEDIA_APP_DIR, proposal.id, referral_document.name)
             referral_document.can_delete = True
             referral_document.save()
 
     for qa_officer_document in QAOfficerDocument.objects.filter(proposal_id=proposal.id):
-        qa_officer_document._file.name = u'proposals/{}/qaofficer/{}'.format(proposal.id, qa_officer_document.name)
+        qa_officer_document._file.name = u'{}/proposals/{}/qaofficer/{}'.format(settings.MEDIA_APP_DIR, proposal.id, qa_officer_document.name)
         qa_officer_document.can_delete = True
         qa_officer_document.save()
 
     for onhold_document in OnHoldDocument.objects.filter(proposal_id=proposal.id):
-        onhold_document._file.name = u'proposals/{}/on_hold/{}'.format(proposal.id, onhold_document.name)
+        onhold_document._file.name = u'{}/proposals/{}/on_hold/{}'.format(settings.MEDIA_APP_DIR, proposal.id, onhold_document.name)
         onhold_document.can_delete = True
         onhold_document.save()
 
     for requirement in proposal.requirements.all():
         for requirement_document in RequirementDocument.objects.filter(requirement=requirement):
-            requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
+            requirement_document._file.name = u'{}/proposals/{}/requirement_documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, requirement_document.name)
             requirement_document.can_delete = True
             requirement_document.save()
 
@@ -3151,70 +3212,29 @@ def clone_documents(proposal, original_proposal, media_prefix):
         log_entry_document.can_delete = True
         log_entry_document.save()
 
-#    for log_entry in proposal.comms_logs.all():
-#        for log_entry_document in ProposalLogDocument.objects.filter(log_entry=log_entry):
-#            #log_entry_document.requirement = log_entry
-#            #log_entry_document.id = None
-#            #log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
-#            log_entry_document._file.name = u'proposals/{}/communications/{}'.format(proposal.id, log_entry_document.name)
-#            log_entry_document.can_delete = True
-#            log_entry_document.save()
-
     # copy documents on file system and reset can_delete flag
-    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_prefix, original_proposal.id, proposal.id), shell=True)
+    media_dir = '{}/{}'.format(media_prefix, settings.MEDIA_APP_DIR)
+    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_dir, original_proposal.id, proposal.id), shell=True)
 
 
 def _clone_documents(proposal, original_proposal, media_prefix):
     for proposal_document in ProposalDocument.objects.filter(proposal=original_proposal.id):
         proposal_document.proposal = proposal
         proposal_document.id = None
-        proposal_document._file.name = u'proposals/{}/documents/{}'.format(proposal.id, proposal_document.name)
+        proposal_document._file.name = u'{}/proposals/{}/documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, proposal_document.name)
         proposal_document.can_delete = True
         proposal_document.save()
 
-    for referral in proposal.referrals.all():
-        for referral_document in ReferralDocument.objects.filter(referral=referral):
-            referral_document.referral = referral
-            referral_document.id = None
-            #referral_document._file.name = u'proposals/{}/referral/{}/documents/{}'.format(proposal.id, referral.id, referral_document.name)
-            referral_document._file.name = u'proposals/{}/referral/{}'.format(proposal.id, referral_document.name)
-            referral_document.can_delete = True
-            referral_document.save()
-
-    for qa_officer_document in QAOfficerDocument.objects.filter(proposal=original_proposal.id):
-        qa_officer_document.proposal = proposal
-        qa_officer_document.id = None
-        qa_officer_document._file.name = u'proposals/{}/qaofficer/{}'.format(proposal.id, qa_officer_document.name)
-        qa_officer_document.can_delete = True
-        qa_officer_document.save()
-
-    for onhold_document in OnHoldDocument.objects.filter(proposal=original_proposal.id):
-        onhold_document.proposal = proposal
-        onhold_document.id = None
-        onhold_document._file.name = u'proposals/{}/on_hold/{}'.format(proposal.id, onhold_document.name)
-        onhold_document.can_delete = True
-        onhold_document.save()
-
-    for requirement in proposal.requirements.all():
-        for requirement_document in RequirementDocument.objects.filter(requirement=requirement):
-            requirement_document.requirement = requirement
-            requirement_document.id = None
-            #requirement_document._file.name = u'proposals/{}/requirement_documents/{}/{}'.format(proposal.id, requirement.id, requirement_document.name)
-            requirement_document._file.name = u'proposals/{}/requirement_documents/{}'.format(proposal.id, requirement_document.name)
-            requirement_document.can_delete = True
-            requirement_document.save()
-
-    for log_entry in proposal.comms_logs.all():
-        for log_entry_document in ProposalLogDocument.objects.filter(log_entry=log_entry):
-            log_entry_document.requirement = log_entry
-            log_entry_document.id = None
-            #log_entry_document._file.name = u'proposals/{}/communications/{}/{}'.format(proposal.id, log_entry.id, log_entry_document.name)
-            log_entry_document._file.name = u'proposals/{}/communications/{}'.format(proposal.id, log_entry_document.name)
-            log_entry_document.can_delete = True
-            log_entry_document.save()
+    for proposal_required_document in ProposalRequiredDocument.objects.filter(proposal=original_proposal.id):
+        proposal_required_document.proposal = proposal
+        proposal_required_document.id = None
+        proposal_required_document._file.name = u'{}/proposals/{}/required_documents/{}'.format(settings.MEDIA_APP_DIR, proposal.id, proposal_required_document.name)
+        proposal_required_document.can_delete = True
+        proposal_required_document.save()
 
     # copy documents on file system and reset can_delete flag
-    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_prefix, original_proposal.id, proposal.id), shell=True)
+    media_dir = '{}/{}'.format(media_prefix, settings.MEDIA_APP_DIR)
+    subprocess.call('cp -pr {0}/proposals/{1} {0}/proposals/{2}'.format(media_dir, original_proposal.id, proposal.id), shell=True)
 
 def duplicate_object(self):
     """
@@ -3307,6 +3327,92 @@ def duplicate_object(self):
         print('|- Set {} many-to-many relations on {} {}'.format(len(relations), field_name, text_relations))
 
     return self
+
+def duplicate_tclass(p):
+    original_proposal=copy.deepcopy(p)
+    p.id=None
+    p.save()
+    print ('new proposal',p)
+
+    for park in original_proposal.parks.all():
+
+        original_park=copy.deepcopy(park)
+        park.id=None
+        park.proposal=p
+        park.save()
+        print('new park', park,park.id, original_park, original_park.id, park.proposal)
+        for activity in original_park.activities.all():
+            activity.id=None
+            activity.proposal_park=park
+            activity.save()
+            print('new activity', activity, activity.id, park)
+            #new_activities_list.append(new_ac)
+        for access in original_park.access_types.all():
+            access.id=None
+            access.proposal_park=park
+            access.save()
+            print('new access', access, park)
+            #new_access_list.append(new_ac)
+        for zone in original_park.zones.all():
+            original_zone=copy.deepcopy(zone)
+            zone.id=None
+            zone.proposal_park=park
+            zone.save()
+            print('new zone',zone)
+            for acz in original_zone.park_activities.all():
+                acz.id=None
+                acz.park_zone=zone
+                acz.save()
+                print('new zone activity', acz, zone)
+
+    for trail in original_proposal.trails.all():
+        original_trail=copy.deepcopy(trail)
+        trail.id=None
+        trail.proposal=p
+        trail.save()
+
+        for section in original_trail.sections.all():
+            original_section=copy.deepcopy(section)
+            section.id=None
+            section.proposal_trail=trail
+            section.save()
+            print('new section', section, trail)
+            for act in original_section.trail_activities.all():
+                act.id=None
+                act.trail_section=section
+                act.save()
+                print('new trail activity', act, section)
+
+    try:
+        other_details=ProposalOtherDetails.objects.get(proposal=original_proposal)
+        new_accreditations=[]
+        print('proposal:',original_proposal, original_proposal.other_details.id, other_details.id)
+        print('accreditations', other_details.accreditations.all())
+        for acc in other_details.accreditations.all():
+            acc.id=None
+            acc.save()
+            new_accreditations.append(acc)
+        other_details.id=None
+        other_details.proposal=p
+        other_details.save()
+        for new_acc in new_accreditations:
+            new_acc.proposal_other_details=other_details
+            new_acc.save()
+    except ProposalOtherDetails.DoesNotExist:
+        other_details=ProposalOtherDetails.objects.create(proposal=p)
+
+    for vehicle in original_proposal.vehicles.all():
+        vehicle.id=None
+        vehicle.proposal=p
+        vehicle.save()
+    for vessel in original_proposal.vessels.all():
+        vessel.id=None
+        vessel.proposal=p
+        vessel.save()
+
+    return p
+
+
 
 def searchKeyWords(searchWords, searchProposal, searchApproval, searchCompliance, is_internal= True):
     from commercialoperator.utils import search, search_approval, search_compliance
@@ -3425,7 +3531,7 @@ def check_migrate_approval(data):
     except:
         raise ValidationError('Licence holder is required')
 
-def migrate_approval(data):
+def migrate_approval(data, not_found):
     from commercialoperator.components.approvals.models import Approval
     org_applicant = None
     proxy_applicant = None
@@ -3438,20 +3544,23 @@ def migrate_approval(data):
                 submitter = EmailUser.objects.get(email__icontains=data['submitter'])
             except:
                 submitter = EmailUser.objects.create(email=data['submitter'], password = '')
-            if data['org_applicant']:
+            if data['abn']:
                 #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
-                org_applicant = Organisation.objects.get(organisation__abn=data['org_applicant'])
+                org_applicant = Organisation.objects.get(organisation__abn=data['abn'])
         else:
-            ValidationError('Licence holder is required')
+            #ValidationError('Licence holder is required')
+            logger.error('Licence holder is required: submitter {}, abn {}'.format(data['submitter'], data['abn']))
+            not_found.append({'submitter': data['submitter'], 'abn': data['abn']})
+            return None
     except Exception, e:
-        raise ValidationError('Licence holder is required: \n{}'.format(e))
+        #raise ValidationError('Licence holder is required: \n{}'.format(e))
+        logger.error('Licence holder is required: submitter {}, abn {}'.format(data['submitter'], data['abn']))
+        not_found.append({'submitter': data['submitter'], 'abn': data['abn']})
+        return None
 
-    start_date = datetime.datetime.strptime(data['start_date'], '%d/%m/%Y')
-    issue_date = datetime.datetime.strptime(data['issue_date'], '%d/%m/%Y')
-    expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d/%m/%Y')
     application_type=ApplicationType.objects.get(name=data['application_type'])
     application_name = application_type.name
-            # Get most recent versions of the Proposal Types
+    # Get most recent versions of the Proposal Types
     qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
     proposal_type = qs_proposal_type.get(name=application_name)
     proposal= Proposal.objects.create( # Dummy 'T Class' proposal
@@ -3461,9 +3570,9 @@ def migrate_approval(data):
                     schema=proposal_type.schema
                 )
     approval = Approval.objects.create(
-                    issue_date=issue_date,
-                    expiry_date=expiry_date,
-                    start_date=start_date,
+                    issue_date=data['issue_date'],
+                    expiry_date=data['expiry_date'],
+                    start_date=data['start_date'],
                     org_applicant=org_applicant,
                     submitter= submitter,
                     current_proposal=proposal
@@ -3478,7 +3587,42 @@ def migrate_approval(data):
     approval.save()
     return approval
 
-def create_migration_data(filename, verify=False):
+def create_migration_data(filename, verify=False, app_type='T Class'):
+    def get_dates(data, row):
+        try:
+            #import ipdb; ipdb.set_trace()
+            if data['start_date']:
+                start_date = datetime.datetime.strptime(data['start_date'], '%d-%b-%y').date() # '05-Feb-89'
+            else:
+                start_date = None
+
+            if data['issue_date']:
+                issue_date = datetime.datetime.strptime(data['issue_date'], '%d-%b-%y').date()
+            else:
+                issue_date = None
+
+            if data['expiry_date']:
+                expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date()
+
+            if not (start_date and issue_date):
+                start_date = datetime.date.today()
+                issue_date = datetime.date.today()
+            elif not start_date:
+                start_date = issue_date
+            elif not issue_date:
+                issue_date = start_date
+
+        except Exception, e:
+            logger.error('Error in Dates: {}'.format(data))
+            raise
+
+        data.update({'start_date': start_date})
+        data.update({'issue_date': start_date})
+        data.update({'expiry_date': expiry_date})
+
+        return data
+
+
     try:
         '''
         Example csv
@@ -3490,26 +3634,287 @@ def create_migration_data(filename, verify=False):
             create_migration_data('commercialoperator/utils/csv/approvals.csv')
         '''
         data={}
+        not_found=[]
+        no_expiry=[]
         with open(filename) as csvfile:
             reader = csv.reader(csvfile, delimiter=str(','))
             header = next(reader) # skip header
             for row in reader:
                 #import ipdb; ipdb.set_trace()
-                data.update({'org_applicant': row[0].strip()})
+                data.update({'abn': row[0].translate(None, string.whitespace)})
                 data.update({'submitter': row[1].strip()})
                 data.update({'start_date': row[2].strip()})
                 data.update({'issue_date': row[3].strip()})
                 data.update({'expiry_date': row[4].strip()})
                 data.update({'application_type': row[5].strip()})
-                print data
+                data.update({'submitter2': row[6].strip()})
+                data.update({'submitter3': row[7].strip()})
+                data.update({'submitter4': row[8].strip()})
+                data.update({'submitter_full_str': row[9].strip()})
 
-                if verify:
-                    approval=check_migrate_approval(data)
+                if data['expiry_date']:
+                    get_dates(data, row)
+                    if row[5].strip()[0] == 'T':
+                        application_type = 'T Class'
+                    elif row[5].strip()[0] == 'E':
+                        application_type = 'E Class'
+                    else:
+                        logger.error('Unknown Application Type: {}'.format(row[5].strip()))
+
+                    data.update({'application_type': application_type})
+                    #print data
+
+                    if application_type == app_type:
+                        if verify:
+                            approval=check_migrate_approval(data)
+                        else:
+                            approval=migrate_approval(data, not_found)
+                        #print data
+                        print '{} - {}'.format(approval, data['submitter'])
+                        print
                 else:
-                    approval=migrate_approval(data)
-                print approval
+                    no_expiry.append(data['submitter'])
+
+        print 'Not Found: {}'.format(not_found)
+        print 'No Expiry: {}'.format(no_expiry)
+    except Exception, e:
+        print data
+        print e
+
+
+def create_organisation(data, count, debug=False):
+
+    #import ipdb; ipdb.set_trace()
+    #print 'Data: {}'.format(data)
+    #user = None
+    try:
+        user, created = EmailUser.objects.get_or_create(
+            email__icontains=data['email1'],
+            defaults={
+                'first_name': data['first_name'],
+                'last_name': data['last_name'],
+                'phone_number': data['phone_number1'],
+                'mobile_number': data['mobile_number'],
+            },
+        )
+    except Exception, e:
+        print data['email1']
+        import ipdb; ipdb.set_trace()
+
+    if debug:
+        print 'User: {}'.format(user)
+
+
+    abn_existing = []
+    abn_new = []
+    process = True
+    try:
+        ledger_organisation.objects.get(abn=data['abn'])
+        abn_existing.append(data['abn'])
+        print '{}, Existing ABN: {}'.format(count, data['abn'])
+        process = False
+    except Exception, e:
+        print '{}, Add ABN: {}'.format(count, data['abn'])
+        #import ipdb; ipdb.set_trace()
+
+    if process:
+        try:
+            #print 'Country: {}'.format(data['country'])
+            country=Country.objects.get(printable_name__icontains=data['country'])
+            oa, created = OrganisationAddress.objects.get_or_create(
+                line1=data['address_line1'],
+                locality=data['suburb'],
+                postcode=data['postcode'] if data['postcode'] else '0000',
+                defaults={
+                    'line2': data['address_line2'],
+                    'line3': data['address_line3'],
+                    'state': data['state'],
+                    'country': country.code,
+                }
+            )
+        except:
+            print 'Country 2: {}'.format(data['country'])
+            import ipdb; ipdb.set_trace()
+            raise
+        if debug:
+            print 'Org Address: {}'.format(oa)
+
+        try:
+            lo, created = ledger_organisation.objects.get_or_create(
+                abn=data['abn'],
+                defaults={
+                    'name': data['licencee'],
+                    'postal_address': oa,
+                    'billing_address': oa,
+                    'trading_name': data['trading_name']
+                }
+            )
+            if created:
+                abn_new.append(data['abn'])
+            else:
+                print '******** ERROR ********* abn already exists {}'.format(data['abn'])
+
+        except Exception, e:
+            print 'ABN: {}'.format(data['abn'])
+            import ipdb; ipdb.set_trace()
+            raise
+
+        if debug:
+            print 'Ledger Org: {}'.format(lo)
+
+        #import ipdb; ipdb.set_trace()
+        try:
+            org, created = Organisation.objects.get_or_create(organisation=lo)
+        except Exception, e:
+            print 'Org: {}'.format(org)
+            import ipdb; ipdb.set_trace()
+            raise
+
+        if debug:
+            print 'Organisation: {}'.format(org)
+
+        try:
+            delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
+        except Exception, e:
+            print 'Delegate Creation Failed: {}'.format(user)
+            import ipdb; ipdb.set_trace()
+            raise
+
+        if debug:
+            print 'Delegate: {}'.format(delegate)
+
+        try:
+            oc, created = OrganisationContact.objects.get_or_create(
+                organisation=org,
+                email=user.email,
+                defaults={
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'phone_number': user.phone_number,
+                    'mobile_number': user.mobile_number if data['mobile_number'] else '',
+                    'user_status': 'active',
+                    'user_role': 'organisation_admin',
+                    'is_admin': True
+                }
+            )
+        except Exception, e:
+            print 'Org Contact: {}'.format(user)
+            import ipdb; ipdb.set_trace()
+            raise
+
+        if debug:
+            print 'Org Contact: {}'.format(oc)
+
+        #return abn_new, abn_existing
+
+    return abn_new, abn_existing
+
+def create_organisation_data(filename, verify=False):
+    #import ipdb; ipdb.set_trace()
+    def get_start_date(data, row):
+        try:
+            expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date() # '05-Feb-89'
+        except Exception, e:
+            data.update({'start_date': None})
+            data.update({'issue_date': None})
+            data.update({'expiry_date': None})
+            #logger.error('Expiry Date: {}'.format(data['expiry_date']))
+            #logger.error('Data: {}'.format(data))
+            #raise
+            return
+
+        term = data['term'].split() # '3 YEAR'
+
+        #import ipdb; ipdb.set_trace()
+        if 'YEAR' in term[1]:
+            start_date = expiry_date - relativedelta(years=int(term[0]))
+        if 'MONTH' in term[1]:
+            start_date = expiry_date - relativedelta(months=int(term[0]))
+        else:
+            start_date = datetime.date.today()
+
+        data.update({'start_date': start_date})
+        data.update({'issue_date': start_date})
+        data.update({'expiry_date': expiry_date})
+
+    data={}
+    abn_existing = []
+    abn_new = []
+    count = 1
+    try:
+        '''
+        Example csv
+            address, town/city, state (WA), postcode, org_name, abn, trading_name, first_name, last_name, email, phone_number
+            123 Something Road, Perth, WA, 6100, Import Test Org 3, 615503, DDD_03, john, Doe_1, john.doe_1@dbca.wa.gov.au, 08 555 5555
+
+            File No:Licence No:Expiry Date:Term:Trading Name:Licensee:ABN:Title:First Name:Surname:Other Contact:Address 1:Address 2:Address 3:Suburb:State:Country:Post:Telephone1:Telephone2:Mobile:Insurance Expiry:Survey Cert:Name:SPV:ATAP Expiry:Eco Cert Expiry:Vessels:Vehicles:Email1:Email2:Email3:Email4
+            2018/001899-1:HQ70324:28-Feb-21:3 YEAR:4 U We Do:4 U We Do Pty Ltd::MR:Petrus:Grobler::Po Box 2483:::ESPERANCE:WA:AUSTRALIA:6450:458021841:::23-Jun-18::::30-Jun-18::0:7:groblerp@gmail.com:::
+        To test:
+            from commercialoperator.components.proposals.models import create_organisation_data
+            create_migration_data('commercialoperator/utils/csv/orgs.csv')
+        '''
+        with open(filename) as csvfile:
+            reader = csv.reader(csvfile, delimiter=str(':'))
+            header = next(reader) # skip header
+            for row in reader:
+                #import ipdb; ipdb.set_trace()
+                data.update({'file_no': row[0].translate(None, string.whitespace)})
+                data.update({'licence_no': row[1].translate(None, string.whitespace)})
+                data.update({'expiry_date': row[2].strip()})
+                data.update({'term': row[3].strip()})
+
+                get_start_date(data, row)
+
+                data.update({'trading_name': row[4].strip()})
+                data.update({'licencee': row[5].strip()})
+                data.update({'abn': row[6].translate(None, string.whitespace)})
+                data.update({'title': row[7].strip()})
+                data.update({'first_name': row[8].strip().capitalize()})
+                data.update({'last_name': row[9].strip().capitalize()})
+                data.update({'other_contact': row[10].strip()})
+                data.update({'address_line1': row[11].strip()})
+                data.update({'address_line2': row[12].strip()})
+                data.update({'address_line3': row[13].strip()})
+                data.update({'suburb': row[14].strip().capitalize()})
+                data.update({'state': row[15].strip()})
+
+                country = ' '.join([i.lower().capitalize() for i in row[16].strip().split()])
+                if country == 'A':
+                    country = 'Australia'
+                data.update({'country': country})
+
+                data.update({'postcode': row[17].translate(None, string.whitespace)})
+                data.update({'phone_number1': row[18].translate(None, b' -()')})
+                data.update({'phone_number2': row[19].translate(None, b' -()')})
+                data.update({'mobile_number': row[20].translate(None, b' -()')})
+
+                data.update({'email1': row[29].strip()})
+                data.update({'email2': row[30].strip()})
+                data.update({'email3': row[31].strip()})
+                data.update({'email4': row[32].strip()})
+                #import ipdb; ipdb.set_trace()
+
+                #print data
+
+                new, existing = create_organisation(data, count)
+                count += 1
+                abn_new = new + abn_new
+                abn_existing = existing + abn_existing
+                #if data['expiry_date']:
+                #    organisation=create_organisation(data)
+                #else:
+                #    logger.warn('No Expiry Date: {}'.format(data))
+                #print organisation
+
+        print 'New: {}, Existing: {}'.format(len(abn_new), len(abn_existing))
+        print 'New: {}'.format(abn_new)
+        print 'Existing: {}'.format(abn_existing)
+
+
     except:
+        logger.info('Main {}'.format(data))
         raise
+
 
 
 

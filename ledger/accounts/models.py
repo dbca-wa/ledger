@@ -270,6 +270,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                            verbose_name="date of birth", help_text='')
     phone_number = models.CharField(max_length=50, null=True, blank=True,
                                     verbose_name="phone number", help_text='')
+    position_title = models.CharField(max_length=50, null=True, blank=True,
+                                    verbose_name="position title", help_text='')
     mobile_number = models.CharField(max_length=50, null=True, blank=True,
                                      verbose_name="mobile number", help_text='')
     fax_number = models.CharField(max_length=50, null=True, blank=True,
@@ -500,6 +502,63 @@ class EmailUserAction(UserAction):
             what=str(action)
         )
 
+class CommunicationsLogEntry(models.Model):
+    TYPE_CHOICES = [
+        ('email', 'Email'),
+        ('phone', 'Phone Call'),
+        ('mail', 'Mail'),
+        ('person', 'In Person'),
+        ('onhold', 'On Hold'),
+        ('onhold_remove', 'Remove On Hold'),
+        ('with_qaofficer', 'With QA Officer'),
+        ('with_qaofficer_completed', 'QA Officer Completed'),
+    ]
+    DEFAULT_TYPE = TYPE_CHOICES[0][0]
+
+    #to = models.CharField(max_length=200, blank=True, verbose_name="To")
+    to = models.TextField(blank=True, verbose_name="To")
+    fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
+    #cc = models.CharField(max_length=200, blank=True, verbose_name="cc")
+    cc = models.TextField(blank=True, verbose_name="cc")
+
+    #type = models.CharField(max_length=35, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    log_type = models.CharField(max_length=35, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    reference = models.CharField(max_length=100, blank=True)
+    subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
+    text = models.TextField(blank=True)
+
+    customer = models.ForeignKey(EmailUser, null=True, related_name='+')
+    staff = models.ForeignKey(EmailUser, null=True, related_name='+')
+
+    created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+
+    class Meta:
+        app_label = 'accounts'
+
+
+class EmailUserLogEntry(CommunicationsLogEntry):
+    emailuser = models.ForeignKey(EmailUser, related_name='comms_logs')
+
+    def save(self, **kwargs):
+        # save the request id if the reference not provided
+        if not self.reference:
+            self.reference = self.emailuser.id
+        super(EmailUserLogEntry, self).save(**kwargs)
+
+    class Meta:
+        app_label = 'accounts'
+
+
+def update_emailuser_comms_log_filename(instance, filename):
+    return 'emailusers/{}/communications/{}/{}'.format(instance.log_entry.emailuser.id,instance.id,filename)
+
+class EmailUserLogDocument(Document):
+    log_entry = models.ForeignKey('EmailUserLogEntry',related_name='documents')
+    _file = models.FileField(upload_to=update_emailuser_comms_log_filename)
+
+    class Meta:
+        app_label = 'accounts'
+
 
 
 class EmailUserListener(object):
@@ -621,6 +680,7 @@ class Organisation(models.Model):
     identification = models.FileField(upload_to='%Y/%m/%d', null=True, blank=True)
     postal_address = models.ForeignKey('OrganisationAddress', related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
     billing_address = models.ForeignKey('OrganisationAddress', related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+    trading_name = models.CharField(max_length=256, null=True, blank=True)
 
     def upload_identification(self, request):
         with transaction.atomic():

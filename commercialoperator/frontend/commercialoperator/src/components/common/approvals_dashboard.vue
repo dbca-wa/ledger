@@ -242,8 +242,31 @@ export default {
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
-                            return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            var result = '';
+                            var popTemplate = '';
+                            if(!full.migrated){
+                            // return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            result= `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            }
+                            else if(full.migrated){
+                               var icon = "<i class='fa fa-file-pdf-o' style='color:red'></i>"
+                               var message= 'This is a migrated licence';
+                               popTemplate = _.template('<a href="#" ' +
+                                            'role="button" ' +
+                                            'data-toggle="popover" ' +
+                                            'data-trigger="hover" ' +
+                                            'data-placement="top auto"' +
+                                            'data-html="true" ' +
+                                            'data-content="<%= text %>" ' +
+                                            '><%= tick %></a>');
+                                    result += popTemplate({
+                                        text: message,
+                                        tick: icon
+                                    });
+                            }
+                            return result;
                         },
+                        'createdCell': helpers.dtPopoverCellFn,
                         name: 'licence_document__name'
                     },
                     {
@@ -251,10 +274,16 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if(vm.check_assessor(full)){
+                                //if(vm.check_assessor(full)){
+                                if(full.is_approver){
                                     if(full.can_reissue){
                                         links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
                                     }
+                                }
+                                if(full.is_assessor){
+                                    // if(full.can_reissue){
+                                    //     links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
+                                    // }
                                     if(full.application_type=='E Class' && (full.status=='Current' || full.status=='Suspended')){
                                         if(full.can_extend){
                                             links +=  `<a href='#${full.id}' data-extend-approval='${full.id}'>Extend</a><br/>`;
@@ -283,7 +312,7 @@ export default {
 
                                 }
                             }
-                            else{
+                            else{//External Dashboard actions.
                                 if (full.can_reissue) {
                                     links +=  `<a href='/external/approval/${full.id}'>View</a><br/>`;
                                     if(full.can_action){
@@ -307,6 +336,7 @@ export default {
                         orderable: false,
                         name: ''
                     },
+                    {data: "migrated", visible: false},
                     
                 ],
                 processing: true,

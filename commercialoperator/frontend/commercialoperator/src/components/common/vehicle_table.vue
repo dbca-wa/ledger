@@ -239,9 +239,19 @@ export default {
             //console.log(vm.regions);
         },
         newVehicle: function(){
+            let vm=this;
             this.$refs.edit_vehicle.vehicle_id = null;
             //this.$refs.edit_vehicle.fetchVehicle(id);
-            this.$refs.edit_vehicle.vehicle=this.new_vehicle;
+            var new_vehicle_another={
+                access_type: null,
+                capacity:'',
+                rego:'',
+                rego_expiry:null,
+                license:'',
+                proposal: vm.proposal.id
+            }
+            //this.$refs.edit_vehicle.vehicle=this.new_vehicle;
+            this.$refs.edit_vehicle.vehicle=new_vehicle_another;
             this.$refs.edit_vehicle.vehicle_action='add'
             this.$refs.edit_vehicle.isModalOpen = true;
         },

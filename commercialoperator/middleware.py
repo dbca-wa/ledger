@@ -8,6 +8,8 @@ import datetime
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from commercialoperator.components.bookings.models import ApplicationFee
+from reversion.middleware  import RevisionMiddleware
+from reversion.views import _request_creates_revision
 
 
 CHECKOUT_PATH = re.compile('^/ledger/checkout/checkout')
@@ -40,3 +42,15 @@ class BookingTimerMiddleware(object):
                 # booking in the session is not a temporary type, ditch it
                 del request.session['cols_app_invoice']
         return
+
+class RevisionOverrideMiddleware(RevisionMiddleware):
+
+    """
+        Wraps the entire request in a revision.
+
+        override venv/lib/python2.7/site-packages/reversion/middleware.py
+    """
+
+	# exclude ledger payments/checkout from revision - hack to overcome basket (lagging status) issue/conflict with reversion
+    def request_creates_revision(self, request):
+        return _request_creates_revision(request) and 'checkout' not in request.get_full_path()

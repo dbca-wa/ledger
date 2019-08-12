@@ -34,7 +34,7 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="due_date" style="width: 70%;">
-                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" v-model="approval.expiry_date" :disabled="is_amendment">
+                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" ref="expiry_date" v-model="approval.expiry_date" :disabled="is_amendment">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
@@ -73,6 +73,9 @@
                     </form>
                 </div>
             </div>
+
+            <p v-if="can_preview">Click <a href="#" @click.prevent="preview">here</a> to preview the licence document.</p>
+
             <div slot="footer">
                 <button type="button" v-if="issuingApproval" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Processing</button>
                 <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
@@ -134,6 +137,9 @@ export default {
         }
     },
     computed: {
+        csrf_token: function() {
+          return helpers.getCookie('csrftoken')
+        },
         showError: function() {
             var vm = this;
             return vm.errors;
@@ -152,10 +158,49 @@ export default {
         is_amendment: function(){
             return this.proposal_type == 'Amendment' ? true : false;
         },
+        can_preview: function(){
+            return this.processing_status == 'With Approver' ? true : false;
+        },
+        preview_licence_url: function() {
+          return (this.proposal_id) ? `/preview/licence-pdf/${this.proposal_id}` : '';
+        },
         
 
     },
     methods:{
+        preview:function () {
+            let vm =this;
+
+            let formData = new FormData(vm.form)
+
+            // convert formData to json
+            let jsonObject = {};
+            for (const [key, value] of formData.entries()) {
+                jsonObject[key] = value;
+            }
+
+            vm.post_and_redirect(vm.preview_licence_url, {'csrfmiddlewaretoken' : vm.csrf_token, 'formData': JSON.stringify(jsonObject)});
+        },
+
+        post_and_redirect: function(url, postData) {
+            /* http.post and ajax do not allow redirect from Django View (post method),
+               this function allows redirect by mimicking a form submit.
+
+               usage:  vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
+            */
+            var postFormStr = "<form method='POST' target='_blank' name='Preview Licence' action='" + url + "'>";
+
+            for (var key in postData) {
+                if (postData.hasOwnProperty(key)) {
+                    postFormStr += "<input type='hidden' name='" + key + "' value='" + postData[key] + "'>";
+                }
+            }
+            postFormStr += "</form>";
+            var formElement = $(postFormStr);
+            $('body').append(formElement);
+            $(formElement).submit();
+        },
+
         ok:function () {
             let vm =this;
             if($(vm.form).valid()){
