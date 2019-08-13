@@ -574,7 +574,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 if serializer.is_valid():
                     instance = serializer.save()
                     if request.data.get('allocated_group_id'):
-                        res = self.add_workflow_log(request, instance)
+                        res = self.workflow_action(request, instance)
                         return res
                     else:
                         # Log parent actions and update status
@@ -655,7 +655,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
-    def add_workflow_log(self, request, instance=None, *args, **kwargs):
+    def workflow_action(self, request, instance=None, *args, **kwargs):
         try:
             with transaction.atomic():
                 if not instance:

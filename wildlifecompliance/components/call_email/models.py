@@ -177,13 +177,19 @@ class CasePriority(models.Model):
 
 
 class CallEmail(RevisionedMixin):
+    DRAFT = 'draft'
+    OPEN = 'open'
+    OPEN_FOLLOWUP = 'open_followup'
+    OPEN_INSPECTION = 'open_inspection'
+    OPEN_CASE = 'open_case'
+    CLOSED = 'closed'
     STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('open', 'Open'),
-        ('open_followup', 'Open (follow-up)'),
-        ('open_inspection', 'Open (Inspection)'),
-        ('open_case', 'Open (Case)'),
-        ('closed', 'Closed'),
+        (DRAFT, 'Draft'),
+        (OPEN, 'Open'),
+        (OPEN_FOLLOWUP, 'Open (follow-up)'),
+        (OPEN_FOLLOWUP, 'Open (Inspection)'),
+        (OPEN_CASE, 'Open (Case)'),
+        (CLOSED, 'Closed'),
     )
 
     status = models.CharField(
@@ -312,50 +318,58 @@ class CallEmail(RevisionedMixin):
     #     return get_related_items(self)
 
     def forward_to_regions(self, request):
-        self.status = self.STATUS_CHOICES.open
-        instance.log_user_action(
+        self.status = self.OPEN
+        self.log_user_action(
             CallEmailUserAction.ACTION_FORWARD_TO_REGIONS.format(self.number), 
             request)
+        self.save()
 
     def forward_to_wildlife_protection_branch(self, request):
-        self.status = self.STATUS_CHOICES.open
-        instance.log_user_action(
+        self.status = self.OPEN
+        self.log_user_action(
             CallEmailUserAction.ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH.format(self.number), 
             request)
+        self.save()
 
     def allocate_for_follow_up(self, request):
-        self.status = self.STATUS_CHOICES.open_followup
+        self.status = self.OPEN_FOLLOWUP
         self.log_user_action(
                 CallEmailUserAction.ACTION_ALLOCATE_FOR_FOLLOWUP.format(self.number), 
                 request)
+        self.save()
 
     def allocate_for_inspection(self, request):
-        self.status = self.STATUS_CHOICES.open_inspection
+        self.status = self.OPEN_INSPECTION
         self.log_user_action(
                 CallEmailUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(self.number), 
                 request)
+        self.save()
 
     def allocate_for_case(self, request):
-        self.status = self.STATUS_CHOICES.open_case
+        self.status = self.OPEN_CASE
         self.log_user_action(
                 CallEmailUserAction.ACTION_ALLOCATE_FOR_CASE.format(self.number), 
                 request)
+        self.save()
 
     def close(self, request):
-        self.status = self.STATUS_CHOICES.closed
+        self.status = self.CLOSED
         self.log_user_action(
                 CallEmailUserAction.ACTION_CLOSED.format(self.number), 
                 request)
+        self.save()
 
     def add_offence(self, request):
         self.log_user_action(
                 CallEmailUserAction.ACTION_OFFENCE.format(self.number), 
                 request)
+        self.save()
 
     def add_sanction_outcome(self, request):
         self.log_user_action(
                 CallEmailUserAction.ACTION_SANCTION_OUTCOME.format(self.number), 
                 request)
+        self.save()
 
     def add_referrers(self, request):
         referrers_selected = request.data.get('referrers_selected').split(",")
@@ -368,8 +382,8 @@ class CallEmail(RevisionedMixin):
                 raise e
             referrer = Referrer.objects.get(id=selection_int)
             if referrer:
-                instance.referrer.add(referrer)
-        instance.save()
+                self.referrer.add(referrer)
+        self.save()
 
 @python_2_unicode_compatible
 class ComplianceFormDataRecord(models.Model):
