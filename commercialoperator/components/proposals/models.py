@@ -1567,8 +1567,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                     expiry_date = datetime.datetime.strptime(details.get('due_date'), '%d/%m/%Y').date(),
                     start_date = datetime.datetime.strptime(details.get('start_date'), '%d/%m/%Y').date(),
                     submitter = self.submitter,
-                    org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
-                    proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                    #org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
+                    #proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                    org_applicant = self.org_applicant,
+                    proxy_applicant = self.proxy_applicant,
                 )
 
                 # Generate the preview document - get the value of the BytesIO buffer
