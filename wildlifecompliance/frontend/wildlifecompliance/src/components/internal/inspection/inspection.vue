@@ -482,7 +482,6 @@ export default {
       setPlannedForTime: 'setPlannedForTime',
       modifyInspectionTeam: 'modifyInspectionTeam',
       setPartyInspected: 'setPartyInspected',
-      createDocumentActionUrl: 'createDocumentActionUrl',
     }),
     newPersonCreated: function(obj) {
         console.log(obj);
@@ -516,12 +515,6 @@ export default {
         
       });
     },
-    //createDocumentActionUrl: async function() {
-      //return helpers.add_endpoint_join(
-        //  api_endpoints.inspection,
-          //this.inspection.id + "/process_inspection_report_document/"
-          //)
-    //},
     sanction_outcome(){
       console.log('sanction_outcome');
       this.sanctionOutcomeInitialised = true;
@@ -685,13 +678,6 @@ export default {
         await this.setInspection(res.body); 
     },
   },
-  //beforeRouteEnter: function(to, from, next) {
-  //    console.log(to);
-  //          next((vm) => {
-  //              vm.loadInspection({ inspection_id: to.params.inspection_id });
-  //              
-  //          });
-  //},
   created: async function() {
       if (this.$route.params.inspection_id) {
           await this.loadInspection({ inspection_id: this.$route.params.inspection_id });

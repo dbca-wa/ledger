@@ -438,16 +438,6 @@ export default {
               'name': ''
           })
       },
-      //createDocumentActionUrl: async function(done) {
-      //  if (!this.inspection.id) {
-      //      // create inspection and update vuex
-      //      let returned_inspection = await this.saveInspection({ route: null, crud: 'create', internal: true })
-      //      await this.loadInspection(returned_inspection.body.id);
-      //  }
-      //  // ensure filefield document_action_url is not empty
-      //  this.$refs.comms_log_file.document_action_url = this.inspection.commsLogsDocumentUrl;
-      //  return done(true);
-      //},
     },
     created: async function() {
         

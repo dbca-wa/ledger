@@ -420,9 +420,6 @@ const ComplianceRendererBlock = {
         'setFormValue',
         //'refreshApplicationFees',
     ]),
-    //...mapActions('complianceRendererStore', {
-      //  createDocumentActionUrl: 'createDocumentActionUrl',
-    //}),
     strToBool: strToBool,
     element_id: function(depth=0) {
         return `id_${this.component_name}${(depth) ? `_${depth}` : ''}${this.instance !== null ? `__instance${this.instance}`: ''}`;

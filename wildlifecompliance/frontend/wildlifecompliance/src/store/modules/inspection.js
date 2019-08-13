@@ -168,12 +168,5 @@ export const inspectionStore = {
         setPartyInspected({ commit, }, data) {
             commit("updatePartyInspected", data);
         },
-        createDocumentActionUrl({state}) {
-            //let inspectionId = await state.inspection.id;
-            return helpers.add_endpoint_join(
-                api_endpoints.inspection,
-                state.inspection.id + "/process_inspection_report_document/"
-                )
-        },
     },
 };

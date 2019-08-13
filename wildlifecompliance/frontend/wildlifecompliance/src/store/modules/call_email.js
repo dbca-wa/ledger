@@ -269,7 +269,7 @@ export const callemailStore = {
         },
     },
     actions: {
-        async loadCallEmail({ dispatch, }, { call_email_id }) {
+        async loadCallEmail({ dispatch, commit }, { call_email_id }) {
             console.log("loadCallEmail");
             console.log(call_email_id);
             try {
@@ -280,10 +280,10 @@ export const callemailStore = {
                     );
 
                 /* Set CallEmail object */
-                await dispatch("setCallEmail", returnedCallEmail.body);
+                await commit("updateCallEmail", returnedCallEmail.body);
 
                 for (let form_data_record of returnedCallEmail.body.data) {
-                    dispatch("setFormValue", {
+                    await dispatch("setFormValue", {
                         key: form_data_record.field_name,
                         value: {
                             "value": form_data_record.value,
@@ -484,12 +484,6 @@ export const callemailStore = {
         },
         setDateOfCall({ commit }, date ) {
             commit("updateDateOfCall", date);
-        },
-        async createDocumentActionUrl({state}) {
-          return helpers.add_endpoint_join(
-              api_endpoints.call_email,
-              state.call_email.id + "/process_comms_log_document/"
-              )
         },
     },
 };
