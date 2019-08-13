@@ -280,7 +280,7 @@ export const callemailStore = {
                     );
 
                 /* Set CallEmail object */
-                await commit("updateCallEmail", returnedCallEmail.body);
+                commit("updateCallEmail", returnedCallEmail.body);
 
                 for (let form_data_record of returnedCallEmail.body.data) {
                     await dispatch("setFormValue", {
