@@ -25,6 +25,9 @@ import {
 import {
 	inspectionStore
 } from './modules/inspection';
+import {
+	sanctionOutcomeStore
+} from './modules/sanction_outcome';
 
 Vue.use(Vuex);
 
@@ -41,5 +44,6 @@ export default new Vuex.Store({
 		callemailStore: callemailStore,
 		offenceStore: offenceStore,
 		inspectionStore: inspectionStore,
+		sanctionOutcomeStore: sanctionOutcomeStore,
 	}
 });

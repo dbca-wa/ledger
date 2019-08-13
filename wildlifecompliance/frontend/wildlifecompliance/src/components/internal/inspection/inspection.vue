@@ -72,7 +72,7 @@
                         
                         <div class="row action-button">
                           <div v-if="!readonlyForm" class="col-sm-12">
-                                <a @click="offence()" class="btn btn-primary btn-block">
+                                <a @click="open_offence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
                           </div>
@@ -80,7 +80,7 @@
 
                         <div  class="row action-button">
                           <div v-if="!readonlyForm && this.offenceExists" class="col-sm-12">
-                                <a @click="sanction_outcome()" class="btn btn-primary btn-block">
+                                <a @click="open_sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
                           </div>
@@ -522,15 +522,14 @@ export default {
           this.inspection.id + "/process_inspection_report_document/"
           )
     },
-    sanction_outcome(){
-      console.log('sanction_outcome');
+    open_sanction_outcome(){
       this.sanctionOutcomeInitialised = true;
       this.$nextTick(() => {
           this.$refs.sanction_outcome.isModalOpen = true;
           this.constructRelatedItemsTable();
       });
     },
-    offence(){
+    open_offence(){
       this.offenceInitialised = true;
       this.$refs.offence.isModalOpen = true;
     },
