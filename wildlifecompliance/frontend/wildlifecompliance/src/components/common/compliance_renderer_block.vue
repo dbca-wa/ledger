@@ -218,7 +218,7 @@
                 :data="value"/>
         </div>
 
-        <File v-if="component.type === 'file'"
+        <File v-if="component.type === 'file' && parent_id"
             :name="component_name"
             :label="component.label"
             :field_data="value"
@@ -228,7 +228,7 @@
             :help_text="help_text"
             :docsUrl="documents_url"
             :isRequired="component.isRequired"
-            :createDocumentActionUrl="createDocumentActionUrl"  
+            :documentActionUrl="documentActionUrl"  
             :help_text_url="help_text_url"/>
 
         <DateField v-if="component.type === 'date'"
@@ -319,7 +319,9 @@ const ComplianceRendererBlock = {
           type: String,
           default: null
       },
-      createDocumentActionUrl: Function,
+      callingComponent: {
+          type: Object,
+      },
   },
   computed: {
     ...mapGetters([
@@ -329,9 +331,35 @@ const ComplianceRendererBlock = {
     ...mapGetters('callemailStore', {
         call_email: 'call_email',
     }),
+    ...mapGetters('inspectionStore', {
+        inspection: 'inspection',
+    }),
+    parent_id: function() {
+        if (this.call_email && this.call_email.id) {
+            return true;
+        } else if (this.inspection && this.inspection.id) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+    documentActionUrl: function() {
+        if (this.call_email && this.call_email.id) {
+            return this.call_email.rendererDocumentUrl;
+        } else if (this.inspection && this.inspection.id) {
+            return this.inspection.rendererDocumentUrl;
+        }
+    },
     is_readonly: function() {
         // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
-        return this.component.readonly ? this.component.readonly : !this.call_email.can_user_edit_form;
+        if (this.call_email && this.call_email.id) {
+            return this.component.readonly ? this.component.readonly : !this.call_email.can_user_edit_form;
+        } else if (this.inspection && this.inspection.id) {
+            console.log(this.inspection);
+            console.log(this.component.readonly);
+            return this.component.readonly ? this.component.readonly : !this.inspection.can_user_action;
+        }
+        //return this.component.readonly ? this.component.readonly : !this.callingComponent.can_user_action;
     },
     comment_data: function() {
         return this.call_email.comment_data;
@@ -429,7 +457,7 @@ const ComplianceRendererBlock = {
             //this.refreshApplicationFees();
         }
     },
-  }
+  },
 }
 
 export default ComplianceRendererBlock;

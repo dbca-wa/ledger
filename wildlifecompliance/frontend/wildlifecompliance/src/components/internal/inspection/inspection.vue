@@ -123,7 +123,7 @@
                                   <label>Inspection Type</label>
                                 </div>
                                 <div class="col-sm-6">
-                                  <select :disabled="readonlyForm" class="form-control" v-model="inspection.inspection_type_id">
+                                  <select :disabled="readonlyForm" class="form-control" v-model="inspection.inspection_type_id" @change="loadSchema">
                                     <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
                                       {{ option.inspection_type }}
                                     </option>
@@ -236,11 +236,10 @@
                         <div :id="cTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Checklist">
                                 <div class="col-sm-12 form-group"><div class="row">
-                                    <div v-for="(item, index) in current_schema">
+                                    <div v-if="current_schema" v-for="(item, index) in current_schema">
                                       <compliance-renderer-block
                                          :component="item"
-                                         :createDocumentActionUrl="createDocumentActionUrl"
-                                         v-bind:key="`compliance_renderer_block_${index}`"
+                                         v-bind:key="`compliance_renderer_block${index}`"
                                         />
                                     </div>
                                 </div></div>
@@ -253,8 +252,8 @@
                                         <div class="col-sm-3">
                                             <label class="control-label pull-left"  for="Name">Inspection Report</label>
                                         </div>
-                                        <div class="col-sm-9">
-                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :createDocumentActionUrl="createDocumentActionUrl" />
+                                        <div class="col-sm-9" v-if="inspection.inspectionReportDocumentUrl">
+                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :documentActionUrl="inspection.inspectionReportDocumentUrl" />
                                         </div>
                                     </div>
                                 </div>
@@ -317,7 +316,7 @@ import moment from 'moment';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 import Offence from '../offence/offence';
-import SanctionOutcome from '../sanction_outcome/sanction_outcome';
+import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
 
 
@@ -516,12 +515,6 @@ export default {
         
       });
     },
-    createDocumentActionUrl: async function() {
-      return helpers.add_endpoint_join(
-          api_endpoints.inspection,
-          this.inspection.id + "/process_inspection_report_document/"
-          )
-    },
     sanction_outcome(){
       console.log('sanction_outcome');
       this.sanctionOutcomeInitialised = true;
@@ -685,14 +678,10 @@ export default {
         await this.setInspection(res.body); 
     },
   },
-  beforeRouteEnter: function(to, from, next) {
-      console.log(to);
-            next(async (vm) => {
-                await vm.loadInspection({ inspection_id: to.params.inspection_id });
-                
-            });
-  },
   created: async function() {
+      if (this.$route.params.inspection_id) {
+          await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
+      }
       console.log(this)
 
       // inspection_types
@@ -727,11 +716,11 @@ export default {
           this.$refs.search_person.setInput(value);
       }
       // load Inspection report
-      await this.$refs.inspection_report_file.get_documents();
-    // load current Inspection renderer schema
-    if (this.inspection.inspection_type_id) {
-      await this.loadSchema();
-    }
+      //await this.$refs.inspection_report_file.get_documents();
+      // load current Inspection renderer schema
+      if (this.inspection.inspection_type_id) {
+          await this.loadSchema();
+      }
   },
   mounted: function() {
       let vm = this;
@@ -750,7 +739,7 @@ export default {
           vm.setPlannedForTime(e.date.format('LT'));
       });
       
-      this.$nextTick(() => {
+      this.$nextTick(async () => {
           this.addEventListeners();
       });
   }

@@ -110,7 +110,7 @@
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
             			        <div class="col-sm-9">
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :createDocumentActionUrl="createDocumentActionUrl"  />
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="call_email.commsLogsDocumentUrl"  />
                                 </div>
                             </div>
                         </div>
@@ -277,7 +277,7 @@ export default {
     },
     methods: {
       ...mapActions('callemailStore', {
-          saveCallEmail: 'saveCallEmail'
+          saveCallEmail: 'saveCallEmail',
       }),
       loadAllocatedGroup: async function() {
           let url = helpers.add_endpoint_join(
@@ -437,12 +437,6 @@ export default {
               'file': null,
               'name': ''
           })
-      },
-      createDocumentActionUrl: function() {
-          return helpers.add_endpoint_join(
-          api_endpoints.call_email,
-          this.call_email.id + "/process_comms_log_document/"
-          )
       },
     },
     created: async function() {
