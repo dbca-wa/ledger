@@ -271,7 +271,7 @@ export default {
       sendData: async function() {
           let post_url = '';
           if (this.inspection && this.inspection.id) {
-              post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
+              post_url = '/api/inspection/' + this.inspection.id + '/workflow_action/'
           } else {
                 post_url = '/api/inspection/'
           }
@@ -314,11 +314,10 @@ export default {
           
       },
       createDocumentActionUrl: async function(done) {
-        console.log("v-on")
         if (!this.inspection.id) {
             // create inspection and update vuex
-            let returned_inspection = await this.saveInspection({ route: null, crud: 'create', internal: true })
-            await this.loadInspection(returned_inspection.body.id);
+            let returned_inspection = await this.saveInspection({ route: false, crud: 'create', internal: true })
+            await this.loadInspection({inspection_id: returned_inspection.body.id});
         }
         // ensure filefield document_action_url is not empty
         this.$refs.comms_log_file.document_action_url = this.inspection.commsLogsDocumentUrl;

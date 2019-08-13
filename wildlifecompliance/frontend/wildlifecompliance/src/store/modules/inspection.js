@@ -63,7 +63,6 @@ export const inspectionStore = {
     },
     actions: {
         async loadInspection({ dispatch, commit }, { inspection_id }) {
-            console.log("loadInspection");
             try {
                 const returnedInspection = await Vue.http.get(
                     helpers.add_endpoint_json(
@@ -145,6 +144,11 @@ export const inspectionStore = {
             if (crud === 'duplicate') {
                 return window.location.href = "/internal/inspection/" + inspectionId;
             }
+            else if (crud === 'create' && internal) {
+                console.log("modal file create")
+                return savedInspection;
+            }
+            // Below needs to be reviewed
             else if (crud !== 'create') {
                 if (!internal) {
                     await swal("Saved", "The record has been saved", "success");

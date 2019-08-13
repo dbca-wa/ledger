@@ -374,7 +374,7 @@ export default {
           this.attachAnother();
       },
       sendData: async function(){        
-          let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
+          let post_url = '/api/call_email/' + this.call_email.id + '/workflow_action/'
           let payload = new FormData(this.form);
           payload.append('call_email_id', this.call_email.id);
           payload.append('details', this.workflowDetails);
