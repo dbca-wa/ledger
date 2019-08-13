@@ -133,7 +133,7 @@ export default {
         get_documents: async function() {
             this.show_spinner = true;
 
-            if (this.documentActionUrl) {
+            if (this.document_action_url) {
                 var formData = new FormData();
                 formData.append('action', 'list');
                 if (this.commsLogId) {
@@ -161,7 +161,7 @@ export default {
             }
             formData.append('document_id', file.id);
             formData.append('csrfmiddlewaretoken', this.csrf_token);
-            if (this.documentActionUrl) {
+            if (this.document_action_url) {
                 let res = await Vue.http.post(this.document_action_url, formData)
                 console.log(res.body)
                 this.documents = res.body.filedata;
@@ -181,7 +181,7 @@ export default {
                 formData.append('comms_log_id', this.commsLogId);
             }
             formData.append('csrfmiddlewaretoken', this.csrf_token);
-            if (this.documentActionUrl) {
+            if (this.document_action_url) {
                 let res = await Vue.http.post(this.document_action_url, formData)
             }
             this.show_spinner = false;
@@ -219,7 +219,7 @@ export default {
         save_document: async function(e) {
             this.show_spinner = true;
 
-            if (this.documentActionUrl) {
+            if (this.document_action_url) {
                 var formData = new FormData();
                 formData.append('action', 'save');
                 if (this.commsLogId) {
