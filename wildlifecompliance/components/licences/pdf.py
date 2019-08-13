@@ -258,14 +258,14 @@ def _create_licence(licence_buffer, licence, application):
     elements.append(Paragraph('Activities', styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    conditionList = ListFlowable(
+    activityList = ListFlowable(
         [Paragraph("{name}: {start_date} - {expiry_date}".format(
             name=selected_activity.licence_activity.name,
             start_date=selected_activity.start_date.strftime(DATE_FORMAT),
             expiry_date=selected_activity.expiry_date.strftime(DATE_FORMAT)
         ), styles['Left'],) for selected_activity in licence.current_activities],
         bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
-    elements.append(conditionList)
+    elements.append(activityList)
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('Purposes', styles['BoldLeft']))

@@ -3,6 +3,7 @@ from decimal import Decimal as D, getcontext
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.conf import settings
+from django.db.models import Q
 from oscar.apps.checkout.utils import CheckoutSessionData as CoreCheckoutSessionData
 from oscar.apps.voucher.models import Voucher
 from oscar.core.loading import get_class
@@ -12,6 +13,8 @@ from ledger.catalogue.models import Product
 from ledger.basket.models import Basket
 from ledger.basket.middleware import BasketMiddleware
 from django.core.signing import BadSignature, Signer
+from django.core.exceptions import ValidationError
+from confy import env
 
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
@@ -75,7 +78,10 @@ def create_checkout_session(request, parameters):
     session_data = CheckoutSessionData(request) 
 
     # reset method of payment when creating a new session
-    session_data.pay_by(None)
+    try:
+        session_data.pay_by(parameters['payment_method'])
+    except KeyError:
+        session_data.pay_by(None)
     
     session_data.use_system(serializer.validated_data['system'])
     session_data.charge_by(serializer.validated_data['card_method'])
@@ -351,8 +357,9 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
             if not isinstance(owner, User):
                 owner = User.objects.get(id=owner)
             # Check if owner has previous baskets
-            if owner.baskets.filter(status='Open'):
-                old_basket = owner.baskets.get(status='Open')
+            open_baskets = Basket.objects.filter(status='Open',system=system,owner=owner).count()
+            if open_baskets > 0:
+                old_basket = Basket.objects.filter(status='Open',system=system,owner=owner)[0]
 
         # Use the previously open basket if its present or create a new one
         if old_basket:
@@ -371,11 +378,29 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         basket.strategy = selector.strategy(user=owner)
         basket.custom_ledger = True
         # Check if there are products to be added to the cart and if they are valid products
-        defaults = ('ledger_description','quantity','price_incl_tax','oracle_code')
+        # EXAMPLE config for settings.py: os.environ['LEDGER_CUSTOM_PRODUCT_LIST'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code','line_status')"
+        # you can import def calculate_excl_gst and use this funcation to calculate the mount with out gst on line items that have gst component.
+        ledger_product_custom_fields = env('LEDGER_PRODUCT_CUSTOM_FIELDS', None)
+        ledger_product_default_fields = ('ledger_description','quantity','price_incl_tax','oracle_code')
+
+        UPDATE_PAYMENT_ALLOCATION = env('UPDATE_PAYMENT_ALLOCATION', False)
+        if UPDATE_PAYMENT_ALLOCATION is True:
+             ledger_product_default_fields = ('ledger_description','quantity','price_incl_tax','oracle_code','line_status')
+
+        if ledger_product_custom_fields:
+                ledger_product_default_fields = ledger_product_custom_fields
+
         for p in product_list:
-            if not all(d in p for d in defaults):
+            if not all(d in p for d in ledger_product_default_fields):
                 raise ValidationError('Please make sure that the product format is valid')
-            p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
+            if ledger_product_custom_fields:
+                 if 'price_excl_tax' in ledger_product_custom_fields:
+                     # dont calculate tax as this should be included in the product list
+                     pass
+                 else:
+                     p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
+            else:
+                 p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
         # Save the basket
         basket.save()
         # Add the valid products to the basket

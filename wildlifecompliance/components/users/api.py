@@ -1,19 +1,22 @@
+import re
 import traceback
 from django.db import transaction
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
-from rest_framework import viewsets, serializers, views
+from rest_framework import viewsets, serializers, views, status
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from ledger.accounts.models import EmailUser, Address, Profile, EmailIdentity, EmailUserAction
+from django.contrib.auth.models import Permission, ContentType
 from datetime import datetime
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.applications.email import send_id_updated_notification
+from wildlifecompliance.components.call_email.serializers import SaveEmailUserSerializer, SaveUserAddressSerializer
 from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
 )
-
+from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.users.serializers import (
     UserSerializer,
@@ -24,7 +27,13 @@ from wildlifecompliance.components.users.serializers import (
     ContactSerializer,
     EmailIdentitySerializer,
     EmailUserActionSerializer,
-    MyUserDetailsSerializer
+    MyUserDetailsSerializer,
+    CompliancePermissionGroupSerializer,
+    RegionDistrictSerializer,
+    ComplianceUserDetailsSerializer,
+    CompliancePermissionGroupDetailedSerializer,
+    ComplianceUserDetailsOptimisedSerializer,
+    CompliancePermissionGroupMembersSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -35,12 +44,44 @@ from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
 
 
+def generate_dummy_email(first_name, last_name):
+    e = EmailUser(first_name=first_name, last_name=last_name)
+    email_address = e.get_dummy_email().strip().strip('.').lower()
+    email_address = re.sub(r'\.+', '.', email_address)
+    email_address = re.sub(r'\s+', '_', email_address)
+    return email_address
+
+
+
 class GetMyUserDetails(views.APIView):
     renderer_classes = [JSONRenderer, ]
 
     def get(self, request, format=None):
         serializer = MyUserDetailsSerializer(request.user, context={'request': request})
         return Response(serializer.data)
+
+
+class GetComplianceUserDetails(views.APIView):
+    renderer_classes = [JSONRenderer, ]
+
+    def get(self, request, format=None):
+        serializer = ComplianceUserDetailsSerializer(request.user, context={'request': request})
+        returned_data = serializer.data
+        if returned_data.get('id'):
+            user_id = returned_data.get('id')
+            user = EmailUser.objects.get(id=user_id)
+            
+            
+            compliance_permissions = []
+            for group in user.groups.all():
+                for permission in group.permissions.all():
+                    compliance_permissions.append(permission.codename)
+                returned_data.update({ 'base_compliance_permissions': compliance_permissions })
+            if 'volunteer' in compliance_permissions:
+                returned_data.update({'is_volunteer': True})
+            else:
+                returned_data.update({'is_volunteer': False})
+        return Response(returned_data)
 
 
 class GetUser(views.APIView):
@@ -386,6 +427,74 @@ class UserViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @list_route(methods=['POST', ])
+    def create_new_person(self, request, *args, **kwargs):
+        with transaction.atomic():
+            try:
+                email_user_id_requested = request.data.get('id', {})
+                email_address = request.data.get('email', '')
+                if not email_address:
+                    first_name = request.data.get('first_name', '')
+                    last_name = request.data.get('last_name', '')
+                    email_address = generate_dummy_email(first_name, last_name)
+
+                if email_user_id_requested:
+                    email_user_instance = EmailUser.objects.get(id=email_user_id_requested)
+                    email_user_instance.email = email_address
+                else:
+                    email_user_instance = EmailUser.objects.create_user(email_address, '')
+                    request.data.update({'email': email_address})
+
+                email_user_serializer = SaveEmailUserSerializer(
+                    email_user_instance,
+                    data=request.data,
+                    partial=True)
+
+                if email_user_serializer.is_valid(raise_exception=True):
+                    email_user_serializer.save()
+
+                    # Residential address
+                    # UPDATE user_id of residential address in order to save the residential address
+                    request.data['residential_address'].update({'user_id': email_user_serializer.data['id']})
+                    residential_address_id_requested = request.data.get('residential_address', {}).get('id', {})
+                    if residential_address_id_requested:
+                        residential_address_instance = Address.objects.get(id=residential_address_id_requested)
+                        address_serializer = SaveUserAddressSerializer(
+                            instance=residential_address_instance,
+                            data=request.data['residential_address'],
+                            partial=True)
+                    else:
+                        address_serializer = SaveUserAddressSerializer(
+                            data=request.data['residential_address'],
+                            partial=True)
+                    if address_serializer.is_valid(raise_exception=True):
+                        address_serializer.save()
+
+                    # Update relation between email_user and residential_address
+                    request.data.update({'residential_address_id': address_serializer.data['id']})
+                    email_user = EmailUser.objects.get(id=email_user_serializer.instance.id)
+                    email_user_serializer = SaveEmailUserSerializer(email_user, request.data)
+                    if email_user_serializer.is_valid():
+                        email_user_serializer.save()
+
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(repr(e.error_dict))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e))
+
+        email_user = EmailUser.objects.get(id=email_user_serializer.instance.id)
+        email_user_serializer = UserSerializer(email_user,)
+        return Response(
+            email_user_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=self.get_success_headers(email_user_serializer.data)
+        )
+
 
 class EmailIdentityViewSet(viewsets.ModelViewSet):
     queryset = EmailIdentity.objects.all()
@@ -410,3 +519,174 @@ class EmailIdentityViewSet(viewsets.ModelViewSet):
         if exclude_user is not None:
             queryset = queryset.exclude(user=exclude_user)
         return queryset
+
+
+class CompliancePermissionGroupViewSet(viewsets.ModelViewSet):
+    queryset = CompliancePermissionGroup.objects.none()
+    serializer_class = CompliancePermissionGroupSerializer
+    renderer_classes = [JSONRenderer, ]
+
+    def get_queryset(self):
+        if is_internal(self.request):
+            return CompliancePermissionGroup.objects.all()
+        elif is_customer(self.request):
+            return CompliancePermissionGroup.objects.none()
+        return CompliancePermissionGroup.objects.none()
+
+    @list_route(methods=['GET', ])
+    def get_officers(self, request, *args, **kwargs):
+        try:
+            officers = EmailUser.objects.filter(groups__in=CompliancePermissionGroup.objects.filter(permissions__in=Permission.objects.filter(codename='officer')))
+            serializer = ComplianceUserDetailsOptimisedSerializer(officers, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['POST'])
+    def get_users(self, request, *args, **kwargs):
+        try:
+            users = (EmailUser.objects.filter(id__in=request.data.get('user_list')))
+            serializer = ComplianceUserDetailsOptimisedSerializer(users, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @list_route(methods=['GET', ])
+    def get_detailed_list(self, request, *args, **kwargs):
+        try:
+            serializer = CompliancePermissionGroupDetailedSerializer(
+                CompliancePermissionGroup.objects.all(), 
+                many=True
+                )
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+
+class RegionDistrictViewSet(viewsets.ModelViewSet):
+    queryset = RegionDistrict.objects.all()
+    serializer_class = RegionDistrictSerializer
+    renderer_classes = [JSONRenderer, ]
+
+    def get_queryset(self):
+        # import ipdb; ipdb.set_trace()
+        user = self.request.user
+        if is_internal(self.request):
+            return RegionDistrict.objects.all()
+        elif is_customer(self.request):
+            return RegionDistrict.objects.none()
+        return RegionDistrict.objects.none()
+    
+    # @list_route(methods=['GET', ])
+    # def list_region_districts(self, request, *args, **kwargs):
+    #     try:
+    #         serializer = RegionDistrictSerializer(
+    #             RegionDistrict.objects.all(), 
+    #             many=True
+    #             )
+    #         print(serializer.data)
+    #         return Response(serializer.data)
+    #     except serializers.ValidationError:
+    #         print(traceback.print_exc())
+    #         raise
+    #     except ValidationError as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(repr(e.error_dict))
+    #     except Exception as e:
+    #         print(traceback.print_exc())
+    #         raise serializers.ValidationError(str(e))
+    
+    @list_route(methods=['GET', ])
+    def get_regions(self, request, *args, **kwargs):
+        try:
+            serializer = RegionDistrictSerializer(
+                RegionDistrict.objects.filter(region=None), 
+                many=True
+                )
+            print(serializer.data)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def get_region_districts(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = RegionDistrictSerializer(
+                instance.districts.all(), many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    def get_group_id_by_region_district(self, request, *args, **kwargs):
+        print("get_group_id_by_region_district")
+        print(request.data)
+        try:
+            instance = self.get_object()
+            group_permission = request.data.get('group_permission')
+            compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+            permission = Permission.objects.filter(codename=group_permission).filter(content_type_id=compliance_content_type.id).first()
+            group = CompliancePermissionGroup.objects.filter(region_district=instance).filter(permissions=permission).first()
+            print(group)
+
+            allocated_group = [{
+                'email': '',
+                'first_name': '',
+                'full_name': '',
+                'id': None,
+                'last_name': '',
+                'title': '',
+                }]
+            #serializer = ComplianceUserDetailsOptimisedSerializer(group.members, many=True)
+            serializer = CompliancePermissionGroupMembersSerializer(instance=group)
+            print(serializer.data)
+            for member in serializer.data['members']:
+                allocated_group.append(member)
+
+            return Response(data={'allocated_group': allocated_group, 'group_id': group.id})
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+

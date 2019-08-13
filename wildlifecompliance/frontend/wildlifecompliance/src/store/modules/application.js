@@ -60,9 +60,11 @@ export const applicationStore = {
         },
         isApplicationLoaded: state => Object.keys(state.application).length && state.application.licence_type_data.activity.length,
         isApplicationActivityVisible: (state, getters, rootState, rootGetters) =>
-            ({activity_id, exclude_statuses,
-                exclude_processing_statuses,
-                for_user_role, only_processing_statuses,
+            ({activity_id,
+              exclude_statuses,
+              exclude_processing_statuses,
+              for_user_role,
+              only_processing_statuses,
             }) => {
             if(!state.application.activities) {
                 return 0;
@@ -147,6 +149,7 @@ export const applicationStore = {
                 Vue.http.get(url).then(res => {
                     dispatch('setOriginalApplication', res.body);
                     dispatch('setApplication', res.body);
+                    dispatch('refreshApplicationFees');
                     for(let form_data_record of res.body.data) {
                         dispatch('setFormValue', {
                             key: form_data_record.field_name,
@@ -158,6 +161,8 @@ export const applicationStore = {
                                 "schema_name": form_data_record.schema_name,
                                 "component_type": form_data_record.component_type,
                                 "instance_name": form_data_record.instance_name,
+                                "licence_activity_id": form_data_record.licence_activity_id,
+                                "licence_purpose_id": form_data_record.licence_purpose_id,
                             }
                         });
                     }

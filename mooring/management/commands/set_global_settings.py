@@ -15,7 +15,7 @@ class Command(BaseCommand):
             for i in range(15):
                 if GlobalSettings.objects.filter(mooring_group=group, key=i).count() == 0:
                     if i == 0:
-                        value = 25
+                        value = 0 
                     if i == 1:
                         value = 31
                     if i == 2:

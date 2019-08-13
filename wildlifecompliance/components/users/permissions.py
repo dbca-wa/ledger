@@ -37,14 +37,6 @@ PERMISSION_GROUPS = [
     
 ]
 
-COMPLIANCE_PERMISSION_GROUPS = [
-    {
-        'name': 'Triage Officers',
-        # 'per_activity': False,
-        'permissions': ['triage_officer']
-    },
-]
-
 CUSTOM_GROUP_PERMISSIONS = {
     'organisation_access_request': {
         'name': 'Organisation Access Request',
@@ -84,9 +76,47 @@ CUSTOM_GROUP_PERMISSIONS = {
     
 }
 
+COMPLIANCE_PERMISSION_GROUPS = [
+    {
+        'name': 'Triage Call/Email',
+        'per_district': True,
+        'permissions': ['triage_call_email']
+    },
+    {
+        'name': 'Officer',
+        'per_district': True,
+        'permissions': ['officer']
+    },
+    {
+        'name': 'Manager',
+        'per_district': True,
+        'permissions': ['manager']
+    },
+    {
+        'name': 'Volunteer',
+        'per_district': False,
+        'permissions': ['volunteer']
+    },
+]
+
 COMPLIANCE_GROUP_PERMISSIONS = {
-    'triage_officer': {
-        'name': 'Triage Officer',
+    'triage_call_email': {
+        'name': 'Triage Call/Email',
+        'app_label': 'wildlifecompliance',
+        'model': 'compliancepermissiongroup',
+    },
+    'officer': {
+        'name': 'Officer',
+        'app_label': 'wildlifecompliance',
+        'model': 'compliancepermissiongroup',
+    },
+    'manager': {
+        'name': 'Manager',
+        'app_label': 'wildlifecompliance',
+        'model': 'compliancepermissiongroup',
+    },
+    'volunteer': {
+        'name': 'Volunteer',
         'app_label': 'wildlifecompliance',
         'model': 'compliancepermissiongroup',
     },

@@ -522,13 +522,13 @@ export default {
                     mRender: function(data, type, full) {
                         var id = full.id;
                         if (full.active) {
-                            var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
+                            var column ="<td ><a href='__ID__' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
                                 column += "<a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >Close</a></td>";
                             }
                         }
                         else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
+                            var column = "<td ><a href='__ID__' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
                                 column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" data-current_closure='"+ full.current_closure +"'>Open</a></td>";
                             }
@@ -801,7 +801,9 @@ export default {
         validateSize: function(){
             let vm = this;
             var isValid = true;
-            if(!parseInt(vm.campground.vessel_size_limit) > 0){
+            console.log('VESSEL SIZE'); 
+            console.log(vm.campground.vessel_size_limit)
+            if(!parseFloat(vm.campground.vessel_size_limit) > 0){
                 isValid = false;
                 var error = {
                     title : "Invalid Size",
@@ -836,7 +838,7 @@ export default {
         validateDraft: function(){
             let vm = this;
             var isValid = true;
-            if(!parseInt(vm.campground.vessel_draft_limit) > 0){
+            if(!parseFloat(vm.campground.vessel_draft_limit) > 0){
                 isValid = false;
                 var error = {
                     title : "Invalid Draft",
@@ -847,7 +849,7 @@ export default {
                 vm.swalMessage(error);
             }
             if (isValid){
-                if (parseInt(vm.campground.vessel_draft_limit) > vm.limits[vm.class_val + 3].value){
+                if (parseFloat(vm.campground.vessel_draft_limit) > vm.limits[vm.class_val + 3].value){
                     isValid = false;
                     var error = {
                         title : "Invalid Draft",
@@ -863,8 +865,8 @@ export default {
         validateBeamWeight: function(){
             let vm = this;
             var isValid = true;
-            if(vm.campground.mooring_physical_type == 1) {
-                if(!parseInt(vm.campground.vessel_beam_limit) > 0){
+            if(vm.campground.mooring_physical_type == 1 || vm.campground.mooring_physical_type == 2) {
+                if(!parseFloat(vm.campground.vessel_beam_limit) > 0){
                     isValid = false;
                     var error = {
                         title : "Invalid Beam",
@@ -875,7 +877,7 @@ export default {
                     vm.swalMessage(error);
                 }
                 if (isValid){
-                    if (parseInt(vm.campground.vessel_beam_limit) > vm.limits[vm.class_val + 6].value){
+                    if (parseFloat(vm.campground.vessel_beam_limit) > vm.limits[vm.class_val + 6].value){
                         isValid = false;
                         var error = {
                             title : "Invalid Beam",
@@ -887,7 +889,7 @@ export default {
                     }
                 }
             } else {
-                if(!parseInt(vm.campground.vessel_weight_limit) > 0){
+                if(!parseFloat(vm.campground.vessel_weight_limit) > 0){
                     isValid = false;
                     var error = {
                         title : "Invalid Weight",
@@ -898,7 +900,7 @@ export default {
                     vm.swalMessage(error);
                 }
                 if (isValid){
-                    if (parseInt(vm.campground.vessel_weight_limit) > vm.limits[vm.class_val + 9].value){
+                    if (parseFloat(vm.campground.vessel_weight_limit) > vm.limits[vm.class_val + 9].value){
                         isValid = false;
                         var error = {
                             title : "Invalid Weight",
@@ -997,7 +999,7 @@ export default {
             }
 
             if (isValid){
-                console.log("Page has found to be valid up until form checks")
+                // console.log("Page has found to be valid up until form checks")
                 $('form').each(function(){
                     if (!$(this).valid()){
                         isValid = false;
@@ -1064,8 +1066,8 @@ export default {
                         console.log("There was an error sending data.");
                         console.log(resp);
                         var message = {
-                            title: "Failure",
-                            text: "Mooring not updated, there was an error.\nPlease check all mandatory fields are complete.",
+                            title: "Failure: There was and error updating the mooring",
+                            text: resp.responseText,
                             type: "error"
                         }
                         vm.swalMessage(message);

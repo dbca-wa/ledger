@@ -5,10 +5,13 @@ from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
     OrganisationContact
 )
+from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.components.organisations.utils import can_admin_org, is_consultant
+from wildlifecompliance.helpers import is_customer, is_internal
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from rest_framework.fields import CurrentUserDefault
+from django.contrib.auth.models import Permission
 
 
 class DocumentSerializer(serializers.ModelSerializer):
@@ -232,6 +235,8 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
     contact_details = serializers.SerializerMethodField()
     wildlifecompliance_organisations = serializers.SerializerMethodField()
     identification = DocumentSerializer()
+    is_customer = serializers.SerializerMethodField()
+    is_internal = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -250,7 +255,9 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
             'wildlifecompliance_organisations',
             'personal_details',
             'address_details',
-            'contact_details'
+            'contact_details',
+            'is_customer',
+            'is_internal',
         )
 
     def get_personal_details(self, obj):
@@ -275,6 +282,81 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
             wildlifecompliance_organisations, many=True, context={
                 'user_id': obj.id}).data
         return serialized_orgs
+
+    def get_is_customer(self, obj):
+        return is_customer(self.context.get('request'))
+
+    def get_is_internal(self, obj):
+        return is_internal(self.context.get('request'))
+
+
+class ComplianceUserDetailsSerializer(serializers.ModelSerializer):
+    residential_address = UserAddressSerializer()
+    personal_details = serializers.SerializerMethodField()
+    address_details = serializers.SerializerMethodField()
+    contact_details = serializers.SerializerMethodField()
+    # compliance_permissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'title',
+            'id',
+            'last_name',
+            'first_name',
+            'dob',
+            'email',
+            'residential_address',
+            'phone_number',
+            'mobile_number',
+            'fax_number',
+            # 'compliance_permissions',
+            'personal_details',
+            'address_details',
+            'contact_details'
+        )
+
+    def get_personal_details(self, obj):
+        return True if obj.last_name and obj.first_name and obj.dob else False
+
+    def get_address_details(self, obj):
+        return True if obj.residential_address else False
+
+    def get_contact_details(self, obj):
+        if obj.mobile_number and obj.email:
+            return True
+        elif obj.phone_number and obj.email:
+            return True
+        elif obj.mobile_number and obj.phone_number:
+            return True
+        else:
+            return False
+
+    # def get_wildlifecompliance_organisations(self, obj):
+    #     wildlifecompliance_organisations = obj.wildlifecompliance_organisations
+    #     serialized_orgs = UserOrganisationSerializer(
+    #         wildlifecompliance_organisations, many=True, context={
+    #             'user_id': obj.id}).data
+    #     return serialized_orgs
+
+
+class ComplianceUserDetailsOptimisedSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'title',
+            'id',
+            'last_name',
+            'first_name',
+            'email',
+            'full_name',
+        )
+    
+    def get_full_name(self, obj):
+        if obj.first_name and obj.last_name:
+            return obj.first_name + ' ' + obj.last_name
 
 
 class EmailUserActionSerializer(serializers.ModelSerializer):
@@ -305,3 +387,78 @@ class EmailIdentitySerializer(serializers.ModelSerializer):
             'user',
             'email'
         )
+
+
+class RegionDistrictSerializer(serializers.ModelSerializer):
+    # region = RegionDistrictSerializer(many=True)
+
+    class Meta:
+        model = RegionDistrict
+        fields = (
+            'id',
+            'district',
+            'region',
+            'display_name',
+            'districts'
+        )
+
+
+class CompliancePermissionGroupSerializer(serializers.ModelSerializer):
+    region_district = RegionDistrictSerializer(many=True)
+
+    class Meta:
+        model = CompliancePermissionGroup
+        fields = (
+            'id',
+            'name',
+            'region_district',
+            'display_name',
+            )
+
+
+class CompliancePermissionGroupMembersSerializer(serializers.ModelSerializer):
+    members = ComplianceUserDetailsOptimisedSerializer(many=True)
+
+    class Meta:
+        model = CompliancePermissionGroup
+        fields = (
+            'members',
+            )
+
+
+class PermissionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Permission
+        fields = (
+            'codename',
+        )
+        read_only_fields = (
+            'codename',
+        )
+
+
+class CompliancePermissionGroupDetailedSerializer(serializers.ModelSerializer):
+    region_district = RegionDistrictSerializer(many=True)
+    members = ComplianceUserDetailsOptimisedSerializer(many=True)
+    # permissions = PermissionSerializer(many=True)
+    permissions_list = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = CompliancePermissionGroup
+        fields = (
+            'id',
+            'name',
+            'region_district',
+            'display_name',
+            'members',
+            # 'permissions',
+            'permissions_list',
+            )
+
+    def get_permissions_list(self, obj):
+        permissions_list = []
+        for permission in obj.permissions.all():
+            permissions_list.append(permission.codename)
+        return permissions_list
+

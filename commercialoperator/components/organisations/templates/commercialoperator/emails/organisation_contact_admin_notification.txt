@@ -1,0 +1,13 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your have been made Company Admin to:
+
+        Organisation : {{ organisation.name }}
+
+        ABN : {{ organisation.abn}}
+
+        You were linked to this organisation by {{ linked_by.get_full_name }}({{linked_by.email}}).
+    You can now make applications on behalf of this organisation.
+
+{%  endblock %}

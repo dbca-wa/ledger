@@ -82,7 +82,7 @@
                     <a href="{% url 'get_admissions_confirmation' admissionsBooking.id %}" class="btn btn-info btn-lg" >Confirmation</a>
                     {% if request.user.is_authenticated %}
                         {% for bi in admissionsInvoice %}
-                        <a href="{% url 'mooring-invoice-pdf' bi %}" class="btn btn-info btn-lg" >Invoice</a>
+                            <a href="{% url 'mooring-invoice-pdf' bi %}" class="btn btn-info btn-lg" >Invoice</a>
                         {% endfor %}
                         {% if admissionsBooking.in_future and not admissionsBooking.part_booking %}
                             <a href="{% url 'public_cancel_admissions_booking' admissionsBooking.id %}" class="btn btn-info btn-lg">Cancel Admission Booking</a>
@@ -93,7 +93,7 @@
                 {% else %}
                     <p style="font-size: 1.5rem; font-weight: bold;">You do not have permission to access the confirmation or invoice for this booking.<br>Please check your email or contact RIA directly.</p>
                 {% endif %}
-                <p style="font-size: 1.5rem; font-weight: bold;">You must bring your printed confirmation with you to the island.</p>
+                <p style="font-size: 1.5rem; font-weight: bold;">You must bring your confirmation with you to the island.</p>
             </div></div>
         </div>
     </div>

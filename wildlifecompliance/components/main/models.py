@@ -5,6 +5,30 @@ from django.db.models.query import QuerySet
 from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser
 import os
+from django.utils.translation import ugettext_lazy as _
+from django.contrib.postgres.fields.jsonb import JSONField
+
+
+@python_2_unicode_compatible
+class Sequence(models.Model):
+
+    name = models.CharField(
+        verbose_name=_("name"),
+        max_length=100,
+        primary_key=True,
+    )
+
+    last = models.PositiveIntegerField(
+        verbose_name=_("last value"),
+    )
+
+    class Meta:
+        verbose_name = _("sequence")
+        verbose_name_plural = _("sequences")
+
+    def __str__(self):
+        return "Sequence(name={}, last={})".format(
+            repr(self.name), repr(self.last))
 
 
 @python_2_unicode_compatible
@@ -125,3 +149,55 @@ queryset_methods = {
 
 for method_name, method in queryset_methods.items():
     setattr(QuerySet, method_name, method)
+
+# list of approved related item models
+#
+# (Call_email, 'C'), (Offence, 'O'), Email_User, Inspection, ...
+
+approved_related_item_models = [
+        'Offence',
+        'CallEmail',
+        'Inspection',
+        'SanctionOutcome',
+        ]
+
+def get_related_items(self, **kwargs):
+    return_list = []
+    for f in self._meta.get_fields():
+        if f.is_relation and f.related_model.__name__ in approved_related_item_models:
+            if f.is_relation and f.one_to_many:
+
+                if self._meta.model_name == 'callemail':
+                    field_objects = f.related_model.objects.filter(call_email_id=self.id)
+                elif self._meta.model_name == 'inspection':
+                    field_objects = f.related_model.objects.filter(inspection_id=self.id)
+                for field_object in field_objects:
+                    return_list.append(
+                        {   'model_name': f.related_model.__name__,
+                            'identifier': field_object.get_related_items_identifier,
+                            'descriptor': field_object.get_related_items_descriptor
+                        })
+            elif f.is_relation:
+                field_value = f.value_from_object(self)
+
+                if field_value:
+                    field_object = f.related_model.objects.get(id=field_value)
+
+                    return_list.append(
+                        {   'model_name': f.name,
+                            'identifier': field_object.get_related_items_identifier, 
+                            'descriptor': field_object.get_related_items_descriptor
+                        })
+    return return_list       
+
+# Examples of model properties for get_related_items
+@property
+def get_related_items_identifier(self):
+    return self.id
+
+@property
+def get_related_items_descriptor(self):
+    return '{0}, {1}'.format(self.street, self.wkb_geometry)
+
+
+

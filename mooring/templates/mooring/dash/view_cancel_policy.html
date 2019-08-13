@@ -48,6 +48,12 @@
         <div class="col-lg-12">
 		&nbsp;
 	</div>	
+        <div class="col-lg-12">
+            {% if cpo_check == False %}
+                <div class="alert alert-danger" role="alert"> <strong>ERROR</strong> Missing Zero day Policy </div>
+            {% endif %}
+        </div>
+
         <table width="100%" id='table-policy' class='hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline'>
         <thead>
         <tr><th>ID</th><th>Calculation Type</th><th>Amount/Percentage</th><th>Days</th><th>Action</th></tr>

@@ -218,7 +218,7 @@
                 :data="value"/>
         </div>
 
-        <File v-if="component.type === 'file'"
+        <File v-if="component.type === 'file' && parent_id"
             :name="component_name"
             :label="component.label"
             :field_data="value"
@@ -227,8 +227,8 @@
             :readonly="is_readonly"
             :help_text="help_text"
             :docsUrl="documents_url"
-            :call_email_id="call_email.id"
             :isRequired="component.isRequired"
+            :documentActionUrl="documentActionUrl"  
             :help_text_url="help_text_url"/>
 
         <DateField v-if="component.type === 'date'"
@@ -269,7 +269,8 @@ import Conditions from '@/components/forms/conditions.vue'
 // import SelectConditions from '@/components/forms/select-conditions.vue'
 import Checkbox from '@/components/forms/checkbox.vue'
 import Declaration from '@/components/forms/declarations.vue'
-import File from '@/components/forms/call_email_file.vue'
+//import File from '@/components/forms/call_email_file.vue'
+import File from '@/components/common/compliance_file.vue'
 import SelectBlock from '@/components/forms/select.vue'
 import DateField from '@/components/forms/date-field.vue'
 import TextField from '@/components/forms/text.vue'
@@ -306,7 +307,7 @@ const ComplianceRendererBlock = {
       GridBlock,
   },
   data: function() {
-    return {
+      return {
     }
   },
   props:{
@@ -317,7 +318,10 @@ const ComplianceRendererBlock = {
       instance: {
           type: String,
           default: null
-      }
+      },
+      callingComponent: {
+          type: Object,
+      },
   },
   computed: {
     ...mapGetters([
@@ -327,8 +331,35 @@ const ComplianceRendererBlock = {
     ...mapGetters('callemailStore', {
         call_email: 'call_email',
     }),
+    ...mapGetters('inspectionStore', {
+        inspection: 'inspection',
+    }),
+    parent_id: function() {
+        if (this.call_email && this.call_email.id) {
+            return true;
+        } else if (this.inspection && this.inspection.id) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+    documentActionUrl: function() {
+        if (this.call_email && this.call_email.id) {
+            return this.call_email.rendererDocumentUrl;
+        } else if (this.inspection && this.inspection.id) {
+            return this.inspection.rendererDocumentUrl;
+        }
+    },
     is_readonly: function() {
-        return this.component.readonly ? this.component.readonly : null;
+        // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
+        if (this.call_email && this.call_email.id) {
+            return this.component.readonly ? this.component.readonly : !this.call_email.can_user_edit_form;
+        } else if (this.inspection && this.inspection.id) {
+            console.log(this.inspection);
+            console.log(this.component.readonly);
+            return this.component.readonly ? this.component.readonly : !this.inspection.can_user_action;
+        }
+        //return this.component.readonly ? this.component.readonly : !this.callingComponent.can_user_action;
     },
     comment_data: function() {
         return this.call_email.comment_data;
@@ -426,7 +457,7 @@ const ComplianceRendererBlock = {
             //this.refreshApplicationFees();
         }
     },
-  }
+  },
 }
 
 export default ComplianceRendererBlock;

@@ -15,6 +15,7 @@ let dbName = 'WildlifeCompliance';
 const timeNow = Date.now();
 let expiryDiff = 86400000;  // 1 day = 86400000 milliseconds;
 
+
 module.exports = {
     getSetCache: async (store_name, key, url, expiry) => {
         
@@ -39,7 +40,7 @@ module.exports = {
                 }
             }
             else {
-                let returnedFromUrl = await Vue.http.get(url);
+                const returnedFromUrl = await Vue.http.get(url);
                 // url returns individual record (eg. @detail_route)
                 if (returnedFromUrl.body.id) {
                     // assumes that every record has an id element
@@ -56,7 +57,7 @@ module.exports = {
             // ensure cached value is not stale (1 week based on default expiry date)
             let store_keys = await storeInstance.keys();
             if (store_keys.length > 0) {
-                for (let store_key in store_keys) {
+                for (let store_key of store_keys) {
                     let this_entry = await storeInstance.getItem(store_key);
                     let timeDiff = timeNow - this_entry[0];
                     if (timeDiff > expiryDiff * 7) {
@@ -65,7 +66,9 @@ module.exports = {
                 }
             }
         } catch(err) {
-            console.error(err);
+            // on cache failure, request data from backend directly
+            const returnedFromUrl = await Vue.http.get(url);
+            return returnedFromUrl.body;
         }
     },
     getSetCacheList: async (store_name, url, expiry) => {
@@ -88,9 +91,7 @@ module.exports = {
                 let timeDiff = timeNow - firstEntry[0];
                 // ensure cached value is not stale
                 if (timeDiff > expiryDiff) {
-                    for (let store_key of store_keys) {
-                        await storeInstance.removeItem(store_key);
-                    }
+                    storeInstance.clear();
                 } else {
                     for (let store_key of store_keys) {
                         let this_val = await storeInstance.getItem(store_key);
@@ -100,9 +101,10 @@ module.exports = {
                     }
                 }
             } 
-            store_keys = await storeInstance.keys();
-            if ((store_keys.length == 0)) {
-                // empty store - get data from url
+            let fresh_keys = await storeInstance.keys();
+            if (fresh_keys.length === 0) {
+            // else {    
+            // empty store - get data from url
                 const returnedFromUrl = await Vue.http.get(url);
                 // ensure store is empty
                 await storeInstance.clear();
@@ -128,7 +130,13 @@ module.exports = {
             return returned_list;
 
         } catch(err) {
-            console.log(err);
+            // on cache failure, request data from backend directly
+            const returnedFromDb = await Vue.http.get(url);
+            if (returnedFromDb.body.results) {
+                return returnedFromDb.body.results;
+            } else {
+                return returnedFromDb.body;
+            }
         }
     }
 };

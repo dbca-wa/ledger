@@ -6,11 +6,15 @@ from django.conf.urls.static import static
 from rest_framework import routers
 
 from wildlifecompliance import views
-from wildlifecompliance.components.applications.views import ApplicationSuccessView
+from wildlifecompliance.components.applications.views import (
+    ApplicationSuccessView,
+    LicenceFeeSuccessView,
+)
 from wildlifecompliance.admin import wildlifecompliance_admin_site
 
 from wildlifecompliance.components.main.views import SearchKeywordsView, SearchReferenceView
 from wildlifecompliance.components.applications import views as application_views
+from wildlifecompliance.components.offence.api import OffenceViewSet
 from wildlifecompliance.components.users import api as users_api
 from wildlifecompliance.components.organisations import api as org_api
 from wildlifecompliance.components.applications import api as application_api
@@ -18,6 +22,10 @@ from wildlifecompliance.components.licences import api as licence_api
 from wildlifecompliance.components.returns import api as return_api
 from wildlifecompliance.management.permissions_manager import CollectorManager
 from wildlifecompliance.components.call_email import api as call_email_api
+from wildlifecompliance.components.offence import api as offence_api
+from wildlifecompliance.components.inspection import api as inspection_api
+from wildlifecompliance.components.sanction_outcome import api as sanction_outcome_api
+from wildlifecompliance.components.main import api as main_api
 
 from wildlifecompliance.utils import are_migrations_running
 
@@ -45,6 +53,8 @@ router.register(r'licences_class', licence_api.LicenceCategoryViewSet)
 router.register(r'licence_available_purposes',
                 licence_api.UserAvailableWildlifeLicencePurposesViewSet)
 router.register(r'returns', return_api.ReturnViewSet)
+router.register(r'returns_paginated', return_api.ReturnPaginatedViewSet)
+router.register(r'returns_amendment', return_api.ReturnAmendmentRequestViewSet)
 router.register(r'return_types', return_api.ReturnTypeViewSet)
 router.register(r'organisations', org_api.OrganisationViewSet)
 router.register(r'organisations_paginated',
@@ -66,11 +76,26 @@ router.register(r'report_types', call_email_api.ReportTypeViewSet)
 router.register(r'location', call_email_api.LocationViewSet)
 router.register(r'referrers', call_email_api.ReferrerViewSet)
 router.register(r'search_user', call_email_api.EmailUserViewSet)
+router.register(r'search_alleged_offences', offence_api.SearchSectionRegulation)
+router.register(r'search_organisation', offence_api.SearchOrganisation)
 router.register(r'map_layers', call_email_api.MapLayerViewSet)
+router.register(r'compliancepermissiongroup', users_api.CompliancePermissionGroupViewSet)
+router.register(r'region_district', users_api.RegionDistrictViewSet)
+router.register(r'case_priorities', call_email_api.CasePriorityViewSet)
+router.register(r'inspection_types', inspection_api.InspectionTypeViewSet)
+router.register(r'offence', offence_api.OffenceViewSet)
+router.register(r'call_email_paginated', call_email_api.CallEmailPaginatedViewSet)
+router.register(r'inspection', inspection_api.InspectionViewSet)
+router.register(r'inspection_paginated', inspection_api.InspectionPaginatedViewSet)
+router.register(r'sanction_outcome', sanction_outcome_api.SanctionOutcomeViewSet)
+router.register(r'sanction_outcome_paginated', sanction_outcome_api.SanctionOutcomePaginatedViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),
                     name='get-my-user-details'),
+                url(r'^api/my_compliance_user_details/$',
+                    users_api.GetComplianceUserDetails.as_view(),
+                    name='get-my-compliance-user-details'),
                 url(r'^api/is_new_user/$',
                     users_api.IsNewUser.as_view(),
                     name='is-new-user'),
@@ -80,6 +105,9 @@ api_patterns = [url(r'^api/my_user_details/$',
                 url(r'^api/amendment_request_reason_choices',
                     application_api.AmendmentRequestReasonChoicesView.as_view(),
                     name='amendment_request_reason_choices'),
+                url(r'^api/return_amendment_request_reason_choices',
+                    return_api.ReturnAmendmentRequestReasonChoicesView.as_view(),
+                    name='return_amendment_request_reason_choices'),
                 url(r'^api/empty_list/$',
                     application_api.GetEmptyList.as_view(),
                     name='get-empty-list'),
@@ -135,7 +163,20 @@ urlpatterns = [
     url(r'^application_submit/submit_with_invoice/',
         ApplicationSuccessView.as_view(),
         name='external-application-success-invoice'),
+    url(r'^application/finish_licence_fee_payment/',
+        LicenceFeeSuccessView.as_view(),
+        name='external-licence-fee-success-invoice'),
 
+    # following url is defined so that to include url path when sending
+    # call_email emails to users
+    url(r'^internal/call_email/(?P<call_email_id>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-call-email-detail'),
+    
+    # following url is defined so that to include url path when sending
+    # inspection emails to users
+    url(r'^internal/inspection/(?P<inspection_id>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-inspection-detail'),
+    
     # url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
     url(r'^export/pdf/$', application_views.pdflatex, name='pdf_latex'),
     url(r'^mgt-commands/$',

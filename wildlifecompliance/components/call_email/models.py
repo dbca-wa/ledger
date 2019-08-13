@@ -9,22 +9,37 @@ from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.organisations.models import Organisation
-from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
-    UserAction, Document
-
+    UserAction, Document, get_related_items
+from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
+#from wildlifecompliance.components.main.models import InspectionType
 
 logger = logging.getLogger(__name__)
 
-
 def update_compliance_doc_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/documents/{}'.format(
-        instance.call_email.id, filename)
+    #return 'wildlifecompliance/compliance/{}/documents/{}'.format(
+        #instance.call_email.id, filename)
+    pass
 
+def update_call_email_doc_filename(instance, filename):
+    # return 'wildlifecompliance/compliance/{}/documents/{}'.format(
+      #  instance.call_email.id, filename)
+    pass
 
 def update_compliance_comms_log_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
-        instance.log_entry.call_email.id, instance.id, filename)
+    #return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
+        #instance.log_entry.call_email.id, instance.id, filename)
+    pass
+
+def update_call_email_comms_log_filename(instance, filename):
+    #return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
+     #   instance.log_entry.call_email.id, instance.id, filename)
+    pass
+
+def update_compliance_workflow_log_filename(instance, filename):
+    #return 'wildlifecompliance/compliance/{}/workflow/{}/{}'.format(
+        #instance.workflow.call_email.id, instance.id, filename)
+    pass
 
 
 class Classification(models.Model):
@@ -66,10 +81,11 @@ class ReportType(models.Model):
     report_type = models.CharField(max_length=50)
     schema = JSONField(null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
-    description = models.CharField(max_length=256, blank=True, null=True)
+    description = models.CharField(max_length=255, blank=True, null=True)
     replaced_by = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
+    advice_url = models.CharField(max_length=255, blank=True, null=True, help_text="Should start with http://")
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -136,6 +152,30 @@ class MapLayer(models.Model):
         return '{0}, {1}'.format(self.display_name, self.layer_name)
 
 
+class CasePriority(models.Model):
+    description = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_CasePriority'
+        verbose_name_plural = 'CM_CasePriorities'
+
+    def __str__(self):
+        return self.description
+
+
+# class InspectionType(models.Model):
+#     description = models.CharField(max_length=255, null=True, blank=True)
+
+#     class Meta:
+#         app_label = 'wildlifecompliance'
+#         verbose_name = 'CM_InspectionType'
+#         verbose_name_plural = 'CM_InspectionTypes'
+
+#     def __str__(self):
+#         return self.description
+
+
 class CallEmail(RevisionedMixin):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
@@ -165,23 +205,36 @@ class CallEmail(RevisionedMixin):
     number = models.CharField(max_length=50, blank=True, null=True)
     caller = models.CharField(max_length=100, blank=True, null=True)
     caller_phone_number = models.CharField(max_length=50, blank=True, null=True)
-    assigned_to = models.CharField(max_length=100, blank=True, null=True)
+    assigned_to = models.ForeignKey(
+        EmailUser, 
+        related_name='callemail_assigned_to',
+        null=True
+    )
+    volunteer = models.ForeignKey(
+        EmailUser, 
+        related_name='callemail_volunteer',
+        null=True
+    )
     anonymous_call = models.BooleanField(default=False)
     caller_wishes_to_remain_anonymous = models.BooleanField(default=False)
     occurrence_from_to = models.BooleanField(default=False)
     occurrence_date_from = models.DateField(null=True)
     occurrence_time_from = models.CharField(max_length=20, blank=True, null=True)
+    occurrence_time_start = models.TimeField(blank=True, null=True)
     occurrence_date_to = models.DateField(null=True)
     occurrence_time_to = models.CharField(max_length=20, blank=True, null=True)
+    occurrence_time_end = models.TimeField(blank=True, null=True)
+    date_of_call = models.DateField(null=True)
+    time_of_call = models.TimeField(blank=True, null=True)
     report_type = models.ForeignKey(
         ReportType,
         null=True,
         related_name='call_schema',
     )
-    referrer = models.ForeignKey(
+    referrer = models.ManyToManyField(
         Referrer,
-        null=True,
-        related_name="report_referrer"
+        blank=True,
+        # related_name="report_referrer"
     )
     email_user = models.ForeignKey(
         EmailUser,
@@ -189,7 +242,32 @@ class CallEmail(RevisionedMixin):
     )
     advice_given = models.BooleanField(default=False)
     advice_details = models.TextField(blank=True, null=True)
-
+    region = models.ForeignKey(
+        RegionDistrict, 
+        related_name='callemail_region', 
+        null=True
+    )
+    district = models.ForeignKey(
+        RegionDistrict, 
+        related_name='callemail_district', 
+        null=True
+    )
+    allocated_group = models.ForeignKey(
+        CompliancePermissionGroup,
+        related_name='callemail_allocated_group', 
+        null=True
+    )
+    case_priority = models.ForeignKey(
+        CasePriority,
+        related_name='callemail_case_priority', 
+        null=True
+    )
+    #inspection_type = models.ForeignKey(
+     #   InspectionType,
+      #  related_name='callemail_inspection_type', 
+       # null=True
+    #)
+    
     class Meta:
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_Call/Email'
@@ -220,7 +298,18 @@ class CallEmail(RevisionedMixin):
             return self.report_type.schema
     
     def log_user_action(self, action, request):
-        return ComplianceUserAction.log_action(self, action, request.user)
+        return CallEmailUserAction.log_action(self, action, request.user)
+
+    @property
+    def get_related_items_identifier(self):
+        return self.number
+
+    @property
+    def get_related_items_descriptor(self):
+        return '{0}, {1}'.format(self.status, self.caller)
+    # @property
+    # def related_items(self):
+    #     return get_related_items(self)
 
 
 @python_2_unicode_compatible
@@ -339,9 +428,10 @@ class ComplianceFormDataRecord(models.Model):
             form_data_record.save()
 
 
-class ComplianceDocument(Document):
+class CallEmailDocument(Document):
     call_email = models.ForeignKey('CallEmail', related_name='documents')
-    _file = models.FileField(upload_to=update_compliance_doc_filename)
+    #_file = models.FileField(max_length=255, upload_to=update_call_email_doc_filename)
+    _file = models.FileField(max_length=255)
     input_name = models.CharField(max_length=255, blank=True, null=True)
     # after initial submit prevent document from being deleted
     can_delete = models.BooleanField(default=True)
@@ -349,7 +439,7 @@ class ComplianceDocument(Document):
 
     def delete(self):
         if self.can_delete:
-            return super(ComplianceDocument, self).delete()
+            return super(CallEmailDocument, self).delete()
         logger.info(
             'Cannot delete existing document object after application has been submitted (including document submitted before\
             application pushback to status Draft): {}'.format(
@@ -360,25 +450,39 @@ class ComplianceDocument(Document):
         app_label = 'wildlifecompliance'
 
 
-class ComplianceLogDocument(Document):
+class CallEmailLogDocument(Document):
+    #name = models.CharField(max_length=100, blank=True,
+     #       verbose_name='name', help_text='')
     log_entry = models.ForeignKey(
-        'ComplianceLogEntry',
+        'CallEmailLogEntry',
         related_name='documents')
-    _file = models.FileField(upload_to=update_compliance_comms_log_filename)
+    #input_name = models.CharField(max_length=255, blank=True, null=True)
+    #version_comment = models.CharField(max_length=255, blank=True, null=True)
+    #_file = models.FileField(max_length=255, upload_to=update_call_email_comms_log_filename)
+    _file = models.FileField(max_length=255)
 
     class Meta:
         app_label = 'wildlifecompliance'
 
 
-class ComplianceLogEntry(CommunicationsLogEntry):
+class CallEmailLogEntry(CommunicationsLogEntry):
     call_email = models.ForeignKey(CallEmail, related_name='comms_logs')
 
     class Meta:
         app_label = 'wildlifecompliance'
 
 
-class ComplianceUserAction(UserAction):
+class CallEmailUserAction(UserAction):
     ACTION_SAVE_CALL_EMAIL_ = "Save Call/Email {}"
+    ACTION_FORWARD_TO_REGIONS = "Forward Call/Email {} to regions"
+    ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH = "Forward Call/Email {} to Wildlife Protection Branch"
+    ACTION_ALLOCATE_FOR_FOLLOWUP = "Allocate Call/Email {} for follow up"
+    ACTION_ALLOCATE_FOR_INSPECTION = "Allocate Call/Email {} for inspection"
+    ACTION_ALLOCATE_FOR_CASE = "Allocate Call/Email {} for case"
+    ACTION_CLOSE = "Close case Call/Email {}"
+    ACTION_OFFENCE = "Create linked offence for Call/Email {}"
+    ACTION_SANCTION_OUTCOME = "Create Sanction Outcome for Call/Email {}"
+    ACTION_PERSON_SEARCH = "Linked person to Call/Email {}"
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -393,3 +497,4 @@ class ComplianceUserAction(UserAction):
         )
 
     call_email = models.ForeignKey(CallEmail, related_name='action_logs')
+

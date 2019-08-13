@@ -1,0 +1,12 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Licence has been expired:
+
+    Licence : {{ approval.lodgement_number}}
+
+    Application : {{ proposal.lodgement_number}}
+
+    
+
+{%  endblock %}

@@ -1,6 +1,6 @@
 <template lang="html">
     <div v-if="isApplicationLoaded" class="container" id="internalApplication">
-            <div class="row">
+        <div class="row" style="padding-bottom: 50px;">
         <h3>{{ headerLabel }}: {{ application.lodgement_number }}</h3>
         <div class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
@@ -95,11 +95,6 @@
                                     <div v-if="!applicationIsDraft" class="row">
                                         <div class="col-sm-12">
                                             <button class="btn btn-primary top-buffer-s col-xs-12" @click.prevent="togglesendtoAssessor()">Assessments &amp; Conditions</button><br/>
-                                        </div>
-                                    </div>
-                                    <div v-if="canOfficerReviewConditions" class="row">
-                                        <div class="col-sm-12">
-                                            <button class="btn btn-warning top-buffer-s col-xs-12" @click.prevent="toggleOfficerConditions()">Review Conditions</button>
                                         </div>
                                     </div>
                                     <div v-if="canProposeIssueOrDecline" class="row">
@@ -502,7 +497,7 @@
                                     <input type='hidden' name="schema" :value="JSON.stringify(application)" />
                                     <input type='hidden' name="application_id" :value="1" />
                                     <input type='hidden' id="selected_activity_tab_id" v-model="selected_activity_tab_id" />
-                                    <div class="row" style="margin-bottom:50px;">
+                                    <div v-if="showNavBarBottom" class="row" style="margin-bottom:50px;">
                                         <div class="navbar navbar-fixed-bottom" style="background-color: #f5f5f5 ">
                                             <div class="navbar-inner">
                                                 <div class="container">
@@ -674,7 +669,7 @@ export default {
         canIssueDecline: function(){
             var activities_list = this.licence_type_data.activity;
             for(let activity of activities_list){
-                if(activity.processing_status.id == 'with_officer_finalisation' &&
+                if(['with_officer_finalisation', 'awaiting_licence_fee_payment'].includes(activity.processing_status.id) &&
                     this.userHasRole('issuing_officer', activity.id)){
                         return true;
                 }
@@ -707,9 +702,6 @@ export default {
                 return false;
             }
             return this.selected_activity_tab_id && this.selectedActivity.processing_status.id == 'with_officer_finalisation' ? true : false;
-        },
-        canOfficerReviewConditions: function(){
-            return this.hasActivityStatus('with_officer_conditions', 1, 'licensing_officer');
         },
         canProposeIssueOrDecline: function(){
             return this.hasActivityStatus('with_officer_conditions', 1, 'licensing_officer');
@@ -761,10 +753,16 @@ export default {
                 case 'amend_activity':
                     return 'Application - Activity Amendment';
                 break;
+                case 'renew_activity':
+                    return 'Application - Activity Renewal';
+                break;
                 default:
                     return 'Application'
                 break;
             }
+        },
+        showNavBarBottom: function() {
+            return this.canReturnToConditions || (!this.applicationIsDraft && this.canSaveApplication)
         }
     },
     methods: {
@@ -841,6 +839,7 @@ export default {
             this.$refs.proposed_licence.propose_issue.licence_activity_id=this.selected_activity_tab_id;
             this.$refs.proposed_licence.propose_issue.licence_activity_name=selectedTabTitle.text();
             this.$refs.proposed_licence.isModalOpen = true;
+            this.$refs.proposed_licence.preloadLastActivity();
         },
         toggleIssue:function(){
             this.save_wo();

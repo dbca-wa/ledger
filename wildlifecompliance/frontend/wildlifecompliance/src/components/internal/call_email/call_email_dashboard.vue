@@ -41,7 +41,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="col-md-3 pull-right">
+                <div v-if="current_user && current_user.is_volunteer" class="col-md-3 pull-right">
                     <button @click.prevent="createCallEmailUrl"
                         class="btn btn-primary pull-right">New Call/Email</button>
                 </div>    
@@ -70,7 +70,7 @@
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/compliance_forms/section.vue";
     export default {
-        name: 'CallEmailTableDash',
+        name: 'CallEmailDashTable',
         data() {
             let vm = this;
             return {
@@ -93,6 +93,17 @@
                     allowInputToggle: true
                 },
                 dtOptions: {
+                    serverSide: true,
+                    searchDelay: 1000,
+                    lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+                    order: [
+                        [0, 'desc']
+                    ],
+                    autoWidth: false,
+                    rowCallback: function (row, data) {
+                        $(row).addClass('appRecordRow');
+                    },
+
 
                     language: {
                         processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -101,18 +112,35 @@
                     responsive: true,
                     processing: true,
                     ajax: {
-                        "url": helpers.add_endpoint_json(api_endpoints.call_email, 'datatable_list'),
-                        "dataSrc": '',
+                        //"url": helpers.add_endpoint_json(api_endpoints.call_email, 'datatable_list'),
+                        //"url": helpers.add_endpoint_json(api_endpoints.call_email_paginated, 'get_paginated_datatable'),
+                        "url": "/api/call_email_paginated/get_paginated_datatable/?format=datatables",
+                        "dataSrc": 'data',
+                        "data": function(d) {
+                            d.status_description = vm.filterStatus;
+                            d.classification_description = vm.filterClassification;
+                            d.date_from = vm.filterLodgedFrom != '' && vm.filterLodgedFrom != null ? moment(vm.filterLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                            d.date_to = vm.filterLodgedTo != '' && vm.filterLodgedTo != null ? moment(vm.filterLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
+                        }
                     },
+                    dom: 'lBfrtip',
+                    //dom: 'B',
+                    buttons: [
+                        'excel',
+                        'csv',
+                        ],
                     columns: [
                         {
                             data: "number",
+                            searchable: false,
                         },
                         {
-                            data: "status",
+                            data: "status.name",
+                            searchable: false,
                         },
                         {
                             data: "classification",
+                            searchable: false,
                             mRender: function (data, type, full) {
                                 if (data) {
                                     return data.name;
@@ -122,7 +150,8 @@
                             }
                         },
                         {
-                            data: "lodgement_date",
+                            data: "lodged_on",
+                            searchable: false,
                             mRender: function (data, type, full) {
                                 return data != '' && data != null ? moment(data).format(vm.dateFormat) : '';
                             }
@@ -130,40 +159,26 @@
                         
                         {
                             data: "caller",
+                            searchable: false
                         },
                         {
                             data: "assigned_to",
+                            searchable: false,
+                            orderable: false,
+                            mRender: function (data, type, full) {
+                                if (data) {
+                                    return data.full_name;
+                                } else {
+                                    return '';
+                                }
+                            }
                         },
                         {
-                            mRender: function (data, type, full) {
-                                return `<a href="/internal/call_email/${full.id}">View</a>`
-                            }
+                            data: "user_action",
+                            searchable: false,
+                            orderable: false
                         }
                     ],
-
-                    // initComplete: function () {
-                    //     var callColumn = vm.$refs.call_email_table.vmDataTable.columns(1);
-                    //     callColumn.data().unique().sort().each(function (d, j) {
-                    //         let status_choices = [];
-                    //         $.each(d, (index, a) => {
-                    //             a != null && status_choices.indexOf(a) < 0 ? status_choices.push(a) :
-                    //             '';
-                    //         })
-                    //         vm.statusChoices = status_choices;
-                    //     });
-                    //     var classificationColumn = vm.$refs.call_email_table.vmDataTable.columns(2);
-                    //     classificationColumn.data().unique().sort().each(function (d, j) {
-                    //         let classification_choices = [];
-                    //         $.each(d, (index, a) => {
-                    //             if (a) {
-                    //                 a['name'] != null && classification_choices.indexOf(a['name']) < 0 ?
-                    //                     classification_choices.push(a['name']) : '';
-                    //             }
-                    //         })
-                    //         vm.classificationChoices = classification_choices;
-                    //     });
-                    // }
-
                 },
                 dtHeaders: [
                     "Number",
@@ -177,7 +192,15 @@
             }
         },
 
+        beforeRouteEnter: function(to, from, next) {
+            next(async (vm) => {
+                await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
+                // await this.datatablePermissionsToggle();
+            });
+        },
+        
         created: async function() {
+            
             let returned_classification_types = await cache_helper.getSetCacheList('CallEmail_ClassificationTypes', '/api/classification.json');
             console.log('classification types');
             console.log(returned_classification_types);
@@ -191,25 +214,14 @@
             Object.assign(this.status_choices, returned_status_choices);
             console.log(this.status_choices);
             this.status_choices.splice(0, 0, {id: 'all', display: 'All'});
+
         },
         watch: {
             filterStatus: function () {
-                let vm = this;
-                let regexSearch = helpers.datatableExactStringMatch(vm.filterStatus);
-                if (vm.filterStatus != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search(regexSearch, true, false).draw();
-                } else {
-                    vm.$refs.call_email_table.vmDataTable.columns(1).search('').draw();
-                }
+                this.$refs.call_email_table.vmDataTable.draw();
             },
             filterClassification: function () {
-                let vm = this;
-                let regexSearch = helpers.datatableExactStringMatch(vm.filterClassification);
-                if (vm.filterClassification != 'All') {
-                    vm.$refs.call_email_table.vmDataTable.columns(2).search(regexSearch, true, false).draw();
-                } else {
-                    vm.$refs.call_email_table.vmDataTable.columns(2).search('').draw();
-                }
+                this.$refs.call_email_table.vmDataTable.draw();
             },
             filterLodgedFrom: function () {
                 this.$refs.call_email_table.vmDataTable.draw();
@@ -226,11 +238,22 @@
         computed: {
             ...mapGetters('callemailStore', {
             }),
+            ...mapGetters({
+                current_user: 'current_user',
+            }),
+            
         },
         methods: {
             ...mapActions('callemailStore', {
                 saveCallEmail: "saveCallEmail",
             }),
+            ...mapActions({
+                loadCurrentUser: "loadCurrentUser",
+                // userhasComplianceRole: "hasComplianceRole",
+            }),
+            // datatablePermissionsToggle: function() {
+            //     return this.current_user.base_compliance_permissions.includes('officer');
+            // },
             createCallEmailUrl: async function () {
                 const newCallId = await this.saveCallEmail({ route: false, crud: 'create'});
                 console.log("newCallId");
@@ -308,6 +331,8 @@
                 await vm.initialiseSearch();
                 await vm.addEventListeners();
             });
+            
+            
         }
     }
 </script>

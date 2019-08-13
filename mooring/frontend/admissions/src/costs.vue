@@ -153,6 +153,17 @@ export default {
                         }
                     }
                 }, {
+                    data: 'mooring_group',
+                    orderable: false,
+                    mRender: function(data, type, full){
+                        if(data){
+                            var column = "<td > " + full.mooring_group + "</td>"
+                            return column;
+                        } else {
+                            return "";
+                        }
+                    }
+                }, {
                     data: 'editable',
                     orderable: false,
                     mRender: function(data, type, full) {
@@ -174,7 +185,7 @@ export default {
                 },
             },
             priceHistoryDtHeaders:[
-                "ID", "Period Start", "Period End", "Adult", "Child", "Infant" ,"Family", "Action"
+                "ID", "Period Start", "Period End", "Adult", "Child", "Infant" ,"Family", "Collecting Agency","Action"
             ]
 
         }

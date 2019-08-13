@@ -231,7 +231,7 @@ class EditAccountView(LoginRequiredMixin, TemplateView):
                 emailuser.save()
                 if new_user and not unique:
                     message = """This combination of given name(s), last name and date of birth is not unique.
-                    If you already have a Parks and Wildlife customer account under another email address, please discontinue this registration and sign in with your existing account and add any additional email addresses as new profiles."""
+                    If you already have a Biodiversity, Conservation and Attractions customer account under another email address, please discontinue this registration and sign in with your existing account and add any additional email addresses as new profiles."""
                     messages.error(request, message)
                     allow_discontinue = True
                 else:
