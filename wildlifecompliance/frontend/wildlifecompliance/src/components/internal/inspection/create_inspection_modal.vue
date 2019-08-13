@@ -78,7 +78,7 @@
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
             			        <div class="col-sm-9">
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl.sync="documentActionUrl" @create-parent="createDocumentActionUrl"/>
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl.sync="inspection.commsLogsDocumentUrl" @create-parent="createDocumentActionUrl"/>
                                 </div>
                             </div>
                         </div>
@@ -176,7 +176,8 @@ export default {
     },
     methods: {
       ...mapActions('inspectionStore', {
-          saveInspection: 'saveInspection'
+          saveInspection: 'saveInspection',
+          setInspection: 'setInspection',
       }),
       loadAllocatedGroup: async function() {
           let url = helpers.add_endpoint_join(
@@ -317,16 +318,10 @@ export default {
         if (!this.inspection.id) {
             // create inspection and get id
             let returned_inspection = await Vue.http.post(api_endpoints.inspection);
-            this.inspection.id = returned_inspection.body.id;
+            await this.setInspection(returned_inspection.body);
         }
-    
-        this.documentActionUrl = await helpers.add_endpoint_join(
-            api_endpoints.inspection,
-            this.inspection.id + "/create_modal_process_comms_log_document/"
-            )
-        console.log("v off");
         return true;
-        //this.$ref.comms_log_file.
+    
       },
 
     },

@@ -87,6 +87,7 @@ export default {
             help_text_url:'',
             commsLogId: null,
             documentActionUrlUpdated: null,
+            //document_action_url: this.documentActionUrl,
             //documentActionUrl: null,
         }
     },
@@ -97,7 +98,16 @@ export default {
     },
 
     watch: {
-        documentActionUrl: function() {},
+        documentActionUrl: {
+            deep: true,
+            immediate: true,
+            handler (newVal, oldVal) {
+            console.log("watch documentActionUrl");
+            console.log(newVal);
+            console.log(oldVal);
+            //this.document_action_url = this.documentActionUrl
+            },
+        },
     },
     methods:{
         handleChange: function (e) {
@@ -127,7 +137,9 @@ export default {
 
             if (e.target.files.length > 0) {
                 //vm.upload_file(e)
-                vm.save_document(e);
+                this.$nextTick(() => {
+                    this.save_document(e);
+                });
             }
 
         },
@@ -165,8 +177,9 @@ export default {
             formData.append('csrfmiddlewaretoken', this.csrf_token);
             if (this.documentActionUrl) {
                 let res = await Vue.http.post(this.documentActionUrl, formData)
+                console.log(res.body)
+                this.documents = res.body.filedata;
                 //this.documents = await this.get_documents()
-                this.documents = await this.get_documents()
                 this.commsLogId = res.body.comms_instance_id;
             }
             //vm.documents = res.body;
@@ -203,29 +216,25 @@ export default {
         },
 
         handleChangeWrapper: async function(e) {
-            if (!this.parent_id && !this.documentActionUrl) {
-                await this.create_parent();
-                this.handleChange(e);
+            if (!this.documentActionUrl) {
+                console.log("create parent");
+                await this.$emit('create-parent');
+                await this.$watch(documentActionUrl);
             }
+            this.$nextTick(() => {
+                this.handleChange(e);
+            });
             //this.documentActionUrlUpdated = await this.$emit('create-parent');
             //return this.documentActionUrlUpdated;
         },
-        create_parent: function(e) {
-            this.$emit('create-parent');
+        create_parent: async function(e) {
+            this.documentActionUrlUpdated = await this.$emit('create-parent');
         },
 
 
 
         save_document: async function(e) {
             this.show_spinner = true;
-            if (!this.parent_id && !this.documentActionUrl) {
-               //await this.$emit('create-parent');
-               //await this.create_parent();
-               // this.$emit('create-parent', (res) => { 
-               //     console.log("emit fn")
-               //     this.DocumentActionUrlUpdated = res
-               // });
-            }
 
             if (this.documentActionUrl) {
                 var formData = new FormData();
