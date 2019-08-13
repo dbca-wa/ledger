@@ -619,6 +619,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 self.submitter.first_name,
                 self.submitter.last_name)
 
+
+
     @property
     def applicant_details(self):
         if self.org_applicant:
@@ -1565,8 +1567,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                     expiry_date = datetime.datetime.strptime(details.get('due_date'), '%d/%m/%Y').date(),
                     start_date = datetime.datetime.strptime(details.get('start_date'), '%d/%m/%Y').date(),
                     submitter = self.submitter,
-                    org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
-                    proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                    #org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
+                    #proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                    org_applicant = self.org_applicant,
+                    proxy_applicant = self.proxy_applicant,
                 )
 
                 # Generate the preview document - get the value of the BytesIO buffer
@@ -1620,8 +1624,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
                                     'submitter': self.submitter,
-                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    'org_applicant' : self.org_applicant,
+                                    'proxy_applicant' : self.proxy_applicant,
                                     'lodgement_number': previous_approval.lodgement_number
                                 }
                             )
@@ -1639,8 +1645,10 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
                                     'submitter': self.submitter,
-                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    'org_applicant' : self.org_applicant,
+                                    'proxy_applicant' : self.proxy_applicant,
                                     'lodgement_number': previous_approval.lodgement_number
                                 }
                             )
@@ -1655,8 +1663,11 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
                                 'submitter': self.submitter,
-                                'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                'org_applicant' : self.org_applicant,
+                                'proxy_applicant' : self.proxy_applicant,
+                                #'extracted_fields' = JSONField(blank=True, null=True)
                             }
                         )
                     # Generate compliances
