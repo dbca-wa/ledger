@@ -147,6 +147,10 @@ def cancel_document(request, instance, comms_instance, document_type):
                 document.delete()
 
 def save_document(request, instance, comms_instance, document_type):
+        # Match model related_name to instance or comms_instance, eg.
+        # sanction_outcome = models.ForeignKey(SanctionOutcome, related_name='documents')..
+        # this document can be accessed or created by 'instance.documents'
+
         # inspection report save
         if document_type == 'inspection_report' and 'filename' in request.data:
             filename = request.data.get('filename')

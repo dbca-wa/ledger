@@ -123,7 +123,7 @@
                                   <label>Inspection Type</label>
                                 </div>
                                 <div class="col-sm-6">
-                                  <select :disabled="readonlyForm" class="form-control" v-model="inspection.inspection_type_id">
+                                  <select :disabled="readonlyForm" class="form-control" v-model="inspection.inspection_type_id" @change="loadSchema">
                                     <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
                                       {{ option.inspection_type }}
                                     </option>
@@ -235,8 +235,8 @@
                         </div>  
                         <div :id="cTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Checklist">
-                                <div class="col-sm-12 form-group" v-if="inspection.schema"><div class="row">
-                                    <div v-for="(item, index) in current_schema">
+                                <div class="col-sm-12 form-group"><div class="row">
+                                    <div v-if="current_schema" v-for="(item, index) in current_schema">
                                       <compliance-renderer-block
                                          :component="item"
                                          v-bind:key="`compliance_renderer_block${index}`"

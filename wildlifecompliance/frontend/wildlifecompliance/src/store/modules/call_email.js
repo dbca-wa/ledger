@@ -143,6 +143,11 @@ export const callemailStore = {
                 state.call_email.id + "/process_renderer_document/"
                 )
             Vue.set(state.call_email, 'rendererDocumentUrl', rendererDocumentUrl); 
+            let commsLogsDocumentUrl = helpers.add_endpoint_join(
+                api_endpoints.call_email,
+                state.call_email.id + "/process_comms_log_document/"
+                )
+            Vue.set(state.call_email, 'commsLogsDocumentUrl', commsLogsDocumentUrl); 
         },
         updateSchema(state, schema) {
             //state.call_email.schema = schema;

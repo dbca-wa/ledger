@@ -78,7 +78,7 @@
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
             			        <div class="col-sm-9">
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl.sync="inspection.commsLogsDocumentUrl" @create-parent="createDocumentActionUrl"/>
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="inspection.commsLogsDocumentUrl" @create-parent="createDocumentActionUrl"/>
                                 </div>
                             </div>
                         </div>
@@ -177,7 +177,7 @@ export default {
     methods: {
       ...mapActions('inspectionStore', {
           saveInspection: 'saveInspection',
-          setInspection: 'setInspection',
+          loadInspection: 'loadInspection',
       }),
       loadAllocatedGroup: async function() {
           let url = helpers.add_endpoint_join(
@@ -313,15 +313,16 @@ export default {
               }
           
       },
-      createDocumentActionUrl: async function() {
+      createDocumentActionUrl: async function(done) {
         console.log("v-on")
         if (!this.inspection.id) {
-            // create inspection and get id
-            let returned_inspection = await Vue.http.post(api_endpoints.inspection);
-            await this.setInspection(returned_inspection.body);
+            // create inspection and update vuex
+            let returned_inspection = await this.saveInspection({ route: null, crud: 'create', internal: true })
+            await this.loadInspection(returned_inspection.body.id);
         }
-        return true;
-    
+        // ensure filefield document_action_url is not empty
+        this.$refs.comms_log_file.document_action_url = this.inspection.commsLogsDocumentUrl;
+        return done(true);
       },
 
     },

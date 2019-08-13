@@ -86,9 +86,7 @@ export default {
             filename:null,
             help_text_url:'',
             commsLogId: null,
-            documentActionUrlUpdated: null,
-            //document_action_url: this.documentActionUrl,
-            //documentActionUrl: null,
+            document_action_url: this.documentActionUrl,
         }
     },
     computed: {
@@ -97,18 +95,6 @@ export default {
         },
     },
 
-    watch: {
-        documentActionUrl: {
-            deep: true,
-            immediate: true,
-            handler (newVal, oldVal) {
-            console.log("watch documentActionUrl");
-            console.log(newVal);
-            console.log(oldVal);
-            //this.document_action_url = this.documentActionUrl
-            },
-        },
-    },
     methods:{
         handleChange: function (e) {
             let vm = this;
@@ -155,7 +141,7 @@ export default {
                 }
                 formData.append('input_name', this.name);
                 formData.append('csrfmiddlewaretoken', this.csrf_token);
-                let res = await Vue.http.post(this.documentActionUrl, formData)
+                let res = await Vue.http.post(this.document_action_url, formData)
                 //let res = await Vue.http.post(this.documentActionUrl, formData)
                 this.documents = res.body.filedata;
                 this.commsLogId = res.body.comms_instance_id;
@@ -176,7 +162,7 @@ export default {
             formData.append('document_id', file.id);
             formData.append('csrfmiddlewaretoken', this.csrf_token);
             if (this.documentActionUrl) {
-                let res = await Vue.http.post(this.documentActionUrl, formData)
+                let res = await Vue.http.post(this.document_action_url, formData)
                 console.log(res.body)
                 this.documents = res.body.filedata;
                 //this.documents = await this.get_documents()
@@ -196,7 +182,7 @@ export default {
             }
             formData.append('csrfmiddlewaretoken', this.csrf_token);
             if (this.documentActionUrl) {
-                let res = await Vue.http.post(this.documentActionUrl, formData)
+                let res = await Vue.http.post(this.document_action_url, formData)
             }
             this.show_spinner = false;
         },
@@ -216,22 +202,19 @@ export default {
         },
 
         handleChangeWrapper: async function(e) {
-            if (!this.documentActionUrl) {
-                console.log("create parent");
-                await this.$emit('create-parent');
-                await this.$watch(documentActionUrl);
-            }
-            this.$nextTick(() => {
+            console.log(this.document_action_url)
+            if (!this.document_action_url) {
+                // parameter must be passed to the parent method to ensure that parent object id is updated
+                // and document_action_url is passed the correct string
+                await this.$emit('create-parent', (done) => {
+                    console.log("inside emit")
+                    console.log(done)
+                    this.handleChange(e);
+                });
+            } else {
                 this.handleChange(e);
-            });
-            //this.documentActionUrlUpdated = await this.$emit('create-parent');
-            //return this.documentActionUrlUpdated;
+            }
         },
-        create_parent: async function(e) {
-            this.documentActionUrlUpdated = await this.$emit('create-parent');
-        },
-
-
 
         save_document: async function(e) {
             this.show_spinner = true;
@@ -246,10 +229,7 @@ export default {
                 formData.append('filename', e.target.files[0].name);
                 formData.append('_file', this.uploadFile(e));
                 formData.append('csrfmiddlewaretoken', this.csrf_token);
-                //if (!this.documentActionUrl) {
-                //    this.documentActionUrl = await this.createDocumentActionUrl()
-                //}
-                let res = await Vue.http.post(this.documentActionUrl, formData)
+                let res = await Vue.http.post(this.document_action_url, formData)
                 
                 this.documents = res.body.filedata;
                 this.commsLogId = res.body.comms_instance_id;
@@ -280,20 +260,10 @@ export default {
             }
         }
         this.$nextTick(async () => {
-            //if (!this.parent_id) {
-            //    console.log(this.$parent)
-            //    await this.$parent.createDocumentActionUrl();
-            //}
-            console.log(this.documentActionUrl);
+            console.log(this.document_action_url);
             await this.get_documents();
         });
     },
-    //updated: function() {
-    //    this.$nextTick(async () => {
-    //        await this.get_documents();
-    //    });
-    //},
-
 }
 
 </script>
