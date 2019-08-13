@@ -1,6 +1,5 @@
 from django.contrib import admin
-
-# Register your models here.
+from ledger.settings_base import PRODUCTION_EMAIL
 from . import models
 
 @admin.register(models.CashTransaction)
@@ -130,10 +129,13 @@ class OracleInterfaceSystemAdmin(admin.ModelAdmin):
 @admin.register(models.OracleAccountCode)
 class OracleAccountCode(admin.ModelAdmin):
     list_display = ('active_receivables_activities',)
-    readonly_fields = [f.name for f in models.OracleAccountCode._meta.fields]
+    if PRODUCTION_EMAIL:
+        readonly_fields = [f.name for f in models.OracleAccountCode._meta.fields]
 
     def has_add_permission(self, request):
-        return False
+        if PRODUCTION_EMAIL:
+            return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        if PRODUCTION_EMAIL:
+            return False
