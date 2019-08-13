@@ -158,6 +158,7 @@
                                             <label>Date of Issue</label>
                                         </div>
                                         <div class="col-sm-6">
+                                            <input :readonly="readonlyForm" class="form-control" v-model="sanction_outcome.date_of_issue"/>
                                         </div>
                                     </div></div>
 
@@ -166,6 +167,7 @@
                                             <label>Time of Issue</label>
                                         </div>
                                         <div class="col-sm-6">
+                                            <input :readonly="readonlyForm" class="form-control" v-model="sanction_outcome.time_of_issue"/>
                                         </div>
                                     </div></div>
                                 </FormSection>
