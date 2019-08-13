@@ -99,3 +99,24 @@ class HelpPageHistoryCompareView(HistoryCompareDetailView):
     template_name = 'commercialoperator/reversion_history.html'
 
 
+class PreviewLicencePDFView(View):
+    def post(self, request, *args, **kwargs):
+        response = HttpResponse(content_type='application/pdf')
+
+        proposal = self.get_object()
+        details = json.loads(request.POST.get('formData'))
+
+        response.write(proposal.preview_approval(request, details))
+        return response
+
+    def get_object(self):
+        return get_object_or_404(Proposal, id=self.kwargs['proposal_pk'])
+
+
+from commercialoperator.components.proposals.utils import test_proposal_emails
+class TestEmailView(View):
+    def get(self, request, *args, **kwargs):
+        test_proposal_emails(request)
+        return HttpResponse('Test Email Script Completed')
+
+

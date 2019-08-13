@@ -1549,6 +1549,38 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             except:
                 raise
 
+    def preview_approval(self,request,details):
+        from commercialoperator.components.approvals.models import PreviewTempApproval
+        with transaction.atomic():
+            try:
+                if self.processing_status != 'with_approver':
+                    raise ValidationError('Licence preview only available when processing status is with_approver. Current status {}'.format(self.processing_status))
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                #if not self.applicant.organisation.postal_address:
+                if not self.applicant_address:
+                    raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
+
+                preview_approval = PreviewTempApproval.objects.create(
+                    current_proposal = self,
+                    issue_date = timezone.now(),
+                    expiry_date = datetime.datetime.strptime(details.get('due_date'), '%d/%m/%Y').date(),
+                    start_date = datetime.datetime.strptime(details.get('start_date'), '%d/%m/%Y').date(),
+                    submitter = self.submitter,
+                    org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
+                    proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                )
+
+                # Generate the preview document - get the value of the BytesIO buffer
+                licence_buffer = preview_approval.generate_doc(request.user, preview=True)
+
+                # clean temp preview licence object
+                transaction.set_rollback(True)
+
+                return licence_buffer
+            except:
+                raise
+
 
     def final_approval(self,request,details):
         from commercialoperator.components.approvals.models import Approval
@@ -1579,7 +1611,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
                 if self.processing_status == 'approved':
                     # TODO if it is an ammendment proposal then check appropriately
-                    #import ipdb; ipdb.set_trace()
                     checking_proposal = self
                     if self.proposal_type == 'renewal':
                         if self.previous_application:
@@ -1587,21 +1618,15 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    #'activity' : self.activity,
-                                    #'region' : self.region,
-                                    #'tenure' : self.tenure,
-                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    #'applicant' : self.applicant,
                                     'submitter': self.submitter,
                                     #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
                                     #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                     'org_applicant' : self.org_applicant,
                                     'proxy_applicant' : self.proxy_applicant,
                                     'lodgement_number': previous_approval.lodgement_number
-                                    #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
                             )
                             if created:
@@ -1614,35 +1639,24 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    #'activity' : self.activity,
-                                    #'region' : self.region,
-                                    #'tenure' : self.tenure,
-                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    #'applicant' : self.applicant,
                                     'submitter': self.submitter,
                                     #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
                                     #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
                                     'org_applicant' : self.org_applicant,
                                     'proxy_applicant' : self.proxy_applicant,
                                     'lodgement_number': previous_approval.lodgement_number
-                                    #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
                             )
                             if created:
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
                     else:
-                        #import ipdb; ipdb.set_trace()
                         approval,created = Approval.objects.update_or_create(
                             current_proposal = checking_proposal,
                             defaults = {
-                                #'activity' : self.activity,
-                                #'region' : self.region.name,
-                                #'tenure' : self.tenure.name,
-                                #'title' : self.title,
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
@@ -1655,7 +1669,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             }
                         )
                     # Generate compliances
-                    #self.generate_compliances(approval, request)
                     from commercialoperator.components.compliances.models import Compliance, ComplianceUserAction
                     if created:
                         if self.proposal_type == 'amendment':
@@ -1692,40 +1705,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
             except:
                 raise
-
-
-
-    '''def generate_compliances(self,approval):
-        from commercialoperator.components.compliances.models import Compliance
-        today = timezone.now().date()
-        timedelta = datetime.timedelta
-
-        for req in self.requirements.all():
-            if req.recurrence and req.due_date > today:
-                current_date = req.due_date
-                while current_date < approval.expiry_date:
-                    for x in range(req.recurrence_schedule):
-                    #Weekly
-                        if req.recurrence_pattern == 1:
-                            current_date += timedelta(weeks=1)
-                    #Monthly
-                        elif req.recurrence_pattern == 2:
-                            current_date += timedelta(weeks=4)
-                            pass
-                    #Yearly
-                        elif req.recurrence_pattern == 3:
-                            current_date += timedelta(days=365)
-                    # Create the compliance
-                    if current_date <= approval.expiry_date:
-                        Compliance.objects.create(
-                            proposal=self,
-                            due_date=current_date,
-                            processing_status='future',
-                            approval=approval,
-                            requirement=req.requirement,
-                        )
-                        #TODO add logging for compliance'''
-
 
     def generate_compliances(self,approval, request):
         today = timezone.now().date()

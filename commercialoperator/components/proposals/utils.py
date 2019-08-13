@@ -2,6 +2,7 @@ import re
 from django.db import transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails, ProposalAccreditation, ProposalUserAction, ProposalAssessment, ProposalAssessmentAnswer, ChecklistQuestion
@@ -877,7 +878,70 @@ def is_payment_officer(user):
             return True
     return False
 
-    
+
+from commercialoperator.components.proposals.models import Proposal, Referral, AmendmentRequest, ProposalDeclinedDetails
+from commercialoperator.components.approvals.models import Approval
+from commercialoperator.components.compliances.models import Compliance
+from commercialoperator.components.bookings.models import ApplicationFee, Booking
+from ledger.payments.models import Invoice
+from commercialoperator.components.proposals import email as proposal_email
+from commercialoperator.components.approvals import email as approval_email
+from commercialoperator.components.compliances import email as compliance_email
+from commercialoperator.components.bookings import email as booking_email
+def test_proposal_emails(request):
+    """ Script to test all emails (listed below) from the models """
+    # setup
+    if not (settings.PRODUCTION_EMAIL):
+        recipients = [request.user.email]
+        #proposal = Proposal.objects.last()
+        approval = Approval.objects.filter(migrated=False).last()
+        proposal = approval.current_proposal
+        referral = Referral.objects.last()
+        amendment_request = AmendmentRequest.objects.last()
+        reason = 'Not enough information'
+        proposal_decline = ProposalDeclinedDetails.objects.last()
+        compliance = Compliance.objects.last()
+
+        application_fee = ApplicationFee.objects.last()
+        api = Invoice.objects.get(reference=application_fee.application_fee_invoices.last().invoice_reference)
+
+        booking = Booking.objects.last()
+        bi = Invoice.objects.get(reference=booking.invoices.last().invoice_reference)
+
+        proposal_email.send_qaofficer_email_notification(proposal, recipients, request, reminder=False)
+        proposal_email.send_qaofficer_complete_email_notification(proposal, recipients, request, reminder=False)
+        proposal_email.send_referral_email_notification(referral,recipients,request,reminder=False)
+        proposal_email.send_referral_complete_email_notification(referral,request)
+        proposal_email.send_amendment_email_notification(amendment_request, request, proposal)
+        proposal_email.send_submit_email_notification(request, proposal)
+        proposal_email.send_external_submit_email_notification(request, proposal)
+        proposal_email.send_approver_decline_email_notification(reason, request, proposal)
+        proposal_email.send_approver_approve_email_notification(request, proposal)
+        proposal_email.send_proposal_decline_email_notification(proposal,request,proposal_decline)
+        proposal_email.send_proposal_approver_sendback_email_notification(request, proposal)
+        proposal_email.send_proposal_approval_email_notification(proposal,request)
+
+        approval_email.send_approval_expire_email_notification(approval)
+        approval_email.send_approval_cancel_email_notification(approval)
+        approval_email.send_approval_suspend_email_notification(approval, request)
+        approval_email.send_approval_surrender_email_notification(approval, request)
+        approval_email.send_approval_renewal_email_notification(approval)
+        approval_email.send_approval_reinstate_email_notification(approval, request)
+
+        compliance_email.send_amendment_email_notification(amendment_request, request, compliance, is_test=True)
+        compliance_email.send_reminder_email_notification(compliance, is_test=True)
+        compliance_email.send_internal_reminder_email_notification(compliance, is_test=True)
+        compliance_email.send_due_email_notification(compliance, is_test=True)
+        compliance_email.send_internal_due_email_notification(compliance, is_test=True)
+        compliance_email.send_compliance_accept_email_notification(compliance,request, is_test=True)
+        compliance_email.send_external_submit_email_notification(request, compliance, is_test=True)
+        compliance_email.send_submit_email_notification(request, compliance, is_test=True)
 
 
+        booking_email.send_application_fee_invoice_tclass_email_notification(request, proposal, api, recipients, is_test=True)
+        booking_email.send_application_fee_confirmation_tclass_email_notification(request, application_fee, api, recipients, is_test=True)
+        booking_email.send_invoice_tclass_email_notification(request, booking, bi, recipients, is_test=True)
+        booking_email.send_confirmation_tclass_email_notification(request, booking, bi, recipients, is_test=True)
+
+   
 
