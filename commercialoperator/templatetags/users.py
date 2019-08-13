@@ -33,10 +33,14 @@ def is_model_backend(context):
 @register.simple_tag(takes_context=True)
 def is_payment_officer(context):
     request = context['request']
-    for group in request.user.paymentofficergroup_set.all():
-        if group.default:
-            return True
-    return False
+    try:
+        for group in request.user.paymentofficergroup_set.all():
+            if group.default:
+                return True
+        return False
+    except:
+        # could be Anonymous user (external login url)
+        return False
 
 @register.simple_tag()
 def system_maintenance_due():
