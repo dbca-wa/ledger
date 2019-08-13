@@ -97,7 +97,7 @@
                                                 {% if is_commercialoperator_admin_user or request.user.is_superuser %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
                                                 {% endif %}
-                                                {% if is_commercialoperator_admin_user or request.user.is_superuser or is_payment_officer%}
+                                                {% if is_commercialoperator_admin_user or request.user.is_superuser or is_payment_officer %}
                                                     <li><a href="/internal/reports">Reports</a></li>
                                                 {% endif %}
                                                 {% if is_commercialoperator_admin_user or request.user.is_superuser %}

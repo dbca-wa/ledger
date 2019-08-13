@@ -2459,32 +2459,6 @@ class QAOfficerGroup(models.Model):
         assessable_states = ['with_qa_officer']
         return Proposal.objects.filter(processing_status__in=assessable_states)
 
-
-class PaymentOfficerGroup(models.Model):
-    #site = models.OneToOneField(Site, default='1')
-    name = models.CharField(max_length=30, unique=True)
-    members = models.ManyToManyField(EmailUser)
-    default = models.BooleanField(default=False)
-
-    def __str__(self):
-        return 'Payment Officer Group'
-
-    
-    class Meta:
-        app_label = 'commercialoperator'
-        verbose_name = "Payment Officer Group"
-        verbose_name_plural = "Payment Officer group"
-
-
-    def _clean(self):
-        try:
-            default = PaymentOfficerGroup.objects.get(default=True)
-        except PaymentOfficerGroup.DoesNotExist:
-            default = None
-
-        if default and self.default:
-            raise ValidationError('There can only be one default Payment Officer group')
-
 #
 #class ReferralRequestUserAction(UserAction):
 #    ACTION_LODGE_REQUEST = "Lodge request {}"
