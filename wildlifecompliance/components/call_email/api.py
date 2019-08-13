@@ -775,7 +775,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
-    def add_workflow_log(self, request, *args, **kwargs):
+    def workflow_action(self, request, *args, **kwargs):
         print(request.data)
         try:
             with transaction.atomic():
@@ -790,76 +790,33 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
                 # Set CallEmail status depending on workflow type
                 workflow_type = request.data.get('workflow_type')
-                if workflow_type in ('forward_to_regions', 'forward_to_wildlife_protection_branch'):
-                    instance.status = 'open'
-                    if workflow_type == 'forward_to_regions':
-                        instance.log_user_action(
-                            CallEmailUserAction.ACTION_FORWARD_TO_REGIONS.format(instance.number), 
-                            request)
-                    else:
-                        instance.log_user_action(
-                                CallEmailUserAction.ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH.format(instance.number),
-                                request)
-
+                if workflow_type == 'forward_to_regions':
+                    instance.forward_to_regions(request)
+                elif workflow_type == 'forward_to_wildlife_protection_branch':
+                    instance.forward_to_wildlife_protection_branch(request)
                 elif workflow_type == 'allocate_for_follow_up':
-                    instance.status = 'open_followup'
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_ALLOCATE_FOR_FOLLOWUP.format(instance.number), 
-                            request)
-
+                    instance.allocate_for_follow_up(request)
                 elif workflow_type == 'allocate_for_inspection':
-                    instance.status = 'open_inspection'
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(instance.number), 
-                            request)
-
+                    instance.allocate_for_inspection(request)
                 elif workflow_type == 'allocate_for_case':
-                    instance.status = 'open_case'
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_ALLOCATE_FOR_CASE.format(instance.number), 
-                            request)
-
+                    instance.allocate_for_case(request)
                 elif workflow_type == 'close':
-                    instance.status = 'closed'
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_CLOSE.format(instance.number), 
-                            request)
-
+                    instance.close(request)
                 elif workflow_type == 'offence':
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_OFFENCE.format(instance.number), 
-                            request)
-                    
+                    instance.add_offence(request)
                 elif workflow_type == 'sanction_outcome':
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
-                            request)
+                    instance.add_sanction_outcome(request)
+
+                if request.data.get('referrers_selected'):
+                    instance.add_referrers(request)
 
                 instance.region_id = None if request.data.get('region_id') =='null' else request.data.get('region_id')
                 instance.district_id = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
-                #instance.allocated_group_id = request.data.get('allocated_group_id')
-                if request.data.get('referrers_selected'):
-                    referrers_selected = request.data.get('referrers_selected').split(",")
-                    print(referrers_selected)
-                    for selection in referrers_selected:
-                        print(selection)
-                        try:
-                            selection_int = int(selection)
-                        except Exception as e:
-                            raise e
-                        referrer = Referrer.objects.get(id=selection_int)
-                        if referrer:
-                            instance.referrer.add(referrer)
-                print("referrers")
-                print(instance.referrer.all())
-
                 instance.assigned_to_id = None if request.data.get('assigned_to_id') == 'null' else request.data.get('assigned_to_id')
                 instance.inspection_type_id = None if request.data.get('inspection_type_id') == 'null' else request.data.get('inspection_type_id')
                 instance.case_priority_id = None if request.data.get('case_priority_id') == 'null' else request.data.get('case_priority_id')
                 instance.allocated_group_id = None if request.data.get('allocated_group_id') == 'null' else request.data.get('allocated_group_id')
 
-                #if not workflow_type == 'allocate_for_follow_up':
-                 #   instance.assigned_to_id = None
                 instance.save()
 
                 email_data = self.send_mail(request, instance, workflow_entry)

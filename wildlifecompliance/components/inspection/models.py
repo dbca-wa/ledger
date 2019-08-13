@@ -46,6 +46,10 @@ class InspectionType(models.Model):
     def __str__(self):
         return '{0}, v.{1}'.format(self.inspection_type, self.version)
 
+    @property
+    def approval(self):
+        if self.approval_document:
+            return self.approval_document.all()
 
 class Inspection(RevisionedMixin):
     PARTY_CHOICES = (
@@ -163,7 +167,16 @@ class InspectionReportDocument(Document):
     log_entry = models.ForeignKey(
         'Inspection',
         related_name='report')
-    #_file = models.FileField(max_length=255, upload_to=update_inspection_report_filename)
+    _file = models.FileField(max_length=255)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+
+class InspectionTypeApprovalDocument(Document):
+    log_entry = models.ForeignKey(
+        'InspectionType',
+        related_name='approval_document')
     _file = models.FileField(max_length=255)
 
     class Meta:
@@ -174,7 +187,6 @@ class InspectionCommsLogDocument(Document):
     log_entry = models.ForeignKey(
         'InspectionCommsLogEntry',
         related_name='documents')
-    #_file = models.FileField(max_length=255, upload_to=update_inspection_comms_log_filename)
     _file = models.FileField(max_length=255)
 
     class Meta:

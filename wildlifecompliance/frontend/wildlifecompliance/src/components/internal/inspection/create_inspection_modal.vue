@@ -271,7 +271,7 @@ export default {
       sendData: async function() {
           let post_url = '';
           if (this.inspection && this.inspection.id) {
-              post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
+              post_url = '/api/inspection/' + this.inspection.id + '/workflow_action/'
           } else {
                 post_url = '/api/inspection/'
           }
