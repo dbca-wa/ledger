@@ -149,7 +149,7 @@ export default {
             approval_status:[],
             proposal_submitters: [],
             proposal_headers:[
-                "Number","Licence Type","Holder","Status","Start Date","Expiry Date","Licence","Action",
+                "Number","Application","Licence Type","Holder","Status","Start Date","Expiry Date","Licence","Action",
             ],
             proposal_options:{
                 language: {
@@ -216,6 +216,11 @@ export default {
                         'createdCell': helpers.dtPopoverCellFn,
                         name: "id, lodgement_number",
                     },
+                    {
+                        data: "application_lodgement_number",
+                        name: "current_proposal__lodgement_number"
+                    },
+
                     {
                         data: "application_type",
                         name: "current_proposal__application_type__name"

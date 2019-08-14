@@ -108,7 +108,7 @@ export default {
             datatable_id: 'proposal-datatable-'+vm._uid,
             //Profile to check if user has access to process Proposal
             profile: {},
-            is_payment_officer: false,
+            is_payment_admin: false,
             // Filters for Proposals
             filterProposalPark: 'All',
             filterProposalStatus: 'All',
@@ -224,7 +224,7 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (full.payment_status=='paid'){
-                                if(vm.is_payment_officer){
+                                if(vm.is_payment_admin){
 
                                 links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
                                 }
@@ -458,7 +458,7 @@ export default {
             let vm = this;
             Vue.http.get(api_endpoints.profile).then((response) => {
                 vm.profile = response.body;
-                vm.is_payment_officer= response.body.is_payment_officer;
+                vm.is_payment_admin= response.body.is_payment_admin;
             },(error) => {
                 console.log(error);
             })

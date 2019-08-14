@@ -187,6 +187,7 @@ import VehicleTable from '@/components/common/vehicle_table.vue'
 import editParkActivities from './edit_park_activities.vue'
 import editTrailActivities from './edit_trail_activities.vue'
 import FileField from './required_docs.vue'
+//import 'custom-event-polyfill'
 import {
   api_endpoints,
   helpers
@@ -953,7 +954,7 @@ export default {
           //console.log(trail_list)
           vm.trail_activities = vm.find_recurring(all_activities)
         },
-        createParkEvent: function(selected_parks){
+        _createParkEvent: function(selected_parks){
           let vm= this;
           for(var i=0;i<selected_parks.length; i++){
             var elem=$("#park"+selected_parks[i])[0];
@@ -962,6 +963,14 @@ export default {
             elem.dispatchEvent(event);
           }
         },
+        createParkEvent: function(selected_parks){
+          let vm= this;
+          for(var i=0;i<selected_parks.length; i++){
+            //$("#park"+selected_parks[i]).prop( "checked", true );
+            document.getElementById("park"+selected_parks[i]).checked = true
+          }
+        },
+
         eventListeners: function(){
             
         },
@@ -1062,10 +1071,11 @@ export default {
         },
         updated: function(){
           let vm=this;
+          /*
           if(vm.api_regions){ //check if Regions, Parks and districts are loaded in DOM
                 vm.createParkEvent(vm.selected_parks);           
           }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+          */
         },
         created: function(){
           let vm=this;
