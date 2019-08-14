@@ -52,16 +52,25 @@ class InspectionType(models.Model):
 
 
 class Inspection(RevisionedMixin):
+    PARTY_INDIVIDUAL = 'individual'
+    PARTY_ORGANISATION = 'organisation'
     PARTY_CHOICES = (
-            ('individual', 'individual'),
-            ('organisation', 'organisation')
+            (PARTY_INDIVIDUAL, 'individual'),
+            (PARTY_ORGANISATION, 'organisation')
             )
+    STATUS_OPEN = 'open'
+    STATUS_WITH_MANAGER = 'with_manager'
+    STATUS_ENDORSEMENT = 'endorsement'
+    STATUS_SANCTION_OUTCOME = 'sanction_outcome'
+    STATUS_DISCARDED = 'discarded'
+    STATUS_CLOSED = 'closed'
     STATUS_CHOICES = (
-            ('open', 'Open'),
-            ('endorsement', 'Awaiting Endorsement'),
-            ('sanction_outcome', 'Awaiting Sanction Outcomes'),
-            ('discarded', 'Discarded'),
-            ('closed', 'Closed')
+            (STATUS_OPEN, 'Open'),
+            (STATUS_WITH_MANAGER, 'With Manager'),
+            (STATUS_ENDORSEMENT, 'Awaiting Endorsement'),
+            (STATUS_SANCTION_OUTCOME, 'Awaiting Sanction Outcomes'),
+            (STATUS_DISCARDED, 'Discarded'),
+            (STATUS_CLOSED, 'Closed')
             )
 
     title = models.CharField(max_length=200, blank=True, null=True)
@@ -163,6 +172,20 @@ class Inspection(RevisionedMixin):
         if self.inspection_type:
             return self.inspection_type.schema
 
+    def send_to_manager(self, request):
+        self.status = self.STATUS_WITH_MANAGER
+        self.log_user_action(
+            InspectionUserAction.ACTION_SEND_TO_MANAGER.format(self.number), 
+            request)
+        self.save()
+
+    def close(self, request):
+        self.status = self.STATUS_CLOSED
+        self.log_user_action(
+            InspectionUserAction.ACTION_CLOSED.format(self.number), 
+            request)
+        self.save()
+
 class InspectionReportDocument(Document):
     log_entry = models.ForeignKey(
         'Inspection',
@@ -201,6 +224,8 @@ class InspectionUserAction(UserAction):
     ACTION_SAVE_INSPECTION_ = "Save Inspection {}"
     ACTION_OFFENCE = "Create Offence {}"
     ACTION_SANCTION_OUTCOME = "Create Sanction Outcome {}"
+    ACTION_SEND_TO_MANAGER = "Send Inspection {} to Manager"
+    ACTION_CLOSED = "Close Inspection {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

@@ -94,6 +94,14 @@ export default {
             return helpers.getCookie('csrftoken')
         },
     },
+    watch: {
+        documents: {
+            handler: async function () {
+                await this.$emit('update-parent');
+            },
+            deep: true
+        },
+    },
 
     methods:{
         handleChange: function (e) {
@@ -264,6 +272,15 @@ export default {
             await this.get_documents();
         });
     },
+    //updated: async function() {
+        //this.$nextTick(async () => {
+            //await this.$emit('update-parent', (done) => {
+              //  console.log("inside emit")
+                //console.log(done)
+            //});
+      //  });
+    //},
+        
 }
 
 </script>

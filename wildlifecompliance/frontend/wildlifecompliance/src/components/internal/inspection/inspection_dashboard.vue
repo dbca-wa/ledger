@@ -56,7 +56,7 @@
         </div>
         </FormSection>
         <div v-if="inspectionInitialised">
-            <CreateInspectionModal ref="add_inspection"  v-bind:key="createInspectionBindId"/>
+            <InspectionModal ref="add_inspection"  v-bind:key="createInspectionBindId"/>
         </div>
 
     </div>
@@ -68,7 +68,7 @@
     import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/compliance_forms/section.vue";
-    import CreateInspectionModal from "./create_inspection_modal.vue";
+    import InspectionModal from "./inspection_modal.vue";
     
     // import moment from 'moment';
     // import 'bootstrap/dist/css/bootstrap.css';
@@ -249,7 +249,7 @@
         components: {
             datatable,
             FormSection,
-            CreateInspectionModal,
+            InspectionModal,
         },
         computed: {
         },

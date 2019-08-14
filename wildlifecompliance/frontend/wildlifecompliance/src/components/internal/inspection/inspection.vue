@@ -63,8 +63,8 @@
                         </div-->
 
                         <div  class="row action-button">
-                          <div v-if="!readonlyForm" class="col-sm-12">
-                                <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
+                          <div v-if="!readonlyForm && inspectionReportExists" class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('send_to_manager')" class="btn btn-primary btn-block">
                                   Send to Manager
                                 </a>
                           </div>
@@ -253,7 +253,7 @@
                                             <label class="control-label pull-left"  for="Name">Inspection Report</label>
                                         </div>
                                         <div class="col-sm-9" v-if="inspection.inspectionReportDocumentUrl">
-                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :documentActionUrl="inspection.inspectionReportDocumentUrl" />
+                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :documentActionUrl="inspection.inspectionReportDocumentUrl" @update-parent="loadInspectionReport"/>
                                         </div>
                                     </div>
                                 </div>
@@ -300,6 +300,7 @@
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
+        <InspectionModal ref="inspection_modal" :workflow_type="workflow_type" v-bind:key="createInspectionBindId" />
     </div>
 </template>
 <script>
@@ -318,6 +319,7 @@ import 'eonasdan-bootstrap-datetimepicker';
 import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
+import InspectionModal from './inspection_modal.vue';
 
 
 export default {
@@ -329,6 +331,7 @@ export default {
       oTab: 'oTab'+this._uid,
       cTab: 'cTab'+this._uid,
       current_schema: [],
+      createInspectionBindId: '',
       dtHeadersRelatedItems: [
           'Number',
           'Type',
@@ -437,6 +440,7 @@ export default {
     Offence,
     SanctionOutcome,
     filefield,
+    InspectionModal,
   },
   watch: {
       inspection: {
@@ -458,6 +462,9 @@ export default {
     },
     readonlyForm: function() {
         return !this.inspection.can_user_action;
+    },
+    inspectionReportExists: function() {
+        return this.inspection.inspection_report.length > 0 ? true : false;
     },
     offenceExists: function() {
         for (let item of this.inspection.related_items) {
@@ -499,6 +506,11 @@ export default {
         // Should not reach here
       }
     },
+    loadInspectionReport: function() {
+        console.log("loadInspectionReport")
+        this.loadInspection({inspection_id: this.inspection.id});
+    },
+
     loadSchema: function() {
       this.$nextTick(async function() {
       let url = helpers.add_endpoint_json(
@@ -594,7 +606,7 @@ export default {
       this.workflow_type = workflow_type;
       this.updateWorkflowBindId();
       this.$nextTick(() => {
-        this.$refs.add_workflow.isModalOpen = true;
+        this.$refs.inspection_modal.isModalOpen = true;
       });
       // this.$refs.add_workflow.isModalOpen = true;
     },
