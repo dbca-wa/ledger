@@ -669,16 +669,21 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     workflow_entry = self.add_comms_log(request, instance, workflow=True)
 
                 # Set Inspection status to open
-                instance.status = 'open'
+                #instance.status = 'open'
                 
-                instance.region_id = None if request.data.get('region_id') =='null' else request.data.get('region_id')
-                instance.district_id = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
-                #instance.allocated_group_id = request.data.get('allocated_group_id')
-
-                instance.assigned_to_id = None if request.data.get('assigned_to_id') == 'null' else request.data.get('assigned_to_id')
-                instance.inspection_type_id = None if request.data.get('inspection_type_id') == 'null' else request.data.get('inspection_type_id')
-                instance.allocated_group_id = None if request.data.get('allocated_group_id') == 'null' else request.data.get('allocated_group_id')
-                instance.call_email_id = None if request.data.get('call_email_id') == 'null' else request.data.get('call_email_id')
+                # Set Inspection status depending on workflow type
+                workflow_type = request.data.get('workflow_type')
+                if workflow_type == 'send_to_manager':
+                    instance.send_to_manager(request)
+                elif workflow_type == 'close':
+                    instance.close(request)
+                
+                instance.region_id = None if not request.data.get('region_id') else request.data.get('region_id')
+                instance.district_id = None if not request.data.get('district_id') else request.data.get('district_id')
+                instance.assigned_to_id = None if not request.data.get('assigned_to_id') else request.data.get('assigned_to_id')
+                instance.inspection_type_id = None if not request.data.get('inspection_type_id') else request.data.get('inspection_type_id')
+                instance.allocated_group_id = None if not request.data.get('allocated_group_id') else request.data.get('allocated_group_id')
+                instance.call_email_id = None if not request.data.get('call_email_id') else request.data.get('call_email_id')
 
                 instance.save()
                 # Log parent actions and update status

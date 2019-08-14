@@ -398,7 +398,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
-import Inspection from '../inspection/create_inspection_modal';
+import Inspection from '../inspection/inspection_modal';
 
 export default {
   name: "ViewCallEmail",
