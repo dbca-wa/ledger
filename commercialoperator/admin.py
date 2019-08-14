@@ -27,8 +27,8 @@ class EmailUserAdmin(ledger_admin.EmailUserAdmin):
     def get_fieldsets(self, request, obj=None):
         """ Remove the is_superuser checkbox from the Admin page, if user is CommercialOperatorAdmin and NOT superuser """
         fieldsets = super(UserAdmin, self).get_fieldsets(request, obj)
-        if not obj:
-            return fieldsets
+        #if not obj:
+        #    return fieldsets
 
         if request.user.is_superuser:
             return fieldsets

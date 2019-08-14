@@ -6,7 +6,7 @@ from commercialoperator.components.organisations.models import (
 from commercialoperator.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
 from ledger.accounts.utils import in_dbca_domain
-#from commercialoperator.components.proposals.utils import is_payment_officer
+from ledger.payments.helpers import is_payment_admin
 
 class DocumentSerializer(serializers.ModelSerializer):
 
@@ -83,7 +83,7 @@ class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     identification = DocumentSerializer()
     is_department_user = serializers.SerializerMethodField()
-    is_payment_officer = serializers.SerializerMethodField()
+    is_payment_admin = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -102,7 +102,7 @@ class UserSerializer(serializers.ModelSerializer):
             'contact_details',
             'full_name',
             'is_department_user',
-            'is_payment_officer'
+            'is_payment_admin'
         )
     
     def get_personal_details(self,obj):
@@ -128,11 +128,9 @@ class UserSerializer(serializers.ModelSerializer):
         else:
             return False
 
-    def get_is_payment_officer(self, obj):
-        for group in obj.paymentofficergroup_set.all():
-            if group.default:
-                return True
-        return False
+    def get_is_payment_admin(self, obj):
+        #import ipdb; ipdb.set_trace()
+        return is_payment_admin(obj)
 
     def get_commercialoperator_organisations(self, obj):
         commercialoperator_organisations = obj.commercialoperator_organisations
