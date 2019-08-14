@@ -780,7 +780,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 instance = self.get_object()
-                #workflow_entry = self.add_comms_log(request, workflow=True)
                 comms_log_id = request.data.get('call_email_comms_log_id')
                 if comms_log_id and comms_log_id is not 'null':
                     workflow_entry = instance.comms_logs.get(
@@ -810,12 +809,12 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 if request.data.get('referrers_selected'):
                     instance.add_referrers(request)
 
-                instance.region_id = None if request.data.get('region_id') =='null' else request.data.get('region_id')
-                instance.district_id = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
-                instance.assigned_to_id = None if request.data.get('assigned_to_id') == 'null' else request.data.get('assigned_to_id')
-                instance.inspection_type_id = None if request.data.get('inspection_type_id') == 'null' else request.data.get('inspection_type_id')
-                instance.case_priority_id = None if request.data.get('case_priority_id') == 'null' else request.data.get('case_priority_id')
-                instance.allocated_group_id = None if request.data.get('allocated_group_id') == 'null' else request.data.get('allocated_group_id')
+                instance.region_id = None if not request.data.get('region_id') else request.data.get('region_id')
+                instance.district_id = None if not request.data.get('district_id') else request.data.get('district_id')
+                instance.assigned_to_id = None if not request.data.get('assigned_to_id') else request.data.get('assigned_to_id')
+                instance.inspection_type_id = None if not request.data.get('inspection_type_id') else request.data.get('inspection_type_id')
+                instance.case_priority_id = None if not request.data.get('case_priority_id') else request.data.get('case_priority_id')
+                instance.allocated_group_id = None if not request.data.get('allocated_group_id') else request.data.get('allocated_group_id')
 
                 instance.save()
 
