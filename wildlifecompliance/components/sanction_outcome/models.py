@@ -9,11 +9,30 @@ from wildlifecompliance.components.users.models import RegionDistrict, Complianc
 
 
 class SanctionOutcome(models.Model):
+    STATUS_DRAFT = 'draft'
+    STATUS_WITH_MANAGER = 'with_manager'
+    STATUS_WITH_OFFICER = 'with_officer'
+    STATUS_CLOSED = 'closed'
+    STATUS_WITHDRAWN = 'withdrawn'
+    STATUS_CLOSED_ISSUED = 'closed_issued'
+    STATUS_CLOSED_WITHDRAWN = 'closed_withdrawn'
+    STATUS_AWAITING_PAYMENT = 'awaiting_payment'
+    STATUS_AWAITING_PAYMENT_EXTENDED = 'awaiting_payment_extended'
+    STATUS_ISSUED = 'issued'
+    STATUS_OVERDUE = 'overdue'
+
     STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('open', 'Open'),
-        ('closed', 'Closed'),
-        ('discarded', 'Discarded'),
+        (STATUS_DRAFT, 'Draft'),
+        (STATUS_WITH_MANAGER, 'With Mnager'),
+        (STATUS_WITH_OFFICER, 'With Officer'),
+        (STATUS_CLOSED, 'Closed'),
+        (STATUS_WITHDRAWN, 'Withdrawn'),
+        (STATUS_CLOSED_ISSUED, 'Closed (Issued)'),
+        (STATUS_CLOSED_WITHDRAWN, 'Closed (Withdrawn)'),
+        (STATUS_AWAITING_PAYMENT, 'Awaiting Payment'),
+        (STATUS_AWAITING_PAYMENT_EXTENDED, 'Awaiting Payment Extended)'),
+        (STATUS_ISSUED, 'Issued'),
+        (STATUS_OVERDUE, 'Overdue'),
     )
 
     TYPE_INFRINGEMENT_NOTICE = 'infringement_notice'
