@@ -36,6 +36,10 @@ class InspectionType(models.Model):
     replaced_by = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
+    approval_document = models.ForeignKey(
+        'InspectionTypeApprovalDocument',
+        related_name='inspection_type',
+        null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -46,10 +50,6 @@ class InspectionType(models.Model):
     def __str__(self):
         return '{0}, v.{1}'.format(self.inspection_type, self.version)
 
-    @property
-    def approval(self):
-        if self.approval_document:
-            return self.approval_document.all()
 
 class Inspection(RevisionedMixin):
     PARTY_CHOICES = (
@@ -174,9 +174,6 @@ class InspectionReportDocument(Document):
 
 
 class InspectionTypeApprovalDocument(Document):
-    log_entry = models.ForeignKey(
-        'InspectionType',
-        related_name='approval_document')
     _file = models.FileField(max_length=255)
 
     class Meta:
