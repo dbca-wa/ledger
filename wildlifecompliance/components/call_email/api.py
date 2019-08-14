@@ -322,61 +322,17 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
         raise serializers.ValidationError(str(e))
-
+    
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
-    def process_document(self, request, *args, **kwargs):
+    def process_renderer_document(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            action = request.data.get('action')
-            section = request.data.get('input_name')
-            if action == 'list' and 'input_name' in request.data:
-                pass
-
-            elif action == 'delete' and 'document_id' in request.data:
-                document_id = request.data.get('document_id')
-                document = instance.documents.get(id=document_id)
-
-                if document._file and os.path.isfile(
-                        document._file.path) and document.can_delete:
-                    os.remove(document._file.path)
-
-                document.delete()
-                instance.save(version_comment='Approval File Deleted: {}'.format(
-                    document.name))  # to allow revision to be added to reversion history
-
-            elif action == 'save' and 'input_name' in request.data and 'filename' in request.data:
-                call_email_id = request.data.get('call_email_id')
-                filename = request.data.get('filename')
-                _file = request.data.get('_file')
-                if not _file:
-                    _file = request.data.get('_file')
-
-                document = instance.documents.get_or_create(
-                    input_name=section, name=filename)[0]
-                if request.data.get('save_to_path'):
-                    path = instance.update_compliance_doc_filename(request.data.get('filename'))
-                else:
-                    path = default_storage.save(
-                        'wildlifecompliance/call_email/{}/documents/{}'.format(
-                            call_email_id, filename), ContentFile(
-                            _file.read()))
-
-                document._file = path
-                document.save()
-                # to allow revision to be added to reversion history
-                instance.save(
-                    version_comment='File Added: {}'.format(filename))
-
-            return Response(
-                [
-                    dict(
-                        input_name=d.input_name,
-                        name=d.name,
-                        file=d._file.url,
-                        id=d.id,
-                        can_delete=d.can_delete) for d in instance.documents.filter(
-                        input_name=section) if d._file])
+            returned_data = process_generic_document(request, instance)
+            if returned_data:
+                return Response(returned_data)
+            else:
+                return Response()
 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -389,6 +345,73 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+   # @detail_route(methods=['POST'])
+   # @renderer_classes((JSONRenderer,))
+   # def process_document(self, request, *args, **kwargs):
+   #     try:
+   #         instance = self.get_object()
+   #         action = request.data.get('action')
+   #         section = request.data.get('input_name')
+   #         if action == 'list' and 'input_name' in request.data:
+   #             pass
+
+   #         elif action == 'delete' and 'document_id' in request.data:
+   #             document_id = request.data.get('document_id')
+   #             document = instance.documents.get(id=document_id)
+
+   #             if document._file and os.path.isfile(
+   #                     document._file.path) and document.can_delete:
+   #                 os.remove(document._file.path)
+
+   #             document.delete()
+   #             instance.save(version_comment='Approval File Deleted: {}'.format(
+   #                 document.name))  # to allow revision to be added to reversion history
+
+   #         elif action == 'save' and 'input_name' in request.data and 'filename' in request.data:
+   #             call_email_id = request.data.get('call_email_id')
+   #             filename = request.data.get('filename')
+   #             _file = request.data.get('_file')
+   #             if not _file:
+   #                 _file = request.data.get('_file')
+
+   #             document = instance.documents.get_or_create(
+   #                 input_name=section, name=filename)[0]
+   #             if request.data.get('save_to_path'):
+   #                 path = instance.update_compliance_doc_filename(request.data.get('filename'))
+   #             else:
+   #                 path = default_storage.save(
+   #                     'wildlifecompliance/call_email/{}/documents/{}'.format(
+   #                         call_email_id, filename), ContentFile(
+   #                         _file.read()))
+
+   #             document._file = path
+   #             document.save()
+   #             # to allow revision to be added to reversion history
+   #             instance.save(
+   #                 version_comment='File Added: {}'.format(filename))
+
+   #         return Response(
+   #             [
+   #                 dict(
+   #                     input_name=d.input_name,
+   #                     name=d.name,
+   #                     file=d._file.url,
+   #                     id=d.id,
+   #                     can_delete=d.can_delete) for d in instance.documents.filter(
+   #                     input_name=section) if d._file])
+
+   #     except serializers.ValidationError:
+   #         print(traceback.print_exc())
+   #         raise
+   #     except ValidationError as e:
+   #         if hasattr(e, 'error_dict'):
+   #             raise serializers.ValidationError(repr(e.error_dict))
+   #         else:
+   #             raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+   #     except Exception as e:
+   #         print(traceback.print_exc())
+   #         raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
@@ -752,12 +775,11 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
-    def add_workflow_log(self, request, *args, **kwargs):
+    def workflow_action(self, request, *args, **kwargs):
         print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
-                #workflow_entry = self.add_comms_log(request, workflow=True)
                 comms_log_id = request.data.get('call_email_comms_log_id')
                 if comms_log_id and comms_log_id is not 'null':
                     workflow_entry = instance.comms_logs.get(
@@ -767,76 +789,33 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
                 # Set CallEmail status depending on workflow type
                 workflow_type = request.data.get('workflow_type')
-                if workflow_type in ('forward_to_regions', 'forward_to_wildlife_protection_branch'):
-                    instance.status = 'open'
-                    if workflow_type == 'forward_to_regions':
-                        instance.log_user_action(
-                            CallEmailUserAction.ACTION_FORWARD_TO_REGIONS.format(instance.number), 
-                            request)
-                    else:
-                        instance.log_user_action(
-                                CallEmailUserAction.ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH.format(instance.number),
-                                request)
-
+                if workflow_type == 'forward_to_regions':
+                    instance.forward_to_regions(request)
+                elif workflow_type == 'forward_to_wildlife_protection_branch':
+                    instance.forward_to_wildlife_protection_branch(request)
                 elif workflow_type == 'allocate_for_follow_up':
-                    instance.status = 'open_followup'
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_ALLOCATE_FOR_FOLLOWUP.format(instance.number), 
-                            request)
-
+                    instance.allocate_for_follow_up(request)
                 elif workflow_type == 'allocate_for_inspection':
-                    instance.status = 'open_inspection'
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(instance.number), 
-                            request)
-
+                    instance.allocate_for_inspection(request)
                 elif workflow_type == 'allocate_for_case':
-                    instance.status = 'open_case'
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_ALLOCATE_FOR_CASE.format(instance.number), 
-                            request)
-
+                    instance.allocate_for_case(request)
                 elif workflow_type == 'close':
-                    instance.status = 'closed'
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_CLOSE.format(instance.number), 
-                            request)
-
+                    instance.close(request)
                 elif workflow_type == 'offence':
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_OFFENCE.format(instance.number), 
-                            request)
-                    
+                    instance.add_offence(request)
                 elif workflow_type == 'sanction_outcome':
-                    instance.log_user_action(
-                            CallEmailUserAction.ACTION_SANCTION_OUTCOME.format(instance.number), 
-                            request)
+                    instance.add_sanction_outcome(request)
 
-                instance.region_id = None if request.data.get('region_id') =='null' else request.data.get('region_id')
-                instance.district_id = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
-                #instance.allocated_group_id = request.data.get('allocated_group_id')
                 if request.data.get('referrers_selected'):
-                    referrers_selected = request.data.get('referrers_selected').split(",")
-                    print(referrers_selected)
-                    for selection in referrers_selected:
-                        print(selection)
-                        try:
-                            selection_int = int(selection)
-                        except Exception as e:
-                            raise e
-                        referrer = Referrer.objects.get(id=selection_int)
-                        if referrer:
-                            instance.referrer.add(referrer)
-                print("referrers")
-                print(instance.referrer.all())
+                    instance.add_referrers(request)
 
-                instance.assigned_to_id = None if request.data.get('assigned_to_id') == 'null' else request.data.get('assigned_to_id')
-                instance.inspection_type_id = None if request.data.get('inspection_type_id') == 'null' else request.data.get('inspection_type_id')
-                instance.case_priority_id = None if request.data.get('case_priority_id') == 'null' else request.data.get('case_priority_id')
-                instance.allocated_group_id = None if request.data.get('allocated_group_id') == 'null' else request.data.get('allocated_group_id')
+                instance.region_id = None if not request.data.get('region_id') else request.data.get('region_id')
+                instance.district_id = None if not request.data.get('district_id') else request.data.get('district_id')
+                instance.assigned_to_id = None if not request.data.get('assigned_to_id') else request.data.get('assigned_to_id')
+                instance.inspection_type_id = None if not request.data.get('inspection_type_id') else request.data.get('inspection_type_id')
+                instance.case_priority_id = None if not request.data.get('case_priority_id') else request.data.get('case_priority_id')
+                instance.allocated_group_id = None if not request.data.get('allocated_group_id') else request.data.get('allocated_group_id')
 
-                #if not workflow_type == 'allocate_for_follow_up':
-                 #   instance.assigned_to_id = None
                 instance.save()
 
                 email_data = self.send_mail(request, instance, workflow_entry)

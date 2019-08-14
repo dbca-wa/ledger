@@ -7,7 +7,6 @@ from django.db.models import Max
 from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser, RevisionedMixin, Organisation
 from ledger.licence.models import LicenceType
-from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.call_email.models import CallEmail
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
@@ -19,12 +18,14 @@ from django.core.exceptions import ValidationError
 logger = logging.getLogger(__name__)
 
 def update_inspection_comms_log_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
-        instance.log_entry.inspection.id, instance.id, filename)
+    #return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
+     #   instance.log_entry.inspection.id, instance.id, filename)
+     pass
 
 def update_inspection_report_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/report/{}'.format(
-        instance.id, filename)
+    #return 'wildlifecompliance/compliance/{}/report/{}'.format(
+     #   instance.id, filename)
+     pass
 
 
 class InspectionType(models.Model):
@@ -35,6 +36,10 @@ class InspectionType(models.Model):
     replaced_by = models.ForeignKey(
         'self', on_delete=models.PROTECT, blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
+    approval_document = models.ForeignKey(
+        'InspectionTypeApprovalDocument',
+        related_name='inspection_type',
+        null=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -47,16 +52,25 @@ class InspectionType(models.Model):
 
 
 class Inspection(RevisionedMixin):
+    PARTY_INDIVIDUAL = 'individual'
+    PARTY_ORGANISATION = 'organisation'
     PARTY_CHOICES = (
-            ('individual', 'individual'),
-            ('organisation', 'organisation')
+            (PARTY_INDIVIDUAL, 'individual'),
+            (PARTY_ORGANISATION, 'organisation')
             )
+    STATUS_OPEN = 'open'
+    STATUS_WITH_MANAGER = 'with_manager'
+    STATUS_ENDORSEMENT = 'endorsement'
+    STATUS_SANCTION_OUTCOME = 'sanction_outcome'
+    STATUS_DISCARDED = 'discarded'
+    STATUS_CLOSED = 'closed'
     STATUS_CHOICES = (
-            ('open', 'Open'),
-            ('endorsement', 'Awaiting Endorsement'),
-            ('sanction_outcome', 'Awaiting Sanction Outcomes'),
-            ('discarded', 'Discarded'),
-            ('closed', 'Closed')
+            (STATUS_OPEN, 'Open'),
+            (STATUS_WITH_MANAGER, 'With Manager'),
+            (STATUS_ENDORSEMENT, 'Awaiting Endorsement'),
+            (STATUS_SANCTION_OUTCOME, 'Awaiting Sanction Outcomes'),
+            (STATUS_DISCARDED, 'Discarded'),
+            (STATUS_CLOSED, 'Closed')
             )
 
     title = models.CharField(max_length=200, blank=True, null=True)
@@ -158,11 +172,32 @@ class Inspection(RevisionedMixin):
         if self.inspection_type:
             return self.inspection_type.schema
 
+    def send_to_manager(self, request):
+        self.status = self.STATUS_WITH_MANAGER
+        self.log_user_action(
+            InspectionUserAction.ACTION_SEND_TO_MANAGER.format(self.number), 
+            request)
+        self.save()
+
+    def close(self, request):
+        self.status = self.STATUS_CLOSED
+        self.log_user_action(
+            InspectionUserAction.ACTION_CLOSED.format(self.number), 
+            request)
+        self.save()
+
 class InspectionReportDocument(Document):
     log_entry = models.ForeignKey(
         'Inspection',
         related_name='report')
-    _file = models.FileField(max_length=255, upload_to=update_inspection_report_filename)
+    _file = models.FileField(max_length=255)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+
+class InspectionTypeApprovalDocument(Document):
+    _file = models.FileField(max_length=255)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -172,7 +207,7 @@ class InspectionCommsLogDocument(Document):
     log_entry = models.ForeignKey(
         'InspectionCommsLogEntry',
         related_name='documents')
-    _file = models.FileField(max_length=255, upload_to=update_inspection_comms_log_filename)
+    _file = models.FileField(max_length=255)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -189,6 +224,8 @@ class InspectionUserAction(UserAction):
     ACTION_SAVE_INSPECTION_ = "Save Inspection {}"
     ACTION_OFFENCE = "Create Offence {}"
     ACTION_SANCTION_OUTCOME = "Create Sanction Outcome {}"
+    ACTION_SEND_TO_MANAGER = "Send Inspection {} to Manager"
+    ACTION_CLOSED = "Close Inspection {}"
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -203,3 +240,25 @@ class InspectionUserAction(UserAction):
         )
 
     inspection = models.ForeignKey(Inspection, related_name='action_logs')
+
+
+class InspectionDocument(Document):
+    inspection = models.ForeignKey('Inspection', related_name='documents')
+    _file = models.FileField(max_length=255)
+    input_name = models.CharField(max_length=255, blank=True, null=True)
+    # after initial submit prevent document from being deleted
+    can_delete = models.BooleanField(default=True)
+    version_comment = models.CharField(max_length=255, blank=True, null=True)
+
+    def delete(self):
+        if self.can_delete:
+            return super(InspectionDocument, self).delete()
+        #logger.info(
+         #   'Cannot delete existing document object after application has been submitted (including document submitted before\
+          #  application pushback to status Draft): {}'.format(
+           #     self.name)
+        #)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+

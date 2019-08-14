@@ -22,8 +22,9 @@ def update_compliance_doc_filename(instance, filename):
     pass
 
 def update_call_email_doc_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/documents/{}'.format(
-        instance.call_email.id, filename)
+    # return 'wildlifecompliance/compliance/{}/documents/{}'.format(
+      #  instance.call_email.id, filename)
+    pass
 
 def update_compliance_comms_log_filename(instance, filename):
     #return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
@@ -31,8 +32,9 @@ def update_compliance_comms_log_filename(instance, filename):
     pass
 
 def update_call_email_comms_log_filename(instance, filename):
-    return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
-        instance.log_entry.call_email.id, instance.id, filename)
+    #return 'wildlifecompliance/compliance/{}/communications/{}/{}'.format(
+     #   instance.log_entry.call_email.id, instance.id, filename)
+    pass
 
 def update_compliance_workflow_log_filename(instance, filename):
     #return 'wildlifecompliance/compliance/{}/workflow/{}/{}'.format(
@@ -175,13 +177,19 @@ class CasePriority(models.Model):
 
 
 class CallEmail(RevisionedMixin):
+    STATUS_DRAFT = 'draft'
+    STATUS_OPEN = 'open'
+    STATUS_OPEN_FOLLOWUP = 'open_followup'
+    STATUS_OPEN_INSPECTION = 'open_inspection'
+    STATUS_OPEN_CASE = 'open_case'
+    STATUS_CLOSED = 'closed'
     STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('open', 'Open'),
-        ('open_followup', 'Open (follow-up)'),
-        ('open_inspection', 'Open (Inspection)'),
-        ('open_case', 'Open (Case)'),
-        ('closed', 'Closed'),
+        (STATUS_DRAFT, 'Draft'),
+        (STATUS_OPEN, 'Open'),
+        (STATUS_OPEN_FOLLOWUP, 'Open (follow-up)'),
+        (STATUS_OPEN_FOLLOWUP, 'Open (Inspection)'),
+        (STATUS_OPEN_CASE, 'Open (Case)'),
+        (STATUS_CLOSED, 'Closed'),
     )
 
     status = models.CharField(
@@ -309,6 +317,73 @@ class CallEmail(RevisionedMixin):
     # def related_items(self):
     #     return get_related_items(self)
 
+    def forward_to_regions(self, request):
+        self.status = self.STATUS_OPEN
+        self.log_user_action(
+            CallEmailUserAction.ACTION_FORWARD_TO_REGIONS.format(self.number), 
+            request)
+        self.save()
+
+    def forward_to_wildlife_protection_branch(self, request):
+        self.status = self.STATUS_OPEN
+        self.log_user_action(
+            CallEmailUserAction.ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH.format(self.number), 
+            request)
+        self.save()
+
+    def allocate_for_follow_up(self, request):
+        self.status = self.STATUS_OPEN_FOLLOWUP
+        self.log_user_action(
+                CallEmailUserAction.ACTION_ALLOCATE_FOR_FOLLOWUP.format(self.number), 
+                request)
+        self.save()
+
+    def allocate_for_inspection(self, request):
+        self.status = self.STATUS_OPEN_INSPECTION
+        self.log_user_action(
+                CallEmailUserAction.ACTION_ALLOCATE_FOR_INSPECTION.format(self.number), 
+                request)
+        self.save()
+
+    def allocate_for_case(self, request):
+        self.status = self.STATUS_OPEN_CASE
+        self.log_user_action(
+                CallEmailUserAction.ACTION_ALLOCATE_FOR_CASE.format(self.number), 
+                request)
+        self.save()
+
+    def close(self, request):
+        self.status = self.STATUS_CLOSED
+        self.log_user_action(
+                CallEmailUserAction.ACTION_CLOSED.format(self.number), 
+                request)
+        self.save()
+
+    def add_offence(self, request):
+        self.log_user_action(
+                CallEmailUserAction.ACTION_OFFENCE.format(self.number), 
+                request)
+        self.save()
+
+    def add_sanction_outcome(self, request):
+        self.log_user_action(
+                CallEmailUserAction.ACTION_SANCTION_OUTCOME.format(self.number), 
+                request)
+        self.save()
+
+    def add_referrers(self, request):
+        referrers_selected = request.data.get('referrers_selected').split(",")
+        print(referrers_selected)
+        for selection in referrers_selected:
+            print(selection)
+            try:
+                selection_int = int(selection)
+            except Exception as e:
+                raise e
+            referrer = Referrer.objects.get(id=selection_int)
+            if referrer:
+                self.referrer.add(referrer)
+        self.save()
 
 @python_2_unicode_compatible
 class ComplianceFormDataRecord(models.Model):
@@ -428,7 +503,8 @@ class ComplianceFormDataRecord(models.Model):
 
 class CallEmailDocument(Document):
     call_email = models.ForeignKey('CallEmail', related_name='documents')
-    _file = models.FileField(max_length=255, upload_to=update_call_email_doc_filename)
+    #_file = models.FileField(max_length=255, upload_to=update_call_email_doc_filename)
+    _file = models.FileField(max_length=255)
     input_name = models.CharField(max_length=255, blank=True, null=True)
     # after initial submit prevent document from being deleted
     can_delete = models.BooleanField(default=True)
@@ -455,7 +531,8 @@ class CallEmailLogDocument(Document):
         related_name='documents')
     #input_name = models.CharField(max_length=255, blank=True, null=True)
     #version_comment = models.CharField(max_length=255, blank=True, null=True)
-    _file = models.FileField(max_length=255, upload_to=update_call_email_comms_log_filename)
+    #_file = models.FileField(max_length=255, upload_to=update_call_email_comms_log_filename)
+    _file = models.FileField(max_length=255)
 
     class Meta:
         app_label = 'wildlifecompliance'

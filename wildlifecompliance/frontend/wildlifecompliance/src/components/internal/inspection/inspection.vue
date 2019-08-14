@@ -63,8 +63,8 @@
                         </div-->
 
                         <div  class="row action-button">
-                          <div v-if="!readonlyForm" class="col-sm-12">
-                                <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
+                          <div v-if="!readonlyForm && inspectionReportExists" class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('send_to_manager')" class="btn btn-primary btn-block">
                                   Send to Manager
                                 </a>
                           </div>
@@ -123,7 +123,7 @@
                                   <label>Inspection Type</label>
                                 </div>
                                 <div class="col-sm-6">
-                                  <select :disabled="readonlyForm" class="form-control" v-model="inspection.inspection_type_id">
+                                  <select :disabled="readonlyForm" class="form-control" v-model="inspection.inspection_type_id" @change="loadSchema">
                                     <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
                                       {{ option.inspection_type }}
                                     </option>
@@ -236,11 +236,10 @@
                         <div :id="cTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Checklist">
                                 <div class="col-sm-12 form-group"><div class="row">
-                                    <div v-for="(item, index) in current_schema">
+                                    <div v-if="current_schema" v-for="(item, index) in current_schema">
                                       <compliance-renderer-block
                                          :component="item"
-                                         :createDocumentActionUrl="createDocumentActionUrl"
-                                         v-bind:key="`compliance_renderer_block_${index}`"
+                                         v-bind:key="`compliance_renderer_block${index}`"
                                         />
                                     </div>
                                 </div></div>
@@ -253,8 +252,8 @@
                                         <div class="col-sm-3">
                                             <label class="control-label pull-left"  for="Name">Inspection Report</label>
                                         </div>
-                                        <div class="col-sm-9">
-                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :createDocumentActionUrl="createDocumentActionUrl" />
+                                        <div class="col-sm-9" v-if="inspection.inspectionReportDocumentUrl">
+                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :documentActionUrl="inspection.inspectionReportDocumentUrl" @update-parent="loadInspectionReport"/>
                                         </div>
                                     </div>
                                 </div>
@@ -301,6 +300,7 @@
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
+        <InspectionModal ref="inspection_modal" :workflow_type="workflow_type" v-bind:key="createInspectionBindId" />
     </div>
 </template>
 <script>
@@ -319,6 +319,7 @@ import 'eonasdan-bootstrap-datetimepicker';
 import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
+import InspectionModal from './inspection_modal.vue';
 
 
 export default {
@@ -330,6 +331,7 @@ export default {
       oTab: 'oTab'+this._uid,
       cTab: 'cTab'+this._uid,
       current_schema: [],
+      createInspectionBindId: '',
       dtHeadersRelatedItems: [
           'Number',
           'Type',
@@ -438,6 +440,7 @@ export default {
     Offence,
     SanctionOutcome,
     filefield,
+    InspectionModal,
   },
   watch: {
       inspection: {
@@ -459,6 +462,9 @@ export default {
     },
     readonlyForm: function() {
         return !this.inspection.can_user_action;
+    },
+    inspectionReportExists: function() {
+        return this.inspection.inspection_report.length > 0 ? true : false;
     },
     offenceExists: function() {
         for (let item of this.inspection.related_items) {
@@ -500,6 +506,11 @@ export default {
         // Should not reach here
       }
     },
+    loadInspectionReport: function() {
+        console.log("loadInspectionReport")
+        this.loadInspection({inspection_id: this.inspection.id});
+    },
+
     loadSchema: function() {
       this.$nextTick(async function() {
       let url = helpers.add_endpoint_json(
@@ -516,13 +527,9 @@ export default {
         
       });
     },
-    createDocumentActionUrl: async function() {
-      return helpers.add_endpoint_join(
-          api_endpoints.inspection,
-          this.inspection.id + "/process_inspection_report_document/"
-          )
-    },
+
     open_sanction_outcome(){
+
       this.sanctionOutcomeInitialised = true;
       this.$nextTick(() => {
           this.$refs.sanction_outcome.isModalOpen = true;
@@ -600,7 +607,7 @@ export default {
       this.workflow_type = workflow_type;
       this.updateWorkflowBindId();
       this.$nextTick(() => {
-        this.$refs.add_workflow.isModalOpen = true;
+        this.$refs.inspection_modal.isModalOpen = true;
       });
       // this.$refs.add_workflow.isModalOpen = true;
     },
@@ -684,14 +691,10 @@ export default {
         await this.setInspection(res.body); 
     },
   },
-  beforeRouteEnter: function(to, from, next) {
-      console.log(to);
-            next(async (vm) => {
-                await vm.loadInspection({ inspection_id: to.params.inspection_id });
-                
-            });
-  },
   created: async function() {
+      if (this.$route.params.inspection_id) {
+          await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
+      }
       console.log(this)
 
       // inspection_types
@@ -726,11 +729,11 @@ export default {
           this.$refs.search_person.setInput(value);
       }
       // load Inspection report
-      await this.$refs.inspection_report_file.get_documents();
-    // load current Inspection renderer schema
-    if (this.inspection.inspection_type_id) {
-      await this.loadSchema();
-    }
+      //await this.$refs.inspection_report_file.get_documents();
+      // load current Inspection renderer schema
+      if (this.inspection.inspection_type_id) {
+          await this.loadSchema();
+      }
   },
   mounted: function() {
       let vm = this;
@@ -749,7 +752,7 @@ export default {
           vm.setPlannedForTime(e.date.format('LT'));
       });
       
-      this.$nextTick(() => {
+      this.$nextTick(async () => {
           this.addEventListeners();
       });
   }

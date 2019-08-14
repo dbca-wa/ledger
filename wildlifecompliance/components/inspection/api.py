@@ -487,6 +487,29 @@ class InspectionViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
+    def process_renderer_document(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            returned_data = process_generic_document(request, instance)
+            if returned_data:
+                return Response(returned_data)
+            else:
+                return Response()
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
     def process_comms_log_document(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -515,6 +538,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def process_inspection_report_document(self, request, *args, **kwargs):
+        print("process_inspection_report_document")
         try:
             instance = self.get_object()
             returned_data = process_generic_document(
@@ -550,7 +574,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 if serializer.is_valid():
                     instance = serializer.save()
                     if request.data.get('allocated_group_id'):
-                        res = self.add_workflow_log(request, instance)
+                        res = self.workflow_action(request, instance)
                         return res
                     else:
                         # Log parent actions and update status
@@ -631,7 +655,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
-    def add_workflow_log(self, request, instance=None, *args, **kwargs):
+    def workflow_action(self, request, instance=None, *args, **kwargs):
         try:
             with transaction.atomic():
                 if not instance:
@@ -645,16 +669,21 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     workflow_entry = self.add_comms_log(request, instance, workflow=True)
 
                 # Set Inspection status to open
-                instance.status = 'open'
+                #instance.status = 'open'
                 
-                instance.region_id = None if request.data.get('region_id') =='null' else request.data.get('region_id')
-                instance.district_id = None if request.data.get('district_id') == 'null' else request.data.get('district_id')
-                #instance.allocated_group_id = request.data.get('allocated_group_id')
-
-                instance.assigned_to_id = None if request.data.get('assigned_to_id') == 'null' else request.data.get('assigned_to_id')
-                instance.inspection_type_id = None if request.data.get('inspection_type_id') == 'null' else request.data.get('inspection_type_id')
-                instance.allocated_group_id = None if request.data.get('allocated_group_id') == 'null' else request.data.get('allocated_group_id')
-                instance.call_email_id = None if request.data.get('call_email_id') == 'null' else request.data.get('call_email_id')
+                # Set Inspection status depending on workflow type
+                workflow_type = request.data.get('workflow_type')
+                if workflow_type == 'send_to_manager':
+                    instance.send_to_manager(request)
+                elif workflow_type == 'close':
+                    instance.close(request)
+                
+                instance.region_id = None if not request.data.get('region_id') else request.data.get('region_id')
+                instance.district_id = None if not request.data.get('district_id') else request.data.get('district_id')
+                instance.assigned_to_id = None if not request.data.get('assigned_to_id') else request.data.get('assigned_to_id')
+                instance.inspection_type_id = None if not request.data.get('inspection_type_id') else request.data.get('inspection_type_id')
+                instance.allocated_group_id = None if not request.data.get('allocated_group_id') else request.data.get('allocated_group_id')
+                instance.call_email_id = None if not request.data.get('call_email_id') else request.data.get('call_email_id')
 
                 instance.save()
                 # Log parent actions and update status
