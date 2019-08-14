@@ -217,9 +217,18 @@ export default {
                         name: "id, lodgement_number",
                     },
                     {
-                        data: "application_lodgement_number",
+                        data: "linked_applications",
+                        mRender:function (data,type,full) {
+                            let applications = '';
+                            _.forEach(data, function (item) {
+                                applications += item + '<br>';
+                            });
+                            return applications;
+                        },
                         name: "current_proposal__lodgement_number"
+
                     },
+
 
                     {
                         data: "application_type",

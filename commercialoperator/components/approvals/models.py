@@ -11,6 +11,7 @@ from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
 from django.conf import settings
+from django.db.models import Q
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -118,21 +119,11 @@ class Approval(RevisionedMixin):
             except:
                 return "Applicant Not Set"
 
-
-#    @property
-#    def applicant(self):
-#        #import ipdb; ipdb.set_trace()
-#        if self.current_proposal.applicant:
-#            return self.current_proposal.applicant
-#        else:
-#            if self.org_applicant:
-#                return self.org_applicant.organisation.name
-#            elif self.proxy_applicant:
-#                return "{} {}".format(
-#                    self.proxy_applicant.first_name,
-#                    self.proxy_applicant.last_name)
-#            else:
-#                return None
+    @property
+    def linked_applications(self):
+        ids = Proposal.objects.filter(approval__lodgement_number=self.lodgement_number).values_list('id', flat=True)
+        all_linked_ids = Proposal.objects.filter(Q(previous_application__in=ids) | Q(id__in=ids)).values_list('lodgement_number', flat=True)
+        return all_linked_ids
 
     @property
     def applicant_type(self):
