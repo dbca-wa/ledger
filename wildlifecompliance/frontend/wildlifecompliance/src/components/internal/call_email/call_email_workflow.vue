@@ -32,7 +32,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="regionVisibility" class="form-group">
+                        <div v-if="allocateToVisibility" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Allocate to</label>
@@ -227,6 +227,13 @@ export default {
         if (!(this.workflow_type === 'forward_to_wildlife_protection_branch' || 
           this.workflow_type === 'close')
         ) {
+              return true;
+        } else {
+              return false;
+        }
+      },
+      allocateToVisibility: function() {
+          if (this.workflow_type.startsWith('allocate')) {
               return true;
         } else {
               return false;

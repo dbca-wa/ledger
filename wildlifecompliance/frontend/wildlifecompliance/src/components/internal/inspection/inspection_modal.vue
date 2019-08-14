@@ -4,7 +4,7 @@
           <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                        <div class="form-group">
+                        <div class="form-group" v-if="!this.workflow_type">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
@@ -18,7 +18,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" v-if="!this.workflow_type">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
@@ -32,7 +32,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" v-if="allocateToVisibility">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Allocate to</label>
@@ -47,7 +47,7 @@
                           </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group" v-if="!this.workflow_type">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Inspection Type</label>
@@ -171,6 +171,15 @@ export default {
               return "Send to Manager";
           } else if (this.workflow_type === 'close') {
               return "Close Inspection";
+          }
+      },
+      allocateToVisibility: function() {
+          if (this.workflow_type === 'request_amendment') {
+              return true
+          } else if (!this.workflow_type) {
+              return true
+          } else {
+              return false
           }
       },
     },

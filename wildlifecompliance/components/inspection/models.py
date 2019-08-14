@@ -60,6 +60,7 @@ class Inspection(RevisionedMixin):
             )
     STATUS_OPEN = 'open'
     STATUS_WITH_MANAGER = 'with_manager'
+    STATUS_REQUEST_AMENDMENT = 'request_amendment'
     STATUS_ENDORSEMENT = 'endorsement'
     STATUS_SANCTION_OUTCOME = 'sanction_outcome'
     STATUS_DISCARDED = 'discarded'
@@ -67,6 +68,7 @@ class Inspection(RevisionedMixin):
     STATUS_CHOICES = (
             (STATUS_OPEN, 'Open'),
             (STATUS_WITH_MANAGER, 'With Manager'),
+            (STATUS_REQUEST_AMENDMENT, 'Request Amendment'),
             (STATUS_ENDORSEMENT, 'Awaiting Endorsement'),
             (STATUS_SANCTION_OUTCOME, 'Awaiting Sanction Outcomes'),
             (STATUS_DISCARDED, 'Discarded'),
@@ -179,6 +181,13 @@ class Inspection(RevisionedMixin):
             request)
         self.save()
 
+    def request_amendment(self, request):
+        self.status = self.REQUEST_AMENDMENT
+        self.log_user_action(
+            InspectionUserAction.ACTION_REQUEST_AMENDMENT.format(self.number), 
+            request)
+        self.save()
+
     def close(self, request):
         self.status = self.STATUS_CLOSED
         self.log_user_action(
@@ -226,6 +235,7 @@ class InspectionUserAction(UserAction):
     ACTION_SANCTION_OUTCOME = "Create Sanction Outcome {}"
     ACTION_SEND_TO_MANAGER = "Send Inspection {} to Manager"
     ACTION_CLOSED = "Close Inspection {}"
+    ACTION_REQUEST_AMENDMENT = "Request amendment for {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

@@ -62,8 +62,8 @@
                           </div>
                         </div-->
 
-                        <div  class="row action-button">
-                          <div v-if="!readonlyForm && inspectionReportExists" class="col-sm-12">
+                        <div class="row action-button">
+                          <div v-if="sendToManagerVisibility" class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('send_to_manager')" class="btn btn-primary btn-block">
                                   Send to Manager
                                 </a>
@@ -71,7 +71,23 @@
                         </div>
                         
                         <div class="row action-button">
-                          <div v-if="!readonlyForm" class="col-sm-12">
+                          <div v-if="endorseVisibility" class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('endorse')" class="btn btn-primary btn-block">
+                                  Endorse
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div class="row action-button">
+                          <div v-if="requestAmendmentVisibility" class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('request_amendment')" class="btn btn-primary btn-block">
+                                  Request Amendment
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div class="row action-button">
+                          <div v-if="offenceVisibility" class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
@@ -79,7 +95,7 @@
                         </div>
 
                         <div  class="row action-button">
-                          <div v-if="!readonlyForm && this.offenceExists" class="col-sm-12">
+                          <div v-if="sanctionOutcomeVisibility" class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
@@ -474,6 +490,43 @@ export default {
         }
         // return false if no related item is an Offence
         return false
+    },
+    sendToManagerVisibility: function() {
+        if (!this.readonlyForm && this.inspectionReportExists) {
+            if (this.workflow_status === 'open') {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    },
+    endorseVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm) {
+            return this.inspection.status.id === 'with_manager' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    requestAmendmentVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm) {
+            return this.inspection.status.id === 'with_manager' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    offenceVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm) {
+            return this.inspection.status.id === 'open' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    sanctionOutcomeVisibility: function() {
+        if (this.inspection.status && this.offenceExists && !this.readonlyForm) {
+            return this.inspection.status.id === 'open' ? true : false;
+        } else {
+            return false;
+        }
     },
   },
   filters: {
