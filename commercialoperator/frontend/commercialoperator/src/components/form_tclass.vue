@@ -76,7 +76,6 @@
               </div>
               <div class="tab-pane fade" id="pills-activities-land" role="tabpanel" aria-labelledby="pills-activities-land-tab">
 
-                <!--
 				<div class="row">
                   <div class="col-md-6">
                     <div class="row">
@@ -100,9 +99,10 @@
                     </div>
                   </div>
                 </div>
-                -->
 
+                <!--
                 <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities" ref="activities_land"></ActivitiesLand>
+                -->
               </div>
               <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">
                 <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities" ref="activities_marine"></ActivitiesMarine>
