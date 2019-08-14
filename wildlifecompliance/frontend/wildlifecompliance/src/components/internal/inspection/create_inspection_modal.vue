@@ -78,7 +78,7 @@
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
             			        <div class="col-sm-9">
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :createDocumentActionUrl="createDocumentActionUrl" />
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="inspection.commsLogsDocumentUrl" @create-parent="createDocumentActionUrl"/>
                                 </div>
                             </div>
                         </div>
@@ -176,7 +176,8 @@ export default {
     },
     methods: {
       ...mapActions('inspectionStore', {
-          saveInspection: 'saveInspection'
+          saveInspection: 'saveInspection',
+          loadInspection: 'loadInspection',
       }),
       loadAllocatedGroup: async function() {
           let url = helpers.add_endpoint_join(
@@ -270,7 +271,7 @@ export default {
       sendData: async function() {
           let post_url = '';
           if (this.inspection && this.inspection.id) {
-              post_url = '/api/inspection/' + this.inspection.id + '/add_workflow_log/'
+              post_url = '/api/inspection/' + this.inspection.id + '/workflow_action/'
           } else {
                 post_url = '/api/inspection/'
           }
@@ -312,17 +313,15 @@ export default {
               }
           
       },
-      createDocumentActionUrl: async function() {
+      createDocumentActionUrl: async function(done) {
         if (!this.inspection.id) {
-            // create inspection and get id
-            let returned_inspection = await Vue.http.post(api_endpoints.inspection);
-            this.inspection.id = returned_inspection.body.id;
+            // create inspection and update vuex
+            let returned_inspection = await this.saveInspection({ route: false, crud: 'create', internal: true })
+            await this.loadInspection({inspection_id: returned_inspection.body.id});
         }
-    
-        return helpers.add_endpoint_join(
-            api_endpoints.inspection,
-            this.inspection.id + "/create_modal_process_comms_log_document/"
-            )
+        // ensure filefield document_action_url is not empty
+        this.$refs.comms_log_file.document_action_url = this.inspection.commsLogsDocumentUrl;
+        return done(true);
       },
 
     },
@@ -345,8 +344,6 @@ export default {
             api_endpoints.region_district
             );
         Object.assign(this.regionDistricts, returned_region_districts);
-
-        await this.updateAllocatedGroup();
 
         // case_priorities
         let returned_case_priorities = await cache_helper.getSetCacheList(
@@ -383,6 +380,15 @@ export default {
               id: "", 
               name: "",
             });
+        
+        // initialise region as Kensington
+        for (let record of this.regionDistricts) {
+            if (record.district === 'KENSINGTON') {
+                this.district_id = null;
+                this.region_id = record.id;
+            }
+        }
+        await this.updateAllocatedGroup();
     },
     mounted: function() {
         this.form = document.forms.forwardForm;
