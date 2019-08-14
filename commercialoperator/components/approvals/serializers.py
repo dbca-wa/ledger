@@ -108,6 +108,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
     #current_proposal = InternalProposalSerializer(many=False)
     #application_type = ApplicationTypeSerializer(many=True)
     application_type = serializers.SerializerMethodField(read_only=True)
+    linked_applications = serializers.SerializerMethodField(read_only=True)
     can_renew = serializers.SerializerMethodField()
     can_extend = serializers.SerializerMethodField()
     is_assessor = serializers.SerializerMethodField()
@@ -118,6 +119,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'lodgement_number',
+            'linked_applications',
             'licence_document',
             'replaced_by',
             'current_proposal',
@@ -167,6 +169,7 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'status',
             'reference',
             'lodgement_number',
+            'linked_applications',
             'licence_document',
             'start_date',
             'expiry_date',
@@ -189,6 +192,10 @@ class ApprovalSerializer(serializers.ModelSerializer):
             'is_assessor',
             'is_approver'
         )
+
+    def get_linked_applications(self,obj):
+        return obj.linked_applications
+
 
     def get_renewal_document(self,obj):
         if obj.renewal_document and obj.renewal_document._file:
