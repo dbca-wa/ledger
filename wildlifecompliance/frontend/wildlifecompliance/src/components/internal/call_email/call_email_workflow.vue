@@ -376,21 +376,43 @@ export default {
       sendData: async function(){        
           let post_url = '/api/call_email/' + this.call_email.id + '/workflow_action/'
           let payload = new FormData(this.form);
-          payload.append('call_email_id', this.call_email.id);
-          payload.append('details', this.workflowDetails);
+          if (this.call_email.id) {
+              payload.append('call_email_id', this.call_email.id);
+          }
+          if (this.workflowDetails) {
+              payload.append('details', this.workflowDetails);
+          }
           if (this.$refs.comms_log_file.commsLogId) {
               payload.append('call_email_comms_log_id', this.$refs.comms_log_file.commsLogId)
           }
 
-          payload.append('workflow_type', this.workflow_type);
-          payload.append('email_subject', this.modalTitle);
-          payload.append('referrers_selected', this.referrersSelected);
-          payload.append('district_id', this.district_id);
-          payload.append('assigned_to_id', this.assigned_to_id);
-          payload.append('inspection_type_id', this.inspection_type_id);
-          payload.append('case_priority_id', this.case_priority_id);
-          payload.append('region_id', this.region_id);
-          payload.append('allocated_group_id', this.allocated_group_id);
+          if (this.workflow_type) {
+              payload.append('workflow_type', this.workflow_type);
+          }
+          if (this.modalTitle) {
+              payload.append('email_subject', this.modalTitle);
+          }
+          if (this.referrersSelected) {
+              payload.append('referrers_selected', this.referrersSelected);
+          }
+          if (this.district_id) {
+              payload.append('district_id', this.district_id);
+          }
+          if (this.assigned_to_id) {
+              payload.append('assigned_to_id', this.assigned_to_id);
+          }
+          if (this.inspection_type_id) {
+              payload.append('inspection_type_id', this.inspection_type_id);
+          }
+          if (this.case_priority_id) {
+              payload.append('case_priority_id', this.case_priority_id);
+          }
+          if (this.region_id) {
+              payload.append('region_id', this.region_id);
+          }
+          if (this.allocated_group_id) {
+              payload.append('allocated_group_id', this.allocated_group_id);
+          }
 
           let callEmailRes = await this.saveCallEmail({ route: false, crud: 'save', 'internal': true });
           console.log(callEmailRes);
