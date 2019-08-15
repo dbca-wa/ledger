@@ -3,17 +3,36 @@ from django.db import models
 
 from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.main import get_next_value
-from wildlifecompliance.components.main.models import Document
+from wildlifecompliance.components.main.models import Document, UserAction
 from wildlifecompliance.components.offence.models import Offence, Offender, SectionRegulation
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 
 class SanctionOutcome(models.Model):
+    STATUS_DRAFT = 'draft'
+    STATUS_WITH_MANAGER = 'with_manager'
+    STATUS_WITH_OFFICER = 'with_officer'
+    STATUS_CLOSED = 'closed'
+    STATUS_WITHDRAWN = 'withdrawn'
+    STATUS_CLOSED_ISSUED = 'closed_issued'
+    STATUS_CLOSED_WITHDRAWN = 'closed_withdrawn'
+    STATUS_AWAITING_PAYMENT = 'awaiting_payment'
+    STATUS_AWAITING_PAYMENT_EXTENDED = 'awaiting_payment_extended'
+    STATUS_ISSUED = 'issued'
+    STATUS_OVERDUE = 'overdue'
+
     STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('open', 'Open'),
-        ('closed', 'Closed'),
-        ('discarded', 'Discarded'),
+        (STATUS_DRAFT, 'Draft'),
+        (STATUS_WITH_MANAGER, 'With Mnager'),
+        (STATUS_WITH_OFFICER, 'With Officer'),
+        (STATUS_CLOSED, 'Closed'),
+        (STATUS_WITHDRAWN, 'Withdrawn'),
+        (STATUS_CLOSED_ISSUED, 'Closed (Issued)'),
+        (STATUS_CLOSED_WITHDRAWN, 'Closed (Withdrawn)'),
+        (STATUS_AWAITING_PAYMENT, 'Awaiting Payment'),
+        (STATUS_AWAITING_PAYMENT_EXTENDED, 'Awaiting Payment Extended)'),
+        (STATUS_ISSUED, 'Issued'),
+        (STATUS_OVERDUE, 'Overdue'),
     )
 
     TYPE_INFRINGEMENT_NOTICE = 'infringement_notice'
@@ -156,3 +175,33 @@ class SanctionOutcomeDocument(Document):
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_SanctionOutcomeDocument'
         verbose_name_plural = 'CM_SanctionOutcomeDocuments'
+
+
+class SanctionOutcomeUserAction(UserAction):
+    ACTION_SAVE_SANCTION_OUTCOME = "Save Sanction Outcome {}"
+    ACTION_SEND_TO_MANAGER = "Send Sanction Outcome {} to manager"
+    ACTION_ENDORSE = "Endorse Sanction Outcome {}"
+    ACTION_DECLINE = "Decline Sanction Outcome {}"
+    ACTION_RETURN_TO_OFFICER = "Return Sanction Outcome {} to officer"
+    ACTION_ISSUE = "Issue Sanction Outcome {}"
+    ACTION_WITHDRAW = "Withdraw Sanction Outcome {}"
+    ACTION_EXTEND_DUE_DATE = "Extend Sanction Outcome {} Payment Due Date"
+    ACTION_SEND_TO_DOT = "Send Sanction Outcome {} to Department of Transport"
+    ACTION_SEND_TO_FINES_ENFORCEMENT_UNIT = "Send Sanction Outcome {} to Fined Enforcement Unit"
+    ACTION_ESCALATE_FOR_WITHDRAWAL = "Escalate Sanction Outcome {} for Withdrawal"
+    ACTION_RETURN_TO_INFRINGEMENT_NOTICE_COORDINATOR = "Return Sanction Outcome {} to Infringement Notice Coordinator"
+    ACTION_CLOSE = "Close Sanction Outcome {}"
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        ordering = ('-when',)
+
+    @classmethod
+    def log_action(cls, call_email, action, user):
+        return cls.objects.create(
+            call_email=call_email,
+            who=user,
+            what=str(action)
+        )
+
+    sanction_outcome = models.ForeignKey(SanctionOutcome, related_name='action_logs')

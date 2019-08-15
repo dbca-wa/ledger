@@ -2,13 +2,17 @@ from rest_framework import serializers
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
 from wildlifecompliance.components.main.fields import CustomChoiceField
-from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer, OffenderSerializer
+from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer, OffenderSerializer, \
+    OffenceSerializer
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 
 
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
+    type = CustomChoiceField(read_only=True)
     alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
+    offender = OffenderSerializer(read_only=True,)
+    offence = OffenceSerializer(read_only=True,)
 
     class Meta:
         model = SanctionOutcome
@@ -79,6 +83,7 @@ class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
             returned_url = view_url
 
         return returned_url
+
 
 class SaveSanctionOutcomeSerializer(serializers.ModelSerializer):
     offence_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
