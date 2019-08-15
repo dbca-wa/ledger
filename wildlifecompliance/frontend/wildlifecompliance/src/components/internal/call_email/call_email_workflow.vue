@@ -32,7 +32,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="regionVisibility" class="form-group">
+                        <div v-if="allocateToVisibility" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Allocate to</label>
@@ -232,6 +232,13 @@ export default {
               return false;
         }
       },
+      allocateToVisibility: function() {
+          if (this.workflow_type.startsWith('allocate')) {
+              return true;
+        } else {
+              return false;
+        }
+      },
       groupPermission: function() {
         if (this.workflow_type === 'forward_to_regions') {
             return 'triage_call_email';
@@ -279,17 +286,9 @@ export default {
       ...mapActions('callemailStore', {
           saveCallEmail: 'saveCallEmail',
       }),
-      loadAllocatedGroup: async function() {
-          let url = helpers.add_endpoint_join(
-              api_endpoints.region_district,
-              this.regionDistrictId + '/get_group_id_by_region_district/'
-              );
-          let returned = await Vue.http.post(
-              url,
-              { 'group_permission': this.groupPermission
-              });
-          return returned;
-      },
+      ...mapActions({
+          loadAllocatedGroup: 'loadAllocatedGroup',
+      }),
       updateDistricts: function() {
         // this.district_id = null;
         this.availableDistricts = [];
@@ -330,7 +329,10 @@ export default {
               }
           }
           if (this.groupPermission && this.regionDistrictId) {
-              let allocatedGroupResponse = await this.loadAllocatedGroup();
+              let allocatedGroupResponse = await this.loadAllocatedGroup({
+                  region_district_id: this.regionDistrictId, 
+                  group_permission: this.groupPermission
+              });
               if (allocatedGroupResponse.ok) {
                   console.log(allocatedGroupResponse.body.allocated_group);
                   //this.allocatedGroup = Object.assign({}, allocatedGroupResponse.body.allocated_group);

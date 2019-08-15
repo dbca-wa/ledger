@@ -548,7 +548,6 @@ export default {
       loadCallEmail: 'loadCallEmail',
       saveCallEmail: 'saveCallEmail',
       setCallEmail: 'setCallEmail', 
-      // loadAllocatedGroup: 'loadAllocatedGroup',
       setRegionId: 'setRegionId',
       setAllocatedGroupList: 'setAllocatedGroupList',
       setOccurrenceTimeStart: 'setOccurrenceTimeStart',
@@ -558,9 +557,6 @@ export default {
     }),
     ...mapActions({
       saveFormData: "saveFormData",
-    }),
-    ...mapActions({
-      loadCurrentUser: "loadCurrentUser",
     }),
     updateWorkflowBindId: function() {
         let timeNow = Date.now()
