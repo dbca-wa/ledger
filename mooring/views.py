@@ -354,9 +354,6 @@ class CancelBookingView(TemplateView):
 #        }
 #        create_checkout_session(request, checkout_params)
 #        # END PLACE IN UTILS
-#        print ('BASKET')
-#        print (basket)
-#        print basket.status
 #        order_response = place_order_submission(request)
 
         new_order = Order.objects.get(basket=basket)

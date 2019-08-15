@@ -491,8 +491,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                                if ongoing_booking.old_booking is None:
                                   pass
                                else:
-                                   if nowtime > start_dt:
-                                        booking_period[bp.pk] = 'closed'
+                                    if nowtime > start_dt:
+                                       pass
+                                       #booking_period[bp.pk] = 'closed'
                          else:
                               pass
                               #if nowtime > start_dt:

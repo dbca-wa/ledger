@@ -544,6 +544,6 @@ class AdmissionsLocation(admin.ModelAdmin):
 class RefundFailed(admin.ModelAdmin):
     list_display = ('booking', 'invoice_reference','refund_amount','status','created','completed_date','completed_by')
     search_fields = ('booking','invoice_reference','refund_amount')
-    list_filter = ('status','completed_by')
+    list_filter = ('status',)
     ordering = ('id',)
 
