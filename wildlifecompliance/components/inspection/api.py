@@ -675,6 +675,8 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 workflow_type = request.data.get('workflow_type')
                 if workflow_type == 'send_to_manager':
                     instance.send_to_manager(request)
+                elif workflow_type == 'request_amendment':
+                    instance.request_amendment(request)
                 elif workflow_type == 'close':
                     instance.close(request)
                 

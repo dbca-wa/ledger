@@ -62,8 +62,8 @@
                           </div>
                         </div-->
 
-                        <div  class="row action-button">
-                          <div v-if="!readonlyForm && inspectionReportExists" class="col-sm-12">
+                        <div class="row action-button">
+                          <div v-if="sendToManagerVisibility" class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('send_to_manager')" class="btn btn-primary btn-block">
                                   Send to Manager
                                 </a>
@@ -71,7 +71,23 @@
                         </div>
                         
                         <div class="row action-button">
-                          <div v-if="!readonlyForm" class="col-sm-12">
+                          <div v-if="endorseVisibility" class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('endorse')" class="btn btn-primary btn-block">
+                                  Endorse
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div class="row action-button">
+                          <div v-if="requestAmendmentVisibility" class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('request_amendment')" class="btn btn-primary btn-block">
+                                  Request Amendment
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div class="row action-button">
+                          <div v-if="offenceVisibility" class="col-sm-12">
                                 <a @click="offence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
@@ -79,7 +95,7 @@
                         </div>
 
                         <div  class="row action-button">
-                          <div v-if="!readonlyForm && this.offenceExists" class="col-sm-12">
+                          <div v-if="sanctionOutcomeVisibility" class="col-sm-12">
                                 <a @click="sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
@@ -300,7 +316,7 @@
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
-        <InspectionModal ref="inspection_modal" :workflow_type="workflow_type" v-bind:key="createInspectionBindId" />
+        <InspectionModal ref="inspection_modal" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
     </div>
 </template>
 <script>
@@ -331,7 +347,8 @@ export default {
       oTab: 'oTab'+this._uid,
       cTab: 'cTab'+this._uid,
       current_schema: [],
-      createInspectionBindId: '',
+      //createInspectionBindId: '',
+      workflowBindId: '',
       dtHeadersRelatedItems: [
           'Number',
           'Type',
@@ -427,7 +444,7 @@ export default {
         api_endpoints.inspection,
         this.$route.params.inspection_id + "/action_log"
       ),
-      workflowBindId: '',
+      //workflowBindId: '',
       sanctionOutcomeInitialised: false,
     };
   },
@@ -474,6 +491,43 @@ export default {
         }
         // return false if no related item is an Offence
         return false
+    },
+    sendToManagerVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm && this.inspectionReportExists) {
+            if (this.inspection.status.id === 'open') {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    },
+    endorseVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm) {
+            return this.inspection.status.id === 'with_manager' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    requestAmendmentVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm) {
+            return this.inspection.status.id === 'with_manager' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    offenceVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm) {
+            return this.inspection.status.id === 'open' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    sanctionOutcomeVisibility: function() {
+        if (this.inspection.status && this.offenceExists && !this.readonlyForm) {
+            return this.inspection.status.id === 'open' ? true : false;
+        } else {
+            return false;
+        }
     },
   },
   filters: {

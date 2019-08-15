@@ -4,7 +4,7 @@
           <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                        <div class="form-group">
+                        <div class="form-group" v-if="!this.workflow_type">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
@@ -18,7 +18,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" v-if="!this.workflow_type">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
@@ -32,7 +32,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" v-if="allocateToVisibility">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Allocate to</label>
@@ -47,7 +47,7 @@
                           </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group" v-if="!this.workflow_type">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Inspection Type</label>
@@ -173,6 +173,24 @@ export default {
               return "Close Inspection";
           }
       },
+      allocateToVisibility: function() {
+          if (this.workflow_type === 'request_amendment') {
+              return true
+          } else if (!this.workflow_type) {
+              return true
+          } else {
+              return false
+          }
+      },
+      groupPermission: function() {
+          if (!this.workflow_type) {
+              return "officer";
+          } else if (this.workflow_type === 'send_to_manager') {
+              return "manager";
+          } else if (this.workflow_type === 'request_amendment') {
+              return "officer";
+          }
+      },
     },
     filters: {
       formatDate: function(data) {
@@ -185,17 +203,9 @@ export default {
           loadInspection: 'loadInspection',
           setInspection: 'setInspection',
       }),
-      loadAllocatedGroup: async function() {
-          let url = helpers.add_endpoint_join(
-              api_endpoints.region_district,
-              this.regionDistrictId + '/get_group_id_by_region_district/'
-              );
-          let returned = await Vue.http.post(
-              url,
-              { 'group_permission': 'officer'
-              });
-          return returned;
-      },
+      ...mapActions({
+          loadAllocatedGroup: 'loadAllocatedGroup',
+      }),
       updateDistricts: function() {
         // this.district_id = null;
         this.availableDistricts = [];
@@ -226,7 +236,10 @@ export default {
           console.log("updateAllocatedGroup");
           this.errorResponse = "";
           if (this.regionDistrictId) {
-              let allocatedGroupResponse = await this.loadAllocatedGroup();
+              let allocatedGroupResponse = await this.loadAllocatedGroup({
+              region_district_id: this.regionDistrictId,
+              group_permission: this.groupPermission,
+              });
               if (allocatedGroupResponse.ok) {
                   console.log(allocatedGroupResponse.body.allocated_group);
                   //this.allocatedGroup = Object.assign({}, allocatedGroupResponse.body.allocated_group);
@@ -262,9 +275,8 @@ export default {
               if (this.$parent.$refs.related_items_table) {
                   this.$parent.constructRelatedItemsTable();
               }
-              // Update Vuex locally
-              this.setInspection(response.body)
               this.close();
+              this.$router.push({ name: 'internal-inspection-dash' });
           }
       },
       cancel: async function() {
@@ -298,7 +310,7 @@ export default {
               let res = await Vue.http.post(post_url, payload);
               console.log(res);
               if (res.ok) {
-                return res
+                  return res
               }
           } catch(err) {
                   this.errorResponse = err.statusText;
