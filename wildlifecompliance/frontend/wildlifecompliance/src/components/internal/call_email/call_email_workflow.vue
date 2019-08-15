@@ -286,17 +286,9 @@ export default {
       ...mapActions('callemailStore', {
           saveCallEmail: 'saveCallEmail',
       }),
-      loadAllocatedGroup: async function() {
-          let url = helpers.add_endpoint_join(
-              api_endpoints.region_district,
-              this.regionDistrictId + '/get_group_id_by_region_district/'
-              );
-          let returned = await Vue.http.post(
-              url,
-              { 'group_permission': this.groupPermission
-              });
-          return returned;
-      },
+      ...mapActions({
+          loadAllocatedGroup: 'loadAllocatedGroup',
+      }),
       updateDistricts: function() {
         // this.district_id = null;
         this.availableDistricts = [];
@@ -337,7 +329,10 @@ export default {
               }
           }
           if (this.groupPermission && this.regionDistrictId) {
-              let allocatedGroupResponse = await this.loadAllocatedGroup();
+              let allocatedGroupResponse = await this.loadAllocatedGroup({
+                  region_district_id: this.regionDistrictId, 
+                  group_permission: this.groupPermission
+              });
               if (allocatedGroupResponse.ok) {
                   console.log(allocatedGroupResponse.body.allocated_group);
                   //this.allocatedGroup = Object.assign({}, allocatedGroupResponse.body.allocated_group);

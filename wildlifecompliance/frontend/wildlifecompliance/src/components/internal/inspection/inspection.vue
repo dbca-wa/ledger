@@ -316,7 +316,7 @@
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
-        <InspectionModal ref="inspection_modal" :workflow_type="workflow_type" v-bind:key="createInspectionBindId" />
+        <InspectionModal ref="inspection_modal" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
     </div>
 </template>
 <script>
@@ -347,7 +347,8 @@ export default {
       oTab: 'oTab'+this._uid,
       cTab: 'cTab'+this._uid,
       current_schema: [],
-      createInspectionBindId: '',
+      //createInspectionBindId: '',
+      workflowBindId: '',
       dtHeadersRelatedItems: [
           'Number',
           'Type',
@@ -443,7 +444,7 @@ export default {
         api_endpoints.inspection,
         this.$route.params.inspection_id + "/action_log"
       ),
-      workflowBindId: '',
+      //workflowBindId: '',
       sanctionOutcomeInitialised: false,
     };
   },
@@ -492,8 +493,8 @@ export default {
         return false
     },
     sendToManagerVisibility: function() {
-        if (!this.readonlyForm && this.inspectionReportExists) {
-            if (this.workflow_status === 'open') {
+        if (this.inspection.status && !this.readonlyForm && this.inspectionReportExists) {
+            if (this.inspection.status.id === 'open') {
                 return true;
             }
         } else {

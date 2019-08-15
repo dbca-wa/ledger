@@ -182,7 +182,7 @@ class Inspection(RevisionedMixin):
         self.save()
 
     def request_amendment(self, request):
-        self.status = self.REQUEST_AMENDMENT
+        self.status = self.STATUS_REQUEST_AMENDMENT
         self.log_user_action(
             InspectionUserAction.ACTION_REQUEST_AMENDMENT.format(self.number), 
             request)
