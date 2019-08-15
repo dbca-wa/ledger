@@ -65,7 +65,7 @@ def update_profile_postal_address_user(apps, schema_editor):
         raise e
 
 def populate_countries(apps, schema_editor):
-    call_command('oscar_populate_countries')
+    call_command('oscar_populate_countries', is_initial_only=True)
 
 class Migration(migrations.Migration):
 

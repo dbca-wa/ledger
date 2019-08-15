@@ -17,7 +17,7 @@ env:
     global:
         - SECRET_KEY=SecretKeyForTravis
         - DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
-        - FDW_MANAGER_DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_fdw_test"
+        - FDW_MANAGER_DATABASE_URL="postgis://postgres@localhost:5432/travis_ci_test"
         - PRODUCTION_EMAIL=False
         - EMAIL_INSTANCE="TEST"
         - NON_PROD_EMAIL="travis@dpaw.wa.gov.au"
@@ -29,7 +29,6 @@ install:
     - pip install -r requirements.txt
 before_script:
     - psql -c 'create database travis_ci_test;' -U postgres
-    - psql -c 'create database travis_ci_fdw_test;' -U postgres
     - python manage_wl.py migrate --noinput
     - python manage_ps.py migrate --noinput
     - python manage_mo.py migrate --noinput
