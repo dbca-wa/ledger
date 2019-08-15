@@ -34,8 +34,11 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
         total_count = queryset.count()
 
         # Storage for the filters
+        # Required filters are accumulated here
+        # Then issue a query once at last
         q_objects = Q()
 
+        # Filter by the search_text
         search_text = request.GET.get('search[value]')
         if search_text:
             q_objects &= Q(lodgement_number__icontains=search_text) | \
@@ -142,6 +145,9 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return SanctionOutcome.objects.all()
         return SanctionOutcome.objects.none()
+
+    def retrieve(self, request, *args, **kwargs):
+        return super(SanctionOutcomeViewSet, self).retrieve(request, *args, **kwargs)
 
     @list_route(methods=['GET', ])
     def types(self, request, *args, **kwargs):

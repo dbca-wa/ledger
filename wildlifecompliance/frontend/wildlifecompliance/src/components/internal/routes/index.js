@@ -14,7 +14,7 @@ import Returns from '../returns/return.vue'
 import InspectionDashTable from '../inspection/inspection_dashboard.vue'
 import Inspection from '../inspection/inspection.vue'
 import SanctionOutcomeDashTable from '../sanction_outcome/sanction_outcome_dashboard.vue'
-import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal.vue'
+import SanctionOutcome from '../sanction_outcome/sanction_outcome.vue'
 
 export default
 {
@@ -72,7 +72,7 @@ export default
                     name:"internal-sanction-outcome-dash"
                 },
                 {
-                    path: 'sanction_outcome_id',
+                    path: ':sanction_outcome_id',
                     component: SanctionOutcome,
                     name:"view-sanction-outcome"
                 },
