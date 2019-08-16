@@ -744,12 +744,6 @@ export default {
       });
     },
   },
-  //beforeRouteEnter: function(to, from, next) {
-    //        next(async (vm) => {
-      //          await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
-                
-        //    });
-  //},
   created: async function() {
     
     if (this.$route.params.call_email_id) {

@@ -336,7 +336,6 @@ export default {
             await this.loadInspection({inspection_id: returned_inspection.body.id});
         }
         // populate filefield document_action_url
-        // include conditional for create inspection & workflow scenarios
         this.$refs.comms_log_file.document_action_url = this.inspection.createInspectionProcessCommsLogsDocumentUrl;
         return done(true);
       },
