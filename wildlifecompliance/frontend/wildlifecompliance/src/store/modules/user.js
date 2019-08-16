@@ -119,7 +119,7 @@ export const userStore = {
         async loadAllocatedGroup({}, {region_district_id, group_permission}) {
             let url = helpers.add_endpoint_join(
                 api_endpoints.region_district,
-                region_district_id + '/get_group_id_by_region_district/'
+                region_district_id + '/get_compliance_group_by_region_district/'
                 );
             let returned = await Vue.http.post(
                 url,
