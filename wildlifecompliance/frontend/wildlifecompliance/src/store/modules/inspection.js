@@ -38,9 +38,14 @@ export const inspectionStore = {
             Vue.set(state.inspection, 'rendererDocumentUrl', rendererDocumentUrl); 
             let commsLogsDocumentUrl = helpers.add_endpoint_join(
                 api_endpoints.inspection,
-                state.inspection.id + "/create_modal_process_comms_log_document/"
+                state.inspection.id + "/process_comms_log_document/"
                 )
             Vue.set(state.inspection, 'commsLogsDocumentUrl', commsLogsDocumentUrl); 
+            let createInspectionProcessCommsLogsDocumentUrl = helpers.add_endpoint_join(
+                api_endpoints.inspection,
+                state.inspection.id + "/create_inspection_process_comms_log_document/"
+                )
+            Vue.set(state.inspection, 'createInspectionProcessCommsLogsDocumentUrl', createInspectionProcessCommsLogsDocumentUrl); 
         },
         updatePlannedForTime(state, time) {
             Vue.set(state.inspection, 'planned_for_time', time);

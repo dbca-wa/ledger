@@ -77,8 +77,11 @@
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
-            			        <div class="col-sm-9">
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="inspection.commsLogsDocumentUrl" @create-parent="createDocumentActionUrl"/>
+            			        <div class="col-sm-9" v-if="createInspectionFileField">
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="inspection.createInspectionProcessCommsLogsDocumentUrl" @create-parent="createDocumentActionUrl"/>
+                                </div>
+            			        <div class="col-sm-9" v-else>
+                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="inspection.commsLogsDocumentUrl"/>
                                 </div>
                             </div>
                         </div>
@@ -189,6 +192,14 @@ export default {
               return "manager";
           } else if (this.workflow_type === 'request_amendment') {
               return "officer";
+          }
+      },
+      createInspectionFileField: function() {
+          //if (!(this.inspection && this.inspection.id)) {
+          if (!this.workflow_type) {
+              return true;
+          } else {
+              return false;
           }
       },
     },
@@ -305,6 +316,7 @@ export default {
           this.region_id ? payload.append('region_id', this.region_id) : null;
           this.allocated_group_id ? payload.append('allocated_group_id', this.allocated_group_id) : null;
           this.workflow_type ? payload.append('workflow_type', this.workflow_type) : null;
+          //!payload.has('allocated_group') ? payload.append('allocated_group', this.allocatedGroup) : null;
 
           try {
               let res = await Vue.http.post(post_url, payload);
@@ -323,8 +335,8 @@ export default {
             let returned_inspection = await this.saveInspection({ route: false, crud: 'create', internal: true })
             await this.loadInspection({inspection_id: returned_inspection.body.id});
         }
-        // ensure filefield document_action_url is not empty
-        this.$refs.comms_log_file.document_action_url = this.inspection.commsLogsDocumentUrl;
+        // populate filefield document_action_url
+        this.$refs.comms_log_file.document_action_url = this.inspection.createInspectionProcessCommsLogsDocumentUrl;
         return done(true);
       },
 
