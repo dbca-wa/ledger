@@ -10,7 +10,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
 
-from rest_framework import viewsets, serializers
+from rest_framework import viewsets, serializers, status
 from rest_framework.decorators import list_route, detail_route, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -23,7 +23,8 @@ from wildlifecompliance.components.call_email.models import CallEmail, CallEmail
 from wildlifecompliance.components.inspection.models import Inspection, InspectionUserAction
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
-    SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer, SanctionOutcomeDatatableSerializer
+    SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer, SanctionOutcomeDatatableSerializer, \
+    UpdateAssignedToIdSerializer
 from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.helpers import is_internal
 
@@ -210,6 +211,54 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         groups = CompliancePermissionGroup.objects.filter(region_district__in=region_district, permissions__in=permissions)
 
         return groups
+
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def update_assigned_to_id(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = None
+
+            validation_serializer = SanctionOutcomeSerializer(instance, context={'request': request})
+            user_in_group = validation_serializer.data.get('user_in_group')
+
+            if request.data.get('current_user') and user_in_group:
+                serializer = UpdateAssignedToIdSerializer(
+                    instance=instance,
+                    data={
+                        'assigned_to_id': request.user.id,
+                    }
+                )
+            elif user_in_group:
+                serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
+
+            if serializer:
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return_serializer = SanctionOutcomeSerializer(instance=instance,
+                                                             context={'request': request}
+                                                             )
+                    headers = self.get_success_headers(return_serializer.data)
+                    return Response(
+                        return_serializer.data,
+                        status=status.HTTP_201_CREATED,
+                        headers=headers
+                    )
+            else:
+                return Response(validation_serializer.data,
+                                status=status.HTTP_201_CREATED
+                                )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     @list_route(methods=['POST',])
     def sanction_outcome_save(self, request, *args, **kwargs):

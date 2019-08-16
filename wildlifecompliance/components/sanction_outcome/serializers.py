@@ -2,9 +2,11 @@ from rest_framework import serializers
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
 from wildlifecompliance.components.main.fields import CustomChoiceField
+from wildlifecompliance.components.main.models import get_related_items
 from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer, OffenderSerializer, \
     OffenceSerializer
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
+from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
 
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
@@ -13,6 +15,11 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
     alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
     offender = OffenderSerializer(read_only=True,)
     offence = OffenceSerializer(read_only=True,)
+    allocated_group = serializers.SerializerMethodField()
+    user_in_group = serializers.SerializerMethodField()
+    can_user_action = serializers.SerializerMethodField()
+    user_is_assignee = serializers.SerializerMethodField()
+    related_items = serializers.SerializerMethodField()
 
     class Meta:
         model = SanctionOutcome
@@ -32,11 +39,70 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
             'description',
             'date_of_issue',
             'time_of_issue',
+            'assigned_to_id',
             'allocated_group',
-            'assigned_to',
+            'allocated_group_id',
+            'user_in_group',
+            'can_user_action',
+            'user_is_assignee',
+            'related_items',
         )
         read_only_fields = ()
 
+    def get_allocated_group(self, obj):
+        allocated_group = [{
+            'email': '',
+            'first_name': '',
+            'full_name': '',
+            'id': None,
+            'last_name': '',
+            'title': '',
+        }]
+        returned_allocated_group = CompliancePermissionGroupMembersSerializer(instance=obj.allocated_group)
+        for member in returned_allocated_group.data['members']:
+            allocated_group.append(member)
+
+        return allocated_group
+
+    def get_user_in_group(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if obj.allocated_group:
+            for member in obj.allocated_group.members:
+                if user_id == member.id:
+                    return True
+        return False
+
+    def get_can_user_action(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if user_id == obj.assigned_to_id:
+            return True
+        elif obj.allocated_group and not obj.assigned_to_id:
+            for member in obj.allocated_group.members:
+                if user_id == member.id:
+                    return True
+
+        return False
+
+    def get_user_is_assignee(self, obj):
+        user_id = self.context.get('request', {}).user.id
+        if user_id == obj.assigned_to_id:
+            return True
+
+        return False
+
+    def get_related_items(self, obj):
+        return get_related_items(obj)
+
+class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
+    assigned_to_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+
+    class Meta:
+        model = SanctionOutcome
+        fields = (
+            'assigned_to_id',
+        )
 
 class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
