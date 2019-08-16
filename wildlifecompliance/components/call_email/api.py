@@ -40,6 +40,7 @@ from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from wildlifecompliance.components.main.api import save_location, process_generic_document
+from wildlifecompliance.components.main.email import prepare_mail
 from wildlifecompliance.components.users.api import generate_dummy_email
 from wildlifecompliance.components.users.serializers import (
     UserAddressSerializer,
@@ -97,8 +98,7 @@ from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
 
-from wildlifecompliance.components.call_email.email import (
-    send_call_email_forward_email)
+from wildlifecompliance.components.call_email.email import send_mail
 #from wildlifecompliance.components.inspection.serializers import InspectionTypeSerializer
 
 
@@ -345,73 +345,6 @@ class CallEmailViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
-
-   # @detail_route(methods=['POST'])
-   # @renderer_classes((JSONRenderer,))
-   # def process_document(self, request, *args, **kwargs):
-   #     try:
-   #         instance = self.get_object()
-   #         action = request.data.get('action')
-   #         section = request.data.get('input_name')
-   #         if action == 'list' and 'input_name' in request.data:
-   #             pass
-
-   #         elif action == 'delete' and 'document_id' in request.data:
-   #             document_id = request.data.get('document_id')
-   #             document = instance.documents.get(id=document_id)
-
-   #             if document._file and os.path.isfile(
-   #                     document._file.path) and document.can_delete:
-   #                 os.remove(document._file.path)
-
-   #             document.delete()
-   #             instance.save(version_comment='Approval File Deleted: {}'.format(
-   #                 document.name))  # to allow revision to be added to reversion history
-
-   #         elif action == 'save' and 'input_name' in request.data and 'filename' in request.data:
-   #             call_email_id = request.data.get('call_email_id')
-   #             filename = request.data.get('filename')
-   #             _file = request.data.get('_file')
-   #             if not _file:
-   #                 _file = request.data.get('_file')
-
-   #             document = instance.documents.get_or_create(
-   #                 input_name=section, name=filename)[0]
-   #             if request.data.get('save_to_path'):
-   #                 path = instance.update_compliance_doc_filename(request.data.get('filename'))
-   #             else:
-   #                 path = default_storage.save(
-   #                     'wildlifecompliance/call_email/{}/documents/{}'.format(
-   #                         call_email_id, filename), ContentFile(
-   #                         _file.read()))
-
-   #             document._file = path
-   #             document.save()
-   #             # to allow revision to be added to reversion history
-   #             instance.save(
-   #                 version_comment='File Added: {}'.format(filename))
-
-   #         return Response(
-   #             [
-   #                 dict(
-   #                     input_name=d.input_name,
-   #                     name=d.name,
-   #                     file=d._file.url,
-   #                     id=d.id,
-   #                     can_delete=d.can_delete) for d in instance.documents.filter(
-   #                     input_name=section) if d._file])
-
-   #     except serializers.ValidationError:
-   #         print(traceback.print_exc())
-   #         raise
-   #     except ValidationError as e:
-   #         if hasattr(e, 'error_dict'):
-   #             raise serializers.ValidationError(repr(e.error_dict))
-   #         else:
-   #             raise serializers.ValidationError(repr(e[0].encode('utf-8')))
-   #     except Exception as e:
-   #         print(traceback.print_exc())
-   #         raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
@@ -728,50 +661,50 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    def send_mail(self, request, instance, workflow_entry, *args, **kwargs):
-        print("send_mail")
-        print(request.data)
-        try:
-            attachments = []
-            for doc in workflow_entry.documents.all():
-                attachments.append(doc)
+    #def send_mail(self, request, instance, workflow_entry, *args, **kwargs):
+    #    print("send_mail")
+    #    print(request.data)
+    #    try:
+    #        #attachments = []
+    #        #for doc in workflow_entry.documents.all():
+    #         #   attachments.append(doc)
 
-            email_group = []
-            if request.data.get('assigned_to'):
-                try:
-                    user_id_int = int(request.data.get('assigned_to'))
-                    email_group.append(EmailUser.objects.get(id=user_id_int))
-                    # update CallEmail
-                    instance.assigned_to = (EmailUser.objects.get(id=user_id_int))
-                except Exception as e:
-                        print(traceback.print_exc())
-                        raise
-            elif request.data.get('allocated_group'):
-                users = request.data.get('allocated_group').split(",")
-                for user_id in users:
-                    if user_id:
-                        try:
-                            user_id_int = int(user_id)
-                            email_group.append(EmailUser.objects.get(id=user_id_int))
-                        except Exception as e:
-                            print(traceback.print_exc())
-                            raise
-            else:
-                email_group.append(request.user)
+    #        email_group = []
+    #        if request.data.get('assigned_to'):
+    #            try:
+    #                user_id_int = int(request.data.get('assigned_to'))
+    #                email_group.append(EmailUser.objects.get(id=user_id_int))
+    #                # update CallEmail
+    #                instance.assigned_to = (EmailUser.objects.get(id=user_id_int))
+    #            except Exception as e:
+    #                    print(traceback.print_exc())
+    #                    raise
+    #        elif request.data.get('allocated_group'):
+    #            users = request.data.get('allocated_group').split(",")
+    #            for user_id in users:
+    #                if user_id:
+    #                    try:
+    #                        user_id_int = int(user_id)
+    #                        email_group.append(EmailUser.objects.get(id=user_id_int))
+    #                    except Exception as e:
+    #                        print(traceback.print_exc())
+    #                        raise
+    #        else:
+    #            email_group.append(request.user)
 
-            # send email
-            email_data = send_call_email_forward_email(
-            email_group, 
-            instance,
-            # workflow_entry.documents,
-            workflow_entry,
-            request)
+    #        # send email
+    #        email_data = send_call_email_forward_email(
+    #        email_group, 
+    #        instance,
+    #        # workflow_entry.documents,
+    #        workflow_entry,
+    #        request)
 
-            return email_data
+    #        return email_data
 
-        except Exception as e:
-            print(traceback.print_exc())
-            raise e
+    #    except Exception as e:
+    #        print(traceback.print_exc())
+    #        raise e
 
     @detail_route(methods=['POST', ])
     @renderer_classes((JSONRenderer,))
@@ -818,7 +751,7 @@ class CallEmailViewSet(viewsets.ModelViewSet):
 
                 instance.save()
 
-                email_data = self.send_mail(request, instance, workflow_entry)
+                email_data = prepare_mail(request, instance, workflow_entry, send_mail)
 
                 serializer = CallEmailLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
                 serializer.is_valid(raise_exception=True)
