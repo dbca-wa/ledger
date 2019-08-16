@@ -355,7 +355,7 @@ class CallEmail(RevisionedMixin):
     def close(self, request):
         self.status = self.STATUS_CLOSED
         self.log_user_action(
-                CallEmailUserAction.ACTION_CLOSED.format(self.number), 
+                CallEmailUserAction.ACTION_CLOSE.format(self.number), 
                 request)
         self.save()
 
