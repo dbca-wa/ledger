@@ -485,7 +485,7 @@ export default {
     },
     offenceExists: function() {
         for (let item of this.inspection.related_items) {
-            if (item.model_name.toLowerCase() === "offence") {
+            if (item.model_name.toLowerCase() === 'offence') {
                 return true
             }
         }
@@ -494,7 +494,7 @@ export default {
     },
     sendToManagerVisibility: function() {
         if (this.inspection.status && !this.readonlyForm && this.inspectionReportExists) {
-            if (this.inspection.status.id === 'open') {
+            if (this.inspection.status.id.includes('open', 'request_amendment')) {
                 return true;
             }
         } else {

@@ -8,6 +8,7 @@ from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.models import Invoice
 from wildlifecompliance.components.main.utils import get_choice_value
 from wildlifecompliance.components.emails.emails import TemplateEmailBase
+from wildlifecompliance.components.main.email import prepare_attachments, _extract_email_headers
 import os
 
 logger = logging.getLogger(__name__)
@@ -20,17 +21,7 @@ class InspectionForwardNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/send_inspection_forward_notification.html'
     txt_template = 'wildlifecompliance/emails/send_inspection_forward_notification.txt'
 
-
-def prepare_attachments(attachments):
-    returned_attachments = []
-    for document in attachments.all():
-        path, filename = os.path.split(document._file.name)    
-        returned_attachments.append(
-            (filename, document._file.read())
-        )
-    return returned_attachments
-
-def send_inspection_forward_email(select_group, inspection, workflow_entry, request=None):
+def send_mail(select_group, inspection, workflow_entry, request=None):
     email = InspectionForwardNotificationEmail()
     if request.data.get('email_subject'):
         email.subject = request.data.get('email_subject')
@@ -52,47 +43,6 @@ def send_inspection_forward_email(select_group, inspection, workflow_entry, requ
         prepare_attachments(workflow_entry.documents)
         )
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    email_data = _extract_email_headers(msg, inspection, sender=sender)
-    return email_data
-
-def _extract_email_headers(email_message, inspection, sender=None):
-    # from wildlifecompliance.components.call_email.models import ComplianceLogEntry
-    if isinstance(email_message, (EmailMultiAlternatives, EmailMessage,)):
-        # TODO this will log the plain text body, should we log the html
-        # instead
-        text = email_message.body
-        subject = email_message.subject
-        fromm = smart_text(sender) if sender else smart_text(
-            email_message.from_email)
-        # the to email is normally a list
-        if isinstance(email_message.to, list):
-            to = ','.join(email_message.to)
-        else:
-            to = smart_text(email_message.to)
-        # we log the cc and bcc in the same cc field of the log entry as a ','
-        # comma separated string
-        all_ccs = []
-        if email_message.cc:
-            all_ccs += list(email_message.cc)
-        if email_message.bcc:
-            all_ccs += list(email_message.bcc)
-        all_ccs = ','.join(all_ccs)
-
-    else:
-        text = smart_text(email_message)
-        subject = ''
-        to = ''
-        fromm = smart_text(sender) if sender else SYSTEM_NAME
-        all_ccs = ''
-
-    email_data = {
-        'subject': subject,
-        'text': text,
-        #'call_email': call_email,
-        'to': to,
-        'fromm': fromm,
-        'cc': all_ccs
-    }
-
+    email_data = _extract_email_headers(msg, sender=sender)
     return email_data
 
