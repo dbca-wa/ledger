@@ -1,4 +1,3 @@
-
 <template lang="html">
     <div>
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large force>
@@ -259,6 +258,7 @@ export default {
   name: "SanctionOutcome",
   data: function() {
     let vm = this;
+    vm.WORKFLOW_SEND_TO_MANAGER = 'send_to_manager';
 
     return {
       nTab: "nTab" + vm._uid,
@@ -750,9 +750,8 @@ export default {
 
         payload.call_email_id = this.$parent.call_email ? this.$parent.call_email.id : null;
         payload.inspection_id = this.$parent.inspection ? this.$parent.inspection.id : null;
+        payload.workflow_type = this.WORKFLOW_SEND_TO_MANAGER;
 
-        // Set set_sequence to generate lodgement number at the backend
-        // payload.set_sequence = true;
         console.log(payload);
         const savedObj = await Vue.http.post(fetchUrl, payload);
         await swal("Saved", "The record has been saved", "success");
@@ -850,6 +849,10 @@ export default {
 };
 </script>
 
-<style>
-
+<style lang="css" scoped>
+.tab-content {
+  background: white;
+  padding: 10px;
+  border: solid 1px lightgray;
+}
 </style>

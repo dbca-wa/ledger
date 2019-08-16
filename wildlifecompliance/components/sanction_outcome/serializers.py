@@ -32,6 +32,8 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
             'description',
             'date_of_issue',
             'time_of_issue',
+            'allocated_group',
+            'assigned_to',
         )
         read_only_fields = ()
 

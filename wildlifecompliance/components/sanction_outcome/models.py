@@ -47,8 +47,10 @@ class SanctionOutcome(models.Model):
         (TYPE_REMEDIATION_NOTICE, 'Remediation Notice'),
     )
 
+    __original_status = STATUS_DRAFT
+
     type = models.CharField(max_length=30, choices=TYPE_CHOICES, blank=True,)
-    status = models.CharField(max_length=40, choices=STATUS_CHOICES, default='draft',)
+    status = models.CharField(max_length=40, choices=STATUS_CHOICES, default=__original_status,)
 
     region = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_region', null=True,)
     district = models.ForeignKey(RegionDistrict, related_name='sanction_outcome_district', null=True,)
@@ -107,28 +109,14 @@ class SanctionOutcome(models.Model):
 
         return prefix_lodgement
 
-    # def set_sequence(self):
-    #     """
-    #     This function generates new lodgement number without gaps between numbers
-    #     """
-    #     if not self.lodgement_number and self.prefix_lodgement_nubmer:
-    #         new_lodgement_number_int = get_next_value(self.prefix_lodgement_nubmer)
-    #         self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(new_lodgement_number_int)
-
     def delete(self):
-        """
-        This function ...
-        :return: string
-        """
         if self.lodgement_number:
             raise ValidationError('Sanction outcome saved in the database with the logement number cannot be deleted.')
 
         super(SanctionOutcome, self).delete()
 
-    class Meta:
-        app_label = 'wildlifecompliance'
-        verbose_name = 'CM_SanctionOutcome'
-        verbose_name_plural = 'CM_SanctionOutcomes'
+    def log_user_action(self, action, request):
+        return SanctionOutcomeUserAction.log_action(self, action, request.user)
 
     def save(self, *args, **kwargs):
         super(SanctionOutcome, self).save(*args, **kwargs)
@@ -136,10 +124,28 @@ class SanctionOutcome(models.Model):
             self.lodgement_number = self.prefix_lodgement_nubmer + '{0:06d}'.format(self.pk)
             self.save()
 
+        if self.__original_status != self.status:
+            # status changed
+            if self.status == self.STATUS_DRAFT:
+                pass
+
         # TODO: add date_of_issue and time_of_issue
+
+        self.__original_status = self.status
+
 
     def __str__(self):
         return 'Type : {}, Identifier: {}'.format(self.type, self.identifier)
+
+    # def send_to_manager(self, request):
+    #     self.status = self.STATUS_WITH_MANAGER
+    #     self.log_user_action(SanctionOutcomeUserAction.ACTION_SEND_TO_MANAGER.format(self.number), request)
+    #     self.save()
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_SanctionOutcome'
+        verbose_name_plural = 'CM_SanctionOutcomes'
 
 
 class RemediationAction(models.Model):

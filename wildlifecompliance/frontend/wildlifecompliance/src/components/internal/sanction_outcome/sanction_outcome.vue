@@ -52,30 +52,86 @@
                             Action 
                         </div>
                         <div class="panel-body panel-collapse">
-                            <div  class="row action-button">
-                                <!-- <div v-if="!readonlyForm" class="col-sm-12"> -->
+                            <div v-if="visibleIssueButton" class="row action-button">
                                 <div class="col-sm-12">
-                                    <a ref="close" @click="endorseClicked" class="btn btn-primary btn-block">
+                                    <a @click="issueClicked" class="btn btn-primary btn-block">
+                                        Issue
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div v-if="visibleWithdrawButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="withdrawClicked" class="btn btn-primary btn-block">
+                                        Withdraw
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div v-if="visibleSendToManagerButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="sendToManagerClicked" class="btn btn-primary btn-block">
+                                        SendToManager
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div v-if="visibleEndorseButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="endorseClicked" class="btn btn-primary btn-block">
                                         Endorse
                                     </a>
                                 </div>
                             </div>
 
-                            <div  class="row action-button">
+                            <div v-if="visibleDeclineButton" class="row action-button">
                                 <div class="col-sm-12">
-                                    <a ref="close" @click="declineClicked" class="btn btn-primary btn-block">
+                                    <a @click="declineClicked" class="btn btn-primary btn-block">
                                         Decline
                                     </a>
                                 </div>
                             </div>
 
-                            <div  class="row action-button">
+                            <div v-if="visibleReturnToOfficerButton" class="row action-button">
                                 <div class="col-sm-12">
-                                    <a ref="close" @click="returnToOfficerClicked" class="btn btn-primary btn-block">
+                                    <a @click="returnToOfficerClicked" class="btn btn-primary btn-block">
                                         Return to Officer
                                     </a>
                                 </div>
                             </div>
+
+                            <div v-if="visibleExtendDueDateButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="extendDueDateClicked" class="btn btn-primary btn-block">
+                                        Extend Due Date
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div v-if="visibleSendToDoTButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="sendToDoTClicked" class="btn btn-primary btn-block">
+                                        Send to Dot
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div v-if="visibleSendToFinesEnforcementButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="sendToFinesEnforcementClicked" class="btn btn-primary btn-block">
+                                        Send to Fines Enforcement
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div v-if="visibleEscaleteForWithdrawalButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="escaleteForWithdrawalClicked" class="btn btn-primary btn-block">
+                                        Escalete for Withdrawal
+                                    </a>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -149,7 +205,7 @@
                                             <label>Description</label>
                                         </div>
                                         <div class="col-sm-6">
-                                            <textarea class="form-control" placeholder="add description" id="sanction-outcome-description" v-model="sanction_outcome.description"/>
+                                            <textarea :disabled="readonlyForm" class="form-control" placeholder="add description" id="sanction-outcome-description" v-model="sanction_outcome.description"/>
                                         </div>
                                     </div></div>
 
@@ -200,6 +256,9 @@ export default {
     name: 'ViewSanctionOutcome',
     data() {
         let vm = this;
+        vm.STATUS_WITH_MANAGER = 'with_manager';
+        vm.STATUS_WITH_OFFICER = 'with_officer';
+
         return {
             soTab: 'soTab'+this._uid,
             deTab: 'deTab'+this._uid,
@@ -252,7 +311,13 @@ export default {
             return true;
         },
         statusDisplay: function() {
-            return 'TODO: Implement';
+            let ret = '';
+            if (this.sanction_outcome){
+                if (this.sanction_outcome.status){
+                    ret = this.sanction_outcome.status.name;
+                }
+            }
+            return ret;
         },
         typeDisplay: function() {
             let ret = '';
@@ -291,6 +356,85 @@ export default {
                 ret = this.sanction_outcome.lodgement_number;
             }
             return ret;
+        },
+        statusIsWithOfficer: function() {
+            let val = false;
+            if (this.sanction_outcome){
+                if(this.sanction_outcome.status){
+                    if(this.sanction_outcome.status.id === this.STATUS_WITH_OFFICER){
+                        val = true;
+                    }
+                }
+            }
+            return val;
+        },
+        statusIsWithManager: function() {
+            let val = false;
+            if (this.sanction_outcome){
+                if(this.sanction_outcome.status){
+                    if(this.sanction_outcome.status.id === this.STATUS_WITH_MANAGER){
+                        val = true;
+                    }
+                }
+            }
+            return val;
+        },
+        visibleExtendDueDateButton: function() {
+            return true;
+        },
+        visibleSendToDoTButton: function() {
+            return true;
+        },
+        visibleSendToFinesEnforcementButton: function() {
+            return true;
+        },
+        visibleEscaleteForWithdrawalButton: function () {
+            return true;
+        },
+        visibleIssueButton: function() {
+
+            let visible = false;
+            if (this.statusIsWithOfficer){
+                visible = true;
+            }
+            return visible;
+        },
+        visibleWithdrawButton: function() {
+            let visible = false;
+            if (this.statusIsWithOfficer){
+                visible = true;
+            }
+            return visible;
+        },
+        visibleSendToManagerButton: function() {
+            let visible = false;
+            if (this.statusIsWithOfficer){
+                visible = true;
+            }
+            return visible;
+        },
+        visibleEndorseButton: function() {
+            let visible = false;
+            if (this.statusIsWithManager){
+                visible = true;
+            }
+            return visible;
+        },
+        visibleDeclineButton: function() {
+            let visible = false;
+            if (this.statusIsWithManager){
+                visible = true;
+            }
+            return visible;
+        },
+        visibleReturnToOfficerButton: function() {
+            let visible = false;
+            if (this.statusIsWithManager){
+                if (this.sanction_outcome && !this.sanction_outcome.issued_on_paper){
+                    visible = true;
+                }
+            }
+            return visible;
         }
     },
     methods: {
@@ -313,6 +457,27 @@ export default {
         returnToOfficerClicked: function(e) {
             console.log('returnToOfficer clicked');
             console.log(e);
+        },
+        issueClicked: function(e) {
+
+        },
+        withdrawClicked: function(e) {
+
+        },
+        sendToManagerClicked: function(e) {
+
+        },
+        extendDueDateClicked: function(e) {
+
+        },
+        sendToDoTClicked: function(e) {
+
+        },
+        sendToFinesEnforcementClicked: function(e) {
+
+        },
+        escaleteForWithdrawalClicked: function(e) {
+
         },
         updateAssignedToId: async function (user) {
             let url = helpers.add_endpoint_join(

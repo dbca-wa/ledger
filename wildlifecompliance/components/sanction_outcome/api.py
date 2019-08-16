@@ -174,9 +174,45 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
 
             return Response(serializer.data)
 
+    def get_compliance_permission_groups(self, region_district_id, workflow_type):
+        """
+        Determine which CompliancePermissionGroup this sanction outcome should belong to
+        :param region_district_id: The regionDistrict id this sanction outcome is in
+        :param workflow_type: string like 'send_to_manager', 'return_to_officer', ...
+        :return: CompliancePermissionGroup quersyet
+        """
+        # 1. Determine regionDistrict of this sanction outcome
+        region_district = RegionDistrict.objects.filter(id=region_district_id)
+
+        # 2. Determine which permission(s) is going to be apllied
+        compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+        codename = 'officer'
+        if workflow_type == 'send_to_manager':
+            codename = 'manager'
+        elif workflow_type == 'return_to_officer':
+            codename = 'officer'
+        elif workflow_type == 'send_to_department_of_transport':
+            codename = 'department_of_transport'
+        elif workflow_type == 'send_to_fines_enforcement_unit':
+            codename = 'fines_enforcement_unit'
+        elif workflow_type == 'send_to_branch_manager':
+            codename = 'branch_manager'
+        # TODO: more conditional?
+        #   infringement_notice_coordinator
+        #   department_of_transport
+        #   vehicle_owner
+        #   branch_manager
+        #   fines_enforcement_unit
+        #   external_party
+        permissions = Permission.objects.filter(codename=codename, content_type_id=compliance_content_type.id)
+
+        # 3. Find groups which has the permission(s) determined above in the regionDistrict.
+        groups = CompliancePermissionGroup.objects.filter(region_district__in=region_district, permissions__in=permissions)
+
+        return groups
+
     @list_route(methods=['POST',])
     def sanction_outcome_save(self, request, *args, **kwargs):
-
         try:
             with transaction.atomic():
                 res_json = {}
@@ -187,12 +223,17 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 request_data['offence_id'] = request_data.get('current_offence', {}).get('id', None);
                 request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
 
-                # Retrieve group
+                workflow_type = request_data.get('workflow_type', '')
+
                 regionDistrictId = request_data['district_id'] if request_data['district_id'] else request_data['region_id']
-                region_district = RegionDistrict.objects.get(id=regionDistrictId)
-                compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
-                permission = Permission.objects.filter(codename='manager').filter(content_type_id=compliance_content_type.id).first()
-                group = CompliancePermissionGroup.objects.filter(region_district=region_district).filter(permissions=permission).first()
+                groups = self.get_compliance_permission_groups(regionDistrictId, workflow_type)
+
+                if groups.count() == 1:
+                    group = groups.first()
+                else:
+                    # Should not reach here
+                    group = groups.first()
+
                 request_data['allocated_group_id'] = group.id
 
                 # Save sanction outcome (offence, offender, alleged_offences)
@@ -203,11 +244,6 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                     serializer = SaveSanctionOutcomeSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 saved_obj = serializer.save()
-
-                # if request_data.get('set_sequence'):
-                #     # Only when requested, we generate a new lodgement number
-                #     saved_obj.set_sequence()
-                #     saved_obj.save()
 
                 # Save remediation action, and link to the sanction outcome
                 for dict in request_data['remediation_actions']:
