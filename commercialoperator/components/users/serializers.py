@@ -162,8 +162,16 @@ class ContactSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, obj):
-        if not obj.get('phone_number') and not obj.get('mobile_number'):
-            raise serializers.ValidationError('You must provide a mobile/phone number')
+        #import ipdb; ipdb.set_trace()
+        #Mobile and phone number for dbca user are updated from active directory so need to skip these users from validation.
+        domain=None
+        if obj['email']:
+            domain = obj['email'].split('@')[1]
+        if domain in settings.DEPT_DOMAINS:
+            return obj
+        else:
+            if not obj.get('phone_number') and not obj.get('mobile_number'):
+                raise serializers.ValidationError('You must provide a mobile/phone number')
         return obj
 
 class EmailUserActionSerializer(serializers.ModelSerializer):

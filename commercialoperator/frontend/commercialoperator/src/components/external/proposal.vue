@@ -147,6 +147,19 @@ export default {
       let vm = this;
       return vm.proposal.fee_paid ? 'Resubmit' : 'Pay and Submit';
     },
+    save_applicant_data:function(){
+      let vm=this;
+      if(vm.proposal.applicant_type == 'SUB')
+      {
+        vm.$refs.proposal_tclass.$refs.profile.updatePersonal();
+        vm.$refs.proposal_tclass.$refs.profile.updateAddress();
+        vm.$refs.proposal_tclass.$refs.profile.updateContact();
+      }
+      if(vm.proposal.applicant_type == 'ORG'){
+        vm.$refs.proposal_tclass.$refs.organisation.updateDetails();
+        //vm.$refs.proposal_tclass.$refs.organisation.updateAddress();
+      }
+    },
     set_formData: function(e) {
       let vm = this;
       //vm.form=document.forms.new_proposal;
@@ -162,7 +175,9 @@ export default {
     save: function(e) {
       let vm = this;
       //vm.form=document.forms.new_proposal;
+      vm.save_applicant_data();
       let formData = vm.set_formData()
+      //vm.save_applicant_data();
 
 //      let formData = new FormData(vm.form);
       //console.log('land activities', vm.proposal.selected_parks_activities);
@@ -192,7 +207,9 @@ export default {
 
     save_wo_confirm: function(e) {
       let vm = this;
+      vm.save_applicant_data();
       let formData = vm.set_formData()
+      //vm.save_applicant_data();
 
 //      let formData = new FormData(vm.form);
 //      formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
@@ -209,7 +226,7 @@ export default {
 //      formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
 //      formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
 //      formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
-
+      vm.save_applicant_data();
       vm.$http.post(vm.proposal_form_url,formData).then(res=>{
           /* after the above save, redirect to the Django post() method in ApplicationFeeView */
           vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
