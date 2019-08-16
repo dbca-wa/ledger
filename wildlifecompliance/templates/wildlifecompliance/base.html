@@ -8,6 +8,8 @@
 {% is_internal as is_internal_login %}
 {% is_officer as is_officer_login %}
 {% is_wildlifecompliance_admin as is_wildlifecompliance_admin_login %}
+{% is_compliance_internal_user as is_compliance_internal_login %}
+{% is_wildlife_licencing_internal_user as is_wildlife_licencing_internal_login %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -63,13 +65,18 @@
                                 <ul class="nav navbar-nav">
                                     {% block left_menu_items %}
                                         {% if is_internal_login %}
-                                            <li><a href="/internal/call_email">Call/Email</a></li>
-                                            <li><a href="/internal/inspection">Inspections</a></li>
-                                            <li><a href="/internal/licences">Licences</a></li>
-                                            <li><a href="/internal/returns">Returns</a></li>
-                                            <li><a href="/internal/tag_purchases">Tag Purchases</a></li>
-                                            <li><a href="/internal/advices">Advices to CEO</a></li>
-                                            
+                                            {% if is_wildlife_licencing_internal_login %}
+                                                <li><a href="/internal/licences">Licences</a></li>
+                                                <li><a href="/internal/returns">Returns</a></li>
+                                                <li><a href="/internal/tag_purchases">Tag Purchases</a></li>
+                                                <li><a href="/internal/advices">Advices to CEO</a></li>
+                                            {% elif is_compliance_internal_login %}
+                                                <li><a href="/internal/call_email">Call/Email</a></li>
+                                                <li><a href="/internal/inspection">Inspections</a></li>
+                                                <li><a href="/internal/offence">Offences</a></li>
+                                                <li><a href="/internal/sanction_outcome">Sanction Outcomes</a></li>
+                                                <li><a href="/internal/case">Cases</a></li>
+                                            {% endif %}
                                             {% if is_officer_login %}
                                                 <li><a href="/internal/organisations/access">Organisation Access Requests</a></li>
                                                 <li><a href="/internal/search">Search</a></li>
