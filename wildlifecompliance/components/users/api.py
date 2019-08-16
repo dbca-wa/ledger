@@ -654,8 +654,8 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
-    def get_group_id_by_region_district(self, request, *args, **kwargs):
-        print("get_group_id_by_region_district")
+    def get_compliance_group_by_region_district(self, request, *args, **kwargs):
+        print("get_compliance_group_by_region_district")
         print(request.data)
         try:
             instance = self.get_object()

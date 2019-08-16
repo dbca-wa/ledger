@@ -397,28 +397,6 @@ export const callemailStore = {
         setRegionId({ commit }, id) {
             commit('updateRegionId', id);
         },
-        
-        async loadAllocatedGroup({ dispatch }, { region_district_id, group_permission } ) {
-            let url = helpers.add_endpoint_join(
-                api_endpoints.region_district,
-                region_district_id + '/get_group_id_by_region_district/'
-                );
-            let returned = await Vue.http.post(
-                url, 
-                { 'group_permission': group_permission
-            });
-            console.log(returned);
-            if (returned.body.group_id) {
-                await dispatch('setAllocatedGroupId', returned.body.group_id);
-                await dispatch('setAllocatedGroupList', null);
-            }
-            if (returned.body.allocated_group) {
-                await dispatch('setAllocatedGroupList', returned.body.allocated_group);
-                if (returned.body.allocated_group.length <= 1) {
-                    return {'errorResponse': 'This group has no members'};
-                }
-            } 
-        },
         setAllocatedGroupId({ commit, }, id) {
             commit("updateAllocatedGroupId", id);
         },
