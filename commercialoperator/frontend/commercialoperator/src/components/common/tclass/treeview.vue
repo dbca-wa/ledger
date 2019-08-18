@@ -1,72 +1,40 @@
 <template lang="html">
-  <div>
-      <a class="test-url col-sm-4" @click="btn_test($event)">Test URL</a>
-      <input type="button" @click="btn_test($event)" class="btn btn-primary" value="button test"/>
-      <div>
-        <label class="control-label">select parks (new)</label>
+    <div>
+        <div id="mydiv"></div>
+        <!--<pre>{{ selected_items }}</pre>-->
         <treeselect
-          v-model="value"
-          :max-height="200"
-          :multiple="true"
-          :options="options"
-          :open-on-click="false"
-          :value-consists-of="valueconsistsof"
-          :always-open="true"
-          :clearable="true"
-          :flat="false"
-          :appendToBody="false"
-          :default-expand-level="0"
-        >
+            v-model="selected_items"
+            :options="options"
+            :open-on-click="true"
+            :multiple="multiple"
+            :max-height="max_height"
+            :value-consists-of="value_consists_of"
+            :clearable="clearable"
+            :flat="flat"
+            open-on-focus="true"
+            open-direction="bottom"
+            limit="10"
+                :always-open="always_open"
+                :default-expand-level="default_expand_level"
+            >
 
-<!--
-        <template v-slot="{ item }">
-          <a href="#" v-if="item.to">{{item.label}} {{item.to}}</a>
-        </template>
+            <template slot="option-label" slot-scope="{ node }">
+                <label class="col-sm-8 control-label">{{ node.raw.label }}</label>
+                <!--<span v-if="node.raw.can_edit" class="option-label-container">-->
+                <div class="option-label-container">
+                    <a class="col-sm-4 control-label pull-right" @click="edit_activities_test($event,node)">Edit access and activities  <i class="fa fa-edit"></i></a>
+                    <!--<a class="col-sm-4 control-label pull-right" @click="edit_activities(p.id, p.name)" target="_blank">Edit access and activities  <i class="fa fa-edit"></i></a>-->
+                </div>
 
-        <label slot="option-label" slot-scope="{ node, shouldshowcount, count, labelclassname, countclassname }" :class="labelclassname">
-            {{ node.isbranch ? 'branch' : 'leaf' }}: {{ node.label }}
-            <span v-if="shouldshowcount" :class="countclassname">({{ count }})</span>
-        </label>
-
-        <div slot="value-label" slot-scope="{ node }">{{ node.raw.customlabel }}</div>
-
-        <template slot="value-label" slot-scope="{ node }">
-          <a href="#" v-if="node.raw.to">{{node.raw.label}} {{node.raw.to}}</a>
-        </template>
--->
-        <template slot="option-label" slot-scope="{ node }">
-                <label class="col-sm-10 control-label">{{ node.raw.label }}</label>
                 <!--
-                <a class="container-url col-sm-2" href="#https://www.google.com" target="_blank" v-if="node.raw.to">{{node.raw.to}}</a>
-                <a class="container-url col-sm-2" @click="btn_test()">edit</a>
-                <div class="container-url col-sm-2"><input type="button" @click.stop="btn_test()" class="btn btn-primary" value="button test"/></div>
+                :always-open="always_open"
+                :default-expand-level="default_expand_level"
+
+                <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
                 -->
-                <span v-if="node.raw.to">{{node.raw.to}}>
-                    <a id="id_edit_0" class="col-sm-2" v-on:click="btn_test($event)">edit0</a>
-                    <a id="id_edit_1" class="col-sm-2" @click.stop="btn_test($event)">edit1</a>
-                    <a id="id_edit_2" class="col-sm-2" @click.prevent="btn_test($event)">Edit2</a>
-                    <a id="id_edit_3" class="col-sm-2" @click.stop.prevent="btn_test($event)">Edit3</a>
-                    <a id="id_edit_4" class="col-sm-2" @click.prevent.self="btn_test($event)">Edit4</a>
-                    <a id="id_edit_5" class="col-sm-2" @click.self="btn_test($event)">Edit5</a>
-                    <a id="id_edit_6" class="col-sm-2" @click.self.native="btn_test($event)">Edit6</a>
-                    <a id="id_edit_7" class="col-sm-2" @click.self.stop="btn_test($event)">Edit7</a>
-                    <a id="id_edit_8" class="col-sm-2" @click.self.prevent="btn_test($event)">Edit8</a>
-                    <a id="id_edit_9" class="col-sm-2" @click.capture.stop.prevent="btn_test($event)">Edit9</a>
-                    <a id="id_edit_10" class="col-sm-2" @click.self.stop.prevent="btn_test($event)">Edit10</a>
-                    <i id="id_edit_11" class="fa fa-edit" title="Edit Activities 1" @click="btn_test($event)"></i>
-                    <i id="id_edit_12" class="fa fa-edit" title="Edit Activities 2" @click.native.stop.prevent="btn_test($event)"></i>
-                    <i id="id_edit_13" class="fa fa-edit" title="Edit Activities 3" @click.native="btn_test($event)"></i>
-                </span>
-        </template>
-
-
+            </template>
         </treeselect>
-      </div>
-
-      <div>
-        <pre>{{ value }}</pre>
-      </div>
-  </div>
+    </div>
 </template>
 
 <script>
@@ -80,8 +48,18 @@ from '@/utils/hooks'
 import Treeselect from '@riophae/vue-treeselect'
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 
+const template = `
+<ul>
+  <li v-for="item in items">
+   {{ item  }}
+  </li>
+</ul>`;
+
+const compiledTemplate = Vue.compile(template);
+
+
 export default {
-    name:'Applications',
+    name:'TreeSelect',
     components:{
         Treeselect
     },
@@ -89,113 +67,194 @@ export default {
         proposal:{
             type: Object,
             required:true
-        }
+        },
+        selected_items:{
+            type: Object,
+            required:false
+        },
+        options:{
+            type: Object,
+            required:false
+        },
+        flat:{
+            type: Boolean,
+            default: false
+        },
+        always_open:{
+            type: Boolean,
+            default: true
+        },
+        clearable:{
+            type: Boolean,
+            default: true
+        },
+        multiple:{
+            type: Boolean,
+            default: true
+        },
+        max_height:{
+            type: Number,
+            default: 350
+        },
+        default_expand_level:{
+            type: Number,
+            default: 0
+        },
+        value_consists_of:{
+            type: String,
+            default: 'LEAF_PRIORITY', // last leaf nodes get pushed to selected_items array
+        },
     },
 
     data() {
       return {
-        value: [3,5],
-        valueConsistsOf: 'LEAF_PRIORITY',
+        items: ['Item1', 'Item2', 'Item3', 'Item4', 'Item5', 'Item6', 'Item7', 'Item8'],
+        _selected_items: [],
+        _options: [],
+
+        /*
+        selected_items: [3,5],
         options: [ {
           id: 1,
           label: 'a',
           children: [ {
             id: 2,
             label: 'aa',
+            can_edit: false,
           }, {
             id: 3,
             label: 'ab',
-            to: 'ABCDEF',
+            can_edit: true,
           } ],
         }, {
           id: 4,
           label: 'b',
+          can_edit: false,
         }, {
           id: 5,
           label: 'c',
+          can_edit: false,
         } ],
+        */
       }
+    },
+    render(createElement) {
+        return compiledTemplate.render.call(this, createElement);
     },
 
     computed: {
     },
 
     methods:{
-        btn_test:function(e){
-            //e.preventDefault()
-            //e.preventPropagation()
-            this.$emit('click', e);
-            alert("TEST BTN clicked.");
+        fetchParkTreeview: function(){
+            let vm = this;
+
+            //vm.$http.get(api_endpoints.park_treeview).then((response) => { 
+            //vm.$http.get('/api/park_treeview/?format=json&proposal=323').then((response) => { 
+            //vm.$http.get(helpers.add_endpoint_json(api_endpoints.park_treeview,('/?format=json&proposal='+vm.proposal.id)))
+            console.log('treeview_url: ' + api_endpoints.park_treeview + '?format=json&proposal=' + vm.proposal.id)
+            vm.$http.get(api_endpoints.park_treeview + '?format=json&proposal=' + vm.proposal.id)
+            .then((response) => {
+                vm.options = response.body['options'];
+                vm.selected_items = response.body['selected_items'];
+            },(error) => {
+                console.log(error);
+            })
+        },
+        edit_activities: function(p_id, p_name){
+            let vm=this;
+            for (var j=0; j<vm.selected_parks_activities.length; j++){
+              if(vm.selected_parks_activities[j].park==p_id){ 
+                this.$refs.edit_activities.park_activities= vm.selected_parks_activities[j].activities;
+                this.$refs.edit_activities.park_access= vm.selected_parks_activities[j].access
+              }
+            }
+            this.$refs.edit_activities.park_id=p_id;
+            this.$refs.edit_activities.park_name=p_name;
+            this.$refs.edit_activities.fetchAllowedActivities(p_id)
+            this.$refs.edit_activities.fetchAllowedAccessTypes(p_id)
+            this. $refs.edit_activities.isModalOpen = true;
+        },
+        edit_activities_test:function(event, node){
+            alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+            console.log("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+        },
+        mousedown_event_stop_propagation:function(){
+            $('.option-label-container').on('mousedown', function(e) {
+                e.stopPropagation();
+                return false;
+            });
+        },
+        mousedown_event_stop_propagation2:function(){
+            $.each($._data($('.option-label-container')[0], "events"), function(i, event) {
+                    $.each(event, function(j, h) {
+                        alert(j + ' - ' + h);
+                    });
+            });
         }
     },
 
-    beforeUpdate: function() {
-        var elem=$('#id_edit_0');
-        var event = document.createEvent('HTMLEvents');
-        event.initEvent('click', true, true);
-        elem.dispatchEvent(event);
-
-        event.stopPropagation();
+    _beforeMount: function() {
+        let vm=this;
+        vm.mousedown_event_stop_propagation2()
 
         /*
-        $("#id_edit_0").click(
-            function (e) { 
-                e.stopPropagation(); 
-            }
-        );
+        $('.option-label-container').on('mousedown', function(e) {
+            e.stopPropagation();
+            return false;
+        });
         */
     },
 
-    mounted:function () {
 
-/*
-      $('.container-url2').on('click', 'a', function(event) {
-        event.preventDefault();
-        var url = $(this).attr('href');
-      });
+    beforeUpdate: function() {
+        let vm=this;
+        vm.mousedown_event_stop_propagation()
 
-    $('.container-url').click(
-      function(e) {
-          e.stopPropagation();
-      }
-    );
-
-      $('.container-url').on('click', function(event) {
-        event.stopPropagation();
-      });
-
-      $(".vue-treeselect__label-container div a").on('click', function (e) { e.stopPropagation(); })
-
-    }
-*/
-
-/*
-      $('.vue-treeselect__label-container .container-url input').click(
-          function(e) {
+        /*
+        $('.option-label-container').on('mousedown', function(e) {
             e.stopPropagation();
-            alert("1")
-          }
-      );
+            return false;
+        });
+        */
+    },
 
-      $(".container-url input").on('click', function (e) {
-          e.stopPropagation(); 
-          alert("2")
-      })
+    updated: function() {
+        let vm=this;
+        vm.mousedown_event_stop_propagation()
 
-      $(".test-url a").on('click', function (e) {
-          alert("TEST URL clicked."); 
-      })
-      //$("#id_edit_0").on('click', function (e) { e.stopPropagation(); })
-*/
-      $("#id_edit_0").click(function (e) { e.stopPropagation(); });
+        /*
+        $('.option-label-container').on('mousedown', function(e) {
+            e.stopPropagation();
+            return false;
+        });
+        */
+    },
+
+
+    mounted:function () {
+        let vm = this;
+        vm.fetchParkTreeview()
     }
 }
 </script>
 
 <style lang="css" scoped>
-.container-url {
+
+/*
+.option-label-container {
     pointer-events: none;
 }
+
+.vue-treeselect__menu {
+  position: absolute;
+  max-height: none!important;
+}
+.borderDecoration {
+  position: absolute;
+  max-height: none!important;
+}
+*/
 </style>
 
 /*

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, Activity, ActivityCategory, Section, Zone, RequiredDocument, Question, GlobalSettings #, ParkPrice
+from commercialoperator.components.proposals.models import  ProposalParkActivity
 from ledger.accounts.models import EmailUser
 #from commercialoperator.components.proposals.serializers import ProposalTypeSerializer
 
@@ -71,7 +72,52 @@ class RegionSerializer(serializers.ModelSerializer):
         model = Region
         fields = ('id', 'name','forest_region', 'districts')
 
+class ParkSerializer2(serializers.ModelSerializer):
+    label = serializers.SerializerMethodField()
+    can_edit = serializers.SerializerMethodField()
 
+    class Meta:
+        model = Park
+        fields=('id', 'label', 'can_edit')
+
+    def get_label(self, obj):
+        return obj.name
+
+    def get_can_edit(self, obj):
+        #import ipdb; ipdb.set_trace()
+        proposal = self.context['request'].GET.get('proposal')
+        activities = ProposalParkActivity.objects.filter(proposal_park__park=obj.id, proposal_park__proposal=proposal)
+        return True if activities else False
+
+class DistrictSerializer2(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField()
+    label = serializers.SerializerMethodField()
+    children = ParkSerializer2(many=True, read_only=True, source='land_parks')
+    #marine_parks = ParkSerializer(many=True)
+    class Meta:
+        model = District
+        #fields = ('id', 'name', 'land_parks', 'marine_parks')
+        fields = ('id', 'label', 'children')
+
+    def get_id(self, obj):
+        return obj.code
+
+    def get_label(self, obj):
+        return obj.name
+
+class RegionSerializer2(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField()
+    label = serializers.SerializerMethodField()
+    children = DistrictSerializer2(many=True, read_only=True, source='districts')
+    class Meta:
+        model = Region
+        fields = ('id', 'label', 'children')
+
+    def get_id(self, obj):
+        return obj.name
+
+    def get_label(self, obj):
+        return obj.name
 
 class ActivityMatrixSerializer(serializers.ModelSerializer):
     class Meta:

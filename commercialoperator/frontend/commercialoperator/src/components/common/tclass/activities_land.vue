@@ -2,6 +2,16 @@
   <div class="row">
     <div class="col-sm-12">
       <div class="panel panel-default">
+
+<!--
+        <select class="myselect" name="carlist" form="carform">
+          <option value="volvo">Volvo</option>
+          <option value="saab">Saab</option>
+          <option value="opel">Opel</option>
+          <option value="audi">Audi</option>
+        </select>
+-->
+
         <div class="panel-heading">
           <h3 class="panel-title">Activities and Location <small> (Parks)</small>
             <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
@@ -36,36 +46,16 @@
               </div>
             </div>
           </form>
-          <!-- <form> -->
 
-            <!-- testing start <div class="form-horizontal col-sm-12">
-              <label class="control-label">Select Parks</label>
-              <div class="form-check">
-                  <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" data-parsley-required  />
-                  Select all parks from all regions
-              </div>
-              <div class="" v-for="r in api_regions">
-                <div class="form-check">
-                  <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
-                  {{ r.name }} -->
-                  <!-- <a data-toggle="collapse" :href="'#'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
-                <!-- </div>
-                <div class="col-sm-12" v-for="d in r.districts" :id="r.id">
-                  <div class="form-check ">
-                    <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" data-parsley-required />
-                    {{ d.name }} -->
-                   <!--  <a data-toggle="collapse" :href="'#'+d.id+r.id" role="button" aria-expanded="true" aria controls="d.id+r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
-                  <!-- </div>
-                  <div class="" v-for="p in d.land_parks">
-                    <div class="form-check col-sm-12">
-                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" data-parsley-required />
-                    {{ p.name }}
-                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div> testing end--> 
+
+          <div class="col-sm-12" >
+            <div>
+                <label class="control-label">Select Parks</label>
+                <TreeSelect :proposal="proposal"></TreeSelect>
+            </div>
+          </div>
+<!--
+            <TreeSelect :proposal="proposal" :selected_items="selected_parks" :options="park_options"></TreeSelect>
 
             <div class="form-horizontal col-sm-12" >
               <label class="control-label">Select Parks</label>
@@ -94,12 +84,12 @@
                       <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
                     </div>
                   </div>
-                <!--</div>  -->
                 </div>
                 </div>
               </div>
             </div>
             </div>
+-->
 
             <!-- <div>{{selected_parks}}</div>
             <div>{{selected_parks_activities}}</div>   -->           
@@ -187,6 +177,7 @@ import VehicleTable from '@/components/common/vehicle_table.vue'
 import editParkActivities from './edit_park_activities.vue'
 import editTrailActivities from './edit_trail_activities.vue'
 import FileField from './required_docs.vue'
+import TreeSelect from './treeview.vue'
 //import 'custom-event-polyfill'
 import {
   api_endpoints,
@@ -240,6 +231,7 @@ export default {
           editParkActivities,
           editTrailActivities,
           FileField,
+          TreeSelect,
         },
         computed:{
 
@@ -1130,5 +1122,20 @@ export default {
 .list-group-item .glyphicon {
     margin-right: 5px;
 }
+
+/*
+.myselect {
+    position: relative;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+.dropdown-pane {
+  position: relative;
+    margin-bottom: 0;
+    padding: 0;
+}
+*/
+
 </style>
 
