@@ -59,19 +59,20 @@
                                     <span class="icon-bar"></span>
                                     <span class="icon-bar"></span>
                                 </button>
-                                <a class="navbar-brand" href="{% url 'wc_home' %}"><div style="inline"><img src="{% static 'ledger/images/dpaw_small.png' %}">Home</div></a>
+                                <!--a class="navbar-brand" href="{% url 'wc_home' %}"><div style="inline"><img src="{% static 'ledger/images/dpaw_small.png' %}">Home</div></a-->
                             </div>
                             <div id="navbar" class="navbar-collapse collapse">
                                 <ul class="nav navbar-nav">
                                     {% block left_menu_items %}
                                         {% if is_internal_login %}
                                             {% if is_wildlife_licencing_internal_login %}
+                                                <a class="navbar-brand" href="{% url 'wc_home' %}"><div style="inline"><img src="{% static 'ledger/images/dpaw_small.png' %}">Home</div></a>
                                                 <li><a href="/internal/licences">Licences</a></li>
                                                 <li><a href="/internal/returns">Returns</a></li>
                                                 <li><a href="/internal/tag_purchases">Tag Purchases</a></li>
                                                 <li><a href="/internal/advices">Advices to CEO</a></li>
                                             {% elif is_compliance_internal_login %}
-                                                <li><a href="/internal/call_email">Call/Email</a></li>
+                                                <a class="navbar-brand" href="/internal/call_email"><div style="inline"><img src="{% static 'ledger/images/dpaw_small.png' %}">Home</div></a>
                                                 <li><a href="/internal/inspection">Inspections</a></li>
                                                 <li><a href="/internal/offence">Offences</a></li>
                                                 <li><a href="/internal/sanction_outcome">Sanction Outcomes</a></li>

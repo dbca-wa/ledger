@@ -5,7 +5,7 @@ from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
     OrganisationContact
 )
-from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
+from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict, ComplianceManagementUserPreferences
 from wildlifecompliance.components.organisations.utils import can_admin_org, is_consultant
 from wildlifecompliance.helpers import is_customer, is_internal
 from rest_framework import serializers
@@ -19,6 +19,18 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ('id', 'description', 'file', 'name', 'uploaded_date')
+
+
+class UpdateComplianceManagementUserPreferencesSerializer(serializers.ModelSerializer):
+    email_user_id = serializers.IntegerField(
+        required=False, write_only=True, allow_null=True)
+
+    class Meta:
+        model = ComplianceManagementUserPreferences
+        fields = (
+               'email_user_id',
+               'prefer_compliance_management'
+               )
 
 
 class UserOrganisationContactSerializer(serializers.ModelSerializer):
@@ -178,7 +190,7 @@ class UserSerializer(serializers.ModelSerializer):
             'wildlifecompliance_organisations',
             'personal_details',
             'address_details',
-            'contact_details'
+            'contact_details',
         )
 
     def get_personal_details(self, obj):
@@ -237,6 +249,7 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
     identification = DocumentSerializer()
     is_customer = serializers.SerializerMethodField()
     is_internal = serializers.SerializerMethodField()
+    prefer_compliance_management = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -258,6 +271,7 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
             'contact_details',
             'is_customer',
             'is_internal',
+            'prefer_compliance_management',
         )
 
     def get_personal_details(self, obj):
@@ -288,6 +302,12 @@ class MyUserDetailsSerializer(serializers.ModelSerializer):
 
     def get_is_internal(self, obj):
         return is_internal(self.context.get('request'))
+
+    def get_prefer_compliance_management(self, obj):
+        if ComplianceManagementUserPreferences.objects.filter(email_user_id=obj.id):
+            return obj.compliancemanagementuserpreferences.prefer_compliance_management
+        else:
+            return False
 
 
 class ComplianceUserDetailsSerializer(serializers.ModelSerializer):

@@ -16,7 +16,11 @@ from wildlifecompliance.components.call_email.serializers import SaveEmailUserSe
 from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
 )
-from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
+from wildlifecompliance.components.users.models import (
+        CompliancePermissionGroup, 
+        RegionDistrict, 
+        ComplianceManagementUserPreferences,
+        )
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.users.serializers import (
     UserSerializer,
@@ -34,6 +38,9 @@ from wildlifecompliance.components.users.serializers import (
     CompliancePermissionGroupDetailedSerializer,
     ComplianceUserDetailsOptimisedSerializer,
     CompliancePermissionGroupMembersSerializer,
+    CompliancePermissionGroup, 
+    RegionDistrict, 
+    UpdateComplianceManagementUserPreferencesSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -494,6 +501,39 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
             headers=self.get_success_headers(email_user_serializer.data)
         )
+
+    @detail_route(methods=['POST', ])
+    def update_system_preference(self, request, *args, **kwargs):
+        print("update_system_preference")
+        print(request.data)
+        with transaction.atomic():
+            try:
+                user_instance = self.get_object()
+                if ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id):
+                    system_preference_instance = ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id)[0]
+                if system_preference_instance:
+                    serializer = UpdateComplianceManagementUserPreferencesSerializer(
+                            system_preference_instance,
+                            data=request.data
+                            )
+                else:
+                    serializer = UpdateComplianceManagementUserPreferencesSerializer(
+                            data=request.data
+                            )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return_serializer = MyUserDetailsSerializer(request.user, context={'request': request})
+                print(return_serializer.data)
+                return Response(return_serializer.data)
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(repr(e.error_dict))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e))
 
 
 class EmailIdentityViewSet(viewsets.ModelViewSet):
