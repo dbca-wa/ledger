@@ -14,8 +14,6 @@
             open-on-focus="true"
             open-direction="bottom"
             limit="10"
-                :always-open="always_open"
-                :default-expand-level="3"
             >
 
             <input type="hidden" @click="edit_activities_test($event,node)">
@@ -28,18 +26,9 @@
 
                 <!--
                 <TreeSelectNode :node="node"></TreeSelectiNode>
-                -->
-
-                <!--<div v-if="node.raw.can_edit || node.raw.label == 'All parks from all regions'" class="option-label-container">-->
-                <!--<a class="col-sm-4 control-label pull-right" @click="edit_activities(p.id, p.name)" target="_blank">Edit access and activities  <i class="fa fa-edit"></i></a>-->
-                <!--
-                <div v-html="template2" class="option-label-container">
-                </div>
-                    <a class="col-sm-4 control-label pull-right" @click="edit_activities_test($event,node)">Edit access and activities  <i class="fa fa-edit"></i></a>
+                <a class="col-sm-4 control-label pull-right" @click="edit_activities(p.id, p.name)" target="_blank">Edit access and activities  <i class="fa fa-edit"></i></a>
                 :always-open="always_open"
                 :default-expand-level="default_expand_level"
-
-                <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
                 -->
             </template>
         </treeselect>
@@ -54,21 +43,16 @@ import {
 }
 from '@/utils/hooks'
 
-import Treeselect from '@riophae/vue-treeselect'
+/* hack because I have modified two methods in vue-treeselect.js --> renderLabelContainer, renderOptionContainer. TODO look to override instead
+   sudo npm install --save @riophae/vue-treeselect
+   import Treeselect from '@riophae/vue-treeselect'
+*/
+import Treeselect from '@/third-party/vue-treeselect/dict/vue-treeselect.js'
+import '@/third-party/vue-treeselect/dict/vue-treeselect.css'
+
+import Profile from '@/components/user/profile.vue'
 import setupResizeAndScrollEventListeners from '@riophae/vue-treeselect'
-import TreeSelectNode from './treeview_node_edit'
-import '@riophae/vue-treeselect/dist/vue-treeselect.css'
-
-const template = `
-<ul>
-  <li v-for="item in items">
-   {{ item  }}
-  </li>
-</ul>`;
-
-const compiledTemplate = Vue.compile(template);
-
-var template2 = '<a class="col-sm-4 control-label pull-right">Edit access</a>';
+//import TreeSelectNode from './treeview_node_edit'
 
 export default {
     name:'TreeSelect',

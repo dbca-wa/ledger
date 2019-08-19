@@ -3059,6 +3059,7 @@ var Option = {
 
       return null;
     },
+    /*
     renderLabelContainer: function renderLabelContainer(children) {
       var h = this.$createElement;
       return h("div", {
@@ -3078,7 +3079,7 @@ var Option = {
         "class": "vue-treeselect__checkbox-container"
       }, [children]);
     },
-    /*
+    */
     renderLabelContainer: function renderLabelContainer(children) {
       var h = this.$createElement;
       return h("div", {
@@ -3099,7 +3100,6 @@ var Option = {
       }
       }, [children]);
     },
-    */
 
 
     renderCheckbox: function renderCheckbox() {
