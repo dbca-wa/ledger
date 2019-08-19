@@ -16,7 +16,11 @@ from wildlifecompliance.components.call_email.serializers import SaveEmailUserSe
 from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
 )
-from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
+from wildlifecompliance.components.users.models import (
+        CompliancePermissionGroup, 
+        RegionDistrict, 
+        ComplianceManagementUserPreferences,
+        )
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.users.serializers import (
     UserSerializer,
@@ -34,6 +38,7 @@ from wildlifecompliance.components.users.serializers import (
     CompliancePermissionGroupDetailedSerializer,
     ComplianceUserDetailsOptimisedSerializer,
     CompliancePermissionGroupMembersSerializer,
+    UpdateComplianceManagementUserPreferencesSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -495,6 +500,38 @@ class UserViewSet(viewsets.ModelViewSet):
             headers=self.get_success_headers(email_user_serializer.data)
         )
 
+    @detail_route(methods=['POST', ])
+    def update_system_preference(self, request, *args, **kwargs):
+        with transaction.atomic():
+            try:
+                system_preference_instance = None
+                user_instance = self.get_object()
+                if ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id):
+                    system_preference_instance = ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id)[0]
+                if system_preference_instance:
+                    serializer = UpdateComplianceManagementUserPreferencesSerializer(
+                            system_preference_instance,
+                            data=request.data
+                            )
+                else:
+                    serializer = UpdateComplianceManagementUserPreferencesSerializer(
+                            data=request.data
+                            )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return_serializer = MyUserDetailsSerializer(request.user, context={'request': request})
+                print(return_serializer.data)
+                return Response(return_serializer.data)
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(repr(e.error_dict))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e))
+
 
 class EmailIdentityViewSet(viewsets.ModelViewSet):
     queryset = EmailIdentity.objects.all()
@@ -597,25 +634,6 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
         elif is_customer(self.request):
             return RegionDistrict.objects.none()
         return RegionDistrict.objects.none()
-    
-    # @list_route(methods=['GET', ])
-    # def list_region_districts(self, request, *args, **kwargs):
-    #     try:
-    #         serializer = RegionDistrictSerializer(
-    #             RegionDistrict.objects.all(), 
-    #             many=True
-    #             )
-    #         print(serializer.data)
-    #         return Response(serializer.data)
-    #     except serializers.ValidationError:
-    #         print(traceback.print_exc())
-    #         raise
-    #     except ValidationError as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(repr(e.error_dict))
-    #     except Exception as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(str(e))
     
     @list_route(methods=['GET', ])
     def get_regions(self, request, *args, **kwargs):
