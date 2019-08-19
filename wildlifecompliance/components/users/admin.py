@@ -21,3 +21,7 @@ class CompliancePermissionGroupAdmin(admin.ModelAdmin):
 @admin.register(models.RegionDistrict)
 class RegionDistrictAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(models.ComplianceManagementUserPreferences)
+class ComplianceManagementUserPreferencesAdmin(admin.ModelAdmin):
+    pass
