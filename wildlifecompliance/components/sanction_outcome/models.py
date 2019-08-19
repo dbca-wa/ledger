@@ -3,7 +3,7 @@ from django.db import models
 
 from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.main import get_next_value
-from wildlifecompliance.components.main.models import Document, UserAction
+from wildlifecompliance.components.main.models import Document, UserAction, CommunicationsLogEntry
 from wildlifecompliance.components.offence.models import Offence, Offender, SectionRegulation
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
@@ -181,6 +181,21 @@ class SanctionOutcomeDocument(Document):
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_SanctionOutcomeDocument'
         verbose_name_plural = 'CM_SanctionOutcomeDocuments'
+
+
+class SanctionOutcomeCommsLogDocument(Document):
+    log_entry = models.ForeignKey('SanctionOutcomeCommsLogEntry', related_name='documents')
+    _file = models.FileField(max_length=255)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+
+class SanctionOutcomeCommsLogEntry(CommunicationsLogEntry):
+    sanction_outcome = models.ForeignKey(SanctionOutcome, related_name='comms_logs')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
 
 
 class SanctionOutcomeUserAction(UserAction):
