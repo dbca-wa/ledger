@@ -2,7 +2,10 @@ from __future__ import unicode_literals
 from ledger.accounts.models import EmailUser
 from wildlifecompliance import settings
 from wildlifecompliance.components.applications.models import ActivityPermissionGroup
-from wildlifecompliance.components.users.models import CompliancePermissionGroup, ComplianceManagementUserPreferences
+from wildlifecompliance.components.users.models import (
+        CompliancePermissionGroup, 
+        ComplianceManagementUserPreferences,
+        )
 
 
 def belongs_to(user, group_name):

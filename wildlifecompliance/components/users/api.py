@@ -38,8 +38,6 @@ from wildlifecompliance.components.users.serializers import (
     CompliancePermissionGroupDetailedSerializer,
     ComplianceUserDetailsOptimisedSerializer,
     CompliancePermissionGroupMembersSerializer,
-    CompliancePermissionGroup, 
-    RegionDistrict, 
     UpdateComplianceManagementUserPreferencesSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
@@ -504,8 +502,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['POST', ])
     def update_system_preference(self, request, *args, **kwargs):
-        print("update_system_preference")
-        print(request.data)
         with transaction.atomic():
             try:
                 system_preference_instance = None
@@ -638,25 +634,6 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
         elif is_customer(self.request):
             return RegionDistrict.objects.none()
         return RegionDistrict.objects.none()
-    
-    # @list_route(methods=['GET', ])
-    # def list_region_districts(self, request, *args, **kwargs):
-    #     try:
-    #         serializer = RegionDistrictSerializer(
-    #             RegionDistrict.objects.all(), 
-    #             many=True
-    #             )
-    #         print(serializer.data)
-    #         return Response(serializer.data)
-    #     except serializers.ValidationError:
-    #         print(traceback.print_exc())
-    #         raise
-    #     except ValidationError as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(repr(e.error_dict))
-    #     except Exception as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(str(e))
     
     @list_route(methods=['GET', ])
     def get_regions(self, request, *args, **kwargs):

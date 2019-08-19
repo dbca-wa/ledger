@@ -5,7 +5,11 @@ from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
     OrganisationContact
 )
-from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict, ComplianceManagementUserPreferences
+from wildlifecompliance.components.users.models import (
+        CompliancePermissionGroup, 
+        RegionDistrict, 
+        ComplianceManagementUserPreferences
+        )
 from wildlifecompliance.components.organisations.utils import can_admin_org, is_consultant
 from wildlifecompliance.helpers import is_customer, is_internal
 from rest_framework import serializers
@@ -190,7 +194,7 @@ class UserSerializer(serializers.ModelSerializer):
             'wildlifecompliance_organisations',
             'personal_details',
             'address_details',
-            'contact_details',
+            'contact_details'
         )
 
     def get_personal_details(self, obj):
