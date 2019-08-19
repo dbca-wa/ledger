@@ -1,7 +1,7 @@
 <template lang="html">
     <div>
         <div id="mydiv"></div>
-        <!--<pre>{{ selected_items }}</pre>-->
+        <pre>{{ selected_items }}</pre>
         <treeselect
             v-model="selected_items"
             :options="options"
@@ -58,7 +58,7 @@ export default {
     name:'TreeSelect',
     components:{
         Treeselect,
-        TreeSelectNode
+        //TreeSelectNode
     },
     props:{
         proposal:{

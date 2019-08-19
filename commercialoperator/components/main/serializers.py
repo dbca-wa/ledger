@@ -84,20 +84,24 @@ class ParkSerializer2(serializers.ModelSerializer):
         return obj.name
 
     def get_can_edit(self, obj):
-        #import ipdb; ipdb.set_trace()
-        proposal = self.context['request'].GET.get('proposal')
-        activities = ProposalParkActivity.objects.filter(proposal_park__park=obj.id, proposal_park__proposal=proposal)
-        return True if activities else False
+        #proposal = self.context['request'].GET.get('proposal')
+        #activities = ProposalParkActivity.objects.filter(proposal_park__park=obj.id, proposal_park__proposal=proposal)
+        #return True if activities else False
+        return True
 
 class DistrictSerializer2(serializers.ModelSerializer):
+    pk = serializers.SerializerMethodField()
     id = serializers.SerializerMethodField()
     label = serializers.SerializerMethodField()
     children = ParkSerializer2(many=True, read_only=True, source='land_parks')
-    #marine_parks = ParkSerializer(many=True)
+
     class Meta:
         model = District
         #fields = ('id', 'name', 'land_parks', 'marine_parks')
-        fields = ('id', 'label', 'children')
+        fields = ('pk', 'id', 'label', 'children')
+
+    def get_pk(self, obj):
+        return obj.id
 
     def get_id(self, obj):
         return obj.code
@@ -106,18 +110,96 @@ class DistrictSerializer2(serializers.ModelSerializer):
         return obj.name
 
 class RegionSerializer2(serializers.ModelSerializer):
+    pk = serializers.SerializerMethodField()
     id = serializers.SerializerMethodField()
     label = serializers.SerializerMethodField()
     children = DistrictSerializer2(many=True, read_only=True, source='districts')
+
     class Meta:
         model = Region
-        fields = ('id', 'label', 'children')
+        fields = ('pk', 'id', 'label', 'children')
+
+    def get_pk(self, obj):
+        return obj.id
 
     def get_id(self, obj):
         return obj.name
 
     def get_label(self, obj):
         return obj.name
+
+
+class AccessTypeSerializer2(serializers.ModelSerializer):
+    pk = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField()
+    label = serializers.SerializerMethodField()
+    class Meta:
+        model = AccessType
+        fields = ('pk', 'id', 'label', 'visible')
+
+    def get_pk(self, obj):
+        return obj.id
+
+    def get_id(self, obj):
+        return obj.name
+
+    def get_label(self, obj):
+        return obj.name
+
+class ActivitySerializer2(serializers.ModelSerializer):
+    label = serializers.SerializerMethodField()
+    class Meta:
+        model = Activity
+        fields = ('id','label')
+
+    def get_label(self, obj):
+        return obj.name
+
+
+class ActivityCategorySerializer2(serializers.ModelSerializer):
+    pk = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField()
+    label = serializers.SerializerMethodField()
+    children = ActivitySerializer2(many=True, read_only=True, source='activities')
+
+    class Meta:
+        model = ActivityCategory
+        fields = ('pk', 'id', 'label','children')
+
+    def get_pk(self, obj):
+        return obj.id
+
+    def get_id(self, obj):
+        return obj.name
+
+    def get_label(self, obj):
+        return obj.name
+
+class TrailSerializer2(serializers.ModelSerializer):
+    pk = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField()
+    label = serializers.SerializerMethodField()
+    sections=SectionSerializer(many=True)
+    allowed_activities=ActivitySerializer(many=True)
+    class Meta:
+        model = Trail
+        fields = ('pk', 'id', 'label', 'code', 'section_ids', 'sections', 'allowed_activities')
+
+    def get_pk(self, obj):
+        return obj.id
+
+    def get_id(self, obj):
+        return obj.name
+
+    def get_label(self, obj):
+        return obj.name
+
+
+
+class AccessTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessType
+
 
 class ActivityMatrixSerializer(serializers.ModelSerializer):
     class Meta:
@@ -156,11 +238,6 @@ class GlobalSettingsSerializer(serializers.ModelSerializer):
         fields = ('key', 'value')
 
 
-class AccessTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AccessType
-        fields = ('id', 'name', 'visible')
-
 
 class RequiredDocumentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -187,6 +264,15 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ('id', 'question_text', 'answer_one', 'answer_two', 'answer_three', 'answer_four','correct_answer', 'correct_answer_value')
+
+
+class LandActivityTabSerializer(serializers.Serializer):
+    land_parks = RegionSerializer2(many=True, read_only=True, source='regions')
+    access_types = AccessTypeSerializer2(many=True, read_only=True)
+    land_activity_types = ActivitySerializer2(many=True, read_only=True)
+    marine_activity_types = ActivitySerializer2(many=True, read_only=True)
+    trails = TrailSerializer2(many=True, read_only=True)
+    marine_activities = ActivityCategorySerializer2(many=True, read_only=True)
 
 
 class BookingSettlementReportSerializer(serializers.Serializer):

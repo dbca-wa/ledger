@@ -76,7 +76,7 @@ class GlobalSettingsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = GlobalSettings.objects.all().order_by('id')
     serializer_class = GlobalSettingsSerializer
 
-from commercialoperator.components.main.serializers import RegionSerializer2, DistrictSerializer2, ParkSerializer2
+from commercialoperator.components.main.serializers import RegionSerializer2, DistrictSerializer2, ParkSerializer2, ActivityCategorySerializer2, LandActivityTabSerializer
 class RegionViewSet2(viewsets.ReadOnlyModelViewSet):
     queryset = Region.objects.all().order_by('id')
     serializer_class = RegionSerializer2
@@ -89,6 +89,26 @@ class RegionViewSet2(viewsets.ReadOnlyModelViewSet):
         parent_data.update(dict(options=[dict(id=0, label='All parks from all regions', isDefaultExpanded=True, children=serializer.data)]))
         #return Response(serializer.data)
         return Response(parent_data)
+
+
+from collections import namedtuple
+class LandActivityTabViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    A simple ViewSet for listing the Tweets and Articles in your Timeline.
+    """
+    def list(self, request):
+        #Container = namedtuple('ActivityLandTab', ('access_types', 'activity_types', 'regions'))
+        Container = namedtuple('ActivityLandTab', ('access_types', 'land_activity_types', 'marine_activity_types', 'trails', 'marine_activities', 'regions'))
+        container = Container(
+            access_types=AccessType.objects.all().order_by('id'),
+            land_activity_types=Activity.objects.filter(activity_category__activity_type='land').order_by('id'),
+            marine_activity_types=Activity.objects.filter(activity_category__activity_type='marine').order_by('id'),
+            trails=Trail.objects.all().order_by('id'),
+            marine_activities=ActivityCategory.objects.filter(activity_type='marine').order_by('id'),
+            regions=Region.objects.all().order_by('id'),
+        )
+        serializer = LandActivityTabSerializer(container)
+        return Response(serializer.data)
 
 class ParkViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Park.objects.all().order_by('id')

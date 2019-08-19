@@ -40,7 +40,7 @@
               <label class="control-label">Activities</label>
               <div class="" v-for="a in activities">
                 <div class="form-check">
-                  <input  class="form-check-input" v-model="selected_activities" :value="a.id" ref="Checkbox" type="checkbox" :disabled="!canEditActivities"data-parsley-required  />
+                  <input  class="form-check-input" v-model="selected_activities" :value="a.id" ref="Checkbox" type="checkbox" :disabled="!canEditActivities" data-parsley-required />
                   {{ a.name }}
                 </div>
               </div>
@@ -51,7 +51,7 @@
           <div class="col-sm-12" >
             <div>
                 <label class="control-label">Select Parks</label>
-                <TreeSelect :proposal="proposal"></TreeSelect>
+                <TreeSelect :proposal="proposal" :selected_items="selected_parks :options="park_treeview_options"></TreeSelect>
             </div>
           </div>
 <!--
