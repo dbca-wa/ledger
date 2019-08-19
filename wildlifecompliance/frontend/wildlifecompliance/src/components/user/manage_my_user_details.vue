@@ -48,6 +48,15 @@
                             </div>
                           </div>
                           <div class="form-group">
+                            <label for="" class="col-sm-3 control-label" >System Preference</label>
+                            <label class="radio-inline">
+                              <input type="radio" name="system_preference" v-model="current_user.prefer_compliance_management" :value="false" @click.prevent="updateSystemPreference(false)"> Wildlife Licencing
+                            </label>
+                            <label class="radio-inline">
+                              <input type="radio" name="system_preference" v-model="current_user.prefer_compliance_management" :value="true" @click.prevent="updateSystemPreference(true)"> Compliance Management
+                            </label>
+                          </div>
+                          <div class="form-group">
                             <div class="col-sm-12">
                                 <button v-if="!updatingPersonal" class="pull-right btn btn-primary" @click.prevent="updatePersonal()">Update</button>
                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
@@ -1071,6 +1080,16 @@ export default {
                 window.location.href='/';
             },(error) => {
             })
+        },
+        updateSystemPreference: async function(boolValue) {
+            let url = helpers.add_endpoint_join(api_endpoints.users, this.current_user.id + '/update_system_preference/');
+            await Vue.http.post(
+                url, 
+                {
+                    email_user_id: this.current_user.id,
+                    prefer_compliance_management: boolValue
+                });
+            window.location.reload(true);
         },
     },
     beforeRouteEnter: function(to,from,next){
