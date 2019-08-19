@@ -15,18 +15,27 @@
             open-direction="bottom"
             limit="10"
                 :always-open="always_open"
-                :default-expand-level="default_expand_level"
+                :default-expand-level="3"
             >
+
+            <input type="hidden" @click="edit_activities_test($event,node)">
 
             <template slot="option-label" slot-scope="{ node }">
                 <label class="col-sm-8 control-label">{{ node.raw.label }}</label>
-                <!--<span v-if="node.raw.can_edit" class="option-label-container">-->
-                <div class="option-label-container">
-                    <a class="col-sm-4 control-label pull-right" @click="edit_activities_test($event,node)">Edit access and activities  <i class="fa fa-edit"></i></a>
-                    <!--<a class="col-sm-4 control-label pull-right" @click="edit_activities(p.id, p.name)" target="_blank">Edit access and activities  <i class="fa fa-edit"></i></a>-->
+                <div v-if="node.raw.can_edit" class="option-label-container">
+                    <a class="col-sm-4 control-label pull-right" @click.stop="edit_activities_test(node)">Edit access and activities  <i class="fa fa-edit"></i></a>
                 </div>
 
                 <!--
+                <TreeSelectNode :node="node"></TreeSelectiNode>
+                -->
+
+                <!--<div v-if="node.raw.can_edit || node.raw.label == 'All parks from all regions'" class="option-label-container">-->
+                <!--<a class="col-sm-4 control-label pull-right" @click="edit_activities(p.id, p.name)" target="_blank">Edit access and activities  <i class="fa fa-edit"></i></a>-->
+                <!--
+                <div v-html="template2" class="option-label-container">
+                </div>
+                    <a class="col-sm-4 control-label pull-right" @click="edit_activities_test($event,node)">Edit access and activities  <i class="fa fa-edit"></i></a>
                 :always-open="always_open"
                 :default-expand-level="default_expand_level"
 
@@ -46,6 +55,8 @@ import {
 from '@/utils/hooks'
 
 import Treeselect from '@riophae/vue-treeselect'
+import setupResizeAndScrollEventListeners from '@riophae/vue-treeselect'
+import TreeSelectNode from './treeview_node_edit'
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 
 const template = `
@@ -57,11 +68,13 @@ const template = `
 
 const compiledTemplate = Vue.compile(template);
 
+var template2 = '<a class="col-sm-4 control-label pull-right">Edit access</a>';
 
 export default {
     name:'TreeSelect',
     components:{
-        Treeselect
+        Treeselect,
+        TreeSelectNode
     },
     props:{
         proposal:{
@@ -109,6 +122,7 @@ export default {
     data() {
       return {
         items: ['Item1', 'Item2', 'Item3', 'Item4', 'Item5', 'Item6', 'Item7', 'Item8'],
+        template2: '<a class="col-sm-4 control-label pull-right">Edit access  {{node.raw.label}}</a>',
         _selected_items: [],
         _options: [],
 
@@ -175,9 +189,10 @@ export default {
             this.$refs.edit_activities.fetchAllowedAccessTypes(p_id)
             this. $refs.edit_activities.isModalOpen = true;
         },
-        edit_activities_test:function(event, node){
-            alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
-            console.log("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+        //edit_activities_test:function(event, node){
+        edit_activities_test:function(node){
+            //alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+            alert(" park_id: " + node.raw.id + ", park_name: " + node.raw.label );
         },
         mousedown_event_stop_propagation:function(){
             $('.option-label-container').on('mousedown', function(e) {
@@ -194,22 +209,14 @@ export default {
         }
     },
 
-    _beforeMount: function() {
-        let vm=this;
-        vm.mousedown_event_stop_propagation2()
-
-        /*
-        $('.option-label-container').on('mousedown', function(e) {
-            e.stopPropagation();
-            return false;
-        });
-        */
-    },
-
-
     beforeUpdate: function() {
         let vm=this;
-        vm.mousedown_event_stop_propagation()
+        //vm.mousedown_event_stop_propagation()
+
+//        document.querySelector(".vue-treeselect__label-container > svg").addEventListener("click", function(e) {e.stopPropagation(); e.preventDefault();});
+//            Ae.preventDefault();re.stopPropagation();
+//            e.preventDefault();
+//        });
 
         /*
         $('.option-label-container').on('mousedown', function(e) {
@@ -231,15 +238,31 @@ export default {
         */
     },
 
+    beforeMount: function() {
+        let vm=this;
+        vm.mousedown_event_stop_propagation()
+
+        /*
+        $('.option-label-container').on('mousedown', function(e) {
+            e.stopPropagation();
+            return false;
+        });
+        */
+    },
 
     mounted:function () {
         let vm = this;
         vm.fetchParkTreeview()
+        setupResizeAndScrollEventListeners()
     }
 }
 </script>
 
 <style lang="css" scoped>
+
+.vue-treeselect__checkbox-container {
+    width: 50px;
+}
 
 /*
 .option-label-container {
