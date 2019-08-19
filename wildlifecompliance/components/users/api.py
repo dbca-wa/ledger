@@ -508,6 +508,7 @@ class UserViewSet(viewsets.ModelViewSet):
         print(request.data)
         with transaction.atomic():
             try:
+                system_preference_instance = None
                 user_instance = self.get_object()
                 if ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id):
                     system_preference_instance = ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id)[0]
