@@ -15,9 +15,15 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_access }}</pre>
+                            <pre>Parent: {{ selected_access }}</pre>
                             <label class="control-label">Select the required access</label>
-                            <TreeSelect :proposal="proposal" :selected_items="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+                                <!--
+                                The below 3 are equivalent - require an event emitted fro child component - 'this.$emit("update:value", vm.value)', (or 'this.$emit("value", vm.value)' )
+                                <TreeSelect ref="selected_access" :proposal="proposal" @value="selected_access" :value="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+                                <TreeSelect ref="selected_access" :proposal="proposal" @value="selected_access=$event" :value="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+                                <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+                                -->
+                                <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -482,7 +488,7 @@ export default {
                 vm.park_options = [
                     {
                         'id': 'All',
-                        'label':'Select all parks from all regions',
+                        'name':'Select all parks from all regions',
                         'children': response.body['land_parks']
                     }
                 ]
@@ -490,7 +496,7 @@ export default {
                 vm.land_access_options = [
                     {
                         'id': 'All',
-                        'label':'Select all',
+                        'name':'Select all',
                         'children': response.body['access_types']
                     }
                 ]
@@ -499,7 +505,7 @@ export default {
                 vm.land_activity_options = [
                     {
                         'id': 'All',
-                        'label':'Select all',
+                        'name':'Select all',
                         'children': response.body['land_activity_types']
                     }
                 ]
@@ -508,7 +514,7 @@ export default {
                 vm.trail_options = [
                     {
                         'id': 'All',
-                        'label':'Select all',
+                        'name':'Select all',
                         'children': response.body['trails']
                     }
                 ]
@@ -586,19 +592,27 @@ export default {
             }
           }
           },
-          edit_activities: function(p_id, p_name){
+          edit_activities_child_test:function(node){
+              //alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+              alert("IN PARENT:  park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+          },
+          //edit_activities: function(p_id, p_name){
+          edit_activities: function(node){
             let vm=this;
+            var p_id = node.raw.id;
+            var p_name = node.raw.name;
+
             for (var j=0; j<vm.selected_parks_activities.length; j++){
-              if(vm.selected_parks_activities[j].park==p_id){ 
-                this.$refs.edit_activities.park_activities= vm.selected_parks_activities[j].activities;
-                this.$refs.edit_activities.park_access= vm.selected_parks_activities[j].access
+              if(vm.selected_parks_activities[j].park==p_id){
+                this.$refs.edit_activities.park_activities = vm.selected_parks_activities[j].activities;
+                this.$refs.edit_activities.park_access = vm.selected_parks_activities[j].access
               }
             }
             this.$refs.edit_activities.park_id=p_id;
             this.$refs.edit_activities.park_name=p_name;
             this.$refs.edit_activities.fetchAllowedActivities(p_id)
             this.$refs.edit_activities.fetchAllowedAccessTypes(p_id)
-            this. $refs.edit_activities.isModalOpen = true;
+            this.$refs.edit_activities.isModalOpen = true;
           },
           edit_sections: function(trail){
             let vm=this;

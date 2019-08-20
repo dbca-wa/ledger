@@ -1,8 +1,8 @@
 <template lang="html">
     <div>
-        <div id="mydiv"></div>
+        <pre>Child: {{ value }}</pre>
         <treeselect
-            v-model="selected_items"
+            v-model="value"
             :options="options"
             :open-on-click="true"
             :multiple="multiple"
@@ -11,6 +11,7 @@
             :clearable="clearable"
             :flat="flat"
             :default-expand-level="default_expand_level"
+            :normalizer="normalizer"
             open-on-focus="true"
             open-direction="bottom"
             limit="20"
@@ -18,9 +19,10 @@
 
 
             <template slot="option-label" slot-scope="{ node }">
-                <label class="col-sm-8 control-label">{{ node.raw.label }}</label>
+                <label class="col-sm-8 control-label">{{ node.raw.name }}</label>
                 <div v-if="node.raw.can_edit" class="option-label-container">
-                    <a class="col-sm-4 control-label pull-right" @click.stop="edit_activities_test(node)">Edit access and activities  <i class="fa fa-edit"></i></a>
+                    <!--<a class="col-sm-4 control-label pull-right" @click.stop="edit_activities_test(node)">Edit access and activities  <i class="fa fa-edit"></i></a>-->
+                    <a class="col-sm-4 control-label pull-right" @click.stop="edit_activities_parent(node)">Edit access and activities  <i class="fa fa-edit"></i></a>
                 </div>
 
                 <!--
@@ -51,7 +53,7 @@ import Treeselect from '@/third-party/vue-treeselect/dict/vue-treeselect.js'
 import '@/third-party/vue-treeselect/dict/vue-treeselect.css'
 
 import Profile from '@/components/user/profile.vue'
-import setupResizeAndScrollEventListeners from '@riophae/vue-treeselect'
+//import setupResizeAndScrollEventListeners from '@riophae/vue-treeselect'
 //import TreeSelectNode from './treeview_node_edit'
 
 export default {
@@ -65,7 +67,7 @@ export default {
             type: Object,
             required:true
         },
-        selected_items:{
+        value:{
             type: Object,
             required:false
         },
@@ -105,8 +107,6 @@ export default {
 
     data() {
       return {
-        _selected_items: [],
-        _options: [],
         normalizer(node) {
             return {
                 id: node.name,
@@ -116,6 +116,9 @@ export default {
         },
 
         /*
+        _selected_items: [],
+        _options: [],
+
         selected_items: [3,5],
         options: [ {
           id: 1,
@@ -141,47 +144,27 @@ export default {
         */
       }
     },
-    render(createElement) {
-        return compiledTemplate.render.call(this, createElement);
+
+    watch:{
+        value: function(){
+            /* allows two-way update of array value ( 'selected_access' )
+               Requires parent prop: ' :value.sync="selected_access" ', eg. 
+               <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+            */
+            this.$emit("update:value", this.value)
+        },
     },
 
     computed: {
     },
 
     methods:{
-        fetchParkTreeview: function(){
-            let vm = this;
-
-            //vm.$http.get(api_endpoints.park_treeview).then((response) => { 
-            //vm.$http.get('/api/park_treeview/?format=json&proposal=323').then((response) => { 
-            //vm.$http.get(helpers.add_endpoint_json(api_endpoints.park_treeview,('/?format=json&proposal='+vm.proposal.id)))
-            console.log('treeview_url: ' + api_endpoints.park_treeview + '?format=json&proposal=' + vm.proposal.id)
-            vm.$http.get(api_endpoints.park_treeview + '?format=json&proposal=' + vm.proposal.id)
-            .then((response) => {
-                vm.options = response.body['options'];
-                vm.selected_items = response.body['selected_items'];
-            },(error) => {
-                console.log(error);
-            })
-        },
-        edit_activities: function(p_id, p_name){
-            let vm=this;
-            for (var j=0; j<vm.selected_parks_activities.length; j++){
-              if(vm.selected_parks_activities[j].park==p_id){ 
-                this.$refs.edit_activities.park_activities= vm.selected_parks_activities[j].activities;
-                this.$refs.edit_activities.park_access= vm.selected_parks_activities[j].access
-              }
-            }
-            this.$refs.edit_activities.park_id=p_id;
-            this.$refs.edit_activities.park_name=p_name;
-            this.$refs.edit_activities.fetchAllowedActivities(p_id)
-            this.$refs.edit_activities.fetchAllowedAccessTypes(p_id)
-            this. $refs.edit_activities.isModalOpen = true;
-        },
-        //edit_activities_test:function(event, node){
         edit_activities_test:function(node){
             //alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
             alert(" park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+        },
+        edit_activities_parent:function(node){
+            this.$parent.edit_activities(node)
         },
         mousedown_event_stop_propagation:function(){
             $('.option-label-container').on('mousedown', function(e) {
@@ -189,60 +172,19 @@ export default {
                 return false;
             });
         },
-        mousedown_event_stop_propagation2:function(){
-            $.each($._data($('.option-label-container')[0], "events"), function(i, event) {
-                    $.each(event, function(j, h) {
-                        alert(j + ' - ' + h);
-                    });
-            });
-        }
-    },
-
-    beforeUpdate: function() {
-        let vm=this;
-        //vm.mousedown_event_stop_propagation()
-
-//        document.querySelector(".vue-treeselect__label-container > svg").addEventListener("click", function(e) {e.stopPropagation(); e.preventDefault();});
-//            Ae.preventDefault();re.stopPropagation();
-//            e.preventDefault();
-//        });
-
-        /*
-        $('.option-label-container').on('mousedown', function(e) {
-            e.stopPropagation();
-            return false;
-        });
-        */
     },
 
     updated: function() {
-        let vm=this;
-        vm.mousedown_event_stop_propagation()
-
-        /*
-        $('.option-label-container').on('mousedown', function(e) {
-            e.stopPropagation();
-            return false;
-        });
-        */
+        this.mousedown_event_stop_propagation()
     },
 
-    beforeMount: function() {
-        let vm=this;
-        vm.mousedown_event_stop_propagation()
-
-        /*
-        $('.option-label-container').on('mousedown', function(e) {
-            e.stopPropagation();
-            return false;
-        });
-        */
-    },
+    //beforeMount: function() {
+    //    this.mousedown_event_stop_propagation()
+    //},
 
     mounted:function () {
         let vm = this;
-        //vm.fetchParkTreeview()
-        setupResizeAndScrollEventListeners()
+        //setupResizeAndScrollEventListeners()
     }
 }
 </script>
