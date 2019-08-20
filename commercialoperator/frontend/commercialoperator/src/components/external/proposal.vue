@@ -157,7 +157,7 @@ export default {
       }
       if(vm.proposal.applicant_type == 'ORG'){
         vm.$refs.proposal_tclass.$refs.organisation.updateDetails();
-        //vm.$refs.proposal_tclass.$refs.organisation.updateAddress();
+        vm.$refs.proposal_tclass.$refs.organisation.updateAddress();
       }
     },
     set_formData: function(e) {
