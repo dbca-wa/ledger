@@ -15,10 +15,10 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>Parent: {{ selected_access }}</pre>
+                            <pre>{{ selected_access }}</pre>
                             <label class="control-label">Select the required access</label>
                                 <!--
-                                The below 3 are equivalent - require an event emitted fro child component - 'this.$emit("update:value", vm.value)', (or 'this.$emit("value", vm.value)' )
+                                The below 3 are equivalent - require an event emitted fro child component -'this.$emit("update:value", vm.value)', (or 'this.$emit("value", vm.value)' )
                                 <TreeSelect ref="selected_access" :proposal="proposal" @value="selected_access" :value="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
                                 <TreeSelect ref="selected_access" :proposal="proposal" @value="selected_access=$event" :value="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
                                 <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
@@ -33,8 +33,9 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
+                            <pre>{{ selected_activities }}</pre>
                             <label class="control-label">Select the required activities</label>
-                            <TreeSelect :proposal="proposal" :selected_items="selected_activities" :options="land_activity_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="land_activity_options" :default_expand_level="1"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -44,9 +45,9 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <!--<pre>{{ selected_items }}</pre>-->
+                            <pre>{{ selected_parks }}</pre>
                             <label class="control-label">Select Parks</label>
-                            <TreeSelect :proposal="proposal" :selected_items="selected_parks" :options="park_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_parks" :options="park_options" :default_expand_level="1"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -83,8 +84,9 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
+                            <pre>{{ trail_activities }}</pre>
                             <label class="control-label">Select the required activities for trails</label>
-                            <TreeSelect :proposal="proposal" :selected_items="trail_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="trail_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -94,8 +96,9 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
+                            <pre>{{ selected_trails }}</pre>
                             <label class="control-label">Select the required activities</label>
-                            <TreeSelect :proposal="proposal" :selected_items="selected_trails" :options="trail_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_trails" :options="trail_options" :default_expand_level="1"></TreeSelect>
                         </div>
                     </div>
                 </form>

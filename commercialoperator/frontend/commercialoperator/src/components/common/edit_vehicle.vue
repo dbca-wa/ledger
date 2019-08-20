@@ -14,7 +14,7 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <select class="form-control" name="access_type" ref="access_type" v-model="vehicle_access_id">
-                                            <option v-for="a in access_types" :value="a.id">{{a.label}}</option>
+                                            <option v-for="a in access_types" :value="a.id">{{a.name}}</option>
                                         </select>
                                     </div>
                                 </div>

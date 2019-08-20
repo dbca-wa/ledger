@@ -1,6 +1,6 @@
 <template lang="html">
     <div>
-        <pre>Child: {{ value }}</pre>
+        <!-- <pre>TreeSelect: {{ value }}</pre> -->
         <treeselect
             v-model="value"
             :options="options"
@@ -17,12 +17,10 @@
             limit="20"
             >
 
-
             <template slot="option-label" slot-scope="{ node }">
                 <label class="col-sm-8 control-label">{{ node.raw.name }}</label>
                 <div v-if="node.raw.can_edit" class="option-label-container">
-                    <!--<a class="col-sm-4 control-label pull-right" @click.stop="edit_activities_test(node)">Edit access and activities  <i class="fa fa-edit"></i></a>-->
-                    <a class="col-sm-4 control-label pull-right" @click.stop="edit_activities_parent(node)">Edit access and activities  <i class="fa fa-edit"></i></a>
+                    <a class="col-sm-4 control-label pull-right" @click.stop="edit_activities(node)">Edit access and activities  <i class="fa fa-edit"></i></a>
                 </div>
 
                 <!--
@@ -107,6 +105,68 @@ export default {
 
     data() {
       return {
+        //_options: [],
+        normalizer(node) {
+            return {
+                id: node.last_leaf ? node.id : node.name,
+                label: node.name,
+                children: node.children,
+                isDisabled: node.is_disabled,
+            }
+        },
+      }
+    },
+
+    watch:{
+        value: function(){
+            /* allows two-way update of array value ( 'selected_access' )
+               Requires parent Prop: ' :value.sync="selected_access" ', eg. 
+               <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+            */
+
+            this.$emit("update:value", this.value)
+        },
+    },
+
+    computed: {
+    },
+
+    methods:{
+        edit_activities_test:function(node){
+            //alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+            alert(" park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+        },
+        edit_activities:function(node){
+            this.$parent.edit_activities(node)
+        },
+        mousedown_event_stop_propagation:function(){
+            $('.option-label-container').on('mousedown', function(e) {
+                e.stopPropagation();
+                return false;
+            });
+        },
+    },
+
+    updated: function() {
+        this.mousedown_event_stop_propagation()
+    },
+
+    mounted:function () {
+    }
+}
+</script>
+
+<style lang="css" scoped>
+    /*
+    .vue-treeselect__checkbox-container {
+        width: 50px;
+    }
+    */
+</style>
+
+/*
+    data() {
+      return {
         normalizer(node) {
             return {
                 id: node.name,
@@ -144,104 +204,5 @@ export default {
         */
       }
     },
-
-    watch:{
-        value: function(){
-            /* allows two-way update of array value ( 'selected_access' )
-               Requires parent prop: ' :value.sync="selected_access" ', eg. 
-               <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
-            */
-            this.$emit("update:value", this.value)
-        },
-    },
-
-    computed: {
-    },
-
-    methods:{
-        edit_activities_test:function(node){
-            //alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
-            alert(" park_id: " + node.raw.id + ", park_name: " + node.raw.label );
-        },
-        edit_activities_parent:function(node){
-            this.$parent.edit_activities(node)
-        },
-        mousedown_event_stop_propagation:function(){
-            $('.option-label-container').on('mousedown', function(e) {
-                e.stopPropagation();
-                return false;
-            });
-        },
-    },
-
-    updated: function() {
-        this.mousedown_event_stop_propagation()
-    },
-
-    //beforeMount: function() {
-    //    this.mousedown_event_stop_propagation()
-    //},
-
-    mounted:function () {
-        let vm = this;
-        //setupResizeAndScrollEventListeners()
-    }
-}
-</script>
-
-<style lang="css" scoped>
-
-.vue-treeselect__checkbox-container {
-    width: 50px;
-}
-
-/*
-.option-label-container {
-    pointer-events: none;
-}
-
-.vue-treeselect__menu {
-  position: absolute;
-  max-height: none!important;
-}
-.borderDecoration {
-  position: absolute;
-  max-height: none!important;
-}
 */
-</style>
 
-/*
-            items: [
-            {
-                id: 1,
-                name: 'Applications :',
-                children: [
-                  { id: 2, name: 'Calendar : app'  },
-                  { id: 3, name: 'Chrome : app'  },
-                  { id: 4, name: 'Webstorm : app'  }
-                ]
-            },
-            {
-                id: 5,
-                name: 'Documents :',
-                children: [
-                {
-                    id: 6,
-                    name: 'vuetify :',
-                    children: [
-                    {
-                        id: 7,
-                        name: 'src :',
-                        children: [
-                          { id: 8, name: 'index : ts', to:'Edit'  },
-                          { id: 9, name: 'bootstrap : ts'  }
-                        ]
-                    }
-                    ]
-                }
-                ]
-            }
-            ],
-
-*/

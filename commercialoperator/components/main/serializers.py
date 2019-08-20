@@ -35,9 +35,13 @@ class SectionSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'visible', 'doc_url')
 
 class ActivitySerializer(serializers.ModelSerializer):
+    last_leaf = serializers.SerializerMethodField()
     class Meta:
         model = Activity
-        fields = ('id','name')
+        fields = ('id','name', 'last_leaf')
+
+    def get_last_leaf(self, obj):
+        return True
 
 
 class ZoneSerializer(serializers.ModelSerializer):
@@ -72,10 +76,11 @@ class RegionSerializer(serializers.ModelSerializer):
 
 class ParkSerializer2(serializers.ModelSerializer):
     can_edit = serializers.SerializerMethodField()
+    last_leaf = serializers.SerializerMethodField()
 
     class Meta:
         model = Park
-        fields=('id', 'name', 'can_edit')
+        fields=('id', 'name', 'can_edit', 'last_leaf')
 
     def get_can_edit(self, obj):
         #proposal = self.context['request'].GET.get('proposal')
@@ -83,35 +88,54 @@ class ParkSerializer2(serializers.ModelSerializer):
         #return True if activities else False
         return True
 
+    def get_last_leaf(self, obj):
+        return True
+
 class DistrictSerializer2(serializers.ModelSerializer):
     pk = serializers.SerializerMethodField()
+    last_leaf = serializers.SerializerMethodField()
+    is_disabled = serializers.SerializerMethodField()
     children = ParkSerializer2(many=True, read_only=True, source='land_parks')
 
     class Meta:
         model = District
         #fields = ('id', 'name', 'land_parks', 'marine_parks')
-        fields = ('pk', 'id', 'name', 'children')
+        fields = ('pk', 'id', 'name', 'last_leaf', 'is_disabled', 'children')
 
     def get_pk(self, obj):
         return obj.id
+
+    def get_last_leaf(self, obj):
+        return False
+
+    def get_is_disabled(self, obj):
+        return True if obj.parks.count()==0 else False
 
 
 class RegionSerializer2(serializers.ModelSerializer):
     pk = serializers.SerializerMethodField()
+    last_leaf = serializers.SerializerMethodField()
     children = DistrictSerializer2(many=True, read_only=True, source='districts')
 
     class Meta:
         model = Region
-        fields = ('pk', 'id', 'name', 'children')
+        fields = ('pk', 'id', 'name', 'last_leaf', 'children')
 
     def get_pk(self, obj):
         return obj.id
 
+    def get_last_leaf(self, obj):
+        return False
+
 
 class AccessTypeSerializer(serializers.ModelSerializer):
+    last_leaf = serializers.SerializerMethodField()
     class Meta:
         model = AccessType
-        fields = ('id', 'name', 'visible')
+        fields = ('id', 'name', 'last_leaf', 'visible')
+
+    def get_last_leaf(self, obj):
+        return True
 
 
 class ActivityMatrixSerializer(serializers.ModelSerializer):
@@ -167,11 +191,12 @@ class ActivityCategorySerializer(serializers.ModelSerializer):
 
 class TrailSerializer(serializers.ModelSerializer):
     can_edit = serializers.SerializerMethodField()
+    last_leaf = serializers.SerializerMethodField()
     sections=SectionSerializer(many=True)
     allowed_activities=ActivitySerializer(many=True)
     class Meta:
         model = Trail
-        fields = ('id', 'name', 'can_edit', 'code', 'section_ids', 'sections', 'allowed_activities')
+        fields = ('id', 'name', 'can_edit', 'last_leaf', 'code', 'section_ids', 'sections', 'allowed_activities')
 
     def get_can_edit(self, obj):
         #proposal = self.context['request'].GET.get('proposal')
@@ -179,6 +204,8 @@ class TrailSerializer(serializers.ModelSerializer):
         #return True if activities else False
         return True
 
+    def get_last_leaf(self, obj):
+        return True
 
 
 class QuestionSerializer(serializers.ModelSerializer):
