@@ -2,7 +2,6 @@
   <div class="row">
     <div class="col-sm-12">
       <div class="panel panel-default">
-
         <div class="panel-heading">
           <h3 class="panel-title">Activities and Location <small> (Parks)</small>
             <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
@@ -11,56 +10,117 @@
           </h3>
         </div>
         <div class="panel-body collapse in" :id="pBody">
-            <div class="borderDecoration col-sm-12">
-                <form>
-                    <div class="col-sm-12" >
-                        <div>
-                            <pre>{{ selected_access }}</pre>
-                            <label class="control-label">Select the required access</label>
-                            <TreeSelect :proposal="proposal" :selected_items="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <div class="borderDecoration col-sm-12">
-                <form>
-                    <div class="col-sm-12" >
-                        <div>
-                            <label class="control-label">Select the required activities</label>
-                            <TreeSelect :proposal="proposal" :selected_items="selected_activities" :options="land_activity_options" :default_expand_level="1"></TreeSelect>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <div class="borderDecoration col-sm-12">
-                <form>
-                    <div class="col-sm-12" >
-                        <div>
-                            <!--<pre>{{ selected_items }}</pre>-->
-                            <label class="control-label">Select Parks</label>
-                            <TreeSelect :proposal="proposal" :selected_items="selected_parks" :options="park_options" :default_expand_level="1"></TreeSelect>
-                        </div>
-                    </div>
-                </form>
-            </div> 
-
-            <div class="borderDecoration col-sm-12">
-                <div  v-for="rd in required_documents_list">
-                    <div v-if="rd.can_view">
-                        <label>{{rd.question}}</label>
-                        <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id" :readonly="proposal.readonly"></FileField>
-                    </div>
+          <div class="borderDecoration col-sm-12">
+          <form class="form-horizontal col-sm-12" name="personal_form" method="post">
+            <label class="control-label"> Select the required access and activities</label>
+          </form>
+          <form>
+            <div class="form-horizontal col-sm-6">
+              <label class="control-label">Access</label>
+              <div class="" v-for="a in accessTypes">
+                <div class="form-check">
+                  <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.id" data-parsley-required  :disabled="!canEditActivities" />
+                  {{ a.name }}
                 </div>
+              </div>
             </div>
-            <div class="borderDecoration col-sm-12">
-                <label class="control-label">Provide details of every vehicle you plan to use when accessing the parks</label>
-                  <VehicleTable :url="vehicles_url" :proposal="proposal" :access_types="land_access_types" ref="vehicles_table"></VehicleTable>
+          </form>
+          <form>
+            <div class="form-horizontal col-sm-6">
+              <label class="control-label">Activities</label>
+              <div class="" v-for="a in activities">
+                <div class="form-check">
+                  <input  class="form-check-input" v-model="selected_activities" :value="a.id" ref="Checkbox" type="checkbox" :disabled="!canEditActivities"data-parsley-required  />
+                  {{ a.name }}
+                </div>
+              </div>
             </div>
+          </form>
+          <!-- <form> -->
+
+            <!-- testing start <div class="form-horizontal col-sm-12">
+              <label class="control-label">Select Parks</label>
+              <div class="form-check">
+                  <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" data-parsley-required  />
+                  Select all parks from all regions
+              </div>
+              <div class="" v-for="r in api_regions">
+                <div class="form-check">
+                  <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
+                  {{ r.name }} -->
+                  <!-- <a data-toggle="collapse" :href="'#'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
+                <!-- </div>
+                <div class="col-sm-12" v-for="d in r.districts" :id="r.id">
+                  <div class="form-check ">
+                    <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" data-parsley-required />
+                    {{ d.name }} -->
+                   <!--  <a data-toggle="collapse" :href="'#'+d.id+r.id" role="button" aria-expanded="true" aria controls="d.id+r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
+                  <!-- </div>
+                  <div class="" v-for="p in d.land_parks">
+                    <div class="form-check col-sm-12">
+                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" data-parsley-required />
+                    {{ p.name }}
+                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div> testing end--> 
+
+            <div class="form-horizontal col-sm-12" >
+              <label class="control-label">Select Parks</label>
+              <div class="form-check">
+                  <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" :disabled="!canEditActivities" data-parsley-required  />
+                  Select all parks from all regions
+              </div>
+              <div class="list-group list-group-root well">
+              <div class="" v-for="r in api_regions">
+                <div class="form-check col-sm-12 list-group-item" style="">
+                  <input @click="clickRegion($event, r)" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" :disabled="!canEditActivities" data-parsley-required />
+                  {{ r.name }}
+                  <a data-toggle="collapse" :href="'#'+'r'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a>
+                </div>
+                <div class="col-sm-12 list-group collapse" :id="'r'+r.id">
+                  <div v-for="d in r.districts">
+                  <div  style="padding-left: 30px;" class="form-check list-group-item col-sm-12">
+                    <input @click="clickDistrict($event, d, r)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" :disabled="!canEditActivities" data-parsley-required />
+                    {{ d.name }}
+                   <a data-toggle="collapse" :href="'#'+'d'+d.id" role="button" aria-expanded="true" aria controls="d.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> 
+                  </div>
+                  <div class="list-group collapse"  :id="'d'+d.id">
+                    <div class="form-check col-sm-12 list-group-item" style="padding-left: 45px;" v-for="p in d.land_parks">
+                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" :ref="'park'+p.id" type="checkbox" :id="'park'+p.id" :disabled="!canEditActivities" data-parsley-required @click="clickPark($event, p, d)"/>
+                    {{ p.name }}
+                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
+                    </div>
+                  </div>
+                <!--</div>  -->
+                </div>
+                </div>
+              </div>
+            </div>
+            </div>
+
+            <div>{{selected_parks}}</div>
+            <div>{{selected_parks_activities}}</div>
+<!--           </form>
+
+ -->      </div> 
+          <div class="borderDecoration col-sm-12">
+              <div  v-for="rd in required_documents_list">
+                <div v-if="rd.can_view">
+                  <label>{{rd.question}}</label>
+                  <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id" :readonly="proposal.readonly"></FileField>
+                </div>
+              </div>
+          </div>
+          <div class="borderDecoration col-sm-12">
+            <label class="control-label">Provide details of every vehicle you plan to use when accessing the parks</label>
+              <VehicleTable :url="vehicles_url" :proposal="proposal" ref="vehicles_table"></VehicleTable>
+          </div>
         </div>
       </div>
-
+      
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Activities and Location <small> (Trails)</small>
@@ -72,36 +132,42 @@
 
         <div class="panel-body collapse in" :id="tBody">
           <div>
-
             <div class="borderDecoration col-sm-12">
-                <form>
-                    <div class="col-sm-12" >
-                        <div>
-                            <label class="control-label">Select the required activities for trails</label>
-                            <TreeSelect :proposal="proposal" :selected_items="trail_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
-                        </div>
+            <form class="form-horizontal col-sm-12" name="trails_form" method="post">
+              <label class="control-label"> Select the required activities for trails</label>
+            </form>
+            <form>
+              <div class="form-horizontal col-sm-6">
+                <label class="control-label">Activities</label>
+                <div class="" v-for="a in activities">
+                  <div class="form-check">
+                    <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="trail_activities" :value="a.id" data-parsley-required :disabled="!canEditActivities"/>
+                      {{ a.name }}
+                  </div>
+                </div>
+              </div>
+            </form> 
+            <div>
+              <form>
+                <div class="form-horizontal col-sm-12">
+                  <label class="control-label">Select the long distance trails</label>
+                  <div class="list-group list-group-root well">
+                    <div class="" v-for="t in trails">
+                      <div class="form-check col-sm-12 list-group-item">
+                        <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
+                        {{ t.name }} <span><a @click="edit_sections(t)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit section and activities</a></span>
+                      </div>
                     </div>
-                </form>
+                  </div>
+                </div>
+              </form>
             </div>
-
-            <div class="borderDecoration col-sm-12">
-                <form>
-                    <div class="col-sm-12" >
-                        <div>
-                            <label class="control-label">Select the required activities</label>
-                            <TreeSelect :proposal="proposal" :selected_items="selected_trails" :options="trail_options" :default_expand_level="1"></TreeSelect>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
+          </div>
           </div>
         </div>
       </div>
-
       <!-- <div>{{selected_trails}}</div>
       <div>{{selected_trails_activities}}</div> -->
-
       <div>
               <editParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
       </div>
@@ -121,7 +187,6 @@ import VehicleTable from '@/components/common/vehicle_table.vue'
 import editParkActivities from './edit_park_activities.vue'
 import editTrailActivities from './edit_trail_activities.vue'
 import FileField from './required_docs.vue'
-import TreeSelect from './treeview.vue'
 //import 'custom-event-polyfill'
 import {
   api_endpoints,
@@ -142,13 +207,6 @@ export default {
         data:function () {
           let vm = this;
             return{
-                park_options: [],
-                land_access_options: [],
-                land_activity_options: [],
-                trail_options: [],
-                trail_activity_options: [],
-                land_access_types: [],
-                
                 pBody: 'pBody'+vm._uid,
                 tBody: 'lBody'+vm._uid,
                 values:null,
@@ -182,7 +240,6 @@ export default {
           editParkActivities,
           editTrailActivities,
           FileField,
-          TreeSelect,
         },
         computed:{
 
@@ -472,53 +529,6 @@ export default {
         },
         },
         methods:{
-          fetchParkTreeview: function(){
-            let vm = this;
-
-            console.log('treeview_url: ' + api_endpoints.tclass_container + '?format=json')
-            //vm.$http.get(api_endpoints.tclass_container + '?format=json')
-            vm.$http.get(api_endpoints.tclass_container)
-            .then((response) => {
-                vm.park_options = [
-                    {
-                        'id': 'All',
-                        'label':'Select all parks from all regions',
-                        'children': response.body['land_parks']
-                    }
-                ]
-
-                vm.land_access_options = [
-                    {
-                        'id': 'All',
-                        'label':'Select all',
-                        'children': response.body['access_types']
-                    }
-                ]
-                vm.land_access_types = response.body['access_types'] // needed to pass to Vehicle component
-
-                vm.land_activity_options = [
-                    {
-                        'id': 'All',
-                        'label':'Select all',
-                        'children': response.body['land_activity_types']
-                    }
-                ]
-                vm.trail_activity_options = vm.land_activity_options
-
-                vm.trail_options = [
-                    {
-                        'id': 'All',
-                        'label':'Select all',
-                        'children': response.body['trails']
-                    }
-                ]
-
-                //vm.selected_items = response.body['selected_items'];
-            },(error) => {
-                console.log(error);
-            })
-          },
-
           fetchRegions: function(){
             let vm = this;
 
@@ -944,7 +954,7 @@ export default {
           //console.log(trail_list)
           vm.trail_activities = vm.find_recurring(all_activities)
         },
-        _createParkEvent: function(selected_parks){
+        createParkEvent: function(selected_parks){
           let vm= this;
           for(var i=0;i<selected_parks.length; i++){
             var elem=$("#park"+selected_parks[i])[0];
@@ -953,7 +963,7 @@ export default {
             elem.dispatchEvent(event);
           }
         },
-        createParkEvent: function(selected_parks){
+        _createParkEvent: function(selected_parks){
           let vm= this;
           for(var i=0;i<selected_parks.length; i++){
             //$("#park"+selected_parks[i]).prop( "checked", true );
@@ -969,9 +979,6 @@ export default {
         mounted: function() {
 
             let vm = this;
-            vm.fetchParkTreeview()
-
-
             vm.proposal.selected_trails_activities=[];
             vm.proposal.selected_parks_activities=[];
             //vm.proposal.marine_parks_activities=[];
@@ -1064,10 +1071,10 @@ export default {
         },
         updated: function(){
           let vm=this;
-          /*
           if(vm.api_regions){ //check if Regions, Parks and districts are loaded in DOM
                 vm.createParkEvent(vm.selected_parks);           
           }
+          /*
           */
         },
         created: function(){
@@ -1123,20 +1130,5 @@ export default {
 .list-group-item .glyphicon {
     margin-right: 5px;
 }
-
-/*
-.myselect {
-    position: relative;
-    margin-bottom: 0;
-    padding: 0;
-}
-
-.dropdown-pane {
-  position: relative;
-    margin-bottom: 0;
-    padding: 0;
-}
-*/
-
 </style>
 

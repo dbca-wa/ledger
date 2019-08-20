@@ -1,7 +1,6 @@
 <template lang="html">
     <div>
         <div id="mydiv"></div>
-        <pre>{{ selected_items }}</pre>
         <treeselect
             v-model="selected_items"
             :options="options"
@@ -11,12 +10,12 @@
             :value-consists-of="value_consists_of"
             :clearable="clearable"
             :flat="flat"
+            :default-expand-level="default_expand_level"
             open-on-focus="true"
             open-direction="bottom"
-            limit="10"
+            limit="20"
             >
 
-            <input type="hidden" @click="edit_activities_test($event,node)">
 
             <template slot="option-label" slot-scope="{ node }">
                 <label class="col-sm-8 control-label">{{ node.raw.label }}</label>
@@ -29,6 +28,7 @@
                 <a class="col-sm-4 control-label pull-right" @click="edit_activities(p.id, p.name)" target="_blank">Edit access and activities  <i class="fa fa-edit"></i></a>
                 :always-open="always_open"
                 :default-expand-level="default_expand_level"
+                <input type="hidden" @click="edit_activities_test($event,node)">
                 -->
             </template>
         </treeselect>
@@ -83,7 +83,7 @@ export default {
         },
         clearable:{
             type: Boolean,
-            default: true
+            default: false
         },
         multiple:{
             type: Boolean,
@@ -105,10 +105,15 @@ export default {
 
     data() {
       return {
-        items: ['Item1', 'Item2', 'Item3', 'Item4', 'Item5', 'Item6', 'Item7', 'Item8'],
-        template2: '<a class="col-sm-4 control-label pull-right">Edit access  {{node.raw.label}}</a>',
         _selected_items: [],
         _options: [],
+        normalizer(node) {
+            return {
+                id: node.name,
+                label: node.name,
+                children: node.children,
+            }
+        },
 
         /*
         selected_items: [3,5],
@@ -236,7 +241,7 @@ export default {
 
     mounted:function () {
         let vm = this;
-        vm.fetchParkTreeview()
+        //vm.fetchParkTreeview()
         setupResizeAndScrollEventListeners()
     }
 }

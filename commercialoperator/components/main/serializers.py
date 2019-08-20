@@ -179,11 +179,12 @@ class TrailSerializer2(serializers.ModelSerializer):
     pk = serializers.SerializerMethodField()
     id = serializers.SerializerMethodField()
     label = serializers.SerializerMethodField()
+    can_edit = serializers.SerializerMethodField()
     sections=SectionSerializer(many=True)
     allowed_activities=ActivitySerializer(many=True)
     class Meta:
         model = Trail
-        fields = ('pk', 'id', 'label', 'code', 'section_ids', 'sections', 'allowed_activities')
+        fields = ('pk', 'id', 'label', 'can_edit', 'code', 'section_ids', 'sections', 'allowed_activities')
 
     def get_pk(self, obj):
         return obj.id
@@ -194,11 +195,22 @@ class TrailSerializer2(serializers.ModelSerializer):
     def get_label(self, obj):
         return obj.name
 
+    def get_can_edit(self, obj):
+        #proposal = self.context['request'].GET.get('proposal')
+        #activities = ProposalParkActivity.objects.filter(proposal_park__park=obj.id, proposal_park__proposal=proposal)
+        #return True if activities else False
+        return True
+
+
 
 
 class AccessTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessType
+
+    class Meta:
+        model = AccessType
+        fields = ('id', 'name', 'visible')
 
 
 class ActivityMatrixSerializer(serializers.ModelSerializer):
