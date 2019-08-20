@@ -83,9 +83,10 @@ def is_officer(request):
         request.user, licence_officer_groups) or request.user.is_superuser)
 
 def prefer_compliance_management(request):
-    preference_qs = ComplianceManagementUserPreferences.objects.filter(email_user=request.user)
-    if preference_qs and preference_qs[0].prefer_compliance_management:
-        return True
+    if request.user.is_authenticated():
+        preference_qs = ComplianceManagementUserPreferences.objects.filter(email_user=request.user)
+        if preference_qs and preference_qs[0].prefer_compliance_management:
+            return True
     else:
         return False
 
