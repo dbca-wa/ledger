@@ -272,15 +272,6 @@ export default {
             await this.get_documents();
         });
     },
-    //updated: async function() {
-        //this.$nextTick(async () => {
-            //await this.$emit('update-parent', (done) => {
-              //  console.log("inside emit")
-                //console.log(done)
-            //});
-      //  });
-    //},
-        
 }
 
 </script>

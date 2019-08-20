@@ -242,7 +242,7 @@
                             </div>
                             <div class="col-sm-12 form-group"><div class="row">
                                 <div v-if="inspection">
-                                  <datatable ref="inspection_team_table" id="inspection-team-table" :dtOptions="dtOptionsInspectionTeam" :dtHeaders="dtHeadersInspectionTeam" />
+                                    <datatable ref="inspection_team_table" id="inspection-team-table" :dtOptions="dtOptionsInspectionTeam" :dtHeaders="dtHeadersInspectionTeam" />
                                 </div>
                             </div></div>
                           </FormSection>
@@ -286,7 +286,7 @@
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
                                     <div class="col-sm-12">
-                                        <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
+                                        <RelatedItems v-bind:key="relatedItemsBindId"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -336,6 +336,7 @@ import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
 import InspectionModal from './inspection_modal.vue';
+import RelatedItems from "@common-components/related_items.vue";
 
 
 export default {
@@ -458,6 +459,7 @@ export default {
     SanctionOutcome,
     filefield,
     InspectionModal,
+    RelatedItems,
   },
   watch: {
       inspection: {
@@ -527,6 +529,14 @@ export default {
             return this.inspection.status.id === 'open' ? true : false;
         } else {
             return false;
+        }
+    },
+    relatedItemsBindId: function() {
+        let timeNow = Date.now()
+        if (this.inspection && this.inspection.id) {
+            return 'inspection_' + this.inspection.id + '_' + this._uid;
+        } else {
+            return timeNow.toString();
         }
     },
   },
