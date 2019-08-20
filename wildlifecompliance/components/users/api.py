@@ -47,6 +47,8 @@ from wildlifecompliance.components.organisations.serializers import (
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
+from django.urls import reverse
+from django.shortcuts import render, redirect, get_object_or_404
 
 
 def generate_dummy_email(first_name, last_name):
@@ -505,13 +507,17 @@ class UserViewSet(viewsets.ModelViewSet):
         with transaction.atomic():
             try:
                 system_preference_instance = None
+                prefer_compliance_management = request.data.get('prefer_compliance_management')
                 user_instance = self.get_object()
                 if ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id):
                     system_preference_instance = ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id)[0]
                 if system_preference_instance:
                     serializer = UpdateComplianceManagementUserPreferencesSerializer(
                             system_preference_instance,
-                            data=request.data
+                            data={
+                                'email_user_id': user_instance.id, 
+                                'prefer_compliance_management': prefer_compliance_management
+                                }
                             )
                 else:
                     serializer = UpdateComplianceManagementUserPreferencesSerializer(
@@ -519,9 +525,7 @@ class UserViewSet(viewsets.ModelViewSet):
                             )
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-                return_serializer = MyUserDetailsSerializer(request.user, context={'request': request})
-                print(return_serializer.data)
-                return Response(return_serializer.data)
+                return redirect('/')
             except serializers.ValidationError:
                 print(traceback.print_exc())
                 raise
