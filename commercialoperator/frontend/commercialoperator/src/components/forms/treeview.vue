@@ -24,7 +24,6 @@
                 </div>
 
                 <!--
-                <TreeSelectNode :node="node"></TreeSelectiNode>
                 <a class="col-sm-4 control-label pull-right" @click="edit_activities(p.id, p.name)" target="_blank">Edit access and activities  <i class="fa fa-edit"></i></a>
                 :always-open="always_open"
                 :default-expand-level="default_expand_level"
@@ -52,13 +51,11 @@ import '@/third-party/vue-treeselect/dict/vue-treeselect.css'
 
 import Profile from '@/components/user/profile.vue'
 //import setupResizeAndScrollEventListeners from '@riophae/vue-treeselect'
-//import TreeSelectNode from './treeview_node_edit'
 
 export default {
     name:'TreeSelect',
     components:{
         Treeselect,
-        //TreeSelectNode
     },
     props:{
         proposal:{

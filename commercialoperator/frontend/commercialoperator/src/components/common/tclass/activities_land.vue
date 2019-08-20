@@ -130,7 +130,7 @@ import VehicleTable from '@/components/common/vehicle_table.vue'
 import editParkActivities from './edit_park_activities.vue'
 import editTrailActivities from './edit_trail_activities.vue'
 import FileField from './required_docs.vue'
-import TreeSelect from './treeview.vue'
+import TreeSelect from '@/components/forms/treeview.vue'
 //import 'custom-event-polyfill'
 import {
   api_endpoints,

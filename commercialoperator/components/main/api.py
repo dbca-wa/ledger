@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, B
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
 from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, ActivityCategory, Activity, RequiredDocument, Question, GlobalSettings
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer, OracleSerializer, BookingSettlementReportSerializer
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer, OracleSerializer, BookingSettlementReportSerializer, LandActivityTabSerializer
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from commercialoperator.components.proposals.models import Proposal
@@ -19,6 +19,7 @@ from commercialoperator.components.proposals.serializers import ProposalSerializ
 from commercialoperator.components.bookings.utils import oracle_integration
 from commercialoperator.components.bookings import reports
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
+from collections import namedtuple
 import json
 from decimal import Decimal
 
@@ -76,22 +77,6 @@ class GlobalSettingsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = GlobalSettings.objects.all().order_by('id')
     serializer_class = GlobalSettingsSerializer
 
-from commercialoperator.components.main.serializers import LandActivityTabSerializer
-#class RegionViewSet2(viewsets.ReadOnlyModelViewSet):
-#    queryset = Region.objects.all().order_by('id')
-#    serializer_class = RegionSerializer2
-#
-#    def list(self, request, *args, **kwargs):
-#        #import ipdb; ipdb.set_trace()
-#        parent_data = {}
-#        serializer = self.get_serializer(self.queryset, many=True)
-#        parent_data.update(dict(selected_items=[2,3]))
-#        parent_data.update(dict(options=[dict(id=0, label='All parks from all regions', isDefaultExpanded=True, children=serializer.data)]))
-#        #return Response(serializer.data)
-#        return Response(parent_data)
-
-
-from collections import namedtuple
 class LandActivityTabViewSet(viewsets.ReadOnlyModelViewSet):
     """
     A simple ViewSet for listing the Tweets and Articles in your Timeline.
