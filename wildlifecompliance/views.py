@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 
 from datetime import datetime, timedelta
 
-from wildlifecompliance.helpers import is_internal
+from wildlifecompliance.helpers import is_internal, prefer_compliance_management
 from wildlifecompliance.forms import *
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.call_email.models import CallEmail
@@ -68,7 +68,9 @@ class WildlifeComplianceRoutingView(TemplateView):
 
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated():
-            if is_internal(self.request):
+            if is_internal(self.request) and prefer_compliance_management(self.request):
+                return redirect('internal/call_email/')
+            elif is_internal(self.request):
                 return redirect('internal')
             return redirect('external')
         kwargs['form'] = LoginForm

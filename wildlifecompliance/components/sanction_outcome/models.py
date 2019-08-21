@@ -136,6 +136,14 @@ class SanctionOutcome(models.Model):
 
     def __str__(self):
         return 'Type : {}, Identifier: {}'.format(self.type, self.identifier)
+    
+    @property
+    def get_related_items_identifier(self):
+        return self.identifier
+
+    @property
+    def get_related_items_descriptor(self):
+        return '{0}, {1}'.format(self.lodgement_number, self.description)
 
     def issue(self, request):
         self.status = self.STATUS_CLOSED_ISSUED

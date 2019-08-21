@@ -7,6 +7,8 @@ from ledger.accounts.models import EmailUser
 import os
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.postgres.fields.jsonb import JSONField
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 
 @python_2_unicode_compatible
@@ -150,6 +152,27 @@ queryset_methods = {
 for method_name, method in queryset_methods.items():
     setattr(QuerySet, method_name, method)
 
+
+
+class WeakLinks(models.Model):
+
+    first_content_type = models.ForeignKey(
+            ContentType, 
+            related_name='first_content_type',
+            on_delete=models.CASCADE)
+    first_object_id = models.PositiveIntegerField()
+    first_content_object = GenericForeignKey('first_content_type', 'first_object_id')
+
+    second_content_type = models.ForeignKey(
+            ContentType, 
+            related_name='second_content_type',
+            on_delete=models.CASCADE)
+    second_object_id = models.PositiveIntegerField()
+    second_content_object = GenericForeignKey('second_content_type', 'second_object_id')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
 # list of approved related item models
 #
 # (Call_email, 'C'), (Offence, 'O'), Email_User, Inspection, ...
@@ -159,18 +182,20 @@ approved_related_item_models = [
         'CallEmail',
         'Inspection',
         'SanctionOutcome',
+        'Case',
         ]
 
-def get_related_items(self, **kwargs):
+def get_related_items(instance, **kwargs):
     return_list = []
-    for f in self._meta.get_fields():
+    # Strong links
+    for f in instance._meta.get_fields():
         if f.is_relation and f.related_model.__name__ in approved_related_item_models:
             if f.is_relation and f.one_to_many:
 
-                if self._meta.model_name == 'callemail':
-                    field_objects = f.related_model.objects.filter(call_email_id=self.id)
-                elif self._meta.model_name == 'inspection':
-                    field_objects = f.related_model.objects.filter(inspection_id=self.id)
+                if instance._meta.model_name == 'callemail':
+                    field_objects = f.related_model.objects.filter(call_email_id=instance.id)
+                elif instance._meta.model_name == 'inspection':
+                    field_objects = f.related_model.objects.filter(inspection_id=instance.id)
                 for field_object in field_objects:
                     return_list.append(
                         {   'model_name': f.related_model.__name__,
@@ -178,7 +203,7 @@ def get_related_items(self, **kwargs):
                             'descriptor': field_object.get_related_items_descriptor
                         })
             elif f.is_relation:
-                field_value = f.value_from_object(self)
+                field_value = f.value_from_object(instance)
 
                 if field_value:
                     field_object = f.related_model.objects.get(id=field_value)
@@ -188,6 +213,38 @@ def get_related_items(self, **kwargs):
                             'identifier': field_object.get_related_items_identifier, 
                             'descriptor': field_object.get_related_items_descriptor
                         })
+    # Weak links - first pass with instance as first_content_object
+    instance_content_type = ContentType.objects.get_for_model(type(instance))
+
+    weak_links = WeakLinks.objects.filter(
+            first_content_type__pk=instance_content_type.id,
+            first_object_id=instance.id
+            )
+    for link in weak_links:
+        link_content_type = ContentType.objects.get_for_model(
+                type(
+                    link.second_content_object
+                    ))
+        return_list.append(
+            {   'model_name': link_content_type.model,
+                'identifier': link.second_content_object.get_related_items_identifier, 
+                'descriptor': link.second_content_object.get_related_items_descriptor
+            })
+    # Weak links - first pass with instance as second_content_object
+    weak_links = WeakLinks.objects.filter(
+            second_content_type__pk=instance_content_type.id,
+            second_object_id=instance.id
+            )
+    for link in weak_links:
+        link_content_type = ContentType.objects.get_for_model(
+                type(
+                    link.first_content_object
+                    ))
+        return_list.append(
+            {   'model_name': link_content_type.model,
+                'identifier': link.first_content_object.get_related_items_identifier, 
+                'descriptor': link.first_content_object.get_related_items_descriptor
+            })
     return return_list       
 
 # Examples of model properties for get_related_items

@@ -188,6 +188,13 @@ class Inspection(RevisionedMixin):
             request)
         self.save()
 
+    def endorsement(self, request):
+        self.status = self.STATUS_ENDORSEMENT
+        self.log_user_action(
+            InspectionUserAction.ACTION_ENDORSEMENT.format(self.number), 
+            request)
+        self.save()
+
     def close(self, request):
         self.status = self.STATUS_CLOSED
         self.log_user_action(
@@ -236,6 +243,7 @@ class InspectionUserAction(UserAction):
     ACTION_SEND_TO_MANAGER = "Send Inspection {} to Manager"
     ACTION_CLOSED = "Close Inspection {}"
     ACTION_REQUEST_AMENDMENT = "Request amendment for {}"
+    ACTION_ENDORSEMENT = "Endorse {}"
 
     class Meta:
         app_label = 'wildlifecompliance'
