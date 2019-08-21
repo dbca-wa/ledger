@@ -812,6 +812,20 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         qs =AmendmentRequest.objects.filter(proposal = self)
         return qs
 
+    #Check if there is an pending amendment request exist for the proposal
+    @property
+    def pending_amendment_request(self):
+        qs =AmendmentRequest.objects.filter(proposal = self, status = "requested")
+        if qs:
+            return True
+        return False
+
+    @property
+    def is_amendment_proposal(self):
+        if self.proposal_type=='amendment':
+            return True
+        return False
+
     @property
     def search_data(self):
         search_data={}

@@ -74,7 +74,7 @@
                                     <label class="control-label pull-left"  for="Name">Preferred licence period</label>
                                 </div>
                                 <div class="col-sm-9" style="margin-bottom: 5px; width:53% !important">
-                                    <select class="form-control" v-model="proposal.other_details.preferred_licence_period" ref="preferred_licence_period" :disabled="proposal.readonly">
+                                    <select class="form-control" v-model="proposal.other_details.preferred_licence_period" ref="preferred_licence_period" :disabled="proposal.readonly || proposal.pending_amendment_request || proposal.is_amendment_proposal ">
                                         <option v-for="l in licence_period_choices" :value="l.key">{{l.value}}</option>
                                     </select>
                                 </div>

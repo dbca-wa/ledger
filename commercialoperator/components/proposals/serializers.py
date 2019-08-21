@@ -362,6 +362,8 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'proposal_type',
                 'is_qa_officer',
                 'qaofficer_referrals',
+                'pending_amendment_request',
+                'is_amendment_proposal',
 
                 # tab field models
                 'applicant_details',
