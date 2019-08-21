@@ -172,6 +172,8 @@ export default {
               return "Create New Inspection";
           } else if (this.workflow_type === 'send_to_manager') {
               return "Send to Manager";
+          } else if (this.workflow_type === 'request_amendment') {
+              return "Request Amendment";
           } else if (this.workflow_type === 'close') {
               return "Close Inspection";
           }

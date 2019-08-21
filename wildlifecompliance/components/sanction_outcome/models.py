@@ -140,6 +140,14 @@ class SanctionOutcome(models.Model):
 
     def __str__(self):
         return 'Type : {}, Identifier: {}'.format(self.type, self.identifier)
+    
+    @property
+    def get_related_items_identifier(self):
+        return self.identifier
+
+    @property
+    def get_related_items_descriptor(self):
+        return '{0}, {1}'.format(self.lodgement_number, self.description)
 
 
 class RemediationAction(models.Model):
