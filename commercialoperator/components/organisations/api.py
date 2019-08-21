@@ -540,7 +540,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             )
             instance.postal_address = address
             instance.save()
-            send_organisation_address_updated_email_notification(request.user, instance, org, request)
+            #send_organisation_address_updated_email_notification(request.user, instance, org, request)
             serializer = self.get_serializer(org)
             return Response(serializer.data);
         except serializers.ValidationError:
