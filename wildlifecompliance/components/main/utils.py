@@ -359,6 +359,18 @@ def search_reference(reference_number):
         raise ValidationError('Record with provided reference number does not exist')
 
 
-def search_weak_links(request):
-    pass
+def search_weak_links(request_data):
+    from wildlifecompliance.components.call_email.models import CallEmail
+    from wildlifecompliance.components.inspection.models import Inspection
+    from wildlifecompliance.components.offence.models import Offence
+    from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome
+    qs = []
+    call_email_list = []
+    inspection_list = []
+    offence_list = []
+    sanction_outcome_list = []
+
+    components_selected = request_data.get('componentsSelected')
+    search_text = request_data.get('searchText')
+
 
