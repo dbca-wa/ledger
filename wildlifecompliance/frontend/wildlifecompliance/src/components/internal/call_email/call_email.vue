@@ -343,7 +343,7 @@
                         <div :id="rTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
-                                    <div class="col-sm-12">
+                                    <div class="col-sm-12" v-if="relatedItemsVisibility">
                                         <RelatedItems v-bind:key="relatedItemsBindId"/>
                                     </div>
                                 </div></div>
@@ -539,6 +539,13 @@ export default {
             return timeNow.toString();
         }
     },
+    relatedItemsVisibility: function() {
+        if (this.call_email && this.call_email.id) {
+            return true;
+        } else {
+            return false;
+        }
+    }
   },
   filters: {
     formatDate: function(data) {
