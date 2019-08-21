@@ -506,23 +506,16 @@ class UserViewSet(viewsets.ModelViewSet):
     def update_system_preference(self, request, *args, **kwargs):
         with transaction.atomic():
             try:
-                system_preference_instance = None
-                prefer_compliance_management = request.data.get('prefer_compliance_management')
+                prefer_compliance_management = request.data.get('prefer_compliance_management', False)
                 user_instance = self.get_object()
-                if ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id):
-                    system_preference_instance = ComplianceManagementUserPreferences.objects.filter(email_user_id=user_instance.id)[0]
-                if system_preference_instance:
-                    serializer = UpdateComplianceManagementUserPreferencesSerializer(
-                            system_preference_instance,
-                            data={
-                                'email_user_id': user_instance.id, 
-                                'prefer_compliance_management': prefer_compliance_management
-                                }
-                            )
-                else:
-                    serializer = UpdateComplianceManagementUserPreferencesSerializer(
-                            data=request.data
-                            )
+                system_preference_instance, created = ComplianceManagementUserPreferences.objects.get_or_create(email_user_id=user_instance.id)
+                serializer = UpdateComplianceManagementUserPreferencesSerializer(
+                        system_preference_instance,
+                        data={
+                            'email_user_id': user_instance.id, 
+                            'prefer_compliance_management': prefer_compliance_management
+                            }
+                        )
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
                 return redirect('/')
