@@ -84,8 +84,8 @@ def is_officer(request):
 
 def prefer_compliance_management(request):
     if request.user.is_authenticated():
-        preference_qs = ComplianceManagementUserPreferences.objects.filter(email_user=request.user)
-        if preference_qs and preference_qs[0].prefer_compliance_management:
+        preference_qs, created = ComplianceManagementUserPreferences.objects.get_or_create(email_user=request.user)
+        if preference_qs and preference_qs.prefer_compliance_management:
             return True
     else:
         return False
