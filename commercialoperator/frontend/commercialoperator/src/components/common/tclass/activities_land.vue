@@ -84,9 +84,9 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ trail_activities }}</pre>
+                            <pre>{{ selected_trails_activities }}</pre>
                             <label class="control-label">Select the required activities for trails</label>
-                            <TreeSelect :proposal="proposal" :value.sync="trail_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_trails_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -103,6 +103,10 @@
                     </div>
                 </form>
             </div>
+
+            <div>{{selected_trails}}</div>
+            <div>{{selected_trails_activities}}</div>
+
 
           </div>
         </div>
@@ -315,7 +319,7 @@ export default {
             for (var i=0; i<vm.selected_parks_activities.length; i++)
             { 
               if(added.length!=0){
-               
+
                 for(var j=0; j<added.length; j++)
                 {
                   if(vm.selected_parks_activities[i].access.indexOf(added[j])<0){
@@ -363,10 +367,6 @@ export default {
             if(vm.selected_trails_activities.length==0){
               for (var i = 0; i < vm.selected_trails.length; i++) {
                  var data=null;
-                 // data={
-                 //  'trail': vm.selected_trails[i],
-                 //  'activities': current_activities
-                 // }
                  var section_activities=[];
 
                  for (var j=0; j<vm.selected_trails[i].sections.length; j++){
@@ -406,13 +406,6 @@ export default {
                     data={
                     'trail': added_trail[i].trail,
                     'activities': section_activities,                   }
-                    // data={
-                    // 'trail': added_trail[i].trail,
-                    // 'activities':{
-                    //   'zone': added_trail[i].zones,
-                    //   'activities': current_activities,
-                    // }
-                    //}
                    vm.selected_trails_activities.push(data);
                   }
                 }
@@ -445,9 +438,8 @@ export default {
           }
           else{
             for (var i=0; i<vm.selected_trails_activities.length; i++)
-            { 
+            {
               if(added.length!=0){
-               
                 for(var j=0; j<added.length; j++)
                 {
                   // if(vm.selected_trails_activities[i].activities.indexOf(added[j])<0){
@@ -463,10 +455,6 @@ export default {
               if(removed.length!=0){
                 for(var j=0; j<removed.length; j++)
                 {
-                  // var index=vm.selected_trails_activities[i].activities.indexOf(removed[j]);
-                  // if(index!=-1){
-                  //   vm.selected_trails_activities[i].activities.splice(index,1)
-                  // }
                   for(var k=0; k<vm.selected_trails_activities[i].activities.length; k++){
                     var index=vm.selected_trails_activities[i].activities[k].activities.indexOf(removed[j]);
                     if(index!=-1){
@@ -484,17 +472,17 @@ export default {
           fetchParkTreeview: function(){
             let vm = this;
 
-            console.log('treeview_url: ' + api_endpoints.tclass_container + '?format=json')
-            //vm.$http.get(api_endpoints.tclass_container + '?format=json')
+            //console.log('treeview_url: ' + api_endpoints.tclass_container)
             vm.$http.get(api_endpoints.tclass_container)
             .then((response) => {
                 vm.park_options = [
                     {
                         'id': 'All',
                         'name':'Select all parks from all regions',
-                        'children': response.body['land_parks']
+                        'children': response.body['land_parks'] // land_parks --> regions/districts/parks nested json
                     }
                 ]
+                vm.api_regions = response.body['land_parks']
 
                 vm.land_access_options = [
                     {
@@ -504,6 +492,7 @@ export default {
                     }
                 ]
                 vm.land_access_types = response.body['access_types'] // needed to pass to Vehicle component
+                vm.access = response.body['access_types'] // needed to pass to Vehicle component
 
                 vm.land_activity_options = [
                     {
@@ -513,6 +502,7 @@ export default {
                     }
                 ]
                 vm.trail_activity_options = vm.land_activity_options
+                vm.activities = response.body['land_activity_types'] // needed to pass to Vehicle component
 
                 vm.trail_options = [
                     {
@@ -521,44 +511,20 @@ export default {
                         'children': response.body['trails']
                     }
                 ]
+                vm.trails = response.body['trails']
+                vm.required_documents_list = response.body['land_required_documents']
+                vm.fetchRequiredDocumentList();
 
-                //vm.selected_items = response.body['selected_items'];
             },(error) => {
                 console.log(error);
             })
           },
-
-          fetchRegions: function(){
-            let vm = this;
-
-            vm.$http.get(api_endpoints.regions).then((response) => { 
-            vm.api_regions = response.body;
-            },(error) => {
-            console.log(error);
-            })
-          },
-          fetchTrails: function(){
-            let vm = this;
-            vm.$http.get('/api/trails.json').then((response) => {
-            vm.trails = response.body;
-            
-            },(error) => {
-            console.log(error);
-            })
-          },
           fetchRequiredDocumentList: function(){
             let vm = this;
-            vm.$http.get('/api/required_documents.json').then((response) => {
-            vm.required_documents_list = response.body;
             for(var l=0; l<vm.required_documents_list.length; l++){
               vm.required_documents_list[l].can_view=false;
               vm.checkRequiredDocuements(vm.selected_parks_activities)
-              //console.log('park',vm.selected_parks_activities)
             }
-            },(error) => {
-            console.log(error);
-            })
-
           },
           checkRequiredDocuements: function(selected_parks_activities){
             let vm=this;
@@ -596,10 +562,8 @@ export default {
           }
           },
           edit_activities_child_test:function(node){
-              //alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
               alert("IN PARENT:  park_id: " + node.raw.id + ", park_name: " + node.raw.label );
           },
-          //edit_activities: function(p_id, p_name){
           edit_activities: function(node){
             let vm=this;
             var p_id = node.raw.id;
@@ -617,8 +581,9 @@ export default {
             this.$refs.edit_activities.fetchAllowedAccessTypes(p_id)
             this.$refs.edit_activities.isModalOpen = true;
           },
-          edit_sections: function(trail){
+          edit_sections: function(node){
             let vm=this;
+            var trail = node.raw;
             //inserting a temporary variables checked and new_activities to store and display selected activities for each section.
             for(var l=0; l<trail.sections.length; l++){
               trail.sections[l].checked=false;
@@ -637,7 +602,7 @@ export default {
                 } 
               }
             }
-            //console.log(trail);
+            console.log(trail);
             this.$refs.edit_sections.trail=trail;
             this. $refs.edit_sections.isModalOpen = true;
           },
@@ -659,251 +624,6 @@ export default {
               }
             }
           },
-          clickSelectAll: function(e){
-            let vm=this;
-            var checked=e.target.checked;
-            var new_regions=[];
-            var new_district=[];
-            var new_parks = [];
-            if(checked){
-              for(var i=0; i<vm.api_regions.length; i++){
-                new_regions.push(vm.api_regions[i].id);
-                //change the inderminate and checked states of region checkboxes
-                var region = $("#region"+vm.api_regions[i].id)[0]
-                region.checked=true;
-                region.indeterminate=false;
-
-                for (var j=0; j<vm.api_regions[i].districts.length; j++){
-                  new_district.push(vm.api_regions[i].districts[j].id);
-                  //change the inderminate and checked states of district checkboxes
-                  var district = $("#district"+vm.api_regions[i].districts[j].id)[0]
-                    district.checked=true;
-                    district.indeterminate=false;
-                  for (var k=0; k<vm.api_regions[i].districts[j].land_parks.length; k++){
-                    new_parks.push(vm.api_regions[i].districts[j].land_parks[k].id);
-                  }
-                }
-              }
-              vm.selected_regions=new_regions;
-              vm.selected_districts=new_district;
-              vm.selected_parks=new_parks;
-            }
-          if(!checked){
-            for(var i=0; i<vm.api_regions.length; i++){
-              var region = $("#region"+vm.api_regions[i].id)[0]
-                region.checked=false;
-                region.indeterminate=false;
-                for (var j=0; j<vm.api_regions[i].districts.length; j++){
-                    var district = $("#district"+vm.api_regions[i].districts[j].id)[0]
-                    district.checked=false;
-                    district.indeterminate=false;
-                }
-            }
-            vm.selected_regions=[];
-            vm.selected_districts=[];
-            vm.selected_parks=[];
-          }
-          },
-          clickRegion: function(e, r){
-            var checked=e.target.checked;
-            if(checked){
-              for(var i=0; i<r.districts.length; i++){
-                var index=this.selected_districts.indexOf(r.districts[i].id);
-                if(index==-1)
-                {
-                  this.selected_districts.push(r.districts[i].id)
-                  var district = $("#district"+r.districts[i].id)[0]
-                  district.checked=true;
-                  district.indeterminate=false;
-                  for(var j=0; j<r.districts[i].land_parks.length; j++){
-                    var index_park=this.selected_parks.indexOf(r.districts[i].land_parks[j].id);
-                    if(index_park==-1)
-                    {
-                      var s = helpers.copyObject(this.selected_parks);
-                      s.push(r.districts[i].land_parks[j].id);
-                      this.selected_parks=s
-                    }
-                  }   
-                }
-              }
-            }
-            else{
-              for(var i=0; i<r.districts.length; i++){
-                var index=this.selected_districts.indexOf(r.districts[i].id);
-                if(index!=-1){
-                  this.selected_districts.splice(index,1)
-                  var district = $("#district"+r.districts[i].id)[0]
-                  district.checked=false;
-                  district.indeterminate=false;
-                  for(var j=0; j<r.districts[i].land_parks.length; j++){
-                    var index_park=this.selected_parks.indexOf(r.districts[i].land_parks[j].id);
-                    if(index_park!=-1)
-                    {
-                      var s = helpers.copyObject(this.selected_parks);
-                      s.splice(index_park,1);
-                      this.selected_parks=s
-                    }
-                  }
-
-                }
-              }
-            }
-          },
-          clickDistrict: function(e, d, r){
-            let vm=this;
-            var original_region=r;
-            var checked=e.target.checked;
-            if(checked){
-              for(var i=0; i<d.land_parks.length; i++){
-                var index=this.selected_parks.indexOf(d.land_parks[i].id);
-                if(index==-1)
-                {
-                  var r = helpers.copyObject(this.selected_parks);
-                  r.push(d.land_parks[i].id);
-                  this.selected_parks=r
-                  
-                }
-              }
-            }
-            else{
-              if(e.target.indeterminate==false){
-              for(var i=0; i<d.land_parks.length; i++){
-                var index=this.selected_parks.indexOf(d.land_parks[i].id);
-                if(index!=-1){
-                  var r = helpers.copyObject(this.selected_parks);
-                  r.splice(index,1);
-                  this.selected_parks=r
-                  //this.selected_parks.splice(index,1)
-                }
-              }
-            }
-            }
-            this.handleDistrictChange(e,d,original_region);
-          },
-
-          handleDistrictChange: function(e,d, r){
-            //console.log('here')
-            var inder_state=false;
-            var checked_state=false;
-            var checked_all=true;
-            var unchecked_all=true;
-            var elem=$("#region"+r.id)[0]
-            inder_state=elem.indeterminate
-            checked_state=elem.checked
-            if(e.target.checked){
-              if(!checked_state){
-                for(var i=0; i<r.districts.length; i++){
-                  var district = $("#district"+r.districts[i].id)[0]
-                  if(district.checked==false){
-                    checked_all=false;
-                  }
-                }
-                if(checked_all){
-                  elem.indeterminate=false;
-                  elem.checked=true;
-                  var index=this.selected_regions.indexOf(r.id);
-                  if(index==-1){
-                    this.selected_regions.push(r.id)
-                  }
-                }
-                else{
-                  elem.indeterminate=true;
-                  elem.checked=false;
-                }
-              }              
-            }
-            else{//if unselected
-              if(e.target.indeterminate==false){
-              for(var i=0; i<r.districts.length; i++){
-                  var district = $("#district"+r.districts[i].id)[0]
-                  if(district.checked==true){
-                    unchecked_all=false;
-                  }
-                }
-                if(unchecked_all){
-                  elem.indeterminate=false;
-                  elem.checked=false;
-                  var index=this.selected_regions.indexOf(r.id);
-                  if(index>-1){
-                    this.selected_regions.splice(index,1)
-                  }
-                }
-                else{
-                  var index=this.selected_regions.indexOf(r.id);
-                  if(index>-1){
-                    this.selected_regions.splice(index,1)
-                  }
-                  elem.indeterminate=true;
-                  elem.checked=false;
-                }
-              }
-              else{
-                elem.indeterminate=true;
-                  elem.checked=false;
-              }
-            }
-          },
-          
-
-          clickPark: function(e,p,d){
-            var inder_state=false;
-            var checked_state=false;
-            var checked_all=true;
-            var unchecked_all=true;
-            var elem=$("#district"+d.id)[0]
-            inder_state=elem.indeterminate
-            checked_state=elem.checked
-            if(e.target.checked){
-              if(!checked_state){
-                for(var i=0; i<d.land_parks.length; i++){
-                  var park = $("#park"+d.land_parks[i].id)[0]
-                  if(park.checked==false){
-                    checked_all=false;
-                  }
-                }
-                if(checked_all){
-                  elem.indeterminate=false;
-                  elem.checked=true;
-                  var index=this.selected_districts.indexOf(d.id);
-                  if(index==-1){
-                    this.selected_districts.push(d.id)
-                  }
-                }
-                else{
-                  elem.indeterminate=true;
-                  elem.checked=false;
-                }
-              }              
-            }
-            else{//if unselected
-              for(var i=0; i<d.land_parks.length; i++){
-                  var park = $("#park"+d.land_parks[i].id)[0]
-                  if(park.checked==true){
-                    unchecked_all=false;
-                  }
-                }
-                if(unchecked_all){
-                  elem.indeterminate=false;
-                  elem.checked=false;
-                  var index=this.selected_districts.indexOf(d.id);
-                  if(index>-1){
-                    this.selected_districts.splice(index,1)
-                  }
-                }
-                else{
-                  var index=this.selected_districts.indexOf(d.id);
-                  if(index>-1){
-                    this.selected_districts.splice(index,1)
-                  }
-                  elem.indeterminate=true;
-                  elem.checked=false;
-                }
-            }
-            var event = document.createEvent('HTMLEvents');
-            event.initEvent('click', true, true);
-            elem.dispatchEvent(event);
-          },
-          
           find_recurring: function(array){
             var common=new Map();
             array.forEach(function(obj){
@@ -929,7 +649,7 @@ export default {
               var current_trail=trails[i].trail.id
               var current_activities=[]
               var current_sections=[]
-              
+
               for (var j = 0; j < trails[i].sections.length; j++) {
                 var trail_activities=[];
                 for (var k = 0; k < trails[i].sections[j].trail_activities.length; k++) {
@@ -943,43 +663,23 @@ export default {
                 all_activities.push({'key': trail_activities})
                 //current_sections.push(trails[i].sections[j].section)
               }
-               
+
                var data={
                 'trail': current_trail,
                 'activities': current_activities 
                }
                vm.selected_trails_activities.push(data)
-               
             }
-            
+
           for (var i=0; i<trails.length; i++)
-            { 
-              
+            {
               trail_list.push({'trail':trails[i].trail.id, 'sections':trails[i].trail.section_ids})
             }
           vm.selected_trails=trail_list
           //console.log(trail_list)
           vm.trail_activities = vm.find_recurring(all_activities)
         },
-        _createParkEvent: function(selected_parks){
-          let vm= this;
-          for(var i=0;i<selected_parks.length; i++){
-            var elem=$("#park"+selected_parks[i])[0];
-            var event = document.createEvent('HTMLEvents');
-            event.initEvent('click', true, true);
-            elem.dispatchEvent(event);
-          }
-        },
-        createParkEvent: function(selected_parks){
-          let vm= this;
-          for(var i=0;i<selected_parks.length; i++){
-            //$("#park"+selected_parks[i]).prop( "checked", true );
-            document.getElementById("park"+selected_parks[i]).checked = true
-          }
-        },
-
         eventListeners: function(){
-            
         },
     },
 
@@ -992,21 +692,6 @@ export default {
             vm.proposal.selected_trails_activities=[];
             vm.proposal.selected_parks_activities=[];
             //vm.proposal.marine_parks_activities=[];
-            vm.fetchRequiredDocumentList();
-            Vue.http.get('/api/access_types.json').then((res) => {
-                      vm.accessTypes=res.body;                 
-                },
-              err => { 
-                        console.log(err);
-                  }); 
-            Vue.http.get('/api/land_activities.json').then((res) => {
-                      vm.activities=res.body;                 
-                },
-              err => { 
-                        console.log(err);
-                  }); 
-            //vm.fetchRegions(); 
-            //vm.fetchTrails();
             //vm.fetchRequiredDocumentList();
 
             for (var i = 0; i < vm.proposal.land_parks.length; i++) {
@@ -1040,22 +725,15 @@ export default {
             vm.selected_activities = vm.find_recurring(activity_list)
             vm.selected_access=vm.find_recurring(access_list)
             vm.selected_parks=park_list
-            
+
             this.$nextTick(() => {
               let vm=this;
               //vm.eventListeners();
             });
-            //vm.eventListeners();
 
             vm.store_trails(vm.proposal.trails);
 
 
-            // for (var i = 0; i < vm.proposal.trails.length; i++) {
-            //   this.selected_trails.push(vm.proposal.trails[i].trail.id);
-            // } 
-
-            
-            
             $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
               //console.log(this);
             var chev = $( this ).children()[ 0 ];
@@ -1063,34 +741,13 @@ export default {
                 $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
             }, 100 );
             }); 
-
-            //check why this is not working for list items
-            // var list_item=$('.list-group-item')
-            // var a_item=list_item.children[ 1 ]
-            // $(a_item).on( 'click', function () {
-            //   console.log(this);
-            //   var chev2 = $( this ).children()[ 0 ];
-            //   window.setTimeout( function () {
-            //       $( chev2 ).toggleClass( "glyphicon-chevron-up glyphicon-chevron-down" );
-            // }, 100 );
-            // }); 
-            // $('.list-group-item').on('click', function(){
-            //   console.log(this);
-            //   $('.glyphicon', this).toggleClass('glyphicon-chevron-up').toggleClass('glyphicon-chevron-down');
-            // })
         },
         updated: function(){
-          let vm=this;
-          /*
-          if(vm.api_regions){ //check if Regions, Parks and districts are loaded in DOM
-                vm.createParkEvent(vm.selected_parks);           
-          }
-          */
         },
         created: function(){
-          let vm=this;
-          vm.fetchRegions(); 
-          vm.fetchTrails();
+          //let vm=this;
+          //vm.fetchRegions(); 
+          //vm.fetchTrails();
         },
 
     }

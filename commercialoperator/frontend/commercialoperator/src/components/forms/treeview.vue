@@ -134,7 +134,11 @@ export default {
             alert(" park_id: " + node.raw.id + ", park_name: " + node.raw.label );
         },
         edit_activities:function(node){
-            this.$parent.edit_activities(node)
+            if (node.raw.hasOwnProperty('sections')) {
+                this.$parent.edit_sections(node)
+            } else {
+                this.$parent.edit_activities(node)
+            }
         },
         mousedown_event_stop_propagation:function(){
             $('.option-label-container').on('mousedown', function(e) {
