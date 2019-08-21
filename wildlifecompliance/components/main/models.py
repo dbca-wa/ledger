@@ -185,6 +185,18 @@ approved_related_item_models = [
         'Case',
         ]
 
+def format_model_name(model_name):
+    if model_name:
+        lower_model_name = model_name.lower()
+        switcher = {
+                'callemail': 'Call / Email',
+                'inspection': 'Inspection',
+                'offence': 'Offence',
+                'sanctionoutcome': 'Sanction Outcome',
+                'case': 'Case',
+                }
+        return switcher.get(lower_model_name, '')
+
 def get_related_items(instance, **kwargs):
     return_list = []
     # Strong links
@@ -198,7 +210,7 @@ def get_related_items(instance, **kwargs):
                     field_objects = f.related_model.objects.filter(inspection_id=instance.id)
                 for field_object in field_objects:
                     return_list.append(
-                        {   'model_name': f.related_model.__name__,
+                        {   'model_name': format_model_name(f.related_model.__name__),
                             'identifier': field_object.get_related_items_identifier,
                             'descriptor': field_object.get_related_items_descriptor
                         })
@@ -209,7 +221,7 @@ def get_related_items(instance, **kwargs):
                     field_object = f.related_model.objects.get(id=field_value)
 
                     return_list.append(
-                        {   'model_name': f.name,
+                        {   'model_name': format_model_name(f.name),
                             'identifier': field_object.get_related_items_identifier, 
                             'descriptor': field_object.get_related_items_descriptor
                         })
@@ -226,7 +238,7 @@ def get_related_items(instance, **kwargs):
                     link.second_content_object
                     ))
         return_list.append(
-            {   'model_name': link_content_type.model,
+            {   'model_name': format_model_name(link_content_type.model),
                 'identifier': link.second_content_object.get_related_items_identifier, 
                 'descriptor': link.second_content_object.get_related_items_descriptor
             })
@@ -241,7 +253,7 @@ def get_related_items(instance, **kwargs):
                     link.first_content_object
                     ))
         return_list.append(
-            {   'model_name': link_content_type.model,
+            {   'model_name': format_model_name(link_content_type.model),
                 'identifier': link.first_content_object.get_related_items_identifier, 
                 'descriptor': link.first_content_object.get_related_items_descriptor
             })
