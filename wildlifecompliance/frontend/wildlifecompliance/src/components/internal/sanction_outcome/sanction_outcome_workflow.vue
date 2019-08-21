@@ -9,7 +9,7 @@
                             <label class="control-label pull-left">Reason</label>
                         </div>
                         <div class="col-sm-7">
-                            <textarea class="form-control" placeholder="add reason" id="reason" v-model="workflowReason"/>
+                            <textarea class="form-control" placeholder="add reason" id="reason" v-model="workflowDetails"/>
                         </div>
                     </div></div>
 
@@ -38,7 +38,7 @@ require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 
 export default {
-    name: "CallEmailWorking",
+    name: "SanctionOutcomeWorkflow",
     data: function() {
         return {
             isModalOpen: false,
@@ -48,7 +48,7 @@ export default {
                         'name': ''
                     }
             ],
-            workflowReason: '',
+            workflowDetails: '',
         }
     },
     components: {
@@ -128,7 +128,24 @@ export default {
             this.attachAnother();
         },
         sendData: async function () {
+            let post_url = '/api/sanction_outcome/' + this.sanction_outcome.id + '/workflow_action/'
+            let payload = new FormData();
+            payload.append('details', this.workflowDetails);
+            this.$refs.comms_log_file.commsLogId ? payload.append('comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
+            this.workflow_type ? payload.append('workflow_type', this.workflow_type) : null;
 
+            console.log('payload');
+            console.log(payload);
+
+            try {
+                let res = await Vue.http.post(post_url, payload);
+                console.log(res);
+                if (res.ok) {
+                    return res
+                }
+            } catch(err) {
+                    this.errorResponse = err.statusText;
+            }
         },
         uploadFile(target,file_obj){
             let vm = this;

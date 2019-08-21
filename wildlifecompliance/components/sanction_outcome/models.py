@@ -137,10 +137,12 @@ class SanctionOutcome(models.Model):
     def __str__(self):
         return 'Type : {}, Identifier: {}'.format(self.type, self.identifier)
 
-    # def send_to_manager(self, request):
-    #     self.status = self.STATUS_WITH_MANAGER
-    #     self.log_user_action(SanctionOutcomeUserAction.ACTION_SEND_TO_MANAGER.format(self.number), request)
-    #     self.save()
+    def issue(self, request):
+        self.status = self.STATUS_CLOSED_ISSUED
+        self.log_user_action(
+            SanctionOutcomeUserAction.ACTION_ISSUE.format(self.lodgement_number),
+            request)
+        self.save()
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -218,9 +220,9 @@ class SanctionOutcomeUserAction(UserAction):
         ordering = ('-when',)
 
     @classmethod
-    def log_action(cls, call_email, action, user):
+    def log_action(cls, obj, action, user):
         return cls.objects.create(
-            call_email=call_email,
+            sanction_outcome=obj,
             who=user,
             what=str(action)
         )

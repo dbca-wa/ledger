@@ -176,7 +176,12 @@ urlpatterns = [
     # inspection emails to users
     url(r'^internal/inspection/(?P<inspection_id>\d+)/$', views.ApplicationView.as_view(),
         name='internal-inspection-detail'),
-    
+
+    # following url is defined so that to include url path when sending
+    # inspection emails to users
+    url(r'^internal/inspection/(?P<sanction_outcome_id>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-sanction-outcome-detail'),
+
     # url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
     url(r'^export/pdf/$', application_views.pdflatex, name='pdf_latex'),
     url(r'^mgt-commands/$',

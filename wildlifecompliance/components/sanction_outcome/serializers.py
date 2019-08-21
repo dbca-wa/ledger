@@ -3,9 +3,11 @@ from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.main.models import get_related_items
+from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer, OffenderSerializer, \
     OffenceSerializer
-from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
+from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction, \
+    SanctionOutcomeCommsLogEntry
 from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
 
@@ -191,3 +193,18 @@ class SaveRemediationActionSerializer(serializers.ModelSerializer):
             'due_date',
             'sanction_outcome_id',
         )
+
+
+class SanctionOutcomeCommsLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SanctionOutcomeCommsLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self, obj):
+        return [[d.name, d._file.url] for d in obj.documents.all()]
+
