@@ -6,6 +6,7 @@ from rest_framework.renderers import JSONRenderer
 from wildlifecompliance.components.main.utils import (
     search_keywords,
     search_reference,
+    search_weak_links,
 )
 from wildlifecompliance.components.main.serializers import (
     SearchKeywordSerializer,
@@ -28,6 +29,15 @@ class SearchKeywordsView(views.APIView):
         serializer = SearchKeywordSerializer(qs, many=True)
         return Response(serializer.data)
 
+class SearchWeakLinksView(views.APIView):
+    renderer_classes = [JSONRenderer]
+
+    def post(self, request, format=None):
+        qs = []
+        if request.data.get('searchTerm'): # modify as appropriate
+            qs = search_weak_links(request.data)
+        serializer = SearchWeakLinksSerializer(qs, many=True)
+        return Response(serializer.data)
 
 class SearchReferenceView(views.APIView):
     renderer_classes = [JSONRenderer]

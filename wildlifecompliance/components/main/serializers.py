@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from wildlifecompliance.components.main.models import CommunicationsLogEntry
 from ledger.accounts.models import EmailUser
+from wildlifecompliance.components.main.models import WeakLinks
 
 
 class CommunicationLogEntrySerializer(serializers.ModelSerializer):
@@ -40,6 +41,15 @@ class SearchKeywordSerializer(serializers.Serializer):
         source='licence_document._file.url',
         required=False
     )
+
+# to return object description fields for drop-down list vuew
+class SearchWeakLinksSerializer(serializers.Serializer):
+    #number = serializers.CharField()
+    #record_id = serializers.IntegerField()
+    #record_type = serializers.CharField()
+    #applicant = serializers.CharField()
+    #text = serializers.JSONField(required=False)
+    pass
 
 
 class SearchReferenceSerializer(serializers.Serializer):

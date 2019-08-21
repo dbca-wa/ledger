@@ -359,4 +359,6 @@ def search_reference(reference_number):
         raise ValidationError('Record with provided reference number does not exist')
 
 
+def search_weak_links(request):
+    pass
 
