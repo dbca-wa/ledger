@@ -7,7 +7,7 @@ from wildlifecompliance.components.main.serializers import CommunicationLogEntry
 from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer, OffenderSerializer, \
     OffenceSerializer
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction, \
-    SanctionOutcomeCommsLogEntry
+    SanctionOutcomeCommsLogEntry, SanctionOutcomeUserAction
 from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
 
@@ -193,6 +193,28 @@ class SaveRemediationActionSerializer(serializers.ModelSerializer):
             'due_date',
             'sanction_outcome_id',
         )
+
+
+class SanctionOutcomeCommsLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SanctionOutcomeCommsLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self, obj):
+        return [[d.name, d._file.url] for d in obj.documents.all()]
+
+
+class SanctionOutcomeUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+
+    class Meta:
+        model = SanctionOutcomeUserAction
+        fields = '__all__'
 
 
 class SanctionOutcomeCommsLogEntrySerializer(CommunicationLogEntrySerializer):

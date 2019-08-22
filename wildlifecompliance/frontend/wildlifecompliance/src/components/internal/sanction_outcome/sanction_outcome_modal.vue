@@ -233,6 +233,13 @@
                 </div>
             </div>
             <div slot="footer">
+                <div v-if="errorResponse" class="form-group">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <strong>Error: {{ errorResponse }}</strong>
+                        </div>
+                    </div>
+                </div>
                 <button type="button" v-if="processingDetails" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Adding</button>
                 <button type="button" :disabled="!displaySendToManagerButton" class="btn btn-default" @click="ok">Send to Manager</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
@@ -272,6 +279,7 @@ export default {
       availableDistricts: [], // this is generated from the regionDistricts[] above
       documentActionUrl: null,
       elem_paper_id_notice: null,
+      errorResponse: "",
 
       // This is the object to be sent to the server when saving
       sanction_outcome: {
@@ -288,6 +296,8 @@ export default {
         description: "",
         date_of_issue: null,
         time_of_issue: null,
+        allocatedGroup: [],
+        allocated_group_id: null,
 
         remediation_actions: []
       },
@@ -417,11 +427,11 @@ export default {
         this.currentRegionIdChanged();
       }
     },
-    // current_district_id: {
-    //   handler: function() {
-    //     this.currentDistrictIdChanged();
-    //   }
-    // }
+    regionDistrictId: {
+      handler: function() {
+        this.updateAllocatedGroup()
+      }
+    }
   },
   computed: {
     ...mapGetters("offenceStore", {
@@ -481,13 +491,44 @@ export default {
       } else {
         return null;
       }
-    }
+    },
+    groupPermission: function() {
+      return "manager"; // Send to manager
+    },
   },
   methods: {
     ...mapActions("offenceStore", {}),
     ok: async function() {
       await this.sendData();
       this.close();
+    },
+    ...mapActions({
+      loadAllocatedGroup: 'loadAllocatedGroup',
+    }),
+    updateAllocatedGroup: async function() {
+        console.log("updateAllocatedGroup");
+        this.errorResponse = "";
+        if (this.regionDistrictId) {
+            let allocatedGroupResponse = await this.loadAllocatedGroup({
+              region_district_id: this.regionDistrictId,
+              group_permission: this.groupPermission,
+            });
+            if (allocatedGroupResponse.ok) {
+                // Update member list
+                // Vue.set(this, 'sanction_outcome.allocatedGroup', allocatedGroupResponse.body.allocated_group);
+                // Update group id
+                this.sanction_outcome.allocated_group_id = allocatedGroupResponse.body.group_id;
+            } else {
+                // Display http error response on modal
+                this.errorResponse = allocatedGroupResponse.statusText;
+            }
+            // Display empty group error on modal
+            // if (!this.errorResponse &&
+            //     this.allocatedGroup &&
+            //     this.allocatedGroup.length <= 1) {
+            //     this.errorResponse = 'This group has no members';
+            // }
+        }
     },
     cancel: async function() {
         if(this.$refs.sanction_outcome_file) {
@@ -578,12 +619,7 @@ export default {
         districts: [],
         region: null
       });
-      // ensure security group members list is up to date
-      // this.updateAllocatedGroup();
     },
-    // updateAllocatedGroup: function() {
-    //   console.log('implement updateAllocatedGroup()');
-    // },
     addEventListeners: function() {
       let vm = this;
       let el_issue_date = $(vm.$refs.dateOfIssuePicker);

@@ -1,4 +1,5 @@
 import json
+import logging
 import traceback
 
 from datetime import datetime
@@ -27,9 +28,11 @@ from wildlifecompliance.components.sanction_outcome.models import SanctionOutcom
     SanctionOutcomeCommsLogEntry
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
     SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer, SanctionOutcomeDatatableSerializer, \
-    UpdateAssignedToIdSerializer, SanctionOutcomeCommsLogEntrySerializer
+    UpdateAssignedToIdSerializer, SanctionOutcomeCommsLogEntrySerializer, SanctionOutcomeUserActionSerializer
 from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.helpers import is_internal
+
+logger = logging.getLogger('compliancemanagement')
 
 
 class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
@@ -191,23 +194,23 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         # 2. Determine which permission(s) is going to be apllied
         compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
         codename = 'officer'
-        if workflow_type == 'send_to_manager':
+        if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:
             codename = 'manager'
-        elif workflow_type == 'return_to_officer':
+        elif workflow_type == SanctionOutcome.WORKFLOW_DECLINE:
+            codename = '---'
+        elif workflow_type == SanctionOutcome.WORKFLOW_ENDORSE:
+            codename = 'infringement_notice_coordinator'
+        elif workflow_type == SanctionOutcome.WORKFLOW_RETURN_TO_OFFICER:
             codename = 'officer'
-        elif workflow_type == 'send_to_department_of_transport':
-            codename = 'department_of_transport'
-        elif workflow_type == 'send_to_fines_enforcement_unit':
-            codename = 'fines_enforcement_unit'
-        elif workflow_type == 'send_to_branch_manager':
-            codename = 'branch_manager'
-        # TODO: more conditional?
-        #   infringement_notice_coordinator
-        #   department_of_transport
-        #   vehicle_owner
-        #   branch_manager
-        #   fines_enforcement_unit
-        #   external_party
+        elif workflow_type == SanctionOutcome.WORKFLOW_WITHDRAW:
+            codename = '---'
+        elif workflow_type == SanctionOutcome.WORKFLOW_CLOSE:
+            codename = '---'
+        else:
+            # Should not reach here
+            # instance.save()
+            pass
+
         permissions = Permission.objects.filter(codename=codename, content_type_id=compliance_content_type.id)
 
         # 3. Find groups which has the permission(s) determined above in the regionDistrict.
@@ -262,9 +265,49 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET', ])
+    def action_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.action_logs.all()
+            serializer = SanctionOutcomeUserActionSerializer(qs, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def comms_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.comms_logs.all()
+            serializer = SanctionOutcomeCommsLogEntrySerializer(qs, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
     @list_route(methods=['POST',])
     def sanction_outcome_save(self, request, *args, **kwargs):
+        """
+        Create new sanction outcome from the modal
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         try:
             with transaction.atomic():
                 res_json = {}
@@ -282,8 +325,7 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
 
                 if groups.count() == 1:
                     group = groups.first()
-                else:
-                    # Should not reach here
+                elif groups.count() > 1:
                     group = groups.first()
 
                 request_data['allocated_group_id'] = group.id
@@ -295,11 +337,16 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 else:
                     serializer = SaveSanctionOutcomeSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
-                saved_obj = serializer.save()
+                instance = serializer.save()
+
+                if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:
+                    instance.send_to_manager(request)
+                elif not workflow_type:
+                    instance.save()
 
                 # Save remediation action, and link to the sanction outcome
                 for dict in request_data['remediation_actions']:
-                    dict['sanction_outcome_id'] = saved_obj.id
+                    dict['sanction_outcome_id'] = instance.id
                     remediation_action = SaveRemediationActionSerializer(data=dict)
                     if remediation_action.is_valid(raise_exception=True):
                         remediation_action.save()
@@ -313,6 +360,20 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 if request_data.get('inspection_id'):
                     inspection = Inspection.objects.get(id=request_data.get('inspection_id'))
                     inspection.log_user_action(InspectionUserAction.ACTION_SANCTION_OUTCOME.format(inspection.number), request)
+
+                # Create/Retrieve comms log entry
+                comms_log_id = request.data.get('comms_log_id')
+                if comms_log_id and comms_log_id is not 'null':
+                    workflow_entry = instance.comms_logs.get(id=comms_log_id)
+                else:
+                    workflow_entry = self.add_comms_log(request, instance, workflow=True)
+
+                # Update the entry above with email_data
+                email_data = prepare_mail(request, instance, workflow_entry, send_mail)
+                serializer = SanctionOutcomeCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+
                 # Return
                 return HttpResponse(res_json, content_type='application/json')
 
@@ -419,55 +480,46 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
 
                 comms_log_id = request.data.get('comms_log_id')
                 if comms_log_id and comms_log_id is not 'null':
-                    workflow_entry = instance.comms_logs.get(
-                        id=comms_log_id)
+                    workflow_entry = instance.comms_logs.get(id=comms_log_id)
                 else:
                     workflow_entry = self.add_comms_log(request, instance, workflow=True)
 
-                # Set Inspection status to open
-                #instance.status = 'open'
-
-                # Set Inspection status depending on workflow type
+                # Set status
                 workflow_type = request.data.get('workflow_type')
-                if workflow_type == 'issue':
-                    instance.issue(request)
-                elif workflow_type == 'send_to_manager':
+                if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:
                     instance.send_to_manager(request)
-                elif workflow_type == 'request_amendment':
-                    instance.request_amendment(request)
-                elif workflow_type == 'close':
-                    instance.close(request)
+                elif workflow_type == SanctionOutcome.WORKFLOW_DECLINE:
+                    instance.decline(request)
+                elif workflow_type == SanctionOutcome.WORKFLOW_ENDORSE:
+                    instance.endorse(request)
+                elif workflow_type == SanctionOutcome.WORKFLOW_RETURN_TO_OFFICER:
+                    instance.return_to_officer(request)
+                elif workflow_type == SanctionOutcome.WORKFLOW_WITHDRAW:
+                    instance.withdraw(request)
+                else:
+                    # Should not reach here
+                    # instance.save()
+                    pass
 
-                # instance.region_id = None if not request.data.get('region_id') else request.data.get('region_id')
-                # instance.district_id = None if not request.data.get('district_id') else request.data.get('district_id')
-                # instance.assigned_to_id = None if not request.data.get('assigned_to_id') else request.data.get('assigned_to_id')
-                # instance.inspection_type_id = None if not request.data.get('inspection_type_id') else request.data.get('inspection_type_id')
-                # instance.allocated_group_id = None if not request.data.get('allocated_group_id') else request.data.get('allocated_group_id')
-                # instance.call_email_id = None if not request.data.get('call_email_id') else request.data.get('call_email_id')
-
-                instance.save()
                 # Log parent actions and update status
                 # self.update_parent(request, instance)
 
                 # if instance.assigned_to_id:
                 #     instance = self.modify_inspection_team(request, instance, workflow=True, user_id=instance.assigned_to_id)
 
-                # send email
+                # Send email and Log it
                 email_data = prepare_mail(request, instance, workflow_entry, send_mail)
-
                 serializer = SanctionOutcomeCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
-                serializer.is_valid(raise_exception=True)
-                if serializer.is_valid():
+                if serializer.is_valid(raise_exception=True):
                     serializer.save()
-                    return_serializer = SanctionOutcomeSerializer(instance=instance,
-                                                             context={'request': request}
-                                                             )
-                    headers = self.get_success_headers(return_serializer.data)
-                    return Response(
-                        return_serializer.data,
-                        status=status.HTTP_201_CREATED,
-                        headers=headers
-                    )
+
+                return_serializer = SanctionOutcomeSerializer(instance=instance, context={'request': request})
+                headers = self.get_success_headers(return_serializer.data)
+                return Response(
+                    return_serializer.data,
+                    status=status.HTTP_201_CREATED,
+                    headers=headers
+                )
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -483,10 +535,10 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
     def add_comms_log(self, request, instance=None, workflow=False, *args, **kwargs):
         try:
             with transaction.atomic():
-                # create Inspection instance if not passed to this method
+                # create sanction outcome instance if not passed to this method
                 if not instance:
                     instance = self.get_object()
-                # add Inspection attribute to request_data
+                # add sanction outcome attribute to request_data
                 request_data = request.data.copy()
                 request_data['sanction_outcome'] = u'{}'.format(instance.id)
                 if request_data.get('comms_log_id'):

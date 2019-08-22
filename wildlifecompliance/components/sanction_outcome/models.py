@@ -1,6 +1,7 @@
+import datetime
+
 from django.core.exceptions import ValidationError
 from django.db import models
-
 from ledger.accounts.models import EmailUser
 from wildlifecompliance.components.main import get_next_value
 from wildlifecompliance.components.main.models import Document, UserAction, CommunicationsLogEntry
@@ -9,30 +10,31 @@ from wildlifecompliance.components.users.models import RegionDistrict, Complianc
 
 
 class SanctionOutcome(models.Model):
+    WORKFLOW_SEND_TO_MANAGER = 'send_to_manager'
+    WORKFLOW_ENDORSE = 'endorse'
+    WORKFLOW_DECLINE = 'decline'
+    WORKFLOW_WITHDRAW = 'withdraw'
+    WORKFLOW_RETURN_TO_OFFICER = 'return_to_officer'
+    WORKFLOW_CLOSE = 'close'
+
     STATUS_DRAFT = 'draft'
-    STATUS_WITH_MANAGER = 'with_manager'
-    STATUS_WITH_OFFICER = 'with_officer'
-    STATUS_CLOSED = 'closed'
-    STATUS_WITHDRAWN = 'withdrawn'
-    STATUS_CLOSED_ISSUED = 'closed_issued'
-    STATUS_CLOSED_WITHDRAWN = 'closed_withdrawn'
+    STATUS_AWAITING_ENDORSEMENT = 'awaiting_endorsement'
     STATUS_AWAITING_PAYMENT = 'awaiting_payment'
-    STATUS_AWAITING_PAYMENT_EXTENDED = 'awaiting_payment_extended'
-    STATUS_ISSUED = 'issued'
-    STATUS_OVERDUE = 'overdue'
+    STATUS_AWAITING_REVIEW = 'awaiting_review'
+    STATUS_AWAITING_AMENDMENT = 'awaiting_amendment'
+    STATUS_DECLINED = 'declined'
+    STATUS_WITHDRAWN = 'withdrawn'
+    STATUS_CLOSED = 'closed'
 
     STATUS_CHOICES = (
         (STATUS_DRAFT, 'Draft'),
-        (STATUS_WITH_MANAGER, 'With Mnager'),
-        (STATUS_WITH_OFFICER, 'With Officer'),
-        (STATUS_CLOSED, 'Closed'),
-        (STATUS_WITHDRAWN, 'Withdrawn'),
-        (STATUS_CLOSED_ISSUED, 'Closed (Issued)'),
-        (STATUS_CLOSED_WITHDRAWN, 'Closed (Withdrawn)'),
+        (STATUS_AWAITING_ENDORSEMENT, 'Awaiting Endorsement'),
         (STATUS_AWAITING_PAYMENT, 'Awaiting Payment'),
-        (STATUS_AWAITING_PAYMENT_EXTENDED, 'Awaiting Payment Extended)'),
-        (STATUS_ISSUED, 'Issued'),
-        (STATUS_OVERDUE, 'Overdue'),
+        (STATUS_AWAITING_REVIEW, 'Awaiting Review'),
+        (STATUS_AWAITING_AMENDMENT, 'Awaiting Amendment'),
+        (STATUS_DECLINED, 'Declined'),
+        (STATUS_WITHDRAWN, 'Withdrawn'),
+        (STATUS_CLOSED, 'closed'),
     )
 
     TYPE_INFRINGEMENT_NOTICE = 'infringement_notice'
@@ -129,8 +131,6 @@ class SanctionOutcome(models.Model):
             if self.status == self.STATUS_DRAFT:
                 pass
 
-        # TODO: add date_of_issue and time_of_issue
-
         self.__original_status = self.status
 
 
@@ -145,11 +145,35 @@ class SanctionOutcome(models.Model):
     def get_related_items_descriptor(self):
         return '{0}, {1}'.format(self.lodgement_number, self.description)
 
-    def issue(self, request):
-        self.status = self.STATUS_CLOSED_ISSUED
-        self.log_user_action(
-            SanctionOutcomeUserAction.ACTION_ISSUE.format(self.lodgement_number),
-            request)
+    def send_to_manager(self, request):
+        if self.issued_on_paper:
+            self.status = self.STATUS_AWAITING_ENDORSEMENT
+        else:
+            self.status = self.STATUS_AWAITING_REVIEW
+        self.log_user_action(SanctionOutcomeUserAction.ACTION_SEND_TO_MANAGER.format(self.lodgement_number), request)
+        self.save()
+
+    def endorse(self, request):
+        self.status = self.STATUS_AWAITING_PAYMENT
+        current_datetime = datetime.datetime.now()
+        self.date_of_issue = current_datetime.date()
+        self.date_of_issue = current_datetime.time()
+        self.log_user_action(SanctionOutcomeUserAction.ACTION_ENDORSE.format(self.lodgement_number), request)
+        self.save()
+
+    def decline(self, request):
+        self.status = self.STATUS_DECLINED
+        self.log_user_action(SanctionOutcomeUserAction.ACTION_DECLINE.format(self.lodgement_number), request)
+        self.save()
+
+    def return_to_officer(self, request):
+        self.status = self.STATUS_AWAITING_AMENDMENT
+        self.log_user_action(SanctionOutcomeUserAction.ACTION_RETURN_TO_OFFICER.format(self.lodgement_number), request)
+        self.save()
+
+    def withdraw(self, request):
+        self.status = self.STATUS_WITHDRAWN
+        self.log_user_action(SanctionOutcomeUserAction.ACTION_WITHDRAW.format(self.lodgement_number), request)
         self.save()
 
     class Meta:
@@ -209,18 +233,16 @@ class SanctionOutcomeCommsLogEntry(CommunicationsLogEntry):
 
 
 class SanctionOutcomeUserAction(UserAction):
-    ACTION_SAVE_SANCTION_OUTCOME = "Save Sanction Outcome {}"
     ACTION_SEND_TO_MANAGER = "Send Sanction Outcome {} to manager"
     ACTION_ENDORSE = "Endorse Sanction Outcome {}"
     ACTION_DECLINE = "Decline Sanction Outcome {}"
-    ACTION_RETURN_TO_OFFICER = "Return Sanction Outcome {} to officer"
-    ACTION_ISSUE = "Issue Sanction Outcome {}"
+    ACTION_RETURN_TO_OFFICER = "Request amendment for Sanction Outcome {}"
     ACTION_WITHDRAW = "Withdraw Sanction Outcome {}"
-    ACTION_EXTEND_DUE_DATE = "Extend Sanction Outcome {} Payment Due Date"
-    ACTION_SEND_TO_DOT = "Send Sanction Outcome {} to Department of Transport"
-    ACTION_SEND_TO_FINES_ENFORCEMENT_UNIT = "Send Sanction Outcome {} to Fined Enforcement Unit"
-    ACTION_ESCALATE_FOR_WITHDRAWAL = "Escalate Sanction Outcome {} for Withdrawal"
-    ACTION_RETURN_TO_INFRINGEMENT_NOTICE_COORDINATOR = "Return Sanction Outcome {} to Infringement Notice Coordinator"
+    # ACTION_EXTEND_DUE_DATE = "Extend Sanction Outcome {} Payment Due Date"
+    # ACTION_SEND_TO_DOT = "Send Sanction Outcome {} to Department of Transport"
+    # ACTION_SEND_TO_FINES_ENFORCEMENT_UNIT = "Send Sanction Outcome {} to Fined Enforcement Unit"
+    # ACTION_ESCALATE_FOR_WITHDRAWAL = "Escalate Sanction Outcome {} for Withdrawal"
+    # ACTION_RETURN_TO_INFRINGEMENT_NOTICE_COORDINATOR = "Return Sanction Outcome {} to Infringement Notice Coordinator"
     ACTION_CLOSE = "Close Sanction Outcome {}"
 
     class Meta:
