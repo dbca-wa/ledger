@@ -18,22 +18,22 @@ class ApprovalExpireNotificationEmail(TemplateEmailBase):
 
 
 class ApprovalCancelNotificationEmail(TemplateEmailBase):
-    subject = 'Your Licence has been cancelled.'
+    subject = '{} - Commercial Operations Licence cancelled.'.format(settings.DEP_NAME)
     html_template = 'commercialoperator/emails/approval_cancel_notification.html'
     txt_template = 'commercialoperator/emails/approval_cancel_notification.txt'
 
 class ApprovalSuspendNotificationEmail(TemplateEmailBase):
-    subject = 'Your Licence has been suspended.'
+    subject = '{} - Commercial Operations Licence suspended.'.format(settings.DEP_NAME)
     html_template = 'commercialoperator/emails/approval_suspend_notification.html'
     txt_template = 'commercialoperator/emails/approval_suspend_notification.txt'
 
 class ApprovalSurrenderNotificationEmail(TemplateEmailBase):
-    subject = 'Your Licence has been surrendered.'
+    subject = '{} - Commercial Operations Licence surrendered.'.format(settings.DEP_NAME)
     html_template = 'commercialoperator/emails/approval_surrender_notification.html'
     txt_template = 'commercialoperator/emails/approval_surrender_notification.txt'
 
 class ApprovalReinstateNotificationEmail(TemplateEmailBase):
-    subject = 'Your Licence has been reinstated.'
+    subject = '{} - Commercial Operations Licence reinstated.'.format(settings.DEP_NAME)
     html_template = 'commercialoperator/emails/approval_reinstate_notification.html'
     txt_template = 'commercialoperator/emails/approval_reinstate_notification.txt'
 
@@ -91,7 +91,7 @@ def send_approval_suspend_email_notification(approval, request=None):
     email = ApprovalSuspendNotificationEmail()
     proposal = approval.current_proposal
 
-    if 'test-emails' in request.path_info:
+    if request and 'test-emails' in request.path_info:
         details = 'This are my test details'
         from_date = '01/01/1970'
         to_date = '01/01/2070'
@@ -125,7 +125,7 @@ def send_approval_surrender_email_notification(approval, request=None):
     email = ApprovalSurrenderNotificationEmail()
     proposal = approval.current_proposal
 
-    if 'test-emails' in request.path_info:
+    if request and 'test-emails' in request.path_info:
         details = 'This are my test details'
         surrender_date = '01/01/1970'
     else:
