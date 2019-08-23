@@ -51,18 +51,7 @@
                             Action 
                         </div>
                         <div class="panel-body panel-collapse">
-                            <div v-if="visibleIssueButton" class="row action-button">
-                                <div class="col-sm-12">
-                                    <a @click="addWorkflow('issue')" class="btn btn-primary btn-block">
-                                        Issue
-                                    </a>
-                                </div>
-                            </div>
-                            <div v-else>
-                                Issue
-                            </div>
-
-                            <div v-if="visibleWithdrawButton" class="row action-button">
+                            <div v-if="visibilityWithdrawButton" class="row action-button">
                                 <div class="col-sm-12">
                                     <a @click="addWorkflow('withdraw')" class="btn btn-primary btn-block">
                                         Withdraw
@@ -73,7 +62,7 @@
                                 Withdraw
                             </div>
 
-                            <div v-if="visibleSendToManagerButton" class="row action-button">
+                            <div v-if="visibilitySendToManagerButton" class="row action-button">
                                 <div class="col-sm-12">
                                     <a @click="addWorkflow('send_to_manager')" class="btn btn-primary btn-block">
                                         Send To Manager
@@ -84,7 +73,7 @@
                                 Send To Manager
                             </div>
 
-                            <div v-if="visibleEndorseButton" class="row action-button">
+                            <div v-if="visibilityEndorseButton" class="row action-button">
                                 <div class="col-sm-12">
                                     <a @click="addWorkflow('endorse')" class="btn btn-primary btn-block">
                                         Endorse
@@ -95,7 +84,7 @@
                                 Endorse
                             </div>
 
-                            <div v-if="visibleDeclineButton" class="row action-button">
+                            <div v-if="visibilityDeclineButton" class="row action-button">
                                 <div class="col-sm-12">
                                     <a @click="addWorkflow('decline')" class="btn btn-primary btn-block">
                                         Decline
@@ -106,7 +95,7 @@
                                 Declilne
                             </div>
 
-                            <div v-if="visibleReturnToOfficerButton" class="row action-button">
+                            <div v-if="visibilityReturnToOfficerButton" class="row action-button">
                                 <div class="col-sm-12">
                                     <a @click="addWorkflow('return_to_officer')" class="btn btn-primary btn-block">
                                         Return to Officer
@@ -116,51 +105,6 @@
                             <div v-else>
                                 Return to Officer
                             </div>
-
-                            <div v-if="visibleExtendDueDateButton" class="row action-button">
-                                <div class="col-sm-12">
-                                    <a @click="addWorkflow('extend_due_date')" class="btn btn-primary btn-block">
-                                        Extend Due Date
-                                    </a>
-                                </div>
-                            </div>
-                            <div v-else>
-                                Extend Due Date
-                            </div>
-
-                            <div v-if="visibleSendToDoTButton" class="row action-button">
-                                <div class="col-sm-12">
-                                    <a @click="addWorkflow('send_to_dot')" class="btn btn-primary btn-block">
-                                        Send to Dot
-                                    </a>
-                                </div>
-                            </div>
-                            <div v-else>
-                                Send to Dot
-                            </div>
-
-                            <div v-if="visibleSendToFinesEnforcementButton" class="row action-button">
-                                <div class="col-sm-12">
-                                    <a @click="addWorkflow('send_to_fines_enforcement')" class="btn btn-primary btn-block">
-                                        Send to Fines Enforcement
-                                    </a>
-                                </div>
-                            </div>
-                            <div v-else>
-                                Send to Fines Enforcement
-                            </div>
-
-                            <div v-if="visibleEscaleteForWithdrawalButton" class="row action-button">
-                                <div class="col-sm-12">
-                                    <a @click="addWorkflow('escalete_for_withdrawal')" class="btn btn-primary btn-block">
-                                        Escalete for Withdrawal
-                                    </a>
-                                </div>
-                            </div>
-                            <div v-else>
-                                Escalete for Withdrawal
-                            </div>
-
                         </div>
                     </div>
                 </div>
@@ -280,7 +224,6 @@ import datatable from '@vue-utils/datatable.vue'
 import utils from "@/components/external/utils";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-//import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import CommsLogs from "@common-components/comms_logs.vue";
 import filefield from '@/components/common/compliance_file.vue';
 import SanctionOutcomeWorkflow from './sanction_outcome_workflow';
@@ -290,8 +233,12 @@ export default {
     name: 'ViewSanctionOutcome',
     data() {
         let vm = this;
-        vm.STATUS_WITH_MANAGER = 'with_manager';
-        vm.STATUS_WITH_OFFICER = 'with_officer';
+        vm.STATUS_DRAFT = 'draft';
+        vm.STATUS_AWAITING_ENDROSEMENT = 'awaiting_endorsement';
+        vm.STATUS_AWAITING_REVIEW = 'awaiting_review';
+        vm.STATUS_AWAITING_AMENDMENT = 'awaiting_amendment';
+        vm.STATUS_AWAITING_PAYMENT = 'awaiting_payment';
+        vm.STATUS_DECLINED = 'declined';
 
         return {
             workflow_type :'',
@@ -318,24 +265,10 @@ export default {
         SanctionOutcomeWorkflow,
         CommsLogs,
     },
-    beforeRouteEnter: function(to, from, next) {
-        console.log('beforeRouteEnter');
-
-        console.log('to');
-        console.log(to);
-        console.log('from');
-        console.log(from);
-        console.log('next');
-        console.log(next);
-
-        next(async (vm) => {
-            console.log(vm);
-            console.log('aho2');
-            await vm.loadSanctionOutcome({ sanction_outcome_id: to.params.sanction_outcome_id });
-        });
-    },
-    created: function() {
-        console.log('created');
+    created: async function() {
+        if (this.$route.params.sanction_outcome_id) {
+            await this.loadSanctionOutcome({ sanction_outcome_id: this.$route.params.sanction_outcome_id });
+        }
     },
     mounted: function() {
         console.log('mounted');
@@ -346,9 +279,6 @@ export default {
         }),
         readonlyForm: function() {
             return true;
-        },
-        canUserAction: function() {
-            return this.sanction_outcome.can_user_action;
         },
         statusDisplay: function() {
             let ret = '';
@@ -397,99 +327,53 @@ export default {
             }
             return ret;
         },
-        statusIsWithOfficer: function() {
-            let val = false;
-            if (this.sanction_outcome){
-                if(this.sanction_outcome.status){
-                    if(this.sanction_outcome.status.id === this.STATUS_WITH_OFFICER){
-                        val = true;
-                    }
+        canUserAction: function() {
+            return this.sanction_outcome.can_user_action;
+        },
+        visibilityWithdrawButton: function() {
+            let visibility = false;
+            if (this.canUserAction){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_PAYMENT){
+                    visibility = true;
                 }
             }
-            return val;
+            return visibility;
         },
-        statusIsWithManager: function() {
-            let val = false;
-            if (this.sanction_outcome){
-                if(this.sanction_outcome.status){
-                    if(this.sanction_outcome.status.id === this.STATUS_WITH_MANAGER){
-                        val = true;
-                    }
+        visibilitySendToManagerButton: function() {
+            let visibility = false;
+            if (this.canUserAction){
+                if (this.sanction_outcome.status.id === this.STATUS_DRAFT || this.sanction_outcome.status.id === this.STATUS_AWAITING_AMENDMENT){
+                    visibility = true;
                 }
             }
-            return val;
+            return visibility;
         },
-        visibleExtendDueDateButton: function() {
-            let visible = false;
+        visibilityEndorseButton: function() {
+            let visibility = false;
             if (this.canUserAction){
-                visible = true;
-            }
-            return visible;
-        },
-        visibleSendToDoTButton: function() {
-            let visible = false;
-            if (this.canUserAction){
-                visible = true;
-            }
-            return visible;
-        },
-        visibleSendToFinesEnforcementButton: function() {
-            let visible = false;
-            if (this.canUserAction){
-                visible = true;
-            }
-            return visible;
-        },
-        visibleEscaleteForWithdrawalButton: function () {
-            let visible = false;
-            if (this.canUserAction){
-                visible = true;
-            }
-            return visible;
-        },
-        visibleIssueButton: function() {
-            let visible = false;
-            if (this.statusIsWithOfficer && this.canUserAction){
-                visible = true;
-            }
-            return visible;
-        },
-        visibleWithdrawButton: function() {
-            let visible = false;
-            if (this.statusIsWithOfficer && this.canUserAction){
-                visible = true;
-            }
-            return visible;
-        },
-        visibleSendToManagerButton: function() {
-            let visible = false;
-            if (this.statusIsWithOfficer && this.canUserAction){
-                visible = true;
-            }
-            return visible;
-        },
-        visibleEndorseButton: function() {
-            let visible = false;
-            if (this.statusIsWithManager && this.canUserAction){
-                visible = true;
-            }
-            return visible;
-        },
-        visibleDeclineButton: function() {
-            let visible = false;
-            if (this.statusIsWithManager && this.canUserAction){
-                visible = true;
-            }
-            return visible;
-        },
-        visibleReturnToOfficerButton: function() {
-            let visible = false;
-            if (this.statusIsWithManager && this.canUserAction){
-                if (this.sanction_outcome && !this.sanction_outcome.issued_on_paper){
-                    visible = true;
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDROSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
+                    visibility = true;
                 }
             }
-            return visible;
+            return visibility;
+        },
+        visibilityDeclineButton: function() {
+            let visibility = false;
+            if (this.canUserAction){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDROSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
+                    visibility = true;
+                }
+            }
+            return visibility;
+        },
+        visibilityReturnToOfficerButton: function() {
+            let visibility = false;
+            if (this.canUserAction){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
+                    visibility = true;
+                }
+            }
+            return visibility;
         }
     },
     methods: {

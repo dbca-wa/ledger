@@ -296,8 +296,8 @@ export default {
         description: "",
         date_of_issue: null,
         time_of_issue: null,
-        allocatedGroup: [],
-        allocated_group_id: null,
+        // allocatedGroup: [],
+        // allocated_group_id: null,
 
         remediation_actions: []
       },
@@ -427,11 +427,11 @@ export default {
         this.currentRegionIdChanged();
       }
     },
-    regionDistrictId: {
-      handler: function() {
-        this.updateAllocatedGroup()
-      }
-    }
+    // regionDistrictId: {
+    //   handler: function() {
+    //     this.updateAllocatedGroup()
+    //   }
+    // }
   },
   computed: {
     ...mapGetters("offenceStore", {
@@ -505,31 +505,31 @@ export default {
     ...mapActions({
       loadAllocatedGroup: 'loadAllocatedGroup',
     }),
-    updateAllocatedGroup: async function() {
-        console.log("updateAllocatedGroup");
-        this.errorResponse = "";
-        if (this.regionDistrictId) {
-            let allocatedGroupResponse = await this.loadAllocatedGroup({
-              region_district_id: this.regionDistrictId,
-              group_permission: this.groupPermission,
-            });
-            if (allocatedGroupResponse.ok) {
-                // Update member list
-                // Vue.set(this, 'sanction_outcome.allocatedGroup', allocatedGroupResponse.body.allocated_group);
-                // Update group id
-                this.sanction_outcome.allocated_group_id = allocatedGroupResponse.body.group_id;
-            } else {
-                // Display http error response on modal
-                this.errorResponse = allocatedGroupResponse.statusText;
-            }
-            // Display empty group error on modal
-            // if (!this.errorResponse &&
-            //     this.allocatedGroup &&
-            //     this.allocatedGroup.length <= 1) {
-            //     this.errorResponse = 'This group has no members';
-            // }
-        }
-    },
+    // updateAllocatedGroup: async function() {
+    //     console.log("updateAllocatedGroup");
+    //     this.errorResponse = "";
+    //     if (this.regionDistrictId) {
+    //         let allocatedGroupResponse = await this.loadAllocatedGroup({
+    //           region_district_id: this.regionDistrictId,
+    //           group_permission: this.groupPermission,
+    //         });
+    //         if (allocatedGroupResponse.ok) {
+    //             // Update member list
+    //             // Vue.set(this, 'sanction_outcome.allocatedGroup', allocatedGroupResponse.body.allocated_group);
+    //             // Update group id
+    //             this.sanction_outcome.allocated_group_id = allocatedGroupResponse.body.group_id;
+    //         } else {
+    //             // Display http error response on modal
+    //             this.errorResponse = allocatedGroupResponse.statusText;
+    //         }
+    //         // Display empty group error on modal
+    //         // if (!this.errorResponse &&
+    //         //     this.allocatedGroup &&
+    //         //     this.allocatedGroup.length <= 1) {
+    //         //     this.errorResponse = 'This group has no members';
+    //         // }
+    //     }
+    // },
     cancel: async function() {
         if(this.$refs.sanction_outcome_file) {
             await this.$refs.sanction_outcome_file.cancel();

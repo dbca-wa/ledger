@@ -76,14 +76,15 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
         return False
 
     def get_can_user_action(self, obj):
+        # User can have action buttons
+        # when user is assigned to the target object or
+        # when user is a member of the allocated group and no one is assigned to the target object
         user_id = self.context.get('request', {}).user.id
-
         if user_id == obj.assigned_to_id:
             return True
         elif obj.allocated_group and not obj.assigned_to_id:
-            for member in obj.allocated_group.members:
-                if user_id == member.id:
-                    return True
+            if user_id in [member.id for member in obj.allocated_group.members]:
+                return True
 
         return False
 
