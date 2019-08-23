@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission
 from ledger.payments.models import Invoice
 from wildlifecompliance.exceptions import BindApplicationException
+from django.db.models import Q
 
 
 def get_department_user(email):
@@ -365,12 +366,51 @@ def search_weak_links(request_data):
     from wildlifecompliance.components.offence.models import Offence
     from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome
     qs = []
-    call_email_list = []
-    inspection_list = []
-    offence_list = []
-    sanction_outcome_list = []
 
-    components_selected = request_data.get('componentsSelected')
+    components_selected = request_data.get('selectedEntity')
     search_text = request_data.get('searchText')
-
+    # components_selected = 'call_email'
+    #'call_email', 'inspection', 'offence', 'sanction_outcome'
+    #search_text = request_data
+    if 'call_email' in components_selected:
+        qs = CallEmail.objects.filter(
+                Q(number__icontains=search_text) |
+                Q(caller__icontains=search_text) |
+                Q(caller_phone_number__icontains=search_text) |
+                Q(location__street__icontains=search_text) |
+                Q(location__town_suburb__icontains=search_text) 
+                )
+    elif 'inspection' in components_selected:
+        qs = Inspection.objects.filter(
+                Q(number__icontains=search_text) |
+                Q(title__icontains=search_text) |
+                Q(details__icontains=search_text) |
+                Q(inspection_type__inspection_type__icontains=search_text) |
+                Q(individual_inspected__first_name__icontains=search_text) |
+                Q(individual_inspected__last_name__icontains=search_text) |
+                Q(organisation_inspected__trading_name__icontains=search_text) |
+                Q(organisation_inspected__name__icontains=search_text) |
+                Q(call_email__number__icontains=search_text)
+                )
+    elif 'offence' in components_selected:
+        qs = Offence.objects.filter(
+                Q(lodgement_number__icontains=search_text) |
+                Q(identifier__icontains=search_text) |
+                Q(details__icontains=search_text) |
+                Q(alleged_offences__act__icontains=search_text) |
+                Q(alleged_offences__name__icontains=search_text) |
+                Q(offender__person__first_name__icontains=search_text) |
+                Q(offender__person__last_name__icontains=search_text)
+                )
+    elif 'sanction_outcome' in components_selected:
+        qs = SanctionOutcome.objects.filter(
+                Q(lodgement_number__icontains=search_text) |
+                Q(identifier__icontains=search_text) |
+                Q(description__icontains=search_text) |
+                Q(offence__alleged_offences__act__icontains=search_text) |
+                Q(offence__alleged_offences__name__icontains=search_text) |
+                Q(offender__person__first_name__icontains=search_text) |
+                Q(offender__person__last_name__icontains=search_text)
+                )
+    return qs
 

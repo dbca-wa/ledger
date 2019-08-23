@@ -148,7 +148,7 @@ export default {
             });
         },
         // Match typed searchTerm against available human-readable object identifiers (get_related_items_identifier) 
-        search_available_object_identifiers(searchTerm){
+        search_available_object_identifiers(selectedEntity, searchText) {
             let suggest_list_offender = [];
             suggest_list_offender.length = 0;
             this.awesomplete_obj.list = [];
@@ -159,16 +159,23 @@ export default {
                 this.ajax_for_offender = null;
             }
 
-            let search_url = "";
-            if (this.search_type == "individual") {
-                search_url = "/api/search_user/?search=";
-            } else {
-                search_url = "/api/search_organisation/?search=";
+            let search_url = "/api/search_weak_links/";
+            //if (this.search_type == "individual") {
+            //    search_url = "/api/search_user/?search=";
+            //} else {
+            //    search_url = "/api/search_organisation/?search=";
+            //}
+            payload = {
+                    'selectedEntity': selectedEntity,
+                    'searchText': searchText
             }
 
             this.ajax_for_offender = $.ajax({
-                type: "GET",
-                url: search_url + searchTerm,
+                type: "POST",
+                url: search_url,
+                dataType: "json",
+                data: JSON.stringify(payload),
+                contentType: "application/json",
                 success: function(data) {
                     if (data && data.results) {
                         let persons = data.results;

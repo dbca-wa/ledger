@@ -7,7 +7,7 @@ from django.db.models import Max
 from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser, RevisionedMixin, Organisation
 from ledger.licence.models import LicenceType
-from wildlifecompliance.components.organisations.models import Organisation
+#from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.call_email.models import CallEmail
 from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
     UserAction, Document, get_related_items
