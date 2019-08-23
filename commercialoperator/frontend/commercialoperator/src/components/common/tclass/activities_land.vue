@@ -15,7 +15,7 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_access }}</pre>
+                            <!--<pre>{{ selected_access }}</pre>-->
                             <label class="control-label">Select the required access</label>
                                 <!--
                                 The below 3 are equivalent - require an event emitted fro child component -'this.$emit("update:value", vm.value)', (or 'this.$emit("value", vm.value)' )
@@ -33,7 +33,7 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_activities }}</pre>
+                            <!--<pre>{{ selected_activities }}</pre>-->
                             <label class="control-label">Select the required activities</label>
                             <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="land_activity_options" :default_expand_level="1"></TreeSelect>
                         </div>
@@ -45,7 +45,7 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_parks }}</pre>
+                            <!--<pre>{{ selected_parks }}</pre>-->
                             <label class="control-label">Select Parks</label>
                             <TreeSelect :proposal="proposal" :value.sync="selected_parks" :options="park_options" :default_expand_level="1"></TreeSelect>
                         </div>
@@ -84,9 +84,10 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_trails_activities }}</pre>
+                            <!--<pre>{{ trail_activities }}</pre>-->
+                            <!--<pre>{{ selected_trails_activities }}</pre>-->
                             <label class="control-label">Select the required activities for trails</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_trails_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="trail_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -96,24 +97,26 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_trails }}</pre>
+                            <pre>{{ selected_trail_ids }}</pre>
                             <label class="control-label">Select the required activities</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_trails" :options="trail_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_trail_ids" :options="trail_options" :default_expand_level="1"></TreeSelect>
                         </div>
                     </div>
                 </form>
             </div>
 
-            <div>{{selected_trails}}</div>
-            <div>{{selected_trails_activities}}</div>
+            <!--
+            <div>Trail: {{selected_trails}}</div>
+            <div>Activities: {{selected_trails_activities}}</div>
+            -->
+            <div>Trail: {{selected_trails}}</div><br>
+            <div>Activities: {{selected_trails_activities}}</div>
 
 
           </div>
         </div>
       </div>
 
-      <!-- <div>{{selected_trails}}</div>
-      <div>{{selected_trails_activities}}</div> -->
 
       <div>
               <editParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
@@ -176,6 +179,8 @@ export default {
                 selected_activities:[],
                 selected_activities_before:[],
                 selected_trails:[],
+                selected_trail_ids:[],
+                selected_trail_ids_before:[],
                 trail_activities:[],
                 trail_activities_before:[],
                 activities:[],
@@ -201,12 +206,47 @@ export default {
 
         },
         watch:{
-          selected_regions: function(val){
-            //WIP
+          selected_trail_ids: function(){
             let vm=this;
-            var added_region=$(vm.selected_regions).not(vm.selected_regions_before).get();
-            //console.log(added_region)
+
+            vm.removed_trail_id=$(vm.selected_trail_ids_before).not(vm.selected_trail_ids).get();
+            vm.added_trail_id=$(vm.selected_trail_ids).not(vm.selected_trail_ids_before).get();
+            vm.selected_trail_ids_before=vm.selected_trail_ids;
+
+            //var selected_trails_before = vm.selected_trails_before;
+
+            if (vm.removed_trail_id.length > 0) {
+                for (var i=0; i<vm.trails.length; i++) {
+                    if (vm.trails[i].id==vm.removed_trail_id[0]) {
+                        vm.tmp_trail = {'trail': vm.removed_trail_id[0], 'sections': vm.trails[i].section_ids}
+                        vm.selected_trails.pop( vm.tmp_trail )
+                    }
+                }
+            } else if (vm.added_trail_id.length > 0) {
+                for (var i=0; i<vm.trails.length; i++) {
+                    if (vm.trails[i].id==vm.added_trail_id[0]) {
+                        vm.tmp_trail = {'trail': vm.added_trail_id[0], 'sections': vm.trails[i].section_ids}
+                        vm.selected_trails.push( vm.tmp_trail )
+                    }
+                }
+            }
+
+            //vm.selected_trails_before = selected_trails_before;
+
+            /*
+            vm.selected_trails = []
+            for (var i=0; i<vm.selected_trail_ids.length; i++) {
+                vm.selected_trails.push( {'trail': vm.selected_trail_ids[i],'sections': vm.trails[i].section_ids} )
+            }
+            */
+            console.log('selected_trails: ' + JSON.stringify(vm.selected_trails))
           },
+
+//          selected_regions: function(val){
+//            let vm=this;
+//            var added_region=$(vm.selected_regions).not(vm.selected_regions_before).get();
+//          },
+
           selected_parks: function(){
             let vm = this;
             var removed_park=$(vm.selected_parks_before).not(vm.selected_parks).get();
@@ -358,9 +398,20 @@ export default {
               vm.proposal.trails=vm.selected_trails;
             }
 
+            /*
             var removed_trail=$(vm.selected_trails_before).not(vm.selected_trails).get();
             var added_trail=$(vm.selected_trails).not(vm.selected_trails_before).get();
             vm.selected_trails_before=vm.selected_trails;
+            vm.selected_trails_before=vm.selected_trails;
+            */
+
+            var removed_trail = []
+            var added_trail = []
+            if (vm.removed_trail_id.length > 0)  {
+                var removed_trail = [vm.tmp_trail]
+            } else {
+                var added_trail = [vm.tmp_trail]
+            }
 
             var current_activities=vm.trail_activities
 
@@ -420,6 +471,7 @@ export default {
                 }
               }
             }
+            vm.tmp_trail = null;
           },
         trail_activities: function(){
           let vm=this;
@@ -584,6 +636,9 @@ export default {
           edit_sections: function(node){
             let vm=this;
             var trail = node.raw;
+            //trail['id']=node.id
+
+            console.log('Trail 0: ' + JSON.stringify(trail))
             //inserting a temporary variables checked and new_activities to store and display selected activities for each section.
             for(var l=0; l<trail.sections.length; l++){
               trail.sections[l].checked=false;
@@ -602,7 +657,7 @@ export default {
                 } 
               }
             }
-            console.log(trail);
+            console.log('Trail: ' + JSON.stringify(trail))
             this.$refs.edit_sections.trail=trail;
             this. $refs.edit_sections.isModalOpen = true;
           },
