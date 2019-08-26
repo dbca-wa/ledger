@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = settings.SYSTEM_NAME_SHORT + ' Automated Message'
 class ApprovalExpireNotificationEmail(TemplateEmailBase):
-    subject = 'Your Licence has been expired.'
+    subject = '{} - Commercial Operations Licence expired.'.format(settings.DEP_NAME)
     html_template = 'commercialoperator/emails/approval_expire_notification.html'
     txt_template = 'commercialoperator/emails/approval_expire_notification.txt'
 

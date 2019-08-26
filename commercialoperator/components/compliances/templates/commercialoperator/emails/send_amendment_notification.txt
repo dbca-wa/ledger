@@ -1,7 +1,7 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Compliance with requirements{{ compliance.reference }} has been reviewed and requires an amendment before approval.
+    Your document to complete a requirement {{ compliance.reference }} of your licence has been submitted. However, further information is required. Please login to your account <a href="{{login_url}}">here</a>.
 
     {% if reason %}
         <p>
@@ -12,10 +12,9 @@
     {% if amendment_request_text %}
         <p><span> Amendment details: <br> {{ amendment_request_text }}</span></p>
     {% endif %}
-    <p>
-    You can access this Compliance using the following link:
-    </p>
-    {{url}}
+    You will receive a confirmation email, and it will show up on your account if the document meets the requirement.
 
+    You will receive a notification email if there is any incomplete information or documents missing.
+    
 
 {%  endblock %}

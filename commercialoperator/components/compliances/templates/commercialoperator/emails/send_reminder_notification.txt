@@ -1,12 +1,14 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Compliance with requirements{{ compliance.reference }} has passed the due date and has not been lodged yet.
+    Please be aware that the following is overdue:
+    <a href="{{url}}">{{ compliance.reference }}</a>
 
-    <p>
-    You can access this Compliance using the following link:
-    </p>
-    {{url}}
+    To complete the licence requirement please login to your account <a href="{{login_url}}">here</a>.
+
+    It is a condition of your licence that you complete all requirements. Failure to do so may result in cancellation or suspension of the commercial operations licence.
+
+    If you have any queries please contact a licensing officer on {{settings.DEP_PHONE}}, or email {{settings.SUPPORT_EMAIL}}
 
 
 {%  endblock %}
