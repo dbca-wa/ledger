@@ -84,6 +84,8 @@ class Offence(RevisionedMixin):
         related_name='offence_allocated_group',
         null=True
     )
+    region = models.ForeignKey(RegionDistrict, related_name='offence_region', null=True,)
+    district = models.ForeignKey(RegionDistrict, related_name='offence_district', null=True,)
 
     class Meta:
         app_label = 'wildlifecompliance'
