@@ -1,5 +1,7 @@
 import datetime
 
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 from ledger.accounts.models import EmailUser
@@ -145,34 +147,88 @@ class SanctionOutcome(models.Model):
     def get_related_items_descriptor(self):
         return '{0}, {1}'.format(self.lodgement_number, self.description)
 
+    @property
+    def regionDistrictId(self):
+        return self.district.id if self.district else self.region.id
+
+    @staticmethod
+    def get_compliance_permission_group(regionDistrictId, workflow_type):
+        region_district = RegionDistrict.objects.filter(id=regionDistrictId)
+
+        # 2. Determine which permission(s) is going to be apllied
+        compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+        codename = 'officer'
+        if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:
+            codename = 'manager'
+            per_district = True
+        elif workflow_type == SanctionOutcome.WORKFLOW_DECLINE:
+            codename = '---'
+            per_district = False
+        elif workflow_type == SanctionOutcome.WORKFLOW_ENDORSE:
+            codename = 'infringement_notice_coordinator'
+            per_district = False
+        elif workflow_type == SanctionOutcome.WORKFLOW_RETURN_TO_OFFICER:
+            codename = 'officer'
+            per_district = True
+        elif workflow_type == SanctionOutcome.WORKFLOW_WITHDRAW:
+            codename = '---'
+            per_district = False
+        elif workflow_type == SanctionOutcome.WORKFLOW_CLOSE:
+            codename = '---'
+            per_district = False
+        else:
+            # Should not reach here
+            # instance.save()
+            pass
+
+        permissions = Permission.objects.filter(codename=codename, content_type_id=compliance_content_type.id)
+
+        # 3. Find groups which has the permission(s) determined above in the regionDistrict.
+        if per_district:
+            groups = CompliancePermissionGroup.objects.filter(region_district__in=region_district, permissions__in=permissions)
+        else:
+            groups = CompliancePermissionGroup.objects.filter(permissions__in=permissions)
+
+        return groups.first()
+
     def send_to_manager(self, request):
         if self.issued_on_paper:
             self.status = self.STATUS_AWAITING_ENDORSEMENT
         else:
             self.status = self.STATUS_AWAITING_REVIEW
+        new_group = SanctionOutcome.get_compliance_permission_group(self.regionDistrictId, SanctionOutcome.WORKFLOW_SEND_TO_MANAGER)
+        self.allocated_group = new_group
         self.log_user_action(SanctionOutcomeUserAction.ACTION_SEND_TO_MANAGER.format(self.lodgement_number), request)
         self.save()
 
     def endorse(self, request):
         self.status = self.STATUS_AWAITING_PAYMENT
+        new_group = SanctionOutcome.get_compliance_permission_group(self.regionDistrictId, SanctionOutcome.WORKFLOW_ENDORSE)
+        self.allocated_group = new_group
         current_datetime = datetime.datetime.now()
         self.date_of_issue = current_datetime.date()
-        self.date_of_issue = current_datetime.time()
+        self.time_of_issue = current_datetime.time()
         self.log_user_action(SanctionOutcomeUserAction.ACTION_ENDORSE.format(self.lodgement_number), request)
         self.save()
 
     def decline(self, request):
         self.status = self.STATUS_DECLINED
+        new_group = SanctionOutcome.get_compliance_permission_group(self.regionDistrictId, SanctionOutcome.WORKFLOW_DECLINE)
+        self.allocated_group = new_group
         self.log_user_action(SanctionOutcomeUserAction.ACTION_DECLINE.format(self.lodgement_number), request)
         self.save()
 
     def return_to_officer(self, request):
         self.status = self.STATUS_AWAITING_AMENDMENT
+        new_group = SanctionOutcome.get_compliance_permission_group(self.regionDistrictId, SanctionOutcome.WORKFLOW_RETURN_TO_OFFICER)
+        self.allocated_group = new_group
         self.log_user_action(SanctionOutcomeUserAction.ACTION_RETURN_TO_OFFICER.format(self.lodgement_number), request)
         self.save()
 
     def withdraw(self, request):
         self.status = self.STATUS_WITHDRAWN
+        new_group = SanctionOutcome.get_compliance_permission_group(self.regionDistrictId, SanctionOutcome.WORKFLOW_WITHDRAW)
+        self.allocated_group = new_group
         self.log_user_action(SanctionOutcomeUserAction.ACTION_WITHDRAW.format(self.lodgement_number), request)
         self.save()
 

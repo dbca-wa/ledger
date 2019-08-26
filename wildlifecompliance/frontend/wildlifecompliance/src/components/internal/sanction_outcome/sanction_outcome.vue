@@ -234,7 +234,7 @@ export default {
     data() {
         let vm = this;
         vm.STATUS_DRAFT = 'draft';
-        vm.STATUS_AWAITING_ENDROSEMENT = 'awaiting_endorsement';
+        vm.STATUS_AWAITING_ENDORSEMENT = 'awaiting_endorsement';
         vm.STATUS_AWAITING_REVIEW = 'awaiting_review';
         vm.STATUS_AWAITING_AMENDMENT = 'awaiting_amendment';
         vm.STATUS_AWAITING_PAYMENT = 'awaiting_payment';
@@ -351,7 +351,7 @@ export default {
         visibilityEndorseButton: function() {
             let visibility = false;
             if (this.canUserAction){
-                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDROSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDORSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
                     visibility = true;
                 }
             }
@@ -360,7 +360,7 @@ export default {
         visibilityDeclineButton: function() {
             let visibility = false;
             if (this.canUserAction){
-                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDROSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDORSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
                     visibility = true;
                 }
             }

@@ -96,7 +96,7 @@ export default {
         console.log('constructRelatedItemsTable');
         this.$refs.related_items_table.vmDataTable.clear().draw();
 
-        if(this.displayedEntity.related_items){
+        if(this.displayedEntity && this.displayedEntity.related_items){
           for(let i = 0; i< this.displayedEntity.related_items.length; i++){
             let already_exists = this.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(this.displayedEntity.related_items[i].id);
 

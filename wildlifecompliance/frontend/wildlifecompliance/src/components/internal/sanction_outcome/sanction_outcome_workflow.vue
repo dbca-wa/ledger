@@ -49,6 +49,10 @@ export default {
                     }
             ],
             workflowDetails: '',
+            errorResponse: '',
+
+            allocatedGroup: [],
+            allocated_group_id: null,
         }
     },
     components: {
@@ -62,52 +66,71 @@ export default {
         },
     },
     computed: {
-      ...mapGetters('sanctionOutcomeStore', {
-          sanction_outcome: "sanction_outcome",
-      }),
-      modalTitle: function() {
-          switch(this.workflow_type){
-            case 'issue':
-                  return "Issue";
-                  break;
-            case 'withdraw':
-                  return "Withdraw";
-                  break;
-            case 'send_to_manager':
-                  return "Send to Manager";
-                  break;
-            case 'endorse':
-                  return "Endorse";
-                  break;
-            case 'decline':
-                  return "Decline";
-                  break;
-            case 'return_to_officer':
-                  return "Return to Officer";
-                  break;
-            case 'extend_due_date':
-                  return "Extend Due Date";
-                  break;
-            case 'send_to_dot':
-                  return "Send to Department of Transport";
-                  break;
-            case 'send_to_fines_enforcement':
-                  return "Send to Fines Enforcement";
-                  break;
-            case 'escalate_for_withdrawal':
-                  return "Escalate for Withdrawal";
-                  break;
-            default:
-                  return "---";
-          }
+        ...mapGetters('sanctionOutcomeStore', {
+            sanction_outcome: "sanction_outcome",
+        }),
+        modalTitle: function() {
+            switch(this.workflow_type){
+                case 'withdraw':
+                    return "Withdraw";
+                    break;
+                case 'send_to_manager':
+                    return "Send to Manager";
+                    break;
+                case 'endorse':
+                    return "Endorse";
+                    break;
+                case 'decline':
+                    return "Decline";
+                    break;
+                case 'return_to_officer':
+                    return "Return to Officer";
+                    break;
+                default:
+                    return "---";
+            }
+        },
+        regionDistrictId: function() {
+            // if (this.district_id || this.region_id) {
+            //     return this.district_id ? this.district_id : this.region_id;
+            if (this.sanction_outcome.district || this.sanction_outcome.region) {
+                return this.sanction_outcome.district ? this.sanction_outcome.district : this.sanction_outcome.region;
+            } else {
+                return null;
+            }
       },
+    //   groupPermission: function() {
+    //       if (!this.workflow_type) {
+    //           return "";  // TODO: make sure if this is correct
+    //       } else if (this.workflow_type === 'send_to_manager') {
+    //           return "manager";
+    //       } else if (this.workflow_type === 'return_to_officer') {
+    //           return "officer";
+    //       } else if (this.workflow_type === 'endorse') {
+    //           return "infringement_notice_coordinator";
+    //       } else if (this.workflow_type === 'decline') {
+    //           if (this.sanction_outcome.issued_on_paper) {
+    //              return "officer";
+    //           } else {
+    //              return "manager";
+    //           }
+    //       } else if (this.workflow_type === 'withdraw') {
+    //           return "infringement_notice_coordinator";
+    //       } else if (this.workflow_type === 'close') {
+    //           return "";  // TODO: make sure if this is correct
+    //       }
+    //   },
     },
     methods: {
+        ...mapActions({
+            loadAllocatedGroup: 'loadAllocatedGroup',  // defined in store/modules/user.js
+        }),
         ok: async function () {
+            // await this.updateAllocatedGroup();
             const response = await this.sendData();
-            console.log(response);
-            if (response === 'ok') {
+            if (response.ok) {
                 this.close();
+                this.$router.push({ name: 'internal-sanction-outcome-dash' });
             }
         },
         cancel: async function() {
@@ -127,12 +150,42 @@ export default {
             }
             this.attachAnother();
         },
+        // updateAllocatedGroup: async function() {
+        //     console.log('updateAllocatedGroup');
+
+        //     this.errorResponse = "";
+        //     if (this.groupPermission === 'infringement_notice_coordinator') {
+        //         // let allocatedGroupResponse = ...new api endpoint
+
+        //     } else if (this.regionDistrictId) {
+        //         let allocatedGroupResponse = await this.loadAllocatedGroup({
+        //             region_district_id: this.regionDistrictId,
+        //             group_permission: this.groupPermission,
+        //         });
+        //     }
+        //     if (allocatedGroupResponse.ok) {
+        //         Vue.set(this, 'allocatedGroup', allocatedGroupResponse.body.allocated_group);
+        //         this.allocated_group_id = allocatedGroupResponse.body.group_id;
+        //         console.log('allocated_troup_id:');
+        //         console.log(this.allocated_troup_id);
+        //     } else {
+        //         // Display http error response on modal
+        //         this.errorResponse = allocatedGroupResponse.statusText;
+        //     }
+        //     // Display empty group error on modal
+        //     if (!this.errorResponse &&
+        //         this.allocatedGroup &&
+        //         this.allocatedGroup.length <= 1) {
+        //         this.errorResponse = 'This group has no members';
+        //     }
+        // },
         sendData: async function () {
             let post_url = '/api/sanction_outcome/' + this.sanction_outcome.id + '/workflow_action/'
             let payload = new FormData();
             payload.append('details', this.workflowDetails);
             this.$refs.comms_log_file.commsLogId ? payload.append('comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
             this.workflow_type ? payload.append('workflow_type', this.workflow_type) : null;
+            // payload.append('allocated_group_id', this.allocated_group_id);
 
             console.log('payload');
             console.log(payload);

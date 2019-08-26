@@ -265,7 +265,6 @@ export default {
   name: "SanctionOutcome",
   data: function() {
     let vm = this;
-    vm.WORKFLOW_SEND_TO_MANAGER = 'send_to_manager';
 
     return {
       nTab: "nTab" + vm._uid,
@@ -280,6 +279,9 @@ export default {
       documentActionUrl: null,
       elem_paper_id_notice: null,
       errorResponse: "",
+
+      // allocatedGroup: [], // This stores members of the allocatedGroup
+      // allocated_group_id: null,
 
       // This is the object to be sent to the server when saving
       sanction_outcome: {
@@ -378,6 +380,12 @@ export default {
       }
     };
   },
+  props:{
+        workflow_type: {
+            type: String,
+            default: 'send_to_manager',
+        },
+  },
   components: {
     modal,
     datatable,
@@ -427,11 +435,6 @@ export default {
         this.currentRegionIdChanged();
       }
     },
-    // regionDistrictId: {
-    //   handler: function() {
-    //     this.updateAllocatedGroup()
-    //   }
-    // }
   },
   computed: {
     ...mapGetters("offenceStore", {
@@ -503,10 +506,9 @@ export default {
       this.close();
     },
     ...mapActions({
-      loadAllocatedGroup: 'loadAllocatedGroup',
+      loadAllocatedGroup: 'loadAllocatedGroup',  // defined in store/modules/user.js
     }),
     // updateAllocatedGroup: async function() {
-    //     console.log("updateAllocatedGroup");
     //     this.errorResponse = "";
     //     if (this.regionDistrictId) {
     //         let allocatedGroupResponse = await this.loadAllocatedGroup({
@@ -515,19 +517,19 @@ export default {
     //         });
     //         if (allocatedGroupResponse.ok) {
     //             // Update member list
-    //             // Vue.set(this, 'sanction_outcome.allocatedGroup', allocatedGroupResponse.body.allocated_group);
+    //             Vue.set(this, 'allocatedGroup', allocatedGroupResponse.body.allocated_group);
     //             // Update group id
-    //             this.sanction_outcome.allocated_group_id = allocatedGroupResponse.body.group_id;
+    //             this.allocated_group_id = allocatedGroupResponse.body.group_id;
     //         } else {
     //             // Display http error response on modal
     //             this.errorResponse = allocatedGroupResponse.statusText;
     //         }
     //         // Display empty group error on modal
-    //         // if (!this.errorResponse &&
-    //         //     this.allocatedGroup &&
-    //         //     this.allocatedGroup.length <= 1) {
-    //         //     this.errorResponse = 'This group has no members';
-    //         // }
+    //         if (!this.errorResponse &&
+    //             this.allocatedGroup &&
+    //             this.allocatedGroup.length <= 1) {
+    //             this.errorResponse = 'This group has no members';
+    //         }
     //     }
     // },
     cancel: async function() {
@@ -786,7 +788,7 @@ export default {
 
         payload.call_email_id = this.$parent.call_email ? this.$parent.call_email.id : null;
         payload.inspection_id = this.$parent.inspection ? this.$parent.inspection.id : null;
-        payload.workflow_type = this.WORKFLOW_SEND_TO_MANAGER;
+        payload.workflow_type = 'send_to_manager'  // Because this modal is used only when creating new sanction outcome to send to manager
 
         console.log(payload);
         const savedObj = await Vue.http.post(fetchUrl, payload);
