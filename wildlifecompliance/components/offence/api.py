@@ -1,10 +1,16 @@
+import json
 import traceback
+from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.http import HttpResponse
+from django.db.models import Q
 from rest_framework import viewsets, filters, serializers, status
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
+from rest_framework_datatables.filters import DatatablesFilterBackend
+from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
 from ledger.accounts.models import EmailUser, Organisation
 from wildlifecompliance.components.call_email.models import Location, CallEmailUserAction, CallEmail
@@ -13,8 +19,108 @@ from wildlifecompliance.components.call_email.serializers import LocationSeriali
 from wildlifecompliance.components.main.api import save_location
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation
 from wildlifecompliance.components.offence.serializers import OffenceSerializer, SectionRegulationSerializer, \
-    SaveOffenceSerializer, SaveOffenderSerializer, OrganisationSerializer
+    SaveOffenceSerializer, SaveOffenderSerializer, OrganisationSerializer, OffenceDatatableSerializer
 from wildlifecompliance.helpers import is_internal
+
+
+class OffenceFilterBackend(DatatablesFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+        total_count = queryset.count()
+
+        # Storage for the filters
+        # Required filters are accumulated here
+        # Then issue a query once at last
+        q_objects = Q()
+
+        # Filter by the search_text
+        search_text = request.GET.get('search[value]')
+        if search_text:
+            q_objects &= Q(lodgement_number__icontains=search_text) | \
+                         Q(identifier__icontains=search_text) | \
+                         Q(offender__person__first_name__icontains=search_text) | \
+                         Q(offender__person__last_name__icontains=search_text) | \
+                         Q(offender__person__email__icontains=search_text) | \
+                         Q(offender__organisation__name__icontains=search_text) | \
+                         Q(offender__organisation__abn__icontains=search_text) | \
+                         Q(offender__organisation__trading_name__icontains=search_text)
+
+        type = request.GET.get('type',).lower()
+        if type and type != 'all':
+            q_objects &= Q(type=type)
+
+        status = request.GET.get('status',).lower()
+        if status and status != 'all':
+            q_objects &= Q(status=status)
+
+        # payment_status = request.GET.get('payment_status',).lower()
+        # if payment_status and payment_status != 'all':
+        #     q_objects &= Q(payment_status=payment_status)
+
+        date_from = request.GET.get('date_from',).lower()
+        if date_from:
+            date_from = datetime.strptime(date_from, '%d/%m/%Y')
+            q_objects &= Q(date_of_issue__gte=date_from)
+
+        date_to = request.GET.get('date_to',).lower()
+        if date_to:
+            date_to = datetime.strptime(date_to, '%d/%m/%Y')
+            q_objects &= Q(date_of_issue__lte=date_to)
+
+        # perform filters
+        queryset = queryset.filter(q_objects)
+
+        getter = request.query_params.get
+        fields = self.get_fields(getter)
+        ordering = self.get_ordering(getter, fields)
+        if len(ordering):
+            for num, item in enumerate(ordering):
+                # offender is the foreign key of the sanction outcome
+                if item == 'offender':
+                    # offender can be a person or an organisation
+                    ordering[num] = 'offender__person'
+                    ordering.insert(num + 1, 'offender__organisation')
+                elif item == '-offender':
+                    ordering[num] = '-offender__person'
+                    ordering.insert(num + 1, '-offender__organisation')
+                elif item == 'status__name':
+                    ordering[num] = 'status'
+                elif item == '-status__name':
+                    ordering[num] = '-status'
+                elif item == 'user_action':
+                    pass
+
+            queryset = queryset.order_by(*ordering).distinct()
+
+        setattr(view, '_datatables_total_count', total_count)
+        return queryset
+
+
+class OffencePaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (OffenceFilterBackend,)
+    # filter_backends = (DatatablesFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    # renderer_classes = (InspectionRenderer,)
+    queryset = Offence.objects.none()
+    serializer_class = OffenceDatatableSerializer
+    page_size = 10
+
+    def get_queryset(self):
+        # user = self.request.user
+        if is_internal(self.request):
+            return Offence.objects.all()
+        return Offence.objects.none()
+
+    @list_route(methods=['GET', ])
+    def get_paginated_datatable(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        queryset = self.filter_queryset(queryset)
+        self.paginator.page_size = queryset.count()
+        result_page = self.paginator.paginate_queryset(queryset, request)
+        serializer = OffenceDatatableSerializer(result_page, many=True, context={'request': request})
+        ret = self.paginator.get_paginated_response(serializer.data)
+        return ret
 
 
 class OffenceViewSet(viewsets.ModelViewSet):
@@ -26,6 +132,23 @@ class OffenceViewSet(viewsets.ModelViewSet):
         if is_internal(self.request):
             return Offence.objects.all()
         return Offence.objects.none()
+
+    @list_route(methods=['GET', ])
+    def types(self, request, *args, **kwargs):
+        res_obj = []
+        section_regulations = SectionRegulation.objects.all()
+        for item in section_regulations:
+            res_obj.append({'id': item.id, 'display': item.act + ' ' + item.name});
+        res_json = json.dumps(res_obj)
+        return HttpResponse(res_json, content_type='application/json')
+
+    @list_route(methods=['GET', ])
+    def statuses(self, request, *args, **kwargs):
+        res_obj = []
+        for choice in Offence.STATUS_CHOICES:
+            res_obj.append({'id': choice[0], 'display': choice[1]});
+        res_json = json.dumps(res_obj)
+        return HttpResponse(res_json, content_type='application/json')
 
     @list_route(methods=['GET', ])
     def filter_by_call_email(self, request, *args, **kwargs):

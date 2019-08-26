@@ -4,7 +4,7 @@ from ledger.accounts.models import RevisionedMixin, EmailUser, Organisation
 from wildlifecompliance.components.call_email.models import Location, CallEmail
 from wildlifecompliance.components.inspection.models import Inspection
 from wildlifecompliance.components.main.models import Document
-from wildlifecompliance.components.users.models import RegionDistrict
+from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 
 class SectionRegulation(RevisionedMixin):
@@ -32,7 +32,10 @@ class Offence(RevisionedMixin):
         ('closed', 'Closed'),
         ('discarded', 'Discarded'),
     )
-
+    # TYPE_CHOICES = (
+    #     ('type1', 'Type1'),
+    #     ('type2', 'Type2'),
+    # )
     identifier = models.CharField(
         max_length=50,
         blank=True,
@@ -71,6 +74,16 @@ class Offence(RevisionedMixin):
         blank=True,
     )
     details = models.TextField(blank=True)
+    assigned_to = models.ForeignKey(
+        EmailUser,
+        related_name='offence_assigned_to',
+        null=True
+    )
+    allocated_group = models.ForeignKey(
+        CompliancePermissionGroup,
+        related_name='offence_allocated_group',
+        null=True
+    )
 
     class Meta:
         app_label = 'wildlifecompliance'

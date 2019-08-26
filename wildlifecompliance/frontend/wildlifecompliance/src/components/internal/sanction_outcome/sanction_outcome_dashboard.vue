@@ -1,5 +1,5 @@
 <template>
-    <div class="container" id="internalInspectionDash">
+    <div class="container" id="internalSanctionOutcomeDash">
         <FormSection :label="`Sanction Outcome`" :Index="`0`">
 
         <div class="row">

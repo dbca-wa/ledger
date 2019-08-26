@@ -98,6 +98,7 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
     def get_related_items(self, obj):
         return get_related_items(obj)
 
+
 class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
     assigned_to_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
 
@@ -106,6 +107,7 @@ class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
         fields = (
             'assigned_to_id',
         )
+
 
 class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
