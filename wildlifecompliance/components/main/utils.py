@@ -369,6 +369,8 @@ def search_weak_links(request_data):
 
     components_selected = request_data.get('selectedEntity')
     search_text = request_data.get('searchText')
+    #print(components_selected)
+    #print(search_text)
     # components_selected = 'call_email'
     #'call_email', 'inspection', 'offence', 'sanction_outcome'
     #search_text = request_data
@@ -412,5 +414,22 @@ def search_weak_links(request_data):
                 Q(offender__person__first_name__icontains=search_text) |
                 Q(offender__person__last_name__icontains=search_text)
                 )
-    return qs
+    #print(qs)
+    return_qs = []
+    for item in qs:
+        if item._meta.model_name == 'callemail':
+            url_prefix = 'call_email'
+        elif item._meta.model_name == 'sanctionoutcome':
+            url_prefix = 'sanction_outcome'
+        else:
+            url_prefix = item._meta.model_name
+
+        return_qs.append({
+            'id': item.id,
+            'model_name': item._meta.model_name,
+            'item_identifier': item.get_related_items_identifier,
+            'item_description': item.get_related_items_descriptor,
+            'item_action': '/{}/{}'.format(url_prefix, item.id)
+            })
+    return return_qs
 

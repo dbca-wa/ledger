@@ -6,7 +6,7 @@
             </div>
         </div></div>
         <div>
-            <WeakLinks />
+            <WeakLinks @weak-link-selected="createWeakLink"/>
         </div>
     </div>
 </template>
@@ -24,9 +24,16 @@ require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 import WeakLinks from '@/components/common/weak_links.vue';
 
 export default {
-  name: "RelatedItems",
-  data: function() {
+    name: "RelatedItems",
+    props: {
+          parent_update_function: {
+              type: Function,
+          },
+    },
+
+    data: function() {
     return {
+      displayedEntityType: null,
       dtHeadersRelatedItems: [
           'Number',
           'Type',
@@ -85,18 +92,35 @@ export default {
     },
     displayedEntity: function() {
         if (this.call_email && this.call_email.id) {
+            this.displayedEntityType = 'callemail';
             return this.call_email;
         } else if (this.inspection && this.inspection.id) {
+            this.displayedEntityType = 'inspection';
             return this.inspection;
         } else if (this.offence && this.offence.id) {
+            this.displayedEntityType = 'offence';
             return this.offence;
         } else if (this.sanction_outcome && this.sanction_outcome.id) {
+            this.displayedEntityType = 'sanctionoutcome';
             return this.sanction_outcome;
         }
     },
 
   },
   methods: {
+    createWeakLink: async function(obj) {
+        console.log(obj)
+        let payload = {
+            'first_content_type': this.displayedEntityType,
+            'first_object_id': this.displayedEntity.id,
+            'second_content_type': obj.data_type,
+            'second_object_id': obj.id,
+        }
+        console.log(payload);
+        // post payload to url, then
+        await this.parent_update_function(this.displayedEntity.id);
+
+    },
     constructRelatedItemsTable: function() {
         console.log('constructRelatedItemsTable');
         this.$refs.related_items_table.vmDataTable.clear().draw();

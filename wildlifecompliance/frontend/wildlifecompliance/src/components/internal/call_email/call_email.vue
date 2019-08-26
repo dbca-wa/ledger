@@ -344,7 +344,7 @@
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
                                     <div class="col-sm-12" v-if="relatedItemsVisibility">
-                                        <RelatedItems v-bind:key="relatedItemsBindId"/>
+                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_function="loadCallEmail"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -565,7 +565,7 @@ export default {
       setDateOfCall: 'setDateOfCall',
     }),
     ...mapActions({
-      saveFormData: "saveFormData",
+      saveFormData: 'saveFormData',
     }),
     updateWorkflowBindId: function() {
         let timeNow = Date.now()

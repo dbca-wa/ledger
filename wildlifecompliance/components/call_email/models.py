@@ -312,7 +312,8 @@ class CallEmail(RevisionedMixin):
 
     @property
     def get_related_items_descriptor(self):
-        return '{0}, {1}'.format(self.status, self.caller)
+        #return '{0}, {1}'.format(self.status, self.caller)
+        return self.caller
     # @property
     # def related_items(self):
     #     return get_related_items(self)

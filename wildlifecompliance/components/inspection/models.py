@@ -166,7 +166,8 @@ class Inspection(RevisionedMixin):
 
     @property
     def get_related_items_descriptor(self):
-        return '{0}, {1}'.format(self.title, self.details)
+        #return '{0}, {1}'.format(self.title, self.details)
+        return self.title
 
     @property
     def schema(self):

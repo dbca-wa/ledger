@@ -10,7 +10,7 @@ from wildlifecompliance.components.main.utils import (
 )
 from wildlifecompliance.components.main.serializers import (
     SearchKeywordSerializer,
-    SearchReferenceSerializer
+    SearchReferenceSerializer,
 )
 
 
@@ -34,10 +34,13 @@ class SearchWeakLinksView(views.APIView):
 
     def post(self, request, format=None):
         qs = []
-        if request.data.get('searchTerm'): # modify as appropriate
+        if request.data.get('searchText'): # modify as appropriate
             qs = search_weak_links(request.data)
-        serializer = SearchWeakLinksSerializer(qs, many=True)
-        return Response(serializer.data)
+        # print("returned weak links")
+        # print(qs)
+        # return only first 10 results
+        return_qs = qs[:10]
+        return Response(return_qs)
 
 class SearchReferenceView(views.APIView):
     renderer_classes = [JSONRenderer]

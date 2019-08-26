@@ -42,15 +42,5 @@ class SearchKeywordSerializer(serializers.Serializer):
         required=False
     )
 
-# to return object description fields for drop-down list vuew
-class SearchWeakLinksSerializer(serializers.Serializer):
-    #number = serializers.CharField()
-    #record_id = serializers.IntegerField()
-    #record_type = serializers.CharField()
-    #applicant = serializers.CharField()
-    #text = serializers.JSONField(required=False)
-    pass
-
-
 class SearchReferenceSerializer(serializers.Serializer):
     url_string = serializers.CharField()
