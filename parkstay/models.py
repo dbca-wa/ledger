@@ -254,6 +254,20 @@ class Campground(models.Model):
         closure = CampgroundBookingRange(**data)
         closure.save()
 
+    def get_cheapest_rate(self):
+        # Find the cheapest, current site rate for a campground.
+        # Aggregate all sites:
+        sites = [site for site in self.campsites.all()]
+        if not sites:
+            return None
+        # Aggregate all current rates for those sites.
+        rates = [rate for rate in site.rates.current() for site in sites]
+        if rates:
+            # Return the minimum adult rate:
+            return min(rate.rate.adult for rate in rates)
+        else:
+            return None
+
     def createCampsitePriceHistory(self, data):
         '''Create Multiple campsite rates
         '''
@@ -815,6 +829,14 @@ class Rate(models.Model):
         return 'adult: ${}, concession: ${}, child: ${}, infant: ${}'.format(self.adult, self.concession, self.child, self.infant)
 
 
+class CampsiteRateManager(models.Manager):
+    """Define a custom model manager for CampsiteRate objects, having a
+    method to filter on "current" rates only (i.e. those without a date_end).
+    """
+    def current(self):
+        return self.filter(date_end__isnull=True)
+
+
 class CampsiteRate(models.Model):
     RATE_TYPE_CHOICES = (
         (0, 'Standard'),
@@ -840,6 +862,7 @@ class CampsiteRate(models.Model):
     reason = models.ForeignKey('PriceReason')
     details = models.TextField(null=True, blank=True)
     update_level = models.SmallIntegerField(choices=UPDATE_LEVEL_CHOICES, default=0)
+    objects = CampsiteRateManager()
 
     def get_rate(self, num_adult=0, num_concession=0, num_child=0, num_infant=0):
         return self.rate.adult * num_adult + self.rate.concession * num_concession + \
