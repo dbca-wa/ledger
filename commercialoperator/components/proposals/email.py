@@ -37,7 +37,7 @@ class ProposalDeclineSendNotificationEmail(TemplateEmailBase):
     txt_template = 'commercialoperator/emails/proposals/send_decline_notification.txt'
 
 class ProposalApprovalSendNotificationEmail(TemplateEmailBase):
-    subject = 'Your Application has been approved.'
+    subject = '{} - Commercial Operations Licence Approved.'.format(settings.DEP_NAME)
     html_template = 'commercialoperator/emails/proposals/send_approval_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_approval_notification.txt'
 
@@ -345,9 +345,16 @@ def send_proposal_approval_email_notification(proposal,request):
                 attachment = (file_name, doc._file.file.read())
                 attachments.append(attachment)
 
+    url = request.build_absolute_uri(reverse('external'))
+    if "-internal" in url:
+        # remove '-internal'. This email is for external submitters
+        url = ''.join(url.split('-internal'))
+    handbook_url= settings.COLS_HANDBOOK_URL
     context = {
         'proposal': proposal,
         'num_requirement_docs': len(attachments) - 1,
+        'url': url,
+        'handbook_url': handbook_url
     }
 
     msg = email.send(proposal.submitter.email, bcc= all_ccs, attachments=attachments, context=context)

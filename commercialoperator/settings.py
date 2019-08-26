@@ -108,7 +108,7 @@ SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + SITE_DOMAIN)
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', 'no-reply@' + SITE_DOMAIN)
 MEDIA_APP_DIR = env('MEDIA_APP_DIR', 'cols')
 ADMIN_GROUP = env('ADMIN_GROUP', 'COLS Admin')
-COLS_HANDBOOK_URL = env('COLS_HANDBOOK_URL', 'www.parks.dpaw.wa.gov.au/know/commercial-operator-handbook')
+COLS_HANDBOOK_URL = env('COLS_HANDBOOK_URL', 'https://parks.dpaw.wa.gov.au/know/commercial-operator-handbook')
 
 # for ORACLE Job Notification - override settings_base.py
 EMAIL_FROM = DEFAULT_FROM_EMAIL

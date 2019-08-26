@@ -46,9 +46,17 @@ def send_approval_expire_email_notification(approval):
     email = ApprovalExpireNotificationEmail()
     proposal = approval.current_proposal
 
+    url=settings.SITE_URL if settings.SITE_URL else ''
+    url += reverse('external')
+
+    if "-internal" in url:
+        # remove '-internal'. This email is for external submitters
+        url = ''.join(url.split('-internal'))
+
     context = {
         'approval': approval,
-        'proposal': proposal
+        'proposal': proposal,
+        'url': url
     }
     msg = email.send(proposal.submitter.email, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
@@ -57,6 +65,7 @@ def send_approval_expire_email_notification(approval):
     except:
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
+
     _log_approval_email(msg, approval, sender=sender_user)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
     if approval.org_applicant:
