@@ -1,9 +1,9 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-        This Inspection has been forwarded to you:
+        This Sanction Outcome has been forwarded to you:
 
-        Inspection : <a href="{{url}}">{{ inspection.number }}</a> 
+        Sanction Outcome : <a href="{{url}}">{{ sanction_outcome.lodgement_number }}</a>
 
         Message:  {{ workflow_entry_details }}
 
