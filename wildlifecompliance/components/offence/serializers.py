@@ -4,6 +4,7 @@ from ledger.accounts.models import Organisation
 from wildlifecompliance.components.call_email.serializers import LocationSerializer, EmailUserSerializer
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
+from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
 
 class OrganisationSerializer(serializers.ModelSerializer):
@@ -104,6 +105,7 @@ class OffenceSerializer(serializers.ModelSerializer):
     location = LocationSerializer(read_only=True)
     alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
     offenders = serializers.SerializerMethodField(read_only=True)
+    allocated_group = serializers.SerializerMethodField()
 
     class Meta:
         model = Offence
@@ -112,6 +114,12 @@ class OffenceSerializer(serializers.ModelSerializer):
             'identifier',
             'status',
             'call_email',
+            'region_id',
+            'district_id',
+            'assigned_to_id',
+            'allocated_group',
+            'allocated_group_id',
+            'district',
             'inspection_id',
             'occurrence_from_to',
             'occurrence_date_from',
@@ -130,6 +138,22 @@ class OffenceSerializer(serializers.ModelSerializer):
     def get_offenders(self, obj):
         offenders = Offender.active_offenders.filter(offence__exact=obj)
         return [ OffenderSerializer(offender).data for offender in offenders ]
+
+    def get_allocated_group(self, obj):
+        allocated_group = [{
+            'email': '',
+            'first_name': '',
+            'full_name': '',
+            'id': None,
+            'last_name': '',
+            'title': '',
+        }]
+        returned_allocated_group = CompliancePermissionGroupMembersSerializer(instance=obj.allocated_group)
+        for member in returned_allocated_group.data['members']:
+            allocated_group.append(member)
+
+        return allocated_group
+
 
 class SaveOffenceSerializer(serializers.ModelSerializer):
     location_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)

@@ -332,7 +332,7 @@ import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import moment from 'moment';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
-import Offence from '../offence/offence';
+import Offence from '../offence/offence_modal';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
 import InspectionModal from './inspection_modal.vue';

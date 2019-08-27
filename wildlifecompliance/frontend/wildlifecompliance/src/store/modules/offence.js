@@ -37,7 +37,12 @@ export const offenceStore = {
             occurrence_date_to: null,
             occurrence_time_from: null,
             occurrence_time_to: null,
-            details: ''
+            details: '',
+            region_id: null,
+            district_id: null,
+            assigned_to_id: null,
+            allocated_group: [],
+            allocated_group_id: null,
         }
     },
     getters: {
