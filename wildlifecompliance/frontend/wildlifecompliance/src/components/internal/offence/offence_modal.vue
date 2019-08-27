@@ -354,6 +354,9 @@ export default {
       setAllegedOffenceIds: "setAllegedOffenceIds",
       setOffenders: "setOffenders",
       setCallEmailId: "setCallEmailId",
+      setRegionId: "setRegionId",
+      setDistrictId: "setDistrictId",
+      setAllocatedGroupId: "setAllocatedGroupId",
       setInspectionId: "setInspectionId",
       saveOffence: "saveOffence",
       setOffenceEmpty: "setOffenceEmpty"
@@ -537,9 +540,12 @@ export default {
     sendData: async function() {
       let vm = this;
 
-      // If exists, set call_email id to the offence
+      // If exists, set call_email id and other attributes to the offence
       if (this.$parent.call_email) {
           vm.setCallEmailId(this.$parent.call_email.id);
+          vm.setRegionId(this.$parent.call_email.region_id);
+          vm.setDistrictId(this.$parent.call_email.district_id);
+          vm.setAllocatedGroupId(this.$parent.call_email.allocated_group_id);
       }
 
       // If exists, set inspection id to the offence

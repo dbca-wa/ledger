@@ -159,6 +159,9 @@ class SaveOffenceSerializer(serializers.ModelSerializer):
     location_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
     call_email_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
     inspection_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    region_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    district_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    allocated_group_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = Offence
@@ -175,6 +178,9 @@ class SaveOffenceSerializer(serializers.ModelSerializer):
             'occurrence_date_to',
             'occurrence_time_to',
             'details',
+            'region_id',
+            'district_id',
+            'allocated_group_id',
         )
         read_only_fields = ()
 

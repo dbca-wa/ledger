@@ -76,6 +76,15 @@ export const offenceStore = {
         updateCallEmailId(state, id) {
             state.offence.call_email_id = id;
         },
+        updateRegionId(state, id) {
+            state.offence.region_id = id;
+        },
+        updateDistrictId(state, id) {
+            state.offence.district_id = id;
+        },
+        updateAllocatedGroupId(state, id) {
+            state.offence.allocated_group_id = id;
+        },
         updateInspectionId(state, id) {
             state.offence.inspection_id = id;
         },
@@ -200,6 +209,15 @@ export const offenceStore = {
         },
         setCallEmailId({ commit, }, id){
             commit("updateCallEmailId", id);
+        },
+        setRegionId({ commit, }, id){
+            commit("updateRegionId", id);
+        },
+        setDistrictId({ commit, }, id){
+            commit("updateDistrictId", id);
+        },
+        setAllocatedGroupId({ commit, }, id){
+            commit("updateAllocatedGroupId", id);
         },
         setInspectionId({ commit, }, id){
             commit("updateInspectionId", id);
