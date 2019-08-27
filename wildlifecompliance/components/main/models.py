@@ -173,6 +173,20 @@ class WeakLinks(models.Model):
     class Meta:
         app_label = 'wildlifecompliance'
 
+    def save(self, *args, **kwargs):
+        # test for existing object with first and second fields reversed.  If exists, don't create duplicate.
+        duplicate = WeakLinks.objects.filter(
+                first_content_type = self.second_content_type,
+                second_content_type = self.first_content_type,
+                first_object_id = self.second_object_id,
+                second_object_id = self.first_object_id
+                )
+        
+        if duplicate:
+            print("Duplicate - no record created")
+        else:
+            super(WeakLinks, self).save(*args,**kwargs)
+
 # list of approved related item models
 #
 # (Call_email, 'C'), (Offence, 'O'), Email_User, Inspection, ...
@@ -197,6 +211,18 @@ def format_model_name(model_name):
                 }
         return switcher.get(lower_model_name, '')
 
+def format_url(model_name, obj_id):
+    if model_name:
+        lower_model_name = model_name.lower()
+        switcher = {
+                'callemail': '<a href=' + '/api/call_email/{}'.format(obj_id) + '>View</a>',
+                'inspection': '<a href=' + '/api/inspection/{}'.format(obj_id) + '>View</a>',
+                'offence': '<a href=' + '/api/offence/{}'.format(obj_id) + '>View</a>',
+                'sanctionoutcome': '<a href=' + '/api/sanction_outcome/{}'.format(obj_id) + '>View</a>',
+                'case': '<a href=' + '/api/case/{}'.format(obj_id) + '>View</a>',
+                }
+        return switcher.get(lower_model_name, '')
+
 def get_related_items(instance, **kwargs):
     return_list = []
     # Strong links
@@ -216,7 +242,11 @@ def get_related_items(instance, **kwargs):
                     return_list.append(
                         {   'model_name': format_model_name(f.related_model.__name__),
                             'identifier': field_object.get_related_items_identifier,
-                            'descriptor': field_object.get_related_items_descriptor
+                            'descriptor': field_object.get_related_items_descriptor,
+                            'action_url': format_url(f.related_model.__name__, field_object.id),
+                            'link_type': 'strong',
+                            'second_object_id': None,
+                            'second_content_type': None,
                         })
             elif f.is_relation:
                 field_value = f.value_from_object(instance)
@@ -227,7 +257,11 @@ def get_related_items(instance, **kwargs):
                     return_list.append(
                         {   'model_name': format_model_name(f.name),
                             'identifier': field_object.get_related_items_identifier, 
-                            'descriptor': field_object.get_related_items_descriptor
+                            'descriptor': field_object.get_related_items_descriptor,
+                            'action_url': format_url(f.related_model.__name__, field_object.id),
+                            'link_type': 'strong',
+                            'second_object_id': None,
+                            'second_content_type': None,
                         })
     # Weak links - first pass with instance as first_content_object
     instance_content_type = ContentType.objects.get_for_model(type(instance))
@@ -244,7 +278,11 @@ def get_related_items(instance, **kwargs):
         return_list.append(
             {   'model_name': format_model_name(link_content_type.model),
                 'identifier': link.second_content_object.get_related_items_identifier, 
-                'descriptor': link.second_content_object.get_related_items_descriptor
+                'descriptor': link.second_content_object.get_related_items_descriptor,
+                'second_object_id': link.second_content_object.id,
+                'second_content_type': link_content_type.model,
+                'link_type': 'weak',
+                'action_url': None,
             })
     # Weak links - first pass with instance as second_content_object
     weak_links = WeakLinks.objects.filter(
@@ -259,7 +297,11 @@ def get_related_items(instance, **kwargs):
         return_list.append(
             {   'model_name': format_model_name(link_content_type.model),
                 'identifier': link.first_content_object.get_related_items_identifier, 
-                'descriptor': link.first_content_object.get_related_items_descriptor
+                'descriptor': link.first_content_object.get_related_items_descriptor,
+                'second_object_id': link.first_content_object.id,
+                'second_content_type': link_content_type.model,
+                'link_type': 'weak',
+                'action_url': None,
             })
     return return_list       
 

@@ -2,7 +2,7 @@
     <div>
         <div class="col-sm-12 form-group"><div class="row">
             <div class="col-sm-12">
-                <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
+                <datatable ref="related_items_table" id="related-items-table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
             </div>
         </div></div>
         <div>
@@ -55,8 +55,13 @@ export default {
               {
                   data: 'Action',
                   mRender: function(data, type, row){
-                      // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
-                      return '<a href="#">View (not implemented)</a>';
+                      console.log(row)
+                      if (row.Action.link_type === 'strong') {
+                          return row.Action.action_url;
+                      } else if (row.Action.link_type === 'weak') {
+                          return '<a href="#" class="remove_button" second-content-type="' + row.Action.second_content_type + '" second-object-id="' + row.Action.second_object_id + '">Remove</a>';
+                      }
+                      //return '<a href="#">View (not implemented)</a>';
                   }
               },
           ]
@@ -126,6 +131,25 @@ export default {
         }
 
     },
+    removeWeakLink: async function(e) {
+        let secondContentType = e.target.getAttribute("second-content-type");
+        let secondObjectId = e.target.getAttribute("second-object-id");
+        let url = '/api/remove_weak_link/'
+        let payload = {
+            'first_content_type': this.displayedEntityType,
+            'first_object_id': this.displayedEntity.id,
+            'second_content_type': secondContentType,
+            'second_object_id': secondObjectId,
+        }
+        console.log(payload);
+        // post payload to url, then
+        let relatedItems = await Vue.http.post(url, payload);
+        console.log(relatedItems)
+        if (relatedItems.ok) {
+            await this.parent_update_related_items(relatedItems.body);
+        }
+    },
+
     constructRelatedItemsTable: function() {
         console.log('constructRelatedItemsTable');
         this.$refs.related_items_table.vmDataTable.clear().draw();
@@ -147,21 +171,27 @@ export default {
           }
         }
     },
+    addEventListeners: function() {
+      $('#related-items-table').on(
+          'click',
+          '.remove_button',
+          this.removeWeakLink,
+          );
+    }
   },
   created: async function() {
   },
   mounted: function() {
       this.$nextTick(() => {
+          this.addEventListeners();
           this.constructRelatedItemsTable();
+
       });
   }
 };
 </script>
 
 <style lang="css">
-.action-button {
-    margin-top: 5px;
-}
 #main-column {
   padding-left: 2%;
   padding-right: 0;

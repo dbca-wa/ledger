@@ -417,19 +417,12 @@ def search_weak_links(request_data):
     #print(qs)
     return_qs = []
     for item in qs:
-        if item._meta.model_name == 'callemail':
-            url_prefix = 'call_email'
-        elif item._meta.model_name == 'sanctionoutcome':
-            url_prefix = 'sanction_outcome'
-        else:
-            url_prefix = item._meta.model_name
 
         return_qs.append({
             'id': item.id,
             'model_name': item._meta.model_name,
             'item_identifier': item.get_related_items_identifier,
             'item_description': item.get_related_items_descriptor,
-            'item_action': '/{}/{}'.format(url_prefix, item.id)
             })
     return return_qs
 

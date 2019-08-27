@@ -51,11 +51,6 @@ class CreateWeakLinkView(views.APIView):
     renderer_classes = [JSONRenderer]
 
     def post(self, request, format=None):
-        print(request.data)
-        #qs = []
-        #if request.data.get('searchText'): # modify as appropriate
-            #s = search_weak_links(request.data)
-        #return_qs = qs[:10]
         try:
             with transaction.atomic():
                 first_content_type_str = request.data.get('first_content_type')
@@ -73,24 +68,17 @@ class CreateWeakLinkView(views.APIView):
                         model=second_content_type_str)
                 
                 weak_link_instance, created = WeakLinks.objects.get_or_create(
-                        first_content_type = first_content_type,
+                        first_content_type_id = first_content_type.id,
                         first_object_id = first_object_id,
-                        second_content_type = second_content_type,
+                        second_content_type_id = second_content_type.id,
                         second_object_id = second_object_id_int
                         )
-                #if created:
                 # derive parent (calling) object instance from weak_link_instance
                 calling_instance = weak_link_instance.first_content_type.model_class().objects.get(id=first_object_id)
 
                 # get related items of calling_instance
                 related_items = get_related_items(calling_instance)
-                print(related_items)
                 serializer = RelatedItemsSerializer(related_items, many=True)
-                print('serializer.data') 
-                print(serializer.data)
-                #return_json = JSONRenderer().render(serializer.data)
-                #print('return_json') 
-                #print(return_json)
 
                 return Response(serializer.data)
 
@@ -104,14 +92,60 @@ class RemoveWeakLinkView(views.APIView):
     renderer_classes = [JSONRenderer]
 
     def post(self, request, format=None):
-        qs = []
-        #if request.data.get('searchText'): # modify as appropriate
-            #s = search_weak_links(request.data)
-        #return_qs = qs[:10]
+        print(request.data)
         try:
             with transaction.atomic():
+                first_content_type_str = request.data.get('first_content_type')
+                first_object_id = request.data.get('first_object_id')
+                second_content_type_str = request.data.get('second_content_type')
+                second_object_id = request.data.get('second_object_id')
+                
+                # transform request data to search for Weak Link obj to delete
+                second_object_id_int = int(second_object_id)
+                first_content_type = ContentType.objects.get(
+                        app_label='wildlifecompliance', 
+                        model=first_content_type_str)
+                second_content_type = ContentType.objects.get(
+                        app_label='wildlifecompliance', 
+                        model=second_content_type_str)
+                print(first_content_type.id)
+                print(first_object_id)
+                print(second_content_type.id)
+                print(second_object_id_int)
 
-                return Response(return_qs)
+                # If weak link obj not found, test for object with first and second fields reversed and delete that instead.
+                weak_link_qs = WeakLinks.objects.filter(
+                        first_content_type_id = first_content_type.id,
+                        first_object_id = first_object_id,
+                        second_content_type_id = second_content_type.id,
+                        second_object_id = second_object_id_int
+                        )
+                if weak_link_qs:
+                    weak_link_instance = weak_link_qs[0]
+                    weak_link_instance.delete()
+                else:
+                    weak_link_qs = WeakLinks.objects.filter(
+                            first_content_type_id = second_content_type.id,
+                            first_object_id = second_object_id_int,
+                            second_content_type_id = first_content_type.id,
+                            second_object_id = first_object_id
+                            )
+                    if weak_link_qs:
+                        weak_link_instance = weak_link_qs[0]
+                        weak_link_instance.delete()
+
+                # derive parent (calling) object instance from ContentType
+                calling_instance = first_content_type.model_class().objects.get(id=first_object_id)
+
+                # get related items of calling_instance
+                related_items = get_related_items(calling_instance)
+                print("ln 124")
+                print(related_items)
+                serializer = RelatedItemsSerializer(related_items, many=True)
+                print(serializer.data)
+                
+
+                return Response(serializer.data)
         except Exception as e:
             print(traceback.print_exc())
             #raise serializers.ValidationError(str(e))
