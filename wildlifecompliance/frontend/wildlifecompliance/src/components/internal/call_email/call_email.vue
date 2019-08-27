@@ -597,7 +597,9 @@ export default {
     },
     allocateForInspection() {
       this.inspectionInitialised = true;
-      this.$refs.inspection.isModalOpen = true;
+        this.$nextTick(() => {
+          this.$refs.inspection.isModalOpen = true
+      });
     },
     save: async function () {
         if (this.call_email.id) {
