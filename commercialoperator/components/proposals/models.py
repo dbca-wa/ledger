@@ -961,11 +961,11 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     #Check if the user is member of assessor group for the Proposal
     def is_assessor(self,user):
-            return self.__assessor_group() in user.proposalassessorgroup_set.all() 
+            return self.__assessor_group() in user.proposalassessorgroup_set.all()
 
     #Check if the user is member of assessor group for the Proposal
     def is_approver(self,user):
-            return self.__approver_group() in user.proposalapprovergroup_set.all() 
+            return self.__approver_group() in user.proposalapprovergroup_set.all()
 
 
     def can_assess(self,user):
@@ -2084,12 +2084,6 @@ class ProposalTrail(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('trail', 'proposal')
 
-    # @property
-    # def sections(self):
-    #     qs=self.activities.all()
-    #     categories=ActivityCategory.objects.filter(activity_type='land')
-    #     activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
-    #     return activities
 
 class ProposalTrailSection(models.Model):
     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='sections')
@@ -2102,15 +2096,6 @@ class ProposalTrailSection(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('section', 'proposal_trail')
 
-#TODO: Need to remove this model
-# class ProposalTrailActivity(models.Model):
-#     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='trail_activities')
-#     activity = models.ForeignKey(Activity, blank=True, null=True)
-#     section=models.ForeignKey(Section, blank=True, null= True)
-
-#     class Meta:
-#         app_label = 'commercialoperator'
-#         unique_together = ('proposal_trail', 'activity')
 
 class ProposalTrailSectionActivity(models.Model):
     trail_section = models.ForeignKey(ProposalTrailSection, blank=True, null=True, related_name='trail_activities')

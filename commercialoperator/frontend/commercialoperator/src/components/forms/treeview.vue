@@ -12,8 +12,8 @@
             :flat="flat"
             :default-expand-level="default_expand_level"
             :normalizer="normalizer"
+            :open-direction="open_direction"
             open-on-focus="true"
-            open-direction="bottom"
             limit="20"
             >
 
@@ -96,6 +96,10 @@ export default {
         value_consists_of:{
             type: String,
             default: 'LEAF_PRIORITY', // last leaf nodes get pushed to selected_items array
+        },
+        open_direction:{
+            type: String,
+            default: 'bottom'
         },
     },
 

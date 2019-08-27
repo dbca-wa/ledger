@@ -425,8 +425,13 @@ export default {
         let vm = this;
         let formData = new FormData(vm.form);
         formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+        //formData.append('selected_land_access', JSON.stringify(vm.proposal.selected_land_access))
+        //formData.append('selected_land_activities', JSON.stringify(vm.proposal.selected_land_activities))
         formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
         formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+
+              vm.proposal.selected_access=vm.selected_access;
+              vm.proposal.selected_activities=vm.selected_activities;
 
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {

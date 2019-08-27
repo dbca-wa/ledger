@@ -312,6 +312,10 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     get_history = serializers.ReadOnlyField()
     is_qa_officer = serializers.SerializerMethodField()
     fee_invoice_url = serializers.SerializerMethodField()
+    land_access = serializers.SerializerMethodField()
+    land_activities = serializers.SerializerMethodField()
+    trail_activities = serializers.SerializerMethodField()
+    trail_section_activities = serializers.SerializerMethodField()
 
 #    def __init__(self, *args, **kwargs):
 #        import ipdb; ipdb.set_trace()
@@ -368,6 +372,10 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'other_details',
                 'activities_land',
                 'activities_marine',
+                'land_access',
+                'land_activities',
+                'trail_activities',
+                'trail_section_activities',
                 'land_parks',
                 'marine_parks',
                 'trails',
@@ -402,6 +410,18 @@ class BaseProposalSerializer(serializers.ModelSerializer):
 
     def get_fee_invoice_url(self,obj):
         return '/cols/payments/invoice-pdf/{}'.format(obj.fee_invoice_reference) if obj.fee_paid else None
+
+    def get_land_access(self,obj):
+        return obj.land_parks.filter(access_types__isnull=False).values_list('access_types__access_type_id', flat=True).distinct()
+
+    def get_land_activities(self,obj):
+        return obj.land_parks.filter(activities__isnull=False).values_list('activities__activity_id', flat=True).distinct()
+
+    def get_trail_activities(self,obj):
+        return ProposalTrailSectionActivity.objects.filter(trail_section__proposal_trail__proposal=obj.id).values_list('activity',flat=True).distinct()
+
+    def get_trail_section_activities(self,obj):
+        return obj.trails.all().values_list('trail_id', flat=True)
 
 #Not used anymore
 class DTProposalSerializer(BaseProposalSerializer):
@@ -766,6 +786,10 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'applicant_details',
                 'other_details',
                 'activities_land',
+                'land_access',
+                'land_access',
+                'trail_activities',
+                'trail_section_activities',
                 'activities_marine',
                 'land_parks',
                 'marine_parks',
