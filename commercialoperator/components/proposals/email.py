@@ -42,7 +42,7 @@ class ProposalApprovalSendNotificationEmail(TemplateEmailBase):
     txt_template = 'commercialoperator/emails/proposals/send_approval_notification.txt'
 
 class AmendmentRequestSendNotificationEmail(TemplateEmailBase):
-    subject = 'An amendment to your Application is required.'
+    subject = '{} - Commercial Operations Incomplete application.'.format(settings.DEP_NAME)
     html_template = 'commercialoperator/emails/proposals/send_amendment_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_amendment_notification.txt'
 

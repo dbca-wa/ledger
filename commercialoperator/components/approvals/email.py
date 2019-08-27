@@ -38,7 +38,7 @@ class ApprovalReinstateNotificationEmail(TemplateEmailBase):
     txt_template = 'commercialoperator/emails/approval_reinstate_notification.txt'
 
 class ApprovalRenewalNotificationEmail(TemplateEmailBase):
-    subject = 'Your Licence is due for renewal.'
+    subject = '{} - Commercial Operations licence renewal.'.format(settings.DEP_NAME)
     html_template = 'commercialoperator/emails/approval_renewal_notification.html'
     txt_template = 'commercialoperator/emails/approval_renewal_notification.txt'
 
@@ -165,6 +165,7 @@ def send_approval_renewal_email_notification(approval):
     proposal = approval.current_proposal
     url=settings.SITE_URL if settings.SITE_URL else ''
     url += reverse('external')
+    handbook_url= settings.COLS_HANDBOOK_URL
 
     if "-internal" in url:
         # remove '-internal'. This email is for external submitters
@@ -175,7 +176,7 @@ def send_approval_renewal_email_notification(approval):
         'approval': approval,
         'proposal': approval.current_proposal,
         'url': url,
-
+        'handbook_url': handbook_url
     }
     sender = settings.DEFAULT_FROM_EMAIL
     try:

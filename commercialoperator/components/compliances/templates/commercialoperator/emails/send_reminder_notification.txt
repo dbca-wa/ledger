@@ -2,9 +2,9 @@
 
 {%  block content %}
     Please be aware that the following is overdue:
-    <a href="{{url}}">{{ compliance.reference }}</a>
+    {{ compliance.reference }} - {{compliance.requirement.requirement}}
 
-    To complete the licence requirement please login to your account <a href="{{login_url}}">here</a>.
+    To complete the licence requirement please login to your account <a href="{{url}}">here</a>.
 
     It is a condition of your licence that you complete all requirements. Failure to do so may result in cancellation or suspension of the commercial operations licence.
 

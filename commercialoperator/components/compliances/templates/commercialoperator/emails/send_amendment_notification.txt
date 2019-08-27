@@ -1,7 +1,7 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-    Your document to complete a requirement {{ compliance.reference }} of your licence has been submitted. However, further information is required. Please login to your account <a href="{{login_url}}">here</a>.
+    Your document to complete a requirement {{ compliance.reference }} of your licence has been submitted. However, further information is required. Please login to your account <a href="{{url}}">here</a>.
 
     {% if reason %}
         <p>
