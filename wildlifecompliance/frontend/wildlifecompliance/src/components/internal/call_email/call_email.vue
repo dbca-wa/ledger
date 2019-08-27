@@ -344,7 +344,7 @@
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
                                     <div class="col-sm-12" v-if="relatedItemsVisibility">
-                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_function="loadCallEmail"/>
+                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_related_items="setRelatedItems"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -563,6 +563,7 @@ export default {
       setOccurrenceTimeEnd: 'setOccurrenceTimeEnd',
       setTimeOfCall: 'setTimeOfCall',
       setDateOfCall: 'setDateOfCall',
+      setRelatedItems: 'setRelatedItems',
     }),
     ...mapActions({
       saveFormData: 'saveFormData',

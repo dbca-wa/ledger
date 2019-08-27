@@ -6,7 +6,8 @@
             </div>
         </div></div>
         <div>
-            <WeakLinks @weak-link-selected="createWeakLink"/>
+            <!--WeakLinks @weak-link-selected="createWeakLink"/-->
+            <WeakLinks ref="weak_links_lookup"/>
         </div>
     </div>
 </template>
@@ -26,7 +27,7 @@ import WeakLinks from '@/components/common/weak_links.vue';
 export default {
     name: "RelatedItems",
     props: {
-          parent_update_function: {
+          parent_update_related_items: {
               type: Function,
           },
     },
@@ -108,17 +109,21 @@ export default {
 
   },
   methods: {
-    createWeakLink: async function(obj) {
-        console.log(obj)
+    createWeakLink: async function() {
+        let url = '/api/create_weak_link/'
         let payload = {
             'first_content_type': this.displayedEntityType,
             'first_object_id': this.displayedEntity.id,
-            'second_content_type': obj.data_type,
-            'second_object_id': obj.id,
+            'second_content_type': this.$refs.weak_links_lookup.second_content_type,
+            'second_object_id': this.$refs.weak_links_lookup.second_object_id,
         }
         console.log(payload);
         // post payload to url, then
-        await this.parent_update_function(this.displayedEntity.id);
+        let relatedItems = await Vue.http.post(url, payload);
+        console.log(relatedItems)
+        if (relatedItems.ok) {
+            await this.parent_update_related_items(relatedItems.body);
+        }
 
     },
     constructRelatedItemsTable: function() {
@@ -178,5 +183,8 @@ export default {
 }
 .advice-url {
   padding-left: 20%;
+}
+.action-button {
+    margin-top: 5px;
 }
 </style>

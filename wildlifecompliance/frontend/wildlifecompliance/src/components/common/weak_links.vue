@@ -16,6 +16,9 @@
             <!--div class="row"></div-->
             <input :id="elemId" :class="classNames" :readonly="!isEditable" placeholder="Begin typing to search"/>
         </div>
+        <div class="col-sm-3 action-button">
+            <a ref="add_weak_link" @click="callCreateWeakLink" class="btn btn-primary btn-block">Add</a>
+        </div>
     </div>
 </template>
 
@@ -33,6 +36,8 @@ export default {
         return {
             elemId: 'create_weak_link_' + this._uid,
             selectedEntity: null,
+            second_object_id: null,
+            second_content_type: null,
         }
     },
     props: {
@@ -71,10 +76,17 @@ export default {
         //    document.getElementById(this.elemId).value = weak_link_str;
         //},
         markMatchedText(original_text, input) {
+            console.log(original_text)
+            console.log(input)
             let ret_text = original_text.replace(new RegExp(input, "gi"), function( a, b) {
                 return "<mark>" + a + "</mark>";
             });
             return ret_text;
+        },
+        callCreateWeakLink: function() {
+            this.$nextTick(async () => {
+                await this.$parent.createWeakLink();
+            });
         },
         initAwesomplete: function() {
 
@@ -185,7 +197,14 @@ export default {
                 // 
                 // id is an Emailuser.id when data_type is 'individual' or 
                 // an Organisation.id when data_type is 'organisation'
-                this.$emit('weak-link-selected', { id: data_item_id, data_type: data_type });
+                
+                //this.$emit('weak-link-selected', { id: data_item_id, data_type: data_type });
+                //this.$nextTick(() => {
+                //    this.second_object_id = data_item_id
+                //    this.second_content_type = data_type
+                //});
+                this.second_object_id = data_item_id
+                this.second_content_type = data_type
             });
         },
         // Match typed searchTerm against available human-readable object identifiers (get_related_items_identifier) 
@@ -244,6 +263,9 @@ export default {
 </script>
 
 <style>
+.action-button {
+    margin-top: 5px;
+}
 .awesomplete > ul {
     margin-top: 2.5em;
 }

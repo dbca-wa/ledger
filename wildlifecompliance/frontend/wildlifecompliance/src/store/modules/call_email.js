@@ -267,6 +267,9 @@ export const callemailStore = {
         updateDateOfCall(state, date) {
             Vue.set(state.call_email, 'date_of_call', date);
         },
+        updateRelatedItems(state, related_items) {
+            Vue.set(state.call_email, 'related_items', related_items);
+        },
     },
     actions: {
         async loadCallEmail({ dispatch, commit }, { call_email_id }) {
@@ -462,6 +465,9 @@ export const callemailStore = {
         },
         setDateOfCall({ commit }, date ) {
             commit("updateDateOfCall", date);
+        },
+        setRelatedItems({ commit }, related_items ) {
+            commit("updateRelatedItems", related_items);
         },
     },
 };

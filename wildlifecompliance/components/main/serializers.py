@@ -44,3 +44,10 @@ class SearchKeywordSerializer(serializers.Serializer):
 
 class SearchReferenceSerializer(serializers.Serializer):
     url_string = serializers.CharField()
+
+
+class RelatedItemsSerializer(serializers.Serializer):
+    descriptor = serializers.CharField()
+    identifier = serializers.CharField()
+    model_name = serializers.CharField()
+
