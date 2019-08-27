@@ -1,5 +1,6 @@
 from django.conf import settings
 
+
 def parkstay_url(request):
     return {
         'EXPLORE_PARKS_SEARCH': '{}/park-stay'.format(settings.EXPLORE_PARKS_URL),
@@ -11,4 +12,4 @@ def parkstay_url(request):
         'PARKSTAY_EXTERNAL_URL': settings.PARKSTAY_EXTERNAL_URL,
         'DEV_STATIC': settings.DEV_STATIC,
         'DEV_STATIC_URL': settings.DEV_STATIC_URL
-        }
+    }
