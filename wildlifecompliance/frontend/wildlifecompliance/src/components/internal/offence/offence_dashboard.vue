@@ -39,6 +39,9 @@
                     </span>
                 </div>
             </div>
+            <div class="col-md-3 pull-right">
+                <button @click.prevent="createOffence" class="btn btn-primary pull-right">New Offence</button>
+            </div>    
         </div>
 
         <div class="row">
@@ -47,6 +50,9 @@
             </div>
         </div>
         </FormSection>
+        <div v-if="offenceInitialised">
+            <OffenceModal ref="add_offence"  v-bind:key="createOffenceBindId"/>
+        </div>
     </div>
 </template>
 
@@ -55,6 +61,7 @@ import $ from 'jquery'
 import datatable from '@vue-utils/datatable.vue'
 import FormSection from "@/components/compliance_forms/section.vue";
 import { api_endpoints, helpers, cache_helper } from '@/utils/hooks'
+import OffenceModal from "./offence_modal.vue";
 
 export default {
     name: 'OffenceTableDash',
@@ -68,6 +75,7 @@ export default {
             filterStatus: 'all',
             filterDateFromPicker: '',
             filterDateToPicker: '',
+            offenceInitialised: false,
 
             dtOptions: {
                 serverSide: true,
@@ -124,8 +132,6 @@ export default {
                         searchable: true,
                         orderable: true,
                         mRender: function (data, type, row){
-                            console.log('offenders:');
-                            console.log(data);
                             let ret = '';
                             for (let i=0; i<data.length; i++){
                                 let name = '';
@@ -216,35 +222,17 @@ export default {
         this.constructOptionsStatus();
     },
     methods: {
-        // updateDistricts: function(updateFromUI) {
-        //     console.log('updateDistricts');
-        //     // if (updateFromUI) {
-        //     //     // We don't want to clear the default district selection when initially loaded, which derived from the call_email
-        //     //     this.offence.district_id = null;
-        //     // }
-        //     this.offence_availableDistricts = []; // This is a list of options for district
-        //     for (let record of this.offence_regionDistricts) {
-        //         if (this.filterRegionId == record.id) {
-        //             for (let district_id of record.districts) {
-        //                 for (let district_record of this.sanction_outcome_regionDistricts) {
-        //                     if (district_record.id == district_id) {
-        //                         this.sanction_outcome_availableDistricts.push(district_record);
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-
-        //     this.sanction_outcome_availableDistricts.splice(0, 0, {
-        //         id: "all",
-        //         display_name: "All",
-        //         district: "",
-        //         districts: [],
-        //         region: null
-        //     });
-
-        //     this.filterDistrictId = 'all';
-        // },
+        createOffence: function() {
+            this.setCreateOffenceBindId()
+            this.offenceInitialised = true;
+            this.$nextTick(() => {
+                this.$refs.add_offence.isModalOpen = true;
+            });
+        },
+        setCreateOffenceBindId: function() {
+            let timeNow = Date.now()
+            this.createOffenceBindId = 'inspection' + timeNow.toString();
+        },
         addEventListeners: function () {
             this.attachFromDatePicker();
             this.attachToDatePicker();
@@ -279,11 +267,13 @@ export default {
             });
         },
         constructOptionsType: async function() {
+            console.log('constructOptionsType');
             let returned = await cache_helper.getSetCacheList('OffenceTypes', '/api/offence/types.json');
             Object.assign(this.offence_types, returned);
             this.offence_types.splice(0, 0, {id: 'all', display: 'All'});
         },
         constructOptionsStatus: async function() {
+            console.log('constructOptionsStatus');
             let returned = await cache_helper.getSetCacheList('OffenceStatuses', '/api/offence/statuses.json');
             Object.assign(this.offence_statuses, returned);
             this.offence_statuses.splice(0, 0, {id: 'all', display: 'All'});
@@ -292,6 +282,7 @@ export default {
     components: {
         datatable,
         FormSection,
+        OffenceModal,
     },
 }
 
