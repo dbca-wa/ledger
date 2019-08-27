@@ -186,14 +186,14 @@ export default {
                         searchable: true,
                         orderable: false,
                         mRender: function (data, type, row){
-                            return 'Not implemented';
+                            return '---';
                         }
                     },
                     {
                         searchable: true,
                         orderable: false,
                         mRender: function (data, type, row){
-                            return 'Not implemented';
+                            return '---';
                         }
                     },
                     {

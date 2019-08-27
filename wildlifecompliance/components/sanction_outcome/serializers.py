@@ -142,7 +142,7 @@ class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
         process_url = '<a href=/internal/sanction_outcome/' + str(obj.id) + '>Process</a>'
         returned_url = ''
 
-        if obj.status == 'closed':
+        if obj.status == SanctionOutcome.STATUS_CLOSED:
             returned_url = view_url
         elif user_id == obj.assigned_to_id:
             returned_url = process_url

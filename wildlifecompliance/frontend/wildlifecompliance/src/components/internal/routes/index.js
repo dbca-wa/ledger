@@ -16,7 +16,7 @@ import Inspection from '../inspection/inspection.vue'
 import SanctionOutcomeDashTable from '../sanction_outcome/sanction_outcome_dashboard.vue'
 import SanctionOutcome from '../sanction_outcome/sanction_outcome.vue'
 import OffenceDashTable from '../offence/offence_dashboard.vue'
-import Offence from '../offence/offence_modal.vue'
+import Offence from '../offence/offence.vue'
 
 export default
 {

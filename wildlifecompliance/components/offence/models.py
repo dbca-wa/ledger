@@ -25,17 +25,20 @@ class SectionRegulation(RevisionedMixin):
 
 
 class Offence(RevisionedMixin):
+    STATUS_DRAFT = 'draft'
+    STATUS_OPEN = 'open'
+    STATUS_CLOSED = 'closed'
+    STATUS_CLOSING = 'closing'
+    STATUS_DISCARDED = 'discarded'
+
     STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('open', 'Open'),
-        ('closing', 'Closing'),
-        ('closed', 'Closed'),
-        ('discarded', 'Discarded'),
+        (STATUS_DRAFT, 'Draft'),
+        (STATUS_OPEN, 'Open'),
+        (STATUS_CLOSING, 'Closing'),
+        (STATUS_CLOSED, 'Closed'),
+        (STATUS_DISCARDED, 'Discarded'),
     )
-    # TYPE_CHOICES = (
-    #     ('type1', 'Type1'),
-    #     ('type2', 'Type2'),
-    # )
+
     identifier = models.CharField(
         max_length=50,
         blank=True,

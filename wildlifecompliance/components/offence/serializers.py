@@ -81,15 +81,13 @@ class OffenceDatatableSerializer(serializers.ModelSerializer):
         process_url = '<a href=/internal/offence/' + str(obj.id) + '>Process</a>'
         returned_url = ''
 
-        if obj.status == 'closed':
+        if obj.status == Offence.STATUS_CLOSED:
             returned_url = view_url
         elif user_id == obj.assigned_to_id:
             returned_url = process_url
-        elif (obj.allocated_group
-              and not obj.assigned_to_id):
-            for member in obj.allocated_group.members:
-                if user_id == member.id:
-                    returned_url = process_url
+        elif (obj.allocated_group and not obj.assigned_to_id):
+            if user_id in [member.id for member in obj.allocated_group.members]:
+                returned_url = process_url
 
         if not returned_url:
             returned_url = view_url
@@ -112,6 +110,7 @@ class OffenceSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'identifier',
+            'lodgement_number',
             'status',
             'call_email',
             'region_id',
