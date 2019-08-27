@@ -47,7 +47,7 @@
                         <div>
                             <!--<pre>{{ selected_parks }}</pre>-->
                             <label class="control-label">Select Parks</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_parks" :options="park_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_parks" :options="park_options" :default_expand_level="1" allow_edit="true"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -99,7 +99,7 @@
                         <div>
                             <!--<pre>{{ selected_trail_ids }}</pre>-->
                             <label class="control-label">Select the required activities</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_trail_ids" :options="trail_options" :default_expand_level="1" open_direction="top"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_trail_ids" :options="trail_options" :default_expand_level="1" open_direction="top" allow_edit="true"></TreeSelect>
                         </div>
                     </div>
                 </form>

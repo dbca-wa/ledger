@@ -28,7 +28,16 @@
                     </span>
                 </div>
             </template>
-            <div slot="value-label" slot-scope="{ node }"><a @click.stop="edit_activities(node)" :disabled="!is_checked(node)" :title="edit_display_text(node)"> {{node.label}} </a></div>
+
+            <div slot="value-label" slot-scope="{ node }">
+                <div v-if="allow_edit">
+                    <a @click.stop="edit_activities(node)" :disabled="!is_checked(node)" :title="edit_display_text(node)"> {{node.label}} </a>
+                </div>
+                <div v-else>
+                    <a> {{node.label}} </a>
+                </div>
+            </div>
+
         </treeselect>
     </div>
 </template>
@@ -101,6 +110,11 @@ export default {
             type: String,
             default: 'bottom'
         },
+        allow_edit:{
+            type: Boolean,
+            default: false
+        },
+
     },
 
     data() {
