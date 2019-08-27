@@ -5,6 +5,9 @@
                 <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
             </div>
         </div></div>
+        <div>
+            <WeakLinks />
+        </div>
     </div>
 </template>
 <script>
@@ -18,6 +21,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
+import WeakLinks from '@/components/common/weak_links.vue';
 
 export default {
   name: "RelatedItems",
@@ -53,6 +57,7 @@ export default {
   },
   components: {
     datatable,
+    WeakLinks,
   },
   watch: {
       displayedEntity: {

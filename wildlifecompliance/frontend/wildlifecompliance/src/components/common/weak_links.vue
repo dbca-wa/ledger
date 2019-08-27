@@ -185,7 +185,7 @@ export default {
         },
     },
     created: function() {
-        vm.$nextTick(()=>{
+        this.$nextTick(()=>{
             this.initAwesomplete();
         });
     }
