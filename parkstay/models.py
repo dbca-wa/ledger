@@ -831,10 +831,12 @@ class Rate(models.Model):
 
 class CampsiteRateManager(models.Manager):
     """Define a custom model manager for CampsiteRate objects, having a
-    method to filter on "current" rates only (i.e. those without a date_end).
+    method to filter on "current" rates only (i.e. those without a date_end
+    OR a date_end >= today, AND a date_start <= today.
+    Assuming business rules are applied correctly, this should return one rate.
     """
     def current(self):
-        return self.filter(date_end__isnull=True)
+        return self.filter(Q(date_end__gte=date.today()) | Q(date_end__isnull=True)).filter(date_start__lte=date.today())
 
 
 class CampsiteRate(models.Model):
