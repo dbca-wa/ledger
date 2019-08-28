@@ -15,7 +15,7 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_access }}</pre>
+                            <!--<pre>{{ selected_access }}</pre>-->
                             <label class="control-label">Select the required access</label>
                                 <!--
                                 The below 3 are equivalent - require an event emitted fro child component -'this.$emit("update:value", vm.value)', (or 'this.$emit("value", vm.value)' )
@@ -33,7 +33,7 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_activities }}</pre>
+                            <!--<pre>{{ selected_activities }}</pre>-->
                             <label class="control-label">Select the required activities</label>
                             <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="land_activity_options" :default_expand_level="1"></TreeSelect>
                         </div>
@@ -45,9 +45,9 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_parks }}</pre>
+                            <!--<pre>{{ selected_parks }}</pre>-->
                             <label class="control-label">Select Parks</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_parks" :options="park_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_parks" :options="park_options" :default_expand_level="1" allow_edit="true"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -84,9 +84,10 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_trails_activities }}</pre>
+                            <!--<pre>{{ trail_activities }}</pre>-->
+                            <!--<pre>{{ selected_trails_activities }}</pre>-->
                             <label class="control-label">Select the required activities for trails</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_trails_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="trail_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -96,24 +97,29 @@
                 <form>
                     <div class="col-sm-12" >
                         <div>
-                            <pre>{{ selected_trails }}</pre>
+                            <!--<pre>{{ selected_trail_ids }}</pre>-->
                             <label class="control-label">Select the required activities</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_trails" :options="trail_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_trail_ids" :options="trail_options" :default_expand_level="1" open_direction="top" allow_edit="true"></TreeSelect>
                         </div>
                     </div>
                 </form>
             </div>
 
-            <div>{{selected_trails}}</div>
-            <div>{{selected_trails_activities}}</div>
+            <!--
+            <div>Trail: {{selected_trails}}</div>
+            <div>Activities: {{selected_trails_activities}}</div>
+            -->
+            <!--
+            <div>Trail_actvities: {{trail_activities}}</div><br>
+            <div>Selected_Trail: {{selected_trails}}</div><br>
+            <div>Selected_Trailss_Activities: {{selected_trails_activities}}</div>
+            -->
 
 
           </div>
         </div>
       </div>
 
-      <!-- <div>{{selected_trails}}</div>
-      <div>{{selected_trails_activities}}</div> -->
 
       <div>
               <editParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
@@ -161,6 +167,8 @@ export default {
                 trail_options: [],
                 trail_activity_options: [],
                 land_access_types: [],
+                added_trail_id: [],
+                removed_trail_id: [],
                 
                 pBody: 'pBody'+vm._uid,
                 tBody: 'lBody'+vm._uid,
@@ -176,6 +184,8 @@ export default {
                 selected_activities:[],
                 selected_activities_before:[],
                 selected_trails:[],
+                selected_trail_ids:[],
+                selected_trail_ids_before:[],
                 trail_activities:[],
                 trail_activities_before:[],
                 activities:[],
@@ -201,12 +211,112 @@ export default {
 
         },
         watch:{
-          selected_regions: function(val){
-            //WIP
+          selected_trail_ids: function(){
             let vm=this;
-            var added_region=$(vm.selected_regions).not(vm.selected_regions_before).get();
-            //console.log(added_region)
+            //if (vm.proposal){
+            //  vm.proposal.trails=vm.selected_trails;
+            //}
+
+            vm.selected_trails = []
+            for (var i = 0; i < vm.selected_trail_ids.length; i++) {
+                var data = vm.get_selected_trail_data(vm.selected_trail_ids[i] )
+                if (data !== null) {
+                    vm.selected_trails.push( data )
+                }
+            }
+
+            /*
+            var removed_trail=$(vm.selected_trails_before).not(vm.selected_trails).get();
+            var added_trail=$(vm.selected_trails).not(vm.selected_trails_before).get();
+            vm.selected_trails_before=vm.selected_trails;
+            */
+
+            try {
+                var removed_trail_id=$(vm.selected_trail_ids_before).not(vm.selected_trail_ids).get();
+            } catch (error) {
+                console.log('removed_trail: ' + error)
+            }
+
+            try {
+                var added_trail_id=$(vm.selected_trail_ids).not(vm.selected_trail_ids_before).get();
+            } catch (error) {
+                console.log('added_trail: ' + error)
+            }
+            vm.selected_trail_ids_before=vm.selected_trail_ids;
+
+            var current_activities=vm.trail_activities
+
+            if(vm.selected_trails_activities.length==0){
+              for (var i = 0; i < vm.selected_trails.length; i++) {
+                 var data=null;
+                 var section_activities=[];
+
+                 for (var j=0; j<vm.selected_trails[i].sections.length; j++){
+                  var section_data={
+                    'section': vm.selected_trails[i].sections[j],
+                    'activities': current_activities
+                  }
+                  section_activities.push(section_data)
+                 }
+                 data={
+                  'trail': vm.selected_trails[i].trail,
+                  'activities': section_activities 
+                 }
+                 vm.selected_trails_activities.push(data);
+              }
+            }
+            else{
+              if(added_trail_id.length!=0){
+                for(var i=0; i<added_trail_id.length; i++) {
+                  var found=false
+                  for (var j=0; j<vm.selected_trails_activities.length; j++){
+                        //console.log(added_trail[i])
+                        if(vm.selected_trails_activities[j].trail==added_trail_id[i]){
+                          found = true;
+                        }
+                  }
+                  if(found==false) {
+                    //original data object
+                    var section_activities=[];
+                    var trail_data = vm.get_selected_trail_data(added_trail_id[i] )
+                    if (trail_data !== null) {
+                        for(var k=0; k<trail_data.sections.length; k++){
+                          var section_data={
+                          'section': trail_data.sections[k],
+                          'activities': current_activities
+                          }
+                          section_activities.push(section_data)
+                        }
+                        data={
+                          'trail': added_trail_id[i],
+                          'activities': section_activities
+                        }
+                    }
+                    vm.selected_trails_activities.push(data);
+                  }
+                }
+              }
+              if(removed_trail_id.length!=0){
+                for(var i=0; i<removed_trail_id.length; i++)
+                { 
+                  for (var j=0; j<vm.selected_trails_activities.length; j++){
+                    if(vm.selected_trails_activities[j].trail==removed_trail_id[i]){
+                      vm.selected_trails_activities.splice(j,1)}
+                  }
+                }
+              }
+            }
+            if (vm.proposal){
+              vm.proposal.trails=vm.selected_trails;
+              vm.proposal.selected_trails_activities=vm.selected_trails_activities;
+            }
           },
+
+//          selected_regions: function(val){
+//            let vm=this;
+//            var added_region=$(vm.selected_regions).not(vm.selected_regions_before).get();
+//          },
+
           selected_parks: function(){
             let vm = this;
             var removed_park=$(vm.selected_parks_before).not(vm.selected_parks).get();
@@ -344,93 +454,27 @@ export default {
             vm.checkRequiredDocuements(vm.selected_parks_activities)
             if (vm.proposal){
               vm.proposal.selected_parks_activities=vm.selected_parks_activities;
+              vm.proposal.selected_land_access=vm.selected_access;
+              vm.proposal.selected_land_activities=vm.selected_activities;
             }
         },
         selected_trails_activities: function(){
             let vm=this;
+
             if (vm.proposal){
               vm.proposal.selected_trails_activities=vm.selected_trails_activities;
             }
         },
-        selected_trails: function(){
-            let vm=this;
-            if (vm.proposal){
-              vm.proposal.trails=vm.selected_trails;
-            }
-
-            var removed_trail=$(vm.selected_trails_before).not(vm.selected_trails).get();
-            var added_trail=$(vm.selected_trails).not(vm.selected_trails_before).get();
-            vm.selected_trails_before=vm.selected_trails;
-
-            var current_activities=vm.trail_activities
-
-            if(vm.selected_trails_activities.length==0){
-              for (var i = 0; i < vm.selected_trails.length; i++) {
-                 var data=null;
-                 var section_activities=[];
-
-                 for (var j=0; j<vm.selected_trails[i].sections.length; j++){
-                  var section_data={
-                    'section': vm.selected_trails[i].sections[j],
-                    'activities': current_activities
-                  }
-                  section_activities.push(section_data)
-                 }
-                 data={
-                  'trail': vm.selected_trails[i].trail,
-                  'activities': section_activities 
-                 }
-                 vm.selected_trails_activities.push(data);
-               }
-            }
-            else{
-              if(added_trail.length!=0){
-                for(var i=0; i<added_trail.length; i++)
-                { 
-                  var found=false
-                  for (var j=0; j<vm.selected_trails_activities.length; j++){
-                    //console.log(added_trail[i])
-                    if(vm.selected_trails_activities[j].trail==added_trail[i].trail){ 
-                      found = true;}
-                  }
-                  if(found==false)
-                  {//original data object
-                    var section_activities=[];
-                    for(var k=0; k<added_trail[i].sections.length; k++){
-                      var section_data={
-                      'section': added_trail[i].sections[k],
-                      'activities': current_activities
-                      }
-                      section_activities.push(section_data)
-                    }
-                    data={
-                    'trail': added_trail[i].trail,
-                    'activities': section_activities,                   }
-                   vm.selected_trails_activities.push(data);
-                  }
-                }
-              }
-              if(removed_trail.length!=0){
-                for(var i=0; i<removed_trail.length; i++)
-                { 
-                  for (var j=0; j<vm.selected_trails_activities.length; j++){
-                    if(vm.selected_trails_activities[j].trail==removed_trail[i].trail){
-                      vm.selected_trails_activities.splice(j,1)}
-                  }
-                }
-              }
-            }
-          },
         trail_activities: function(){
           let vm=this;
           var removed=$(vm.trail_activities_before).not(vm.trail_activities).get();
           var added=$(vm.trail_activities).not(vm.trail_activities_before).get();
           vm.trail_activities_before=vm.trail_activities;
           if(vm.selected_trails_activities.length==0){
-            for (var i = 0; i < vm.selected_trails.length; i++) {
+            for (var i = 0; i < vm.selected_trail_ids.length; i++) {
                  var data=null;
                  data={
-                  'trail': vm.selected_trails[i],
+                  'trail': vm.selected_trail_ids[i],
                   'activities': vm.trail_activities
                  }
                  vm.selected_trails_activities.push(data);
@@ -469,11 +513,31 @@ export default {
         },
         },
         methods:{
+          get_selected_trail_data:function(trail_id){
+            let vm = this;
+            for (var i=0; i<vm.trails.length; i++) {
+              if (vm.trails[i].id == trail_id) {
+                //console.log(vm.trails[i].section_ids)
+                return {'trail': trail_id, 'sections': vm.trails[i].section_ids}
+              }
+            }
+            return null;
+          },
+          get_selected_trail_ids:function(node){
+            let vm = this;
+
+            var ids = []
+            for (var i=0; i<vm.selected_trails.length; i++) {
+                ids.push( vm.selected_trails[i].trail )
+            }
+            return ids.filter(function(item, pos) { return ids.indexOf(item) == pos;  }) // returns unique array ids
+          },
+
           fetchParkTreeview: function(){
             let vm = this;
 
-            //console.log('treeview_url: ' + api_endpoints.tclass_container)
-            vm.$http.get(api_endpoints.tclass_container)
+            //console.log('treeview_url: ' + api_endpoints.tclass_container_land)
+            vm.$http.get(api_endpoints.tclass_container_land)
             .then((response) => {
                 vm.park_options = [
                     {
@@ -584,6 +648,9 @@ export default {
           edit_sections: function(node){
             let vm=this;
             var trail = node.raw;
+            //trail['id']=node.id
+
+            console.log('Trail 0: ' + JSON.stringify(trail))
             //inserting a temporary variables checked and new_activities to store and display selected activities for each section.
             for(var l=0; l<trail.sections.length; l++){
               trail.sections[l].checked=false;
@@ -602,7 +669,7 @@ export default {
                 } 
               }
             }
-            console.log(trail);
+            console.log('Trail: ' + JSON.stringify(trail))
             this.$refs.edit_sections.trail=trail;
             this. $refs.edit_sections.isModalOpen = true;
           },
@@ -643,7 +710,7 @@ export default {
 
         store_trails: function(trails){
           let vm=this;
-          var all_activities=[] //to store all activities for all sections so can find recurring onees to display selected_activities
+          var all_activities=[] //to store all activities for all sections so can find recurring ones to display selected_activities
           var trail_list=[]
           for (var i = 0; i < trails.length; i++) {
               var current_trail=trails[i].trail.id
@@ -722,6 +789,8 @@ export default {
               access_list.push({'key' : vm.selected_parks_activities[i].access});
             }
 
+            //vm.selected_activities = vm.proposal.land_activities
+            //vm.selected_access=vm.proposal.land_access
             vm.selected_activities = vm.find_recurring(activity_list)
             vm.selected_access=vm.find_recurring(access_list)
             vm.selected_parks=park_list
@@ -732,7 +801,11 @@ export default {
             });
 
             vm.store_trails(vm.proposal.trails);
-
+            //vm.trail_activities = vm.proposal.trail_activities
+            //vm.selected_trail_ids = vm.proposal.trail_section_activities
+            //vm.clear_selected_trails_activities()
+            vm.selected_trail_ids = vm.get_selected_trail_ids()
+            vm.selected_trail_ids_before = vm.selected_trail_ids
 
             $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
               //console.log(this);

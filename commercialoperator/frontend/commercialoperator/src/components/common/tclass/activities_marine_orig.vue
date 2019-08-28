@@ -10,22 +10,7 @@
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
-                    <div class="" >
-
-                        <div class="borderDecoration col-sm-12">
-                            <form>
-                                <div class="col-sm-12" >
-                                    <div>
-                                        <!--<pre>{{ selected_activities }}</pre>-->
-                                        <label class="control-label">Select the required activities</label>
-                                        <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="marine_activity_options" :default_expand_level="1"></TreeSelect>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-
-
-                        <!--
+                    <div class="" >                        
                         <div class="form-horizontal col-sm-12 borderDecoration">
                             <label class="control-label">Select required activities</label>
                             <div  class="" v-for="category in marine_activities" >
@@ -41,9 +26,15 @@
                                 </div>
                             </div>
                         </div>
-                        -->
                         <div class="form-horizontal col-sm-12 borderDecoration">
                             <label class="control-label"> Select the parks for which the activities are required</label>
+                            <!-- <div class="" v-for="p in marine_parks">
+                                <div class="form-check col-sm-12">
+                                  <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities"/>
+                                {{ p.name }}
+                                  <span><a @click="edit_activities(p)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
+                                </div>
+                            </div> -->
                             <div class="list-group list-group-root well">
                                 <div class="" v-for="p in marine_parks">
                                   <div class="form-check col-sm-12 list-group-item">
@@ -264,49 +255,7 @@ from '@/utils/hooks'
         },
         },
         methods:{
-          fetchMarineTreeview: function(){
-            let vm = this;
-
-            //console.log('treeview_url: ' + api_endpoints.tclass_container_marine)
-            vm.$http.get(api_endpoints.tclass_container_marine)
-            .then((response) => {
-
-                vm.marine_activity_options = [
-                    {
-                        'id': 'All',
-                        'name':'Select all marine activities',
-                        'children': response.body['marine_activities']
-                    }
-                ]
-                vm.marine_activities = response.body['marine_activities']
-
-                vm.marine_park_options = [
-                    {
-                        'id': 'All',
-                        'name':'Select all marine parks',
-                        'children': response.body['marine_parks']
-                    }
-                ]
-                vm.marine_parks = response.body['marine_parks']
-
-
-                vm.required_documents_list = response.body['required_documents']
-                vm.fetchRequiredDocumentList();
-
-            },(error) => {
-                console.log(error);
-            })
-          },
-          fetchRequiredDocumentList: function(){
-            let vm = this;
-            for(var l=0; l<vm.required_documents_list.length; l++){
-              vm.required_documents_list[l].can_view=false;
-              vm.checkRequiredDocuements(vm.marine_parks_activities)
-            }
-          },
-
-          /*
-          fetchParks: function(){
+            fetchParks: function(){
             let vm = this;
 
             vm.$http.get('/api/parks/marine_parks.json').then((response) => { 
@@ -315,22 +264,6 @@ from '@/utils/hooks'
             console.log(error);
             })
           },
-          fetchRequiredDocumentList: function(){
-            let vm = this;
-            vm.$http.get('/api/required_documents.json').then((response) => {
-            vm.required_documents_list = response.body;
-            for(var l=0; l<vm.required_documents_list.length; l++){
-              vm.required_documents_list[l].can_view=false;
-              vm.checkRequiredDocuements(vm.marine_parks_activities)
-              //console.log('park',vm.selected_parks_activities)
-            }
-            },(error) => {
-            console.log(error);
-            })
-
-          },
-          */
-
           checkRequiredDocuements: function(marine_parks_activities){
             let vm=this;
             //Check if the combination of selected park and activities require a document to be attahced
@@ -353,7 +286,7 @@ from '@/utils/hooks'
                         if(vm.required_documents_list[j].activity== marine_parks_activities[i].activities[k].activities[l]){
                         vm.required_documents_list[j].can_view=true;
                         }
-                      }
+                      }                     
                     }
                   }
                 }
@@ -369,6 +302,20 @@ from '@/utils/hooks'
               }
             }
           }
+          },
+          fetchRequiredDocumentList: function(){
+            let vm = this;
+            vm.$http.get('/api/required_documents.json').then((response) => {
+            vm.required_documents_list = response.body;
+            for(var l=0; l<vm.required_documents_list.length; l++){
+              vm.required_documents_list[l].can_view=false;
+              vm.checkRequiredDocuements(vm.marine_parks_activities)
+              //console.log('park',vm.selected_parks_activities)
+            }
+            },(error) => {
+            console.log(error);
+            })
+
           },
           clickCategory: function(e, c){
             let vm=this;
@@ -496,17 +443,14 @@ from '@/utils/hooks'
         mounted: function(){
             let vm = this;
             vm.proposal.marine_parks_activities=[];
-            /*
             Vue.http.get('/api/marine_activities.json').then((res) => {
                       vm.marine_activities=res.body;                 
             },
             err => { 
                    console.log(err);
             });
-            */
-            vm.fetchMarineTreeview();
-            //vm.fetchParks();
-            //vm.fetchRequiredDocumentList();
+            vm.fetchParks();
+            vm.fetchRequiredDocumentList();
             vm.store_parks(vm.proposal.marine_parks);
             //vm.eventListeners();
         }

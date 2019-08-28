@@ -12,24 +12,32 @@
             :flat="flat"
             :default-expand-level="default_expand_level"
             :normalizer="normalizer"
+            :open-direction="open_direction"
             open-on-focus="true"
-            open-direction="bottom"
             limit="20"
             >
 
             <template slot="option-label" slot-scope="{ node }">
                 <label class="col-sm-8 control-label">{{ node.raw.name }}</label>
                 <div v-if="node.raw.can_edit" class="option-label-container">
-                    <a class="col-sm-4 control-label pull-right" @click.stop="edit_activities(node)">Edit access and activities  <i class="fa fa-edit"></i></a>
+                    <span v-if="is_checked(node)">
+                        <a class="col-sm-4 control-label pull-right" @click.stop="edit_activities(node)">{{ edit_display_text(node) }}  <i class="fa fa-edit"></i></a>
+                    </span>
+                    <span v-else>
+                        <p class="col-sm-4 control-label pull-right" style="color: grey;">{{ edit_display_text(node) }}  <i class="fa fa-edit"></p>
+                    </span>
                 </div>
-
-                <!--
-                <a class="col-sm-4 control-label pull-right" @click="edit_activities(p.id, p.name)" target="_blank">Edit access and activities  <i class="fa fa-edit"></i></a>
-                :always-open="always_open"
-                :default-expand-level="default_expand_level"
-                <input type="hidden" @click="edit_activities_test($event,node)">
-                -->
             </template>
+
+            <div slot="value-label" slot-scope="{ node }">
+                <div v-if="allow_edit">
+                    <a @click.stop="edit_activities(node)" :disabled="!is_checked(node)" :title="edit_display_text(node)"> {{node.label}} </a>
+                </div>
+                <div v-else>
+                    <a> {{node.label}} </a>
+                </div>
+            </div>
+
         </treeselect>
     </div>
 </template>
@@ -98,6 +106,15 @@ export default {
             type: String,
             default: 'LEAF_PRIORITY', // last leaf nodes get pushed to selected_items array
         },
+        open_direction:{
+            type: String,
+            default: 'bottom'
+        },
+        allow_edit:{
+            type: Boolean,
+            default: false
+        },
+
     },
 
     data() {
@@ -109,11 +126,10 @@ export default {
                 label: node.name,
                 children: node.children,
                 isDisabled: node.is_disabled,
+                }
             }
-        },
-      }
+        }
     },
-
     watch:{
         value: function(){
             /* allows two-way update of array value ( 'selected_access' )
@@ -133,12 +149,22 @@ export default {
             //alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
             alert(" park_id: " + node.raw.id + ", park_name: " + node.raw.label );
         },
+        edit_display_text:function(node){
+            if (node.raw.hasOwnProperty('sections')) {
+                return 'Edit sections and activities';
+            } else {
+                return 'Edit access and activities';
+            }
+        },
         edit_activities:function(node){
             if (node.raw.hasOwnProperty('sections')) {
                 this.$parent.edit_sections(node)
             } else {
                 this.$parent.edit_activities(node)
             }
+        },
+        is_checked:function(node){
+            return this.value.includes(node.id);
         },
         mousedown_event_stop_propagation:function(){
             $('.option-label-container').on('mousedown', function(e) {

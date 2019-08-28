@@ -2627,6 +2627,7 @@ var Delete_component = normalizeComponent(
       instance.select(node);
     })
   },
+  /*
   render: function render() {
     var h = arguments[0];
     var instance = this.instance,
@@ -2651,6 +2652,33 @@ var Delete_component = normalizeComponent(
       "class": "vue-treeselect__multi-value-label"
     }, [labelRenderer]), h("span", {
       "class": "vue-treeselect__icon vue-treeselect__value-remove"
+    }, [h(Delete)])])]);
+  }
+  */
+  render: function render() {
+    var h = arguments[0];
+    var instance = this.instance,
+        node = this.node;
+    var itemClass = {
+      'vue-treeselect__multi-value-item': true,
+      'vue-treeselect__multi-value-item-disabled': node.isDisabled,
+      'vue-treeselect__multi-value-item-new': node.isNew
+    };
+    var customValueLabelRenderer = instance.$scopedSlots['value-label'];
+    var labelRenderer = customValueLabelRenderer ? customValueLabelRenderer({
+      node: node
+    }) : node.label;
+    return h("div", {
+      "class": "vue-treeselect__multi-value-item-container"
+    }, [h("div", {
+      "class": itemClass
+    }, [h("a", {
+      "class": "vue-treeselect__multi-value-label",
+    }, [labelRenderer]), h("span", {
+      "class": "vue-treeselect__icon vue-treeselect__value-remove",
+      on: {
+        "mousedown": this.handleMouseDown
+      }
     }, [h(Delete)])])]);
   }
 });

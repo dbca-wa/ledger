@@ -299,7 +299,7 @@ class SpecialFieldsSearch(object):
 def save_park_activity_data(instance,select_parks_activities, request):
     with transaction.atomic():
         try:
-            if select_parks_activities:
+            if select_parks_activities or len(select_parks_activities)==0:
                 try:
                     #current_parks=instance.parks.all()
                     selected_parks=[]
@@ -410,7 +410,7 @@ def save_park_activity_data(instance,select_parks_activities, request):
 def save_trail_section_activity_data(instance,select_trails_activities, request):
     with transaction.atomic():
         try:
-            if select_trails_activities:
+            if select_trails_activities or len(select_trails_activities)==0:
                 try:
                     #current_parks=instance.parks.all()
                     selected_trails=[]
@@ -531,7 +531,7 @@ def save_trail_section_activity_data(instance,select_trails_activities, request)
 def save_park_zone_activity_data(instance,marine_parks_activities, request):
     with transaction.atomic():
         try:
-            if marine_parks_activities:
+            if marine_parks_activities or len(marine_parks_activities)==0:
                 try:
                     #current_parks=instance.parks.all()
                     selected_parks=[]
@@ -722,21 +722,21 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
                         serializer.is_valid(raise_exception=True)
                         serializer.save()
             #import ipdb; ipdb.set_trace()
-            if select_parks_activities:
+            if select_parks_activities or len(select_parks_activities)==0:
                 try:
 
                     save_park_activity_data(instance, select_parks_activities, request)
 
                 except:
                     raise
-            if select_trails_activities:
+            if select_trails_activities or len(select_trails_activities)==0:
                 try:
 
                     save_trail_section_activity_data(instance, select_trails_activities, request)
 
                 except:
                     raise
-            if marine_parks_activities:
+            if marine_parks_activities or len(marine_parks_activities)==0:
                 try:
                     save_park_zone_activity_data(instance, marine_parks_activities, request)
                 except:
@@ -784,17 +784,17 @@ def save_assessor_data(instance,request,viewset):
                 if marine_parks_activities:
                     marine_parks_activities=json.loads(marine_parks_activities)
             #print select_parks_activities, selected_trails_activities
-            if select_parks_activities:
+            if select_parks_activities or len(select_parks_activities)==0:
                 try:
                     save_park_activity_data(instance, select_parks_activities, request)
                 except:
                     raise
-            if select_trails_activities:
+            if select_trails_activities or len(select_trails_activities)==0:
                 try:
                     save_trail_section_activity_data(instance, select_trails_activities, request)
                 except:
                     raise
-            if marine_parks_activities:
+            if marine_parks_activities or len(marine_parks_activities)==0:
                 try:
                     save_park_zone_activity_data(instance, marine_parks_activities, request)
                 except:
@@ -945,5 +945,5 @@ def test_proposal_emails(request):
         booking_email.send_invoice_tclass_email_notification(request, booking, bi, recipients, is_test=True)
         booking_email.send_confirmation_tclass_email_notification(request, booking, bi, recipients, is_test=True)
 
-   
+
 

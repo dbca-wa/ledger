@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, B
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
 from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, ActivityCategory, Activity, RequiredDocument, Question, GlobalSettings
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer, OracleSerializer, BookingSettlementReportSerializer, LandActivityTabSerializer
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer, OracleSerializer, BookingSettlementReportSerializer, LandActivityTabSerializer, MarineActivityTabSerializer
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from commercialoperator.components.proposals.models import Proposal
@@ -79,7 +79,7 @@ class GlobalSettingsViewSet(viewsets.ReadOnlyModelViewSet):
 
 class LandActivityTabViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    A simple ViewSet for listing the Tweets and Articles in your Timeline.
+    A simple ViewSet for listing the various serialized viewsets in a single container
     """
     def list(self, request):
         #Container = namedtuple('ActivityLandTab', ('access_types', 'activity_types', 'regions'))
@@ -95,6 +95,24 @@ class LandActivityTabViewSet(viewsets.ReadOnlyModelViewSet):
         )
         serializer = LandActivityTabSerializer(container)
         return Response(serializer.data)
+
+
+class MarineActivityTabViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    A simple ViewSet for listing the various serialized viewsets in a single container
+    """
+    def list(self, request):
+        #Container = namedtuple('ActivityLandTab', ('access_types', 'activity_types', 'regions'))
+        Container = namedtuple('ActivityMarineTab', ('marine_activities', 'marine_parks', 'required_documents'))
+        container = Container(
+            #marine_activity_types=Activity.objects.filter(activity_category__activity_type='marine').order_by('id'),
+            marine_activities=ActivityCategory.objects.filter(activity_type='marine').order_by('id'),
+            marine_parks=ActivityCategory.objects.filter(activity_type='marine').order_by('id'),
+            required_documents=RequiredDocument.objects.filter().order_by('id'),
+        )
+        serializer = MarineActivityTabSerializer(container)
+        return Response(serializer.data)
+
 
 class ParkViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Park.objects.all().order_by('id')
