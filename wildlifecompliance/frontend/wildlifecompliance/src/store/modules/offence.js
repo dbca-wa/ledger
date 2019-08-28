@@ -43,6 +43,7 @@ export const offenceStore = {
             assigned_to_id: null,
             allocated_group: [],
             allocated_group_id: null,
+            lodgement_number: '',
         }
     },
     getters: {

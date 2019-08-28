@@ -100,6 +100,7 @@ class OffenceDatatableSerializer(serializers.ModelSerializer):
 
 
 class OffenceSerializer(serializers.ModelSerializer):
+    status = CustomChoiceField(read_only=True)
     location = LocationSerializer(read_only=True)
     alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
     offenders = serializers.SerializerMethodField(read_only=True)
