@@ -99,7 +99,7 @@ class InspectionFilterBackend(DatatablesFilterBackend):
             search_text_inspection_ids = []
             for inspection in queryset:
                 #lodged_on_str = time.strftime('%d/%m/%Y', call_email.lodged_on)
-                planned_for_str = inspection.planned_for_date.strftime('%d/%m/%Y')
+                planned_for_str = inspection.planned_for_date.strftime('%d/%m/%Y') if inspection.planned_for_date else ''
                 if (search_text in (inspection.number.lower() if inspection.number else '')
                     or search_text in (inspection.status.lower() if inspection.status else '')
                     or search_text in (inspection.inspection_type.description.lower() if inspection.inspection_type else '')

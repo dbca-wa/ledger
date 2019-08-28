@@ -124,7 +124,6 @@
                         }
                     },
                     dom: 'lBfrtip',
-                    //dom: 'B',
                     buttons: [
                         'excel',
                         'csv',
