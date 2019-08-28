@@ -801,12 +801,12 @@ export default {
   },
   mounted: function() {
       let vm = this;
-      $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
-          var chev = $( this ).children()[ 0 ];
-          window.setTimeout( function () {
-              $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
-          }, 100 );
-      });
+     // $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
+     //     var chev = $( this ).children()[ 0 ];
+     //     window.setTimeout( function () {
+     //         $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
+     //     }, 100 );
+     // });
 
       // Time field controls
       $('#plannedForTimePicker').datetimepicker({
