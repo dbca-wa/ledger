@@ -536,8 +536,8 @@ export default {
           fetchParkTreeview: function(){
             let vm = this;
 
-            //console.log('treeview_url: ' + api_endpoints.tclass_container)
-            vm.$http.get(api_endpoints.tclass_container)
+            //console.log('treeview_url: ' + api_endpoints.tclass_container_land)
+            vm.$http.get(api_endpoints.tclass_container_land)
             .then((response) => {
                 vm.park_options = [
                     {
