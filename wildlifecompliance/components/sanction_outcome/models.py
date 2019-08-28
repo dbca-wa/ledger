@@ -148,7 +148,8 @@ class SanctionOutcome(models.Model):
 
     @property
     def get_related_items_descriptor(self):
-        return '{0}, {1}'.format(self.identifier, self.description)
+        #return '{0}, {1}'.format(self.identifier, self.description)
+        return self.identifier
 
 
 class RemediationAction(models.Model):

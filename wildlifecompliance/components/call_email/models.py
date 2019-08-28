@@ -8,9 +8,13 @@ from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
-from wildlifecompliance.components.organisations.models import Organisation
-from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
-    UserAction, Document, get_related_items
+#from wildlifecompliance.components.organisations.models import Organisation
+from wildlifecompliance.components.main.models import (
+        CommunicationsLogEntry,
+        UserAction, 
+        Document,
+        )
+from wildlifecompliance.components.main.related_items_utils import get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 #from wildlifecompliance.components.main.models import InspectionType
 
@@ -187,7 +191,7 @@ class CallEmail(RevisionedMixin):
         (STATUS_DRAFT, 'Draft'),
         (STATUS_OPEN, 'Open'),
         (STATUS_OPEN_FOLLOWUP, 'Open (follow-up)'),
-        (STATUS_OPEN_FOLLOWUP, 'Open (Inspection)'),
+        (STATUS_OPEN_INSPECTION, 'Open (Inspection)'),
         (STATUS_OPEN_CASE, 'Open (Case)'),
         (STATUS_CLOSED, 'Closed'),
     )
@@ -312,7 +316,8 @@ class CallEmail(RevisionedMixin):
 
     @property
     def get_related_items_descriptor(self):
-        return '{0}, {1}'.format(self.status, self.caller)
+        #return '{0}, {1}'.format(self.status, self.caller)
+        return self.caller
     # @property
     # def related_items(self):
     #     return get_related_items(self)

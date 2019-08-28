@@ -285,8 +285,8 @@
                         <div :id="rTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
-                                    <div class="col-sm-12">
-                                        <RelatedItems v-bind:key="relatedItemsBindId"/>
+                                    <div class="col-sm-12" v-if="relatedItemsVisibility">
+                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_related_items="setRelatedItems"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -461,14 +461,6 @@ export default {
     InspectionModal,
     RelatedItems,
   },
-  watch: {
-      inspection: {
-          handler: function (){
-              this.constructRelatedItemsTable();
-          },
-          deep: true
-      },
-  },
   computed: {
     ...mapGetters('inspectionStore', {
       inspection: "inspection",
@@ -481,6 +473,9 @@ export default {
     },
     readonlyForm: function() {
         return !this.inspection.can_user_action;
+    },
+    canUserAction: function() {
+        return this.inspection.can_user_action;
     },
     inspectionReportExists: function() {
         return this.inspection.inspection_report.length > 0 ? true : false;
@@ -506,6 +501,13 @@ export default {
     endorseVisibility: function() {
         if (this.inspection.status && !this.readonlyForm) {
             return this.inspection.status.id === 'with_manager' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    testProblem: function() {
+        if (this.canUserAction) {
+            return true;
         } else {
             return false;
         }
@@ -539,6 +541,13 @@ export default {
             return timeNow.toString();
         }
     },
+    relatedItemsVisibility: function() {
+        if (this.inspection && this.inspection.id) {
+            return true;
+        } else {
+            return false;
+        }
+    }
   },
   filters: {
     formatDate: function(data) {
@@ -553,6 +562,7 @@ export default {
       setPlannedForTime: 'setPlannedForTime',
       modifyInspectionTeam: 'modifyInspectionTeam',
       setPartyInspected: 'setPartyInspected',
+      setRelatedItems: 'setRelatedItems',
     }),
     newPersonCreated: function(obj) {
         console.log(obj);

@@ -93,7 +93,8 @@ class Offence(RevisionedMixin):
     
     @property
     def get_related_items_descriptor(self):
-        return '{}, {}'.format(self.identifier, self.details)
+        #return '{}, {}'.format(self.identifier, self.details)
+        return self.identifier
 
 
 class ActiveOffenderManager(models.Manager):
