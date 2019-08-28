@@ -9,10 +9,13 @@ from ledger.accounts.models import EmailUser, RevisionedMixin, Organisation
 from ledger.licence.models import LicenceType
 #from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.call_email.models import CallEmail
-from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
-    UserAction, Document, get_related_items
+from wildlifecompliance.components.main.models import (
+        CommunicationsLogEntry,
+        UserAction, 
+        Document,
+        )
+from wildlifecompliance.components.main.related_items_utils import get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
-#from wildlifecompliance.components.main.models import InspectionType
 from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)

@@ -14,11 +14,10 @@ from wildlifecompliance.components.main.serializers import (
     SearchReferenceSerializer,
     RelatedItemsSerializer,
 )
-from wildlifecompliance.components.main.models import (
-        WeakLinks,
-        get_related_items,
-        )
+from wildlifecompliance.components.main.models import WeakLinks
+from wildlifecompliance.components.main.related_items_utils import get_related_items
 from django.contrib.auth.models import ContentType
+
 
 class SearchKeywordsView(views.APIView):
     renderer_classes = [JSONRenderer]
@@ -108,10 +107,6 @@ class RemoveWeakLinkView(views.APIView):
                 second_content_type = ContentType.objects.get(
                         app_label='wildlifecompliance', 
                         model=second_content_type_str)
-                print(first_content_type.id)
-                print(first_object_id)
-                print(second_content_type.id)
-                print(second_object_id_int)
 
                 # If weak link obj not found, test for object with first and second fields reversed and delete that instead.
                 weak_link_qs = WeakLinks.objects.filter(
@@ -139,11 +134,7 @@ class RemoveWeakLinkView(views.APIView):
 
                 # get related items of calling_instance
                 related_items = get_related_items(calling_instance)
-                print("ln 124")
-                print(related_items)
                 serializer = RelatedItemsSerializer(related_items, many=True)
-                print(serializer.data)
-                
 
                 return Response(serializer.data)
         except Exception as e:

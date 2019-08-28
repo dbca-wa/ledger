@@ -359,7 +359,6 @@ def search_reference(reference_number):
     else:
         raise ValidationError('Record with provided reference number does not exist')
 
-
 def search_weak_links(request_data):
     from wildlifecompliance.components.call_email.models import CallEmail
     from wildlifecompliance.components.inspection.models import Inspection
@@ -369,11 +368,6 @@ def search_weak_links(request_data):
 
     components_selected = request_data.get('selectedEntity')
     search_text = request_data.get('searchText')
-    #print(components_selected)
-    #print(search_text)
-    # components_selected = 'call_email'
-    #'call_email', 'inspection', 'offence', 'sanction_outcome'
-    #search_text = request_data
     if 'call_email' in components_selected:
         qs = CallEmail.objects.filter(
                 Q(number__icontains=search_text) |
@@ -414,7 +408,6 @@ def search_weak_links(request_data):
                 Q(offender__person__first_name__icontains=search_text) |
                 Q(offender__person__last_name__icontains=search_text)
                 )
-    #print(qs)
     return_qs = []
     for item in qs:
 
