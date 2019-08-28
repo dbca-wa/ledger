@@ -2,6 +2,10 @@ from __future__ import unicode_literals
 from ledger.accounts.models import EmailUser
 from wildlifecompliance import settings
 from wildlifecompliance.components.applications.models import ActivityPermissionGroup
+from wildlifecompliance.components.users.models import (
+        CompliancePermissionGroup, 
+        ComplianceManagementUserPreferences,
+        )
 
 
 def belongs_to(user, group_name):
@@ -78,6 +82,23 @@ def is_officer(request):
     return request.user.is_authenticated() and (belongs_to_list(
         request.user, licence_officer_groups) or request.user.is_superuser)
 
+def prefer_compliance_management(request):
+    if request.user.is_authenticated():
+        preference_qs, created = ComplianceManagementUserPreferences.objects.get_or_create(email_user=request.user)
+        if preference_qs and preference_qs.prefer_compliance_management:
+            return True
+    else:
+        return False
+
+def is_compliance_internal_user(request):
+    compliance_groups = [group.name for group in CompliancePermissionGroup.objects.filter(
+            permissions__codename__in=['volunteer',
+                                       'triage_call_email',
+                                       'issuing_officer',
+                                       'officer',
+                                       'manager'])]
+    return request.user.is_authenticated() and (belongs_to_list(
+        request.user, compliance_groups) or request.user.is_superuser)
 
 def get_all_officers():
     licence_officer_groups = ActivityPermissionGroup.objects.filter(

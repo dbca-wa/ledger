@@ -94,6 +94,14 @@ export default {
             return helpers.getCookie('csrftoken')
         },
     },
+    watch: {
+        documents: {
+            handler: async function () {
+                await this.$emit('update-parent');
+            },
+            deep: true
+        },
+    },
 
     methods:{
         handleChange: function (e) {

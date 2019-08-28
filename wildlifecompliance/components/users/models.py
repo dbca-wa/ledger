@@ -119,3 +119,17 @@ class CompliancePermissionGroup(Group):
         return EmailUser.objects.filter(
             groups__id=self.id
         ).distinct()
+
+
+class ComplianceManagementUserPreferences(models.Model):
+
+    prefer_compliance_management = models.BooleanField(default=False)
+    email_user = models.OneToOneField(EmailUser)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_Compliance Management User Preferences'
+
+    def __str__(self):
+        return '{}, {}'.format(self.email_user.id, self.prefer_compliance_management)
+

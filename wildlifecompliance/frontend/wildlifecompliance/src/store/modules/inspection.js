@@ -38,9 +38,14 @@ export const inspectionStore = {
             Vue.set(state.inspection, 'rendererDocumentUrl', rendererDocumentUrl); 
             let commsLogsDocumentUrl = helpers.add_endpoint_join(
                 api_endpoints.inspection,
-                state.inspection.id + "/create_modal_process_comms_log_document/"
+                state.inspection.id + "/process_comms_log_document/"
                 )
             Vue.set(state.inspection, 'commsLogsDocumentUrl', commsLogsDocumentUrl); 
+            let createInspectionProcessCommsLogsDocumentUrl = helpers.add_endpoint_join(
+                api_endpoints.inspection,
+                state.inspection.id + "/create_inspection_process_comms_log_document/"
+                )
+            Vue.set(state.inspection, 'createInspectionProcessCommsLogsDocumentUrl', createInspectionProcessCommsLogsDocumentUrl); 
         },
         updatePlannedForTime(state, time) {
             Vue.set(state.inspection, 'planned_for_time', time);
@@ -63,7 +68,6 @@ export const inspectionStore = {
     },
     actions: {
         async loadInspection({ dispatch, commit }, { inspection_id }) {
-            console.log("loadInspection");
             try {
                 const returnedInspection = await Vue.http.get(
                     helpers.add_endpoint_json(
@@ -145,6 +149,11 @@ export const inspectionStore = {
             if (crud === 'duplicate') {
                 return window.location.href = "/internal/inspection/" + inspectionId;
             }
+            else if (crud === 'create' && internal) {
+                console.log("modal file create")
+                return savedInspection;
+            }
+            // Below needs to be reviewed
             else if (crud !== 'create') {
                 if (!internal) {
                     await swal("Saved", "The record has been saved", "success");

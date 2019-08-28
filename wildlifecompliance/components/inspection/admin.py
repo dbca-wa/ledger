@@ -11,3 +11,7 @@ class InspectionAdmin(admin.ModelAdmin):
 @admin.register(models.InspectionType)
 class InspectionTypeAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(models.InspectionTypeApprovalDocument)
+class InspectionTypeApprovalDocumentAdmin(admin.ModelAdmin):
+    pass

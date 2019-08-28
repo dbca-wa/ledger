@@ -343,8 +343,8 @@
                         <div :id="rTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
-                                    <div class="col-sm-12">
-                                        <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
+                                    <div class="col-sm-12" v-if="relatedItemsVisibility">
+                                        <RelatedItems v-bind:key="relatedItemsBindId"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -398,7 +398,8 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
-import Inspection from '../inspection/create_inspection_modal';
+import Inspection from '../inspection/inspection_modal';
+import RelatedItems from "@common-components/related_items.vue";
 
 export default {
   name: "ViewCallEmail",
@@ -475,17 +476,10 @@ export default {
     SearchPerson,
     CallWorkflow,
     Offence,
-    datatable,
+    //datatable,
+    RelatedItems,
     SanctionOutcome,
     Inspection,
-  },
-  watch: {
-      call_email: {
-          handler: function (){
-              this.constructRelatedItemsTable();
-          },
-          deep: true
-      },
   },
   computed: {
     ...mapGetters('callemailStore', {
@@ -537,6 +531,21 @@ export default {
             return null;
         }
     },
+    relatedItemsBindId: function() {
+        let timeNow = Date.now()
+        if (this.call_email && this.call_email.id) {
+            return 'call_email_' + this.call_email.id + '_' + this._uid;
+        } else {
+            return timeNow.toString();
+        }
+    },
+    relatedItemsVisibility: function() {
+        if (this.call_email && this.call_email.id) {
+            return true;
+        } else {
+            return false;
+        }
+    }
   },
   filters: {
     formatDate: function(data) {
@@ -548,7 +557,6 @@ export default {
       loadCallEmail: 'loadCallEmail',
       saveCallEmail: 'saveCallEmail',
       setCallEmail: 'setCallEmail', 
-      // loadAllocatedGroup: 'loadAllocatedGroup',
       setRegionId: 'setRegionId',
       setAllocatedGroupList: 'setAllocatedGroupList',
       setOccurrenceTimeStart: 'setOccurrenceTimeStart',
@@ -559,39 +567,12 @@ export default {
     ...mapActions({
       saveFormData: "saveFormData",
     }),
-    ...mapActions({
-      loadCurrentUser: "loadCurrentUser",
-    }),
     updateWorkflowBindId: function() {
         let timeNow = Date.now()
         if (this.workflow_type) {
             this.workflowBindId = this.workflow_type + '_' + timeNow.toString();
         } else {
             this.workflowBindId = timeNow.toString();
-        }
-    },
-    constructRelatedItemsTable: function() {
-        console.log('constructRelatedItemsTable');
-        
-        let vm = this;
-        
-        vm.$refs.related_items_table.vmDataTable.clear().draw();
-
-        if(vm.call_email.related_items){
-          for(let i = 0; i<vm.call_email.related_items.length; i++){
-            let already_exists = vm.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(vm.call_email.related_items[i].id);
-
-            if (!already_exists){
-                vm.$refs.related_items_table.vmDataTable.row.add(
-                    {
-                        'identifier': vm.call_email.related_items[i].identifier,
-                        'descriptor': vm.call_email.related_items[i].descriptor,
-                        'model_name': vm.call_email.related_items[i].model_name,
-                        'Action': vm.call_email.related_items[i],
-                    }
-                ).draw();
-            }
-          }
         }
     },
     addWorkflow(workflow_type) {
@@ -747,12 +728,6 @@ export default {
         }
       });
     },
-  },
-  beforeRouteEnter: function(to, from, next) {
-            next(async (vm) => {
-                await vm.loadCurrentUser({ url: `/api/my_compliance_user_details` });
-                
-            });
   },
   created: async function() {
     

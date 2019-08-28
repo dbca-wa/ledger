@@ -32,7 +32,7 @@
                             </div>
                           </div>
                         </div>
-                        <div v-if="regionVisibility" class="form-group">
+                        <div v-if="allocateToVisibility" class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Allocate to</label>
@@ -232,6 +232,13 @@ export default {
               return false;
         }
       },
+      allocateToVisibility: function() {
+          if (this.workflow_type.startsWith('allocate')) {
+              return true;
+        } else {
+              return false;
+        }
+      },
       groupPermission: function() {
         if (this.workflow_type === 'forward_to_regions') {
             return 'triage_call_email';
@@ -279,17 +286,9 @@ export default {
       ...mapActions('callemailStore', {
           saveCallEmail: 'saveCallEmail',
       }),
-      loadAllocatedGroup: async function() {
-          let url = helpers.add_endpoint_join(
-              api_endpoints.region_district,
-              this.regionDistrictId + '/get_group_id_by_region_district/'
-              );
-          let returned = await Vue.http.post(
-              url,
-              { 'group_permission': this.groupPermission
-              });
-          return returned;
-      },
+      ...mapActions({
+          loadAllocatedGroup: 'loadAllocatedGroup',
+      }),
       updateDistricts: function() {
         // this.district_id = null;
         this.availableDistricts = [];
@@ -330,7 +329,10 @@ export default {
               }
           }
           if (this.groupPermission && this.regionDistrictId) {
-              let allocatedGroupResponse = await this.loadAllocatedGroup();
+              let allocatedGroupResponse = await this.loadAllocatedGroup({
+                  region_district_id: this.regionDistrictId, 
+                  group_permission: this.groupPermission
+              });
               if (allocatedGroupResponse.ok) {
                   console.log(allocatedGroupResponse.body.allocated_group);
                   //this.allocatedGroup = Object.assign({}, allocatedGroupResponse.body.allocated_group);
@@ -374,23 +376,21 @@ export default {
           this.attachAnother();
       },
       sendData: async function(){        
-          let post_url = '/api/call_email/' + this.call_email.id + '/add_workflow_log/'
+          let post_url = '/api/call_email/' + this.call_email.id + '/workflow_action/'
           let payload = new FormData(this.form);
-          payload.append('call_email_id', this.call_email.id);
-          payload.append('details', this.workflowDetails);
-          if (this.$refs.comms_log_file.commsLogId) {
-              payload.append('call_email_comms_log_id', this.$refs.comms_log_file.commsLogId)
-          }
-
-          payload.append('workflow_type', this.workflow_type);
-          payload.append('email_subject', this.modalTitle);
-          payload.append('referrers_selected', this.referrersSelected);
-          payload.append('district_id', this.district_id);
-          payload.append('assigned_to_id', this.assigned_to_id);
-          payload.append('inspection_type_id', this.inspection_type_id);
-          payload.append('case_priority_id', this.case_priority_id);
-          payload.append('region_id', this.region_id);
-          payload.append('allocated_group_id', this.allocated_group_id);
+          
+          this.call_email.id ? payload.append('call_email_id', this.call_email.id) : null;
+          this.workflowDetails ? payload.append('details', this.workflowDetails) : null;
+          this.$refs.comms_log_file.commsLogId ? payload.append('call_email_comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
+          this.workflow_type ? payload.append('workflow_type', this.workflow_type) : null;
+          this.modalTitle ? payload.append('email_subject', this.modalTitle) : null;
+          this.referrersSelected ? payload.append('referrers_selected', this.referrersSelected) : null;
+          this.district_id ? payload.append('district_id', this.district_id) : null;
+          this.assigned_to_id ? payload.append('assigned_to_id', this.assigned_to_id) : null;
+          this.inspection_type_id ? payload.append('inspection_type_id', this.inspection_type_id) : null;
+          this.case_priority_id ? payload.append('case_priority_id', this.case_priority_id) : null;
+          this.region_id ? payload.append('region_id', this.region_id) : null;
+          this.allocated_group_id ? payload.append('allocated_group_id', this.allocated_group_id) : null;
 
           let callEmailRes = await this.saveCallEmail({ route: false, crud: 'save', 'internal': true });
           console.log(callEmailRes);

@@ -16,7 +16,11 @@ from wildlifecompliance.components.call_email.serializers import SaveEmailUserSe
 from wildlifecompliance.components.organisations.models import (
     OrganisationRequest,
 )
-from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
+from wildlifecompliance.components.users.models import (
+        CompliancePermissionGroup, 
+        RegionDistrict, 
+        ComplianceManagementUserPreferences,
+        )
 from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.users.serializers import (
     UserSerializer,
@@ -34,6 +38,7 @@ from wildlifecompliance.components.users.serializers import (
     CompliancePermissionGroupDetailedSerializer,
     ComplianceUserDetailsOptimisedSerializer,
     CompliancePermissionGroupMembersSerializer,
+    UpdateComplianceManagementUserPreferencesSerializer,
 )
 from wildlifecompliance.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -42,6 +47,8 @@ from wildlifecompliance.components.organisations.serializers import (
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.renderers import DatatablesRenderer
+from django.urls import reverse
+from django.shortcuts import render, redirect, get_object_or_404
 
 
 def generate_dummy_email(first_name, last_name):
@@ -495,6 +502,33 @@ class UserViewSet(viewsets.ModelViewSet):
             headers=self.get_success_headers(email_user_serializer.data)
         )
 
+    @detail_route(methods=['POST', ])
+    def update_system_preference(self, request, *args, **kwargs):
+        with transaction.atomic():
+            try:
+                prefer_compliance_management = request.data.get('prefer_compliance_management', False)
+                user_instance = self.get_object()
+                system_preference_instance, created = ComplianceManagementUserPreferences.objects.get_or_create(email_user_id=user_instance.id)
+                serializer = UpdateComplianceManagementUserPreferencesSerializer(
+                        system_preference_instance,
+                        data={
+                            'email_user_id': user_instance.id, 
+                            'prefer_compliance_management': prefer_compliance_management
+                            }
+                        )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return redirect('/')
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(repr(e.error_dict))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e))
+
 
 class EmailIdentityViewSet(viewsets.ModelViewSet):
     queryset = EmailIdentity.objects.all()
@@ -598,25 +632,6 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
             return RegionDistrict.objects.none()
         return RegionDistrict.objects.none()
     
-    # @list_route(methods=['GET', ])
-    # def list_region_districts(self, request, *args, **kwargs):
-    #     try:
-    #         serializer = RegionDistrictSerializer(
-    #             RegionDistrict.objects.all(), 
-    #             many=True
-    #             )
-    #         print(serializer.data)
-    #         return Response(serializer.data)
-    #     except serializers.ValidationError:
-    #         print(traceback.print_exc())
-    #         raise
-    #     except ValidationError as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(repr(e.error_dict))
-    #     except Exception as e:
-    #         print(traceback.print_exc())
-    #         raise serializers.ValidationError(str(e))
-    
     @list_route(methods=['GET', ])
     def get_regions(self, request, *args, **kwargs):
         try:
@@ -654,8 +669,8 @@ class RegionDistrictViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST', ])
-    def get_group_id_by_region_district(self, request, *args, **kwargs):
-        print("get_group_id_by_region_district")
+    def get_compliance_group_by_region_district(self, request, *args, **kwargs):
+        print("get_compliance_group_by_region_district")
         print(request.data)
         try:
             instance = self.get_object()

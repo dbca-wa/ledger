@@ -62,25 +62,41 @@
                           </div>
                         </div-->
 
-                        <div  class="row action-button">
-                          <div v-if="!readonlyForm" class="col-sm-12">
-                                <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
+                        <div class="row action-button">
+                          <div v-if="sendToManagerVisibility" class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('send_to_manager')" class="btn btn-primary btn-block">
                                   Send to Manager
                                 </a>
                           </div>
                         </div>
                         
                         <div class="row action-button">
-                          <div v-if="!readonlyForm" class="col-sm-12">
-                                <a @click="offence()" class="btn btn-primary btn-block">
+                          <div v-if="endorseVisibility" class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('endorse')" class="btn btn-primary btn-block">
+                                  Endorse
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div class="row action-button">
+                          <div v-if="requestAmendmentVisibility" class="col-sm-12">
+                                <a ref="close" @click="addWorkflow('request_amendment')" class="btn btn-primary btn-block">
+                                  Request Amendment
+                                </a>
+                          </div>
+                        </div>
+                        
+                        <div class="row action-button">
+                          <div v-if="offenceVisibility" class="col-sm-12">
+                                <a @click="open_offence()" class="btn btn-primary btn-block">
                                   Offence
                                 </a>
                           </div>
                         </div>
 
                         <div  class="row action-button">
-                          <div v-if="!readonlyForm && this.offenceExists" class="col-sm-12">
-                                <a @click="sanction_outcome()" class="btn btn-primary btn-block">
+                          <div v-if="sanctionOutcomeVisibility" class="col-sm-12">
+                                <a @click="open_sanction_outcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
                                 </a>
                           </div>
@@ -226,7 +242,7 @@
                             </div>
                             <div class="col-sm-12 form-group"><div class="row">
                                 <div v-if="inspection">
-                                  <datatable ref="inspection_team_table" id="inspection-team-table" :dtOptions="dtOptionsInspectionTeam" :dtHeaders="dtHeadersInspectionTeam" />
+                                    <datatable ref="inspection_team_table" id="inspection-team-table" :dtOptions="dtOptionsInspectionTeam" :dtHeaders="dtHeadersInspectionTeam" />
                                 </div>
                             </div></div>
                           </FormSection>
@@ -253,7 +269,7 @@
                                             <label class="control-label pull-left"  for="Name">Inspection Report</label>
                                         </div>
                                         <div class="col-sm-9" v-if="inspection.inspectionReportDocumentUrl">
-                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :documentActionUrl="inspection.inspectionReportDocumentUrl" />
+                                            <filefield ref="inspection_report_file" name="inspection-report-file" :isRepeatable="false" :documentActionUrl="inspection.inspectionReportDocumentUrl" @update-parent="loadInspectionReport"/>
                                         </div>
                                     </div>
                                 </div>
@@ -270,7 +286,7 @@
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
                                     <div class="col-sm-12">
-                                        <datatable ref="related_items_table" id="related_items_table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
+                                        <RelatedItems v-bind:key="relatedItemsBindId"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -300,6 +316,7 @@
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
+        <InspectionModal ref="inspection_modal" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
     </div>
 </template>
 <script>
@@ -318,6 +335,8 @@ import 'eonasdan-bootstrap-datetimepicker';
 import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
+import InspectionModal from './inspection_modal.vue';
+import RelatedItems from "@common-components/related_items.vue";
 
 
 export default {
@@ -329,6 +348,8 @@ export default {
       oTab: 'oTab'+this._uid,
       cTab: 'cTab'+this._uid,
       current_schema: [],
+      //createInspectionBindId: '',
+      workflowBindId: '',
       dtHeadersRelatedItems: [
           'Number',
           'Type',
@@ -424,7 +445,7 @@ export default {
         api_endpoints.inspection,
         this.$route.params.inspection_id + "/action_log"
       ),
-      workflowBindId: '',
+      //workflowBindId: '',
       sanctionOutcomeInitialised: false,
     };
   },
@@ -437,6 +458,8 @@ export default {
     Offence,
     SanctionOutcome,
     filefield,
+    InspectionModal,
+    RelatedItems,
   },
   watch: {
       inspection: {
@@ -459,14 +482,62 @@ export default {
     readonlyForm: function() {
         return !this.inspection.can_user_action;
     },
+    inspectionReportExists: function() {
+        return this.inspection.inspection_report.length > 0 ? true : false;
+    },
     offenceExists: function() {
         for (let item of this.inspection.related_items) {
-            if (item.model_name.toLowerCase() === "offence") {
+            if (item.model_name.toLowerCase() === 'offence') {
                 return true
             }
         }
         // return false if no related item is an Offence
         return false
+    },
+    sendToManagerVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm && this.inspectionReportExists) {
+            if (this.inspection.status.id.includes('open', 'request_amendment')) {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    },
+    endorseVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm) {
+            return this.inspection.status.id === 'with_manager' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    requestAmendmentVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm) {
+            return this.inspection.status.id === 'with_manager' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    offenceVisibility: function() {
+        if (this.inspection.status && !this.readonlyForm) {
+            return this.inspection.status.id === 'open' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    sanctionOutcomeVisibility: function() {
+        if (this.inspection.status && this.offenceExists && !this.readonlyForm) {
+            return this.inspection.status.id === 'open' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    relatedItemsBindId: function() {
+        let timeNow = Date.now()
+        if (this.inspection && this.inspection.id) {
+            return 'inspection_' + this.inspection.id + '_' + this._uid;
+        } else {
+            return timeNow.toString();
+        }
     },
   },
   filters: {
@@ -499,6 +570,11 @@ export default {
         // Should not reach here
       }
     },
+    loadInspectionReport: function() {
+        console.log("loadInspectionReport")
+        this.loadInspection({inspection_id: this.inspection.id});
+    },
+
     loadSchema: function() {
       this.$nextTick(async function() {
       let url = helpers.add_endpoint_json(
@@ -515,15 +591,16 @@ export default {
         
       });
     },
-    sanction_outcome(){
-      console.log('sanction_outcome');
+
+    open_sanction_outcome(){
+
       this.sanctionOutcomeInitialised = true;
       this.$nextTick(() => {
           this.$refs.sanction_outcome.isModalOpen = true;
           this.constructRelatedItemsTable();
       });
     },
-    offence(){
+    open_offence(){
       this.offenceInitialised = true;
       this.$refs.offence.isModalOpen = true;
     },
@@ -594,7 +671,7 @@ export default {
       this.workflow_type = workflow_type;
       this.updateWorkflowBindId();
       this.$nextTick(() => {
-        this.$refs.add_workflow.isModalOpen = true;
+        this.$refs.inspection_modal.isModalOpen = true;
       });
       // this.$refs.add_workflow.isModalOpen = true;
     },
