@@ -107,7 +107,8 @@ class MarineActivityTabViewSet(viewsets.ReadOnlyModelViewSet):
         container = Container(
             #marine_activity_types=Activity.objects.filter(activity_category__activity_type='marine').order_by('id'),
             marine_activities=ActivityCategory.objects.filter(activity_type='marine').order_by('id'),
-            marine_parks=ActivityCategory.objects.filter(activity_type='marine').order_by('id'),
+            #marine_parks=ActivityCategory.objects.filter(activity_type='marine').order_by('id'),
+            marine_parks=Park.objects.filter(park_type='marine').order_by('id'),
             required_documents=RequiredDocument.objects.filter().order_by('id'),
         )
         serializer = MarineActivityTabSerializer(container)

@@ -899,7 +899,8 @@ var instanceId = 0;
         internalValue = this.forest.selectedNodeIds.filter(function (id) {
           var node = _this.getNode(id);
 
-          if (node.isLeaf) return true;
+          //if (node.isLeaf) return true;
+          if (node.level==1) return true;
           return node.children.length === 0;
         });
       } else if (this.valueConsistsOf === ALL_WITH_INDETERMINATE) {
@@ -1705,6 +1706,7 @@ var instanceId = 0;
         if (!isRootNode) {
           parentNode.count[ALL_CHILDREN] += 1;
           if (isLeaf) parentNode.count[LEAF_CHILDREN] += 1;
+          de.level
           if (isDisabled) parentNode.hasDisabledDescendants = true;
         }
 

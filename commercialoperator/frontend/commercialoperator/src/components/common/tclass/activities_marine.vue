@@ -24,6 +24,17 @@
                             </form>
                         </div>
 
+                        <div class="borderDecoration col-sm-12">
+                            <form>
+                                <div class="col-sm-12" >
+                                    <div>
+                                        <!--<pre>{{ selected_activities }}</pre>-->
+                                        <label class="control-label">Select the parks for which the activities are required</label>
+                                        <TreeSelect :proposal="proposal" :value.sync="selected_park_ids" :options="marine_park_options" :default_expand_level="1"></TreeSelect>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
 
                         <!--
                         <div class="form-horizontal col-sm-12 borderDecoration">
@@ -41,7 +52,7 @@
                                 </div>
                             </div>
                         </div>
-                        -->
+
                         <div class="form-horizontal col-sm-12 borderDecoration">
                             <label class="control-label"> Select the parks for which the activities are required</label>
                             <div class="list-group list-group-root well">
@@ -53,9 +64,11 @@
                                   </div>
                                 </div>
                             </div>
-                            <!-- <div>{{selected_parks}}</div>
-                            <div>{{marine_parks_activities}}</div> -->
                         </div>
+                        -->
+                        <!-- <div>{{selected_parks}}</div>
+                        <div>{{marine_parks_activities}}</div> -->
+
                         <div class="row"></div>
                         <div class="row"></div>
                         <div class="row"></div>
@@ -89,6 +102,7 @@ import Vue from 'vue'
 import VesselTable from '@/components/common/vessel_table.vue' 
 import editMarineParkActivities from './edit_marine_park_activities.vue'
 import FileField from './required_docs.vue'
+import TreeSelect from '@/components/forms/treeview.vue'
 import {
   api_endpoints,
   helpers
@@ -126,6 +140,7 @@ from '@/utils/hooks'
           VesselTable,
           editMarineParkActivities,
           FileField,
+          TreeSelect,
         },
         watch: {
         selected_parks: function() {
@@ -263,6 +278,7 @@ from '@/utils/hooks'
             }
         },
         },
+
         methods:{
           fetchMarineTreeview: function(){
             let vm = this;

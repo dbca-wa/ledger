@@ -123,6 +123,7 @@ export default {
         normalizer(node) {
             return {
                 id: node.last_leaf ? node.id : node.name,
+                //id: node.last_leaf ? node.node_id : node.name,
                 label: node.name,
                 children: node.children,
                 isDisabled: node.is_disabled,
@@ -145,6 +146,16 @@ export default {
     },
 
     methods:{
+        get_node_id:function(node){
+            //id: node.last_leaf ? node.id : (node.hasOwnProperty('node_id') : node.node_id ? node.name), // this is a nested if statement
+            if (node.last_leaf) {
+                return node.id
+            } else if (node.hasOwnProperty('node_id')) {
+                return node.node_id
+            } else {
+                return node.name
+            }
+        },
         edit_activities_test:function(node){
             //alert("event: " + event + " park_id: " + node.raw.id + ", park_name: " + node.raw.label );
             alert(" park_id: " + node.raw.id + ", park_name: " + node.raw.label );
