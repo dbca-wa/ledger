@@ -60,10 +60,14 @@ export default {
     },
     methods: {
         markMatchedText(original_text, input) {
-            let ret_text = original_text.replace(new RegExp(input, "gi"), function( a, b) {
-                return "<mark>" + a + "</mark>";
-            });
-            return ret_text;
+            if (original_text) {
+                let ret_text = original_text.replace(new RegExp(input, "gi"), function( a, b) {
+                    return "<mark>" + a + "</mark>";
+                });
+                return ret_text;
+            } else {
+                return '';
+            }
         },
         callCreateWeakLink: function() {
             this.$nextTick(async () => {
@@ -125,19 +129,10 @@ export default {
                 let data_item_id = origin[0].getAttribute("data-item-id");
                 let data_type = origin[0].getAttribute("data-type");
 
-                // Emit an event so that the parent vue component can subscribe to the event: 'person-selected' 
-                // and receive the data user selected.
-                // 
-                // id is an Emailuser.id when data_type is 'individual' or 
-                // an Organisation.id when data_type is 'organisation'
-                
-                //this.$emit('weak-link-selected', { id: data_item_id, data_type: data_type });
-                //this.$nextTick(() => {
-                //    this.second_object_id = data_item_id
-                //    this.second_content_type = data_type
-                //});
-                this.second_object_id = data_item_id
-                this.second_content_type = data_type
+                this.$nextTick(() => {
+                    this.second_object_id = data_item_id;
+                    this.second_content_type = data_type;
+                });
             });
         },
         // Match typed searchTerm against available human-readable object identifiers (get_related_items_identifier) 

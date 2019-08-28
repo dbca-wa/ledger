@@ -64,6 +64,9 @@ export const inspectionStore = {
                 }
             }
         },
+        updateRelatedItems(state, related_items) {
+            Vue.set(state.inspection, 'related_items', related_items);
+        },
         
     },
     actions: {
@@ -176,6 +179,9 @@ export const inspectionStore = {
         },
         setPartyInspected({ commit, }, data) {
             commit("updatePartyInspected", data);
+        },
+        setRelatedItems({ commit }, related_items ) {
+            commit("updateRelatedItems", related_items);
         },
     },
 };

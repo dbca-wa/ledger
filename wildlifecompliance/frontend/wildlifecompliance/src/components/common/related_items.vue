@@ -122,7 +122,6 @@ export default {
             'second_content_type': this.$refs.weak_links_lookup.second_content_type,
             'second_object_id': this.$refs.weak_links_lookup.second_object_id,
         }
-        console.log(payload);
         // post payload to url, then
         let relatedItems = await Vue.http.post(url, payload);
         console.log(relatedItems)
@@ -141,7 +140,6 @@ export default {
             'second_content_type': secondContentType,
             'second_object_id': secondObjectId,
         }
-        console.log(payload);
         // post payload to url, then
         let relatedItems = await Vue.http.post(url, payload);
         console.log(relatedItems)
