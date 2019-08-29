@@ -2,28 +2,32 @@
     <div class="container" id="internalInspectionDash">
         <FormSection :label="`Inspection`" :Index="`0`">
 
-        <form class="form-horizontal" name="createForm" method="get">
-            <div class="row">
-                <div class="col-md-3">
-                        <label for="">Type</label>
-                        <select class="form-control" v-model="filterInspectionType">
-                            <option v-for="option in inspectionTypes" :value="option.description" v-bind:key="option.id">
-                                {{ option.description }} 
-                            </option>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="">Type</label>
+                    <select class="form-control" v-model="filterInspectionType">
+                        <option v-for="option in inspectionTypes" :value="option.description" v-bind:key="option.id">
+                            {{ option.description }} 
+                        </option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                        <label for="">Status</label>
-                        <select class="form-control" v-model="filterStatus">
-                            <option v-for="option in statusChoices" :value="option.display" v-bind:key="option.id">
-                                {{ option.display }}
-                            </option>
-                        </select>
-                </div>
-
             </div>
-            <div class="row">
-                <div class="col-md-3">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="">Status</label>
+                    <select class="form-control" v-model="filterStatus">
+                        <option v-for="option in statusChoices" :value="option.display" v-bind:key="option.id">
+                            {{ option.display }}
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
                     <label for="">Planned From</label>
                     <div class="input-group date" ref="plannedDateFromPicker">
                         <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterPlannedFrom">
@@ -32,7 +36,9 @@
                         </span>
                     </div>
                 </div>
-                <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
                     <label for="">Planned To</label>
                     <div class="input-group date" ref="plannedDateToPicker">
                         <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterPlannedTo">
@@ -41,13 +47,13 @@
                         </span>
                     </div>
                 </div>
-                <div class="col-md-3 pull-right">
-                    <button @click.prevent="createInspection"
-                        class="btn btn-primary pull-right">New Inspection</button>
-                </div>    
             </div>
+            <div class="col-md-3 pull-right">
+                <button @click.prevent="createInspection"
+                    class="btn btn-primary pull-right">New Inspection</button>
+            </div>    
+        </div>
             
-        </form>
 
         <div class="row">
             <div class="col-lg-12">
@@ -67,12 +73,8 @@
     import Vue from 'vue'
     import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-    import FormSection from "@/components/compliance_forms/section.vue";
+    import FormSection from "@/components/forms/section_toggle.vue";
     import InspectionModal from "./inspection_modal.vue";
-    
-    // import moment from 'moment';
-    // import 'bootstrap/dist/css/bootstrap.css';
-    // import 'eonasdan-bootstrap-datetimepicker';
     
     export default {
         name: 'InspectionTableDash',
@@ -134,6 +136,11 @@
                             d.date_to = vm.filterPlannedTo != '' && vm.filterPlannedTo != null ? moment(vm.filterPlannedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         }
                     },
+                    dom: 'lBfrtip',
+                    buttons: [
+                        'excel',
+                        'csv',
+                        ],
                     columns: [
                         {
                             data: 'number',
