@@ -88,7 +88,6 @@ class RemoveWeakLinkView(views.APIView):
     renderer_classes = [JSONRenderer]
 
     def post(self, request, format=None):
-        print(request.data)
         try:
             with transaction.atomic():
                 first_content_type_str = request.data.get('first_content_type')

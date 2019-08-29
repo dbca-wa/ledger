@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from utils import approved_related_item_models
 
 logger = logging.getLogger(__name__)
 
@@ -182,12 +183,16 @@ class WeakLinks(models.Model):
                 first_object_id = self.second_object_id,
                 second_object_id = self.first_object_id
                 )
-        
-        if duplicate:
-            log_message =  'Duplicate - no record created for {} with pk {}'.format(
-                        self.first_content_type,
+        if self.second_content_type and self.second_content_type.model not in [i.lower() for i in approved_related_item_models]:
+            log_message =  'Incorrect model type - no record created for {} with pk {}'.format(
+                        self.first_content_type.model,
                         self.first_object_id)
-            logger.info(log_message)
+            logger.debug(log_message)
+        elif duplicate:
+            log_message =  'Duplicate - no record created for {} with pk {}'.format(
+                        self.first_content_type.model,
+                        self.first_object_id)
+            logger.debug(log_message)
         else:
             super(WeakLinks, self).save(*args,**kwargs)
 
