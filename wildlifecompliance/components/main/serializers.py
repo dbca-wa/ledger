@@ -52,6 +52,6 @@ class RelatedItemsSerializer(serializers.Serializer):
     model_name = serializers.CharField()
     second_object_id = serializers.IntegerField(allow_null=True)
     second_content_type = serializers.CharField(allow_blank=True)
-    link_type = serializers.CharField()
+    weak_link = serializers.BooleanField()
     action_url = serializers.CharField(allow_blank=True)
 

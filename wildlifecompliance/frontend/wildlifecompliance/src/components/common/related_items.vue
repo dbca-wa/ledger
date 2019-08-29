@@ -56,12 +56,11 @@ export default {
                   data: 'Action',
                   mRender: function(data, type, row){
                       console.log(row)
-                      if (row.Action.link_type === 'strong') {
+                      if (!row.Action.weak_link) {
                           return row.Action.action_url;
-                      } else if (row.Action.link_type === 'weak') {
+                      } else {
                           return '<a href="#" class="remove_button" second-content-type="' + row.Action.second_content_type + '" second-object-id="' + row.Action.second_object_id + '">Remove</a>';
                       }
-                      //return '<a href="#">View (not implemented)</a>';
                   }
               },
           ]
