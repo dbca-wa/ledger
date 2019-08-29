@@ -18,7 +18,7 @@ from wildlifecompliance.components.call_email.models import (
     CasePriority,
     # InspectionType,
     )
-from wildlifecompliance.components.main.related_items_utils import get_related_items
+from wildlifecompliance.components.main.related_item import get_related_items
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.users.serializers import (
     ComplianceUserDetailsOptimisedSerializer,

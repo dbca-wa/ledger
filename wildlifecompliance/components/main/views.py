@@ -15,7 +15,7 @@ from wildlifecompliance.components.main.serializers import (
     RelatedItemsSerializer,
 )
 from wildlifecompliance.components.main.models import WeakLinks
-from wildlifecompliance.components.main.related_items_utils import get_related_items
+from wildlifecompliance.components.main.related_item import get_related_items
 from django.contrib.auth.models import ContentType
 
 
@@ -77,13 +77,10 @@ class CreateWeakLinkView(views.APIView):
 
                 # get related items of calling_instance
                 related_items = get_related_items(calling_instance)
-                serializer = RelatedItemsSerializer(related_items, many=True)
-
-                return Response(serializer.data)
+                return Response(related_items)
 
         except Exception as e:
             print(traceback.print_exc())
-            #raise serializers.ValidationError(str(e))
             raise e
 
 
@@ -134,12 +131,9 @@ class RemoveWeakLinkView(views.APIView):
 
                 # get related items of calling_instance
                 related_items = get_related_items(calling_instance)
-                serializer = RelatedItemsSerializer(related_items, many=True)
-
-                return Response(serializer.data)
+                return Response(related_items)
         except Exception as e:
             print(traceback.print_exc())
-            #raise serializers.ValidationError(str(e))
             raise e
 
 

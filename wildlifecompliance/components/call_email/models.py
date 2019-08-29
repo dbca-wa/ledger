@@ -14,7 +14,7 @@ from wildlifecompliance.components.main.models import (
         UserAction, 
         Document,
         )
-from wildlifecompliance.components.main.related_items_utils import get_related_items
+#from wildlifecompliance.components.main.related_items_utils import get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 #from wildlifecompliance.components.main.models import InspectionType
 
