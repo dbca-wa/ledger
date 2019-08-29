@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-
+import logging
 from django.db import models
 from django.db.models.query import QuerySet
 from django.utils.encoding import python_2_unicode_compatible
@@ -10,6 +10,7 @@ from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
+logger = logging.getLogger(__name__)
 
 @python_2_unicode_compatible
 class Sequence(models.Model):
@@ -183,7 +184,10 @@ class WeakLinks(models.Model):
                 )
         
         if duplicate:
-            print("Duplicate - no record created")
+            log_message =  'Duplicate - no record created for {} with pk {}'.format(
+                        self.first_content_type,
+                        self.first_object_id)
+            logger.info(log_message)
         else:
             super(WeakLinks, self).save(*args,**kwargs)
 
