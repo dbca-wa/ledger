@@ -410,7 +410,7 @@ export default {
 
         swal({
             title: vm.submit_text() + " Application",
-            text: "Are you sure you want to " + vm.submit_text()+ " this application?",
+            text: "Are you sure you want to " + vm.submit_text().toLowerCase()+ " this application?",
             type: "question",
             showCancelButton: true,
             confirmButtonText: vm.submit_text()

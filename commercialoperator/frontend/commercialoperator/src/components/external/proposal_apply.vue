@@ -267,8 +267,11 @@ export default {
     manyDistricts: function() {
       return this.districts.length > 1;
     },
+    // proposal_type_help_url: function() {
+    //   return this.site_url + "help/commercialoperator/user/#apply_proposal_type"
+    // },
     proposal_type_help_url: function() {
-      return this.site_url + "help/commercialoperator/user/#apply_proposal_type"
+      return api_endpoints.proposal_type_help_url;
     },
     region_help_url: function() {
       return this.site_url + "help/commercialoperator/user/#apply_region"

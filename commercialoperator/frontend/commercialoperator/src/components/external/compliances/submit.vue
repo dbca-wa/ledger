@@ -21,11 +21,11 @@
                           <p>Your Submission will be provided to an officer to gauge compliance of the requirement(s).</p>
                           <p>You will be notified by email once your submission has been reviewed and / or if further action is required</p>
                         </div>                     
-                        <router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
+                        <router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to home</router-link>
                     </div>
                     <div v-else class="col-sm-offset-3 col-sm-6 borderDecoration">
                         <strong>Sorry it looks like there isn't any compliance currently in your session.</strong>
-                        <br /><router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
+                        <br /><router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to home</router-link>
                     </div>
                 </div>
             </div>
