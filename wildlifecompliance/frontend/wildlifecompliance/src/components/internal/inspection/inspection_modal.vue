@@ -160,6 +160,11 @@ export default {
       ...mapGetters('callemailStore', {
         call_email: "call_email",
       }),
+      parent_call_email: function() {
+          if (this.call_email && this.call_email.id) {
+              return true;
+          }
+      },
       regionDistrictId: function() {
           if (this.district_id || this.region_id) {
               return this.district_id ? this.district_id : this.region_id;
@@ -283,10 +288,10 @@ export default {
                   this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
               }
               // For CallEmail related items table
-              if (this.call_email && this.call_email.id) {
+              if (this.parent_call_email) {
                   //await this.parent_update_function({
                   await this.loadCallEmail({
-                      call_email_id: this.$parent.call_email.id,
+                      call_email_id: this.call_email.id,
                   });
               }
               if (this.$parent.$refs.related_items_table) {
@@ -315,7 +320,7 @@ export default {
           let payload = new FormData(this.form);
           payload.append('details', this.workflowDetails);
           this.$refs.comms_log_file.commsLogId ? payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
-          this.$parent.call_email ? payload.append('call_email_id', this.$parent.call_email.id) : null;
+          this.parent_call_email ? payload.append('call_email_id', this.call_email.id) : null;
           this.district_id ? payload.append('district_id', this.district_id) : null;
           this.assigned_to_id ? payload.append('assigned_to_id', this.assigned_to_id) : null;
           this.inspection_type_id ? payload.append('inspection_type_id', this.inspection_type_id) : null;
@@ -385,9 +390,9 @@ export default {
             this.inspection_type_id = this.inspection.inspection_type_id;
             this.region_id = this.inspection.region_id;
             this.district_id = this.inspection.district_id;
-        } else if (this.call_email && this.call_email.id) {
-            this.region_id = this.inspection.region_id;
-            this.district_id = this.inspection.district_id;
+        } else if (this.parent_call_email) {
+            this.region_id = this.call_email.region_id;
+            this.district_id = this.call_email.district_id;
         }
 
         // If no Region/District selected, initialise region as Kensington
