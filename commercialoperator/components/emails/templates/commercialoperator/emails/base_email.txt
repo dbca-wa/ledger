@@ -6,15 +6,16 @@ Dear Sir/Madam,
 {% endblock %}
 
 {% block signature %}
-Yours sincerely,
-
-{{ settings.SYSTEM_NAME_SHORT }} Section
+Regards,
+{{settings.BRANCH_NAME}}
+{{settings.DEP_NAME}}
+Phone: {{ settings.DEP_PHONE_SUPPORT }}
+Address: {{ settings.DEP_ADDRESS}}
 {% endblock %}
 
 
 
 {% block reply_statement %}
-Please do not reply directly to this email. Should you need to contact the licensing section of the  
-{{ settings.DEP_NAME }}, please send emails to {{ settings.SUPPORT_EMAIL }} or call {{ settings.DEP_PHONE_SUPPORT }}.
+Please do not reply directly to this email. Should you need to contact the {{ settings.BRANCH_NAME}}, please send emails to {{ settings.SUPPORT_EMAIL }} or call {{ settings.DEP_PHONE_SUPPORT }}.
 {% endblock %}
 
