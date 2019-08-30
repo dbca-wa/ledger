@@ -592,7 +592,7 @@ export default {
                     this.inspection.inspection_type_id + '/get_schema',
                     );
       let returned_schema = await cache_helper.getSetCache(
-        'Inspection_InspectionTypeSchema', 
+        'InspectionTypeSchema', 
         this.inspection.id.toString(),
         url);
       if (returned_schema) {
@@ -773,7 +773,7 @@ export default {
 
       // inspection_types
       let returned_inspection_types = await cache_helper.getSetCacheList(
-          'Inspection_InspectionTypes',
+          'InspectionTypes',
           api_endpoints.inspection_types
           );
       Object.assign(this.inspectionTypes, returned_inspection_types);

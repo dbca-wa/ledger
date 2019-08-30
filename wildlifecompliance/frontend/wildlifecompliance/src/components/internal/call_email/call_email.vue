@@ -782,7 +782,7 @@ export default {
 
     // regionDistricts
     let returned_region_districts = await cache_helper.getSetCacheList(
-      'CallEmail_RegionDistricts', 
+      'RegionDistricts', 
       api_endpoints.region_district
       );
     Object.assign(this.regionDistricts, returned_region_districts);

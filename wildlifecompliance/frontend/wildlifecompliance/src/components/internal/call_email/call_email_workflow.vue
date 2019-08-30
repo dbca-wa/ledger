@@ -443,7 +443,7 @@ export default {
         
         //await this.$parent.updateAssignedToId('blank');
         // regions
-        let returned_regions = await cache_helper.getSetCacheList('CallEmail_Regions', '/api/region_district/get_regions/');
+        let returned_regions = await cache_helper.getSetCacheList('Regions', '/api/region_district/get_regions/');
         Object.assign(this.regions, returned_regions);
         // blank entry allows user to clear selection
         this.regions.splice(0, 0, 
@@ -456,7 +456,7 @@ export default {
             });
         // regionDistricts
         let returned_region_districts = await cache_helper.getSetCacheList(
-            'CallEmail_RegionDistricts', 
+            'RegionDistricts', 
             api_endpoints.region_district
             );
         Object.assign(this.regionDistricts, returned_region_districts);
@@ -465,7 +465,7 @@ export default {
 
         // case_priorities
         let returned_case_priorities = await cache_helper.getSetCacheList(
-            'CallEmail_CasePriorities', 
+            'CasePriorities', 
             api_endpoints.case_priorities
             );
         Object.assign(this.casePriorities, returned_case_priorities);
@@ -478,7 +478,7 @@ export default {
 
         // inspection_types
         let returned_inspection_types = await cache_helper.getSetCacheList(
-            'CallEmail_InspectionTypes', 
+            'InspectionTypes', 
             api_endpoints.inspection_types
             );
         Object.assign(this.inspectionTypes, returned_inspection_types);

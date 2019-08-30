@@ -152,13 +152,16 @@ export default {
               type: String,
               default: '',
           },
-          parent_update_function: {
-              type: Function,
-          },
+          // parent_update_function: {
+          //     type: Function,
+          // },
     },
     computed: {
       ...mapGetters('inspectionStore', {
         inspection: "inspection",
+      }),
+      ...mapGetters('callemailStore', {
+        call_email: "call_email",
       }),
       regionDistrictId: function() {
           if (this.district_id || this.region_id) {
@@ -218,6 +221,9 @@ export default {
       }),
       ...mapActions({
           loadAllocatedGroup: 'loadAllocatedGroup',
+      }),
+      ...mapActions('callemailStore', {
+          loadCallEmail: 'loadCallEmail',
       }),
       updateDistricts: function() {
         // this.district_id = null;
@@ -280,8 +286,9 @@ export default {
                   this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
               }
               // For CallEmail related items table
-              if (this.$parent.call_email) {
-                  await this.parent_update_function({
+              if (this.call_email) {
+                  //await this.parent_update_function({
+                  await this.loadCallEmail({
                       call_email_id: this.$parent.call_email.id,
                   });
               }
@@ -289,7 +296,7 @@ export default {
                   this.$parent.constructRelatedItemsTable();
               }
               this.close();
-              this.$router.push({ name: 'internal-inspection-dash' });
+              //this.$router.push({ name: 'internal-inspection-dash' });
           }
       },
       cancel: async function() {
@@ -345,7 +352,7 @@ export default {
     },
     created: async function() {
         // regions
-        let returned_regions = await cache_helper.getSetCacheList('CallEmail_Regions', '/api/region_district/get_regions/');
+        let returned_regions = await cache_helper.getSetCacheList('Regions', '/api/region_district/get_regions/');
         Object.assign(this.regions, returned_regions);
         // blank entry allows user to clear selection
         this.regions.splice(0, 0, 
@@ -358,7 +365,7 @@ export default {
             });
         // regionDistricts
         let returned_region_districts = await cache_helper.getSetCacheList(
-            'CallEmail_RegionDistricts', 
+            'RegionDistricts', 
             api_endpoints.region_district
             );
         Object.assign(this.regionDistricts, returned_region_districts);
@@ -377,9 +384,14 @@ export default {
             });
 
         // Get parent component details from vuex
-        this.inspection_type_id = this.inspection.inspection_type_id;
-        this.region_id = this.inspection.region_id;
-        this.district_id = this.inspection.district_id;
+        if (this.inspection && this.inspection.id) {
+            this.inspection_type_id = this.inspection.inspection_type_id;
+            this.region_id = this.inspection.region_id;
+            this.district_id = this.inspection.district_id;
+        } else if (this.call_email && this.call_email.id) {
+            this.region_id = this.inspection.region_id;
+            this.district_id = this.inspection.district_id;
+        }
 
         // If no Region/District selected, initialise region as Kensington
         if (!this.inspection.region_id) {
