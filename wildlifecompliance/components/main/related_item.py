@@ -79,7 +79,7 @@ def get_related_items(entity, **kwargs):
                     if field_value:
                         field_object = f.related_model.objects.get(id=field_value)
                         related_item = RelatedItem(
-                                model_name = format_model_name(f.name),
+                                model_name = format_model_name(f.related_model.__name__),
                                 identifier = field_object.get_related_items_identifier,
                                 descriptor = field_object.get_related_items_descriptor,
                                 action_url = format_url(
