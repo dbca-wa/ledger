@@ -4,7 +4,7 @@
             <div class="col-sm-12">
                 <div class="row">
                     <div v-if="compliance && compliance.id" class="col-sm-offset-3 col-sm-6 borderDecoration">
-                        <strong>Your compliance with requirements has been successfully submitted.</strong>
+                        <strong>Your document to complete a requirement of your licence has been submitted</strong>
                         <br/>
                         <table>
                             <tr>
@@ -18,8 +18,8 @@
                         </table>
                         <div>
                           <p>Thank you for your submission.</p>
-                          <p>Your Submission will be provided to an officer to gauge compliance of the requirement(s).</p>
-                          <p>You will be notified by email once your submission has been reviewed and / or if further action is required</p>
+                          <p>You will receive a confirmation email, and it will show up on your account if the document meets the requirement.</p>
+                          <p>You will receive a notification email if there is any incomplete information or documents missing.</p>
                         </div>                     
                         <router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to home</router-link>
                     </div>

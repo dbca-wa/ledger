@@ -58,7 +58,7 @@
     <div class="col-sm-12">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">License Period <small></small>
+                <h3 class="panel-title">Licence Term <small></small>
                 <a class="panelClicker" :href="'#'+lBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="lBody">
                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                 </a>
@@ -71,7 +71,7 @@
                         <div class="form-group">
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <label class="control-label pull-left"  for="Name">Preferred licence period</label>
+                                    <label class="control-label pull-left"  for="Name">Preferred licence term</label>
                                 </div>
                                 <div class="col-sm-9" style="margin-bottom: 5px; width:53% !important">
                                     <select class="form-control" v-model="proposal.other_details.preferred_licence_period" ref="preferred_licence_period" :disabled="proposal.readonly || proposal.pending_amendment_request || proposal.is_amendment_proposal ">
@@ -617,7 +617,7 @@ export default {
                 $(vm.$refs.preferred_licence_period).select2({
                     "theme": "bootstrap",
                     allowClear: true,
-                    placeholder:"Select preferred licence period"
+                    placeholder:"Select preferred licence term"
                 }).
                 on("select2:select",function (e) {
                     var selected = $(e.currentTarget);

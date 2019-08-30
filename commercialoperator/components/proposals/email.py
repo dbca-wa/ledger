@@ -52,7 +52,7 @@ class SubmitSendNotificationEmail(TemplateEmailBase):
     txt_template = 'commercialoperator/emails/proposals/send_submit_notification.txt'
 
 class ExternalSubmitSendNotificationEmail(TemplateEmailBase):
-    subject = 'A new Application has been submitted.'
+    subject = '{} - Confirmation - Application submitted.'.format(settings.DEP_NAME)
     html_template = 'commercialoperator/emails/proposals/send_external_submit_notification.html'
     txt_template = 'commercialoperator/emails/proposals/send_external_submit_notification.txt'
 
