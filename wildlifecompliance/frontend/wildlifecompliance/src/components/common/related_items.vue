@@ -55,11 +55,12 @@ export default {
               {
                   data: 'Action',
                   mRender: function(data, type, row){
-                      console.log(row)
                       if (!row.Action.weak_link) {
                           return row.Action.action_url;
-                      } else {
+                      } else if (row.Action.weak_link && row.Action.can_user_action) {
                           return '<a href="#" class="remove_button" second-content-type="' + row.Action.second_content_type + '" second-object-id="' + row.Action.second_object_id + '">Remove</a>';
+                      } else {
+                          return '';
                       }
                   }
               },
@@ -116,6 +117,7 @@ export default {
     createWeakLink: async function() {
         let url = '/api/create_weak_link/'
         let payload = {
+            'can_user_action': this.displayedEntity.can_user_action,
             'first_content_type': this.displayedEntityType,
             'first_object_id': this.displayedEntity.id,
             'second_content_type': this.$refs.weak_links_lookup.second_content_type,
@@ -134,6 +136,7 @@ export default {
         let secondObjectId = e.target.getAttribute("second-object-id");
         let url = '/api/remove_weak_link/'
         let payload = {
+            'can_user_action': this.displayedEntity.can_user_action,
             'first_content_type': this.displayedEntityType,
             'first_object_id': this.displayedEntity.id,
             'second_content_type': secondContentType,
@@ -153,18 +156,22 @@ export default {
 
         if(this.displayedEntity.related_items){
           for(let i = 0; i< this.displayedEntity.related_items.length; i++){
-            let already_exists = this.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(this.displayedEntity.related_items[i].id);
+            //let already_exists = this.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(this.displayedEntity.related_items[i].id);
 
-            if (!already_exists){
-                this.$refs.related_items_table.vmDataTable.row.add(
-                    {
-                        'identifier': this.displayedEntity.related_items[i].identifier,
-                        'descriptor': this.displayedEntity.related_items[i].descriptor,
-                        'model_name': this.displayedEntity.related_items[i].model_name,
-                        'Action': this.displayedEntity.related_items[i],
-                    }
-                ).draw();
-            }
+            let actionColumn = new Object();
+            Object.assign(actionColumn, this.displayedEntity.related_items[i]);
+            actionColumn.can_user_action = this.displayedEntity.can_user_action;
+
+            //if (!already_exists) {
+            this.$refs.related_items_table.vmDataTable.row.add(
+                {
+                    'identifier': this.displayedEntity.related_items[i].identifier,
+                    'descriptor': this.displayedEntity.related_items[i].descriptor,
+                    'model_name': this.displayedEntity.related_items[i].model_name,
+                    'Action': actionColumn,
+                }
+            ).draw();
+            //}
           }
         }
     },

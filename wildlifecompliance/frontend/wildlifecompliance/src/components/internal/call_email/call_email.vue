@@ -375,7 +375,7 @@
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadCallEmail"/>
         </div>
         <div v-if="inspectionInitialised">
-            <Inspection ref="inspection" :parent_update_function="loadCallEmail"/>
+            <Inspection ref="inspection"/>
         </div>
     </div>
 </template>
@@ -398,7 +398,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
-import Inspection from '../inspection/inspection_modal';
+import Inspection from '../inspection/create_inspection_modal';
 import RelatedItems from "@common-components/related_items.vue";
 
 export default {
@@ -782,7 +782,7 @@ export default {
 
     // regionDistricts
     let returned_region_districts = await cache_helper.getSetCacheList(
-      'CallEmail_RegionDistricts', 
+      'RegionDistricts', 
       api_endpoints.region_district
       );
     Object.assign(this.regionDistricts, returned_region_districts);

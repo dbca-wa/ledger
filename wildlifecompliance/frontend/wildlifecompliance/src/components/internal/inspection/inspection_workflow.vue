@@ -152,9 +152,6 @@ export default {
               type: String,
               default: '',
           },
-          parent_update_function: {
-              type: Function,
-          },
     },
     computed: {
       ...mapGetters('inspectionStore', {
@@ -280,16 +277,17 @@ export default {
                   this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
               }
               // For CallEmail related items table
-              if (this.$parent.call_email) {
-                  await this.parent_update_function({
-                      call_email_id: this.$parent.call_email.id,
+              if (this.parent_call_email) {
+                  //await this.parent_update_function({
+                  await this.loadCallEmail({
+                      call_email_id: this.call_email.id,
                   });
               }
               if (this.$parent.$refs.related_items_table) {
                   this.$parent.constructRelatedItemsTable();
               }
               this.close();
-              this.$router.push({ name: 'internal-inspection-dash' });
+              //this.$router.push({ name: 'internal-inspection-dash' });
           }
       },
       cancel: async function() {
@@ -308,10 +306,10 @@ export default {
           } else {
                 post_url = '/api/inspection/'
           }
-          let payload = new FormData(this.form);
+          let payload = new FormData();
           payload.append('details', this.workflowDetails);
           this.$refs.comms_log_file.commsLogId ? payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
-          this.$parent.call_email ? payload.append('call_email_id', this.$parent.call_email.id) : null;
+          this.parent_call_email ? payload.append('call_email_id', this.call_email.id) : null;
           this.district_id ? payload.append('district_id', this.district_id) : null;
           this.assigned_to_id ? payload.append('assigned_to_id', this.assigned_to_id) : null;
           this.inspection_type_id ? payload.append('inspection_type_id', this.inspection_type_id) : null;
@@ -345,7 +343,7 @@ export default {
     },
     created: async function() {
         // regions
-        let returned_regions = await cache_helper.getSetCacheList('CallEmail_Regions', '/api/region_district/get_regions/');
+        let returned_regions = await cache_helper.getSetCacheList('Regions', '/api/region_district/get_regions/');
         Object.assign(this.regions, returned_regions);
         // blank entry allows user to clear selection
         this.regions.splice(0, 0, 
@@ -358,7 +356,7 @@ export default {
             });
         // regionDistricts
         let returned_region_districts = await cache_helper.getSetCacheList(
-            'CallEmail_RegionDistricts', 
+            'RegionDistricts', 
             api_endpoints.region_district
             );
         Object.assign(this.regionDistricts, returned_region_districts);
@@ -375,27 +373,15 @@ export default {
               id: "", 
               description: "",
             });
-
         // Get parent component details from vuex
-        this.inspection_type_id = this.inspection.inspection_type_id;
-        this.region_id = this.inspection.region_id;
-        this.district_id = this.inspection.district_id;
-
-        // If no Region/District selected, initialise region as Kensington
-        if (!this.inspection.region_id) {
-            for (let record of this.regionDistricts) {
-                if (record.district === 'KENSINGTON') {
-                    this.district_id = null;
-                    this.region_id = record.id;
-                }
-            }
+        if (this.inspection && this.inspection.id) {
+            this.inspection_type_id = this.inspection.inspection_type_id;
+            this.region_id = this.inspection.region_id;
+            this.district_id = this.inspection.district_id;
         }
+
         // ensure allocated group is current
         await this.updateAllocatedGroup();
-    },
-    mounted: function() {
-        this.form = document.forms.forwardForm;
-      
     }
 };
 </script>
