@@ -557,7 +557,7 @@ export default {
                                 title: 'Contact Accept',
                                 text: 'You have successfully accepted ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -597,7 +597,7 @@ export default {
                                 title: 'Contact Accept (Previously Declined)',
                                 text: 'You have successfully accepted ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -638,7 +638,7 @@ export default {
                                 title: 'Contact Decline',
                                 text: 'You have successfully declined ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -678,7 +678,7 @@ export default {
                                 title: 'Unlink',
                                 text: 'You have successfully unlinked ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                     vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -720,7 +720,7 @@ export default {
                                 title: 'Organisation Admin',
                                 text: 'You have successfully made ' + name + ' an Organisation Admin.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -761,7 +761,7 @@ export default {
                                 title: 'Organisation User',
                                 text: 'You have successfully made ' + name + ' an Organisation User.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -801,7 +801,7 @@ export default {
                                 title: 'Suspend User',
                                 text: 'You have successfully suspended ' + name + ' as a User.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -841,7 +841,7 @@ export default {
                                 title: 'Reinstate User',
                                 text: 'You have successfully reinstated ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -881,7 +881,7 @@ export default {
                                 title: 'Relink User',
                                 text: 'You have successfully relinked ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {

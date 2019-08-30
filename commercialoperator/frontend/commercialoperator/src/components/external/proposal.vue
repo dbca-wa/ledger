@@ -176,6 +176,8 @@ export default {
       let vm = this;
       //vm.form=document.forms.new_proposal;
       vm.save_applicant_data();
+      //await vm.save_applicant_data();
+
       let formData = vm.set_formData()
       //vm.save_applicant_data();
 

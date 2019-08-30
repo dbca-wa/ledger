@@ -20,7 +20,7 @@
                             </li>
                         </ul>
                         <div v-for=" accreditation in proposal.other_details.accreditations">
-                            <div v-if="!accreditation.is_deleted" class="col-sm-12">
+                            <div v-if="!accreditation.is_deleted && accreditation.accreditation_type!='no'" class="col-sm-12">
                                 <Accreditation :accreditation="accreditation":proposal_id="proposal.id" :readonly="proposal.readonly" id="accreditation"></Accreditation>
                             </div>
                             <!-- <fieldset class="scheduler-border">
