@@ -155,7 +155,9 @@
                 <div v-if="errorResponse" class="form-group">
                     <div class="row">
                         <div class="col-sm-12">
-                            <strong>Error: {{ errorResponse }}</strong>
+                            <strong>
+                                <span style="white-space: pre;">{{ errorResponse }}</span>
+                            </strong>
                         </div>
                     </div>
                 </div>
@@ -173,6 +175,7 @@ import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import filefield from '@/components/common/compliance_file.vue';
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
+import { required, minLength, between } from 'vuelidate/lib/validators'
 
 export default {
     name: "CallEmailWorking",
@@ -212,6 +215,24 @@ export default {
     components: {
       modal,
       filefield,
+    },
+    validations: function() {
+        if (this.workflow_type === 'allocate_for_follow_up') {
+            return {
+                region_id: {
+                    required,
+                },
+                assigned_to_id: {
+                    required,
+                },
+            }
+        } else {
+            return {
+                region_id: {
+                    required,
+                },
+            }
+        }
     },
     props:{
           workflow_type: {
@@ -352,12 +373,32 @@ export default {
       },
 
       ok: async function () {
-          const response = await this.sendData();
-          console.log(response);
-          if (response === 'ok') {
-              this.close();
+          let is_valid_form = this.isValidForm();
+          if (is_valid_form) {
+              const response = await this.sendData();
+              console.log(response);
+              if (response === 'ok') {
+                  this.close();
+              }
           }
       },
+      isValidForm: function() {
+          console.log("performValidation");
+          this.$v.$touch();
+          if (this.$v.$invalid) {
+              this.errorResponse = 'Invalid form:\n';
+              if (this.$v.region_id.$invalid) {
+                  this.errorResponse += 'Region is required\n';
+              }
+              if (this.$v.assigned_to_id.$invalid) {
+                  this.errorResponse += 'Officer must be assigned\n';
+              }
+              return false;
+          } else {
+              return true;
+          }
+      },
+
       cancel: async function() {
           await this.$refs.comms_log_file.cancel();
           this.isModalOpen = false;
@@ -401,10 +442,10 @@ export default {
                       this.$router.push({ name: 'internal-call-email-dash' });
                   }
               } catch(err) {
-                  this.errorResponse = err.statusText;
+                  this.errorResponse = 'Error:' + err.statusText;
               } 
           } else {
-              this.errorResponse = callEmailRes.statusText;
+              this.errorResponse = 'Error:' + callEmailRes.statusText;
           }
       },
       

@@ -157,14 +157,6 @@ export default {
       ...mapGetters('inspectionStore', {
         inspection: "inspection",
       }),
-      ...mapGetters('callemailStore', {
-        call_email: "call_email",
-      }),
-      parent_call_email: function() {
-          if (this.call_email && this.call_email.id) {
-              return true;
-          }
-      },
       regionDistrictId: function() {
           if (this.district_id || this.region_id) {
               return this.district_id ? this.district_id : this.region_id;
@@ -223,9 +215,6 @@ export default {
       }),
       ...mapActions({
           loadAllocatedGroup: 'loadAllocatedGroup',
-      }),
-      ...mapActions('callemailStore', {
-          loadCallEmail: 'loadCallEmail',
       }),
       updateDistricts: function() {
         // this.district_id = null;
@@ -317,7 +306,7 @@ export default {
           } else {
                 post_url = '/api/inspection/'
           }
-          let payload = new FormData(this.form);
+          let payload = new FormData();
           payload.append('details', this.workflowDetails);
           this.$refs.comms_log_file.commsLogId ? payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
           this.parent_call_email ? payload.append('call_email_id', this.call_email.id) : null;
@@ -384,32 +373,15 @@ export default {
               id: "", 
               description: "",
             });
-
         // Get parent component details from vuex
         if (this.inspection && this.inspection.id) {
             this.inspection_type_id = this.inspection.inspection_type_id;
             this.region_id = this.inspection.region_id;
             this.district_id = this.inspection.district_id;
-        } else if (this.parent_call_email) {
-            this.region_id = this.call_email.region_id;
-            this.district_id = this.call_email.district_id;
         }
 
-        // If no Region/District selected, initialise region as Kensington
-        if (!this.inspection.region_id) {
-            for (let record of this.regionDistricts) {
-                if (record.district === 'KENSINGTON') {
-                    this.district_id = null;
-                    this.region_id = record.id;
-                }
-            }
-        }
         // ensure allocated group is current
         await this.updateAllocatedGroup();
-    },
-    mounted: function() {
-        this.form = document.forms.forwardForm;
-      
     }
 };
 </script>

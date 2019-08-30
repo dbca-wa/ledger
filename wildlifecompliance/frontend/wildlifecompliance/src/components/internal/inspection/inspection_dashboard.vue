@@ -74,7 +74,7 @@
     import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
     import FormSection from "@/components/forms/section_toggle.vue";
-    import InspectionModal from "./inspection_modal.vue";
+    import InspectionModal from "./create_inspection_modal.vue";
     
     export default {
         name: 'InspectionTableDash',

@@ -316,7 +316,7 @@
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
-        <InspectionModal ref="inspection_modal" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
+        <InspectionWorkflow ref="inspection_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
     </div>
 </template>
 <script>
@@ -335,7 +335,7 @@ import 'eonasdan-bootstrap-datetimepicker';
 import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
-import InspectionModal from './inspection_modal.vue';
+import InspectionWorkflow from './inspection_workflow.vue';
 import RelatedItems from "@common-components/related_items.vue";
 
 
@@ -458,7 +458,7 @@ export default {
     Offence,
     SanctionOutcome,
     filefield,
-    InspectionModal,
+    InspectionWorkflow,
     RelatedItems,
   },
   computed: {
@@ -681,7 +681,7 @@ export default {
       this.workflow_type = workflow_type;
       this.updateWorkflowBindId();
       this.$nextTick(() => {
-        this.$refs.inspection_modal.isModalOpen = true;
+        this.$refs.inspection_workflow.isModalOpen = true;
       });
       // this.$refs.add_workflow.isModalOpen = true;
     },
