@@ -152,9 +152,6 @@ export default {
               type: String,
               default: '',
           },
-          // parent_update_function: {
-          //     type: Function,
-          // },
     },
     computed: {
       ...mapGetters('inspectionStore', {
@@ -286,7 +283,7 @@ export default {
                   this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
               }
               // For CallEmail related items table
-              if (this.call_email) {
+              if (this.call_email && this.call_email.id) {
                   //await this.parent_update_function({
                   await this.loadCallEmail({
                       call_email_id: this.$parent.call_email.id,
