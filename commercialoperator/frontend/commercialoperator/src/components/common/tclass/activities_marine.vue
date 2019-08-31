@@ -30,11 +30,12 @@
                                     <div>
                                         <!--<pre>{{ selected_activities }}</pre>-->
                                         <label class="control-label">Select the parks for which the activities are required</label>
-                                        <TreeSelect :proposal="proposal" :value.sync="selected_park_ids" :options="marine_park_options" :default_expand_level="1"></TreeSelect>
+                                        <TreeSelect :proposal="proposal" :value.sync="selected_zone_ids" :options="marine_park_options" :default_expand_level="1"></TreeSelect>
                                     </div>
                                 </div>
                             </form>
                         </div>
+
 
                         <!--
                         <div class="form-horizontal col-sm-12 borderDecoration">
@@ -94,6 +95,12 @@
                 </div>
             </div>
         </div>
+
+        <div>Selected_Activities: {{selected_activities}}</div><br>
+        <div>selected_zone_ids: {{selected_zone_ids}}</div><br>
+        <div>selected_zones: {{selected_zones}}</div><br>
+        <div>Marine_Park_Activities: {{marine_parks_activities}}</div><br>
+
     </div>
 </template>
 
@@ -123,6 +130,11 @@ from '@/utils/hooks'
         data:function () {
             let vm = this;
             return{
+                selected_zone_ids: [],
+                selected_zone_ids_before: [],
+                park_map: {},
+                zone_map: {},
+                park_activities: [],
                 pBody: 'pBody'+vm._uid,
                 values:null,
                 vessels_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/vessels'),
@@ -130,8 +142,8 @@ from '@/utils/hooks'
                 marine_activities: [],
                 selected_activities:[],
                 selected_activities_before:[],
-                selected_parks:[],
-                selected_parks_before:[],
+                selected_zones:[],
+                selected_zones_before:[],
                 marine_parks_activities:[],
                 required_documents_list: null,
             }
@@ -143,77 +155,99 @@ from '@/utils/hooks'
           TreeSelect,
         },
         watch: {
-        selected_parks: function() {
+          selected_zone_ids: function() {
+          //selected_parks: function() {
             let vm = this;
-            if (vm.proposal) {
-                vm.proposal.parks = vm.selected_parks
+
+            vm.selected_zones = []
+            for (var i = 0; i < vm.selected_zone_ids.length; i++) {
+                //var data = vm.get_selected_park_data(vm.get_park_ids[i] )
+                var zone_id = vm.selected_zone_ids[i]
+                var data = vm.get_selected_zone_data( zone_id )
+                if (data !== null) {
+                    vm.selected_zones.push( data )
+                }
             }
-            var removed_park=$(vm.selected_parks_before).not(vm.selected_parks).get();
-            var added_park=$(vm.selected_parks).not(vm.selected_parks_before).get();
-            vm.selected_parks_before=vm.selected_parks;
+
+            if (vm.proposal) {
+                vm.proposal.parks = vm.selected_zones
+            }
+
+            /*
+            var removed_park=$(vm.selected_zones_before).not(vm.selected_zones).get();
+            var added_park=$(vm.selected_zones).not(vm.selected_zones_before).get();
+            vm.selected_zones_before=vm.selected_zones;
+            */
+
+            try {
+                var removed_zone_ids=$(vm.selected_zone_ids_before).not(vm.selected_zone_ids).get();
+            } catch (error) {
+                console.log('removed_zone: ' + error)
+            }
+
+            try {
+                var added_zone_ids=$(vm.selected_zone_ids).not(vm.selected_zone_ids_before).get();
+            } catch (error) {
+                console.log('added_zone: ' + error)
+            }
+            vm.selected_zone_ids_before=vm.selected_zone_ids;
 
             var current_activities=vm.selected_activities
             var zone_activities=[];
             //var current_access=vm.selected_access
 
             if(vm.marine_parks_activities.length==0){
-              for (var i = 0; i < vm.selected_parks.length; i++) {
-                 var data=null;
-                 // data={
-                 //  'park': vm.selected_parks[i],
-                 //  'activities': current_activities,
-                 //  //'access': current_access
-                 // }
-                 for (var j=0; j<vm.selected_parks[i].zones.length; j++){
-                  var zone_data={
-                    'zone': vm.selected_parks[i].zones[j],
-                    'activities': current_activities
-                  }
-                  zone_activities.push(zone_data)
-                 }
-                 data={
-                  'park': vm.selected_parks[i].park,
+              for (var i = 0; i < vm.selected_zones.length; i++) {
+                var park_id = vm.get_park_id(vm.selected_zones[i].zone)
+                var data=null;
+
+                var zone_data={
+                  'zone': vm.selected_zones[i].zone,
+                  'activities': current_activities
+                }
+                zone_activities.push(zone_data)
+
+                data={
+                  'park': park_id,
                   'activities': zone_activities 
-                 }
-                 vm.marine_parks_activities.push(data);
-               }
+                }
+                vm.marine_parks_activities.push(data);
+              }
             }
             else{
-              if(added_park.length!=0){
-                for(var i=0; i<added_park.length; i++)
-                { 
-                  var found=false
-                  for (var j=0; j<vm.marine_parks_activities.length; j++){
-                    if(vm.marine_parks_activities[j].park==added_park[i].park){ 
-                      found = true;}
-                  }
-                  if(found==false)
-                  {
-                    var zone_activities=[];
-                    for(var k=0; k<added_park[i].zones.length; k++){
-                      var zone_data={
-                      'zone': added_park[i].zones[k],
-                      'activities': current_activities
-                      }
-                      zone_activities.push(zone_data)
-                    }
-                    data={
-                    'park': added_park[i].park,
-                    'activities': zone_activities,
-                    //'access': current_access
-                   }
-                   vm.marine_parks_activities.push(data);
+              if(added_zone_ids.length!=0){
+                for(var i=0; i<added_zone_ids.length; i++) {
+                  var park_id = vm.get_park_id(added_zone_ids[i])
+                  var park_idx = vm.contains_park(park_id)
 
+                  var zone_data={
+                    'zone': added_zone_ids[i],
+                    'activities': current_activities
+                    //'access': current_access
+                  }
+
+                  if( park_idx > -1) { // check if vm.marine_parks_activities dict already contains park entry
+                    vm.marine_parks_activities[park_idx].activities.push( zone_data )
+                  } else {
+                    var zone_activities=[];
+                    zone_activities.push(zone_data)
+
+                    data={
+                      'park': park_id,
+                      'activities': zone_activities,
+                    }
+                    vm.marine_parks_activities.push(data);
                   }
                 }
               }
-              if(removed_park.length!=0){
-                for(var i=0; i<removed_park.length; i++)
-                { 
-                  for (var j=0; j<vm.marine_parks_activities.length; j++){
-                    if(vm.marine_parks_activities[j].park==removed_park[i].park){ 
-                      vm.marine_parks_activities.splice(j,1)}
-                  }
+              if(removed_zone_ids.length!=0){
+                for(var i=0; i<removed_zone_ids.length; i++) {
+                  var park_id = vm.get_park_id(removed_zone_ids[i]);
+                  var park_idx = vm.contains_park(park_id);
+                  var park_activities = vm.marine_parks_activities[park_idx].activities;
+                  var zone_idx = vm.contains_park(park_activities, removed_zone_ids[i]);
+
+                  vm.marine_parks_activities[park_idx].activities.splice(zone_idx,1)
                 }
               }
             }
@@ -224,10 +258,10 @@ from '@/utils/hooks'
           var added=$(vm.selected_activities).not(vm.selected_activities_before).get();
           vm.selected_activities_before=vm.selected_activities;
           if(vm.marine_parks_activities.length==0){
-            for (var i = 0; i < vm.selected_parks.length; i++) {
+            for (var i = 0; i < vm.selected_zones.length; i++) {
                  var data=null;
                  data={
-                  'park': vm.selected_parks[i],
+                  'park': vm.selected_zones[i],
                   'activities': vm.selected_activities,
                   //'access': vm.selected_access
                  }
@@ -235,15 +269,12 @@ from '@/utils/hooks'
                }
           }
           else{
-            
+
             for (var i=0; i<vm.marine_parks_activities.length; i++)
             { 
               if(added.length!=0){
                 for(var j=0; j<added.length; j++)
                 {
-                  // if(vm.marine_parks_activities[i].activities.indexOf(added[j])<0){
-                  //   vm.marine_parks_activities[i].activities.push(added[j]);
-                  // }
                   for(var k=0; k<vm.marine_parks_activities[i].activities.length; k++){
                     if(vm.marine_parks_activities[i].activities[k].activities.indexOf(added[j])<0){
                     vm.marine_parks_activities[i].activities[k].activities.push(added[j]);
@@ -254,10 +285,6 @@ from '@/utils/hooks'
               if(removed.length!=0){
                 for(var j=0; j<removed.length; j++)
                 {
-                  // var index=vm.marine_parks_activities[i].activities.indexOf(removed[j]);
-                  // if(index!=-1){
-                  //   vm.marine_parks_activities[i].activities.splice(index,1)
-                  // }
                   for(var k=0; k<vm.marine_parks_activities[i].activities.length; k++){
                     var index=vm.marine_parks_activities[i].activities[k].activities.indexOf(removed[j]);
                     if(index!=-1){
@@ -280,6 +307,189 @@ from '@/utils/hooks'
         },
 
         methods:{
+          get_selected_zone_data:function(zone_id){
+            let vm = this;
+            for (var i=0; i<vm.marine_parks.length; i++) {
+              var park = vm.marine_parks[i];
+              for (var j=0; j<park.children.length; j++) {
+                var zone = park.children[j];
+                if (zone.id == zone_id) {
+                  //return {'zone': zone_id, 'park': park.id, 'activities': vm.get_park_zone_activity_ids(zone.allowed_activities)} // { "park": 4, "zones": [ 5, 4, 1  ]  }
+                  return {'zone': zone_id, 'park': park.id, 'activities': vm.selected_activities} // { "park": 4, "zones": [ 5, 4, 1  ]  }
+                }
+              }
+            }
+            return null;
+          },
+          _get_selected_park_data:function(park_id){
+            let vm = this;
+            for (var i=0; i<vm.marine_parks.length; i++) {
+              if (vm.marine_parks[i].id == park_id) {
+                //console.log(vm.marine_parks[0].zones[i].id)
+                var park_id = vm.get_park_id()
+                return {'park': park_id, 'zones': vm.get_park_zone_ids(park_id)} // { "park": 4, "zones": [ 5, 4, 1  ]  }
+              }
+            }
+            return null;
+          },
+
+          get_park_zone_activity_ids:function(allowed_activities){
+            let vm = this;
+
+            var allowed_activity_ids = []
+            for (var i=0; i<allowed_activities.length; i++) {
+                allowed_activity_ids.push( allowed_activities[i].id )
+            }
+
+            var ids = []
+            for (var i=0; i<vm.selected_activities.length; i++) {
+                var selected_activity_id = vm.selected_activities[i]
+                if (allowed_activity_ids.indexOf(selected_activity_id) > -1) {
+                    ids.push( selected_activity_id )
+                }
+            }
+            return ids.filter(function(item, pos) { return ids.indexOf(item) == pos;  }) // returns unique array ids
+          },
+
+          get_park_zone_ids:function(park_id){
+            let vm = this;
+            //for (var i=0; i<vm.marine_parks[0].zones.length; i++) { console.log(vm.marine_parks[0].zones[i].id)  }
+
+            var ids = []
+            for (var i=0; i<vm.marine_parks[park_id].zones.length; i++) {
+                ids.push( vm.marine_parks[park_id].zones[i].id )
+            }
+            return ids.filter(function(item, pos) { return ids.indexOf(item) == pos;  }) // returns unique array ids
+          },
+          _get_park_id:function(zone_ids){
+            /* given zone id list returns the associated proposal_park ids */
+            let vm = this;
+
+            var ids = []
+            for (var i=0; i<vm.marine_parks.length; i++){ 
+              var park = vm.marine_parks[i]
+              for (var j=0; j<zone_ids.length; j++) {
+                var park_zone_id = park.children[j].id
+                if (zone_ids.indexOf(park_zone_id) > -1) {
+                  return park_id
+                }
+              }
+            }
+            return null;
+          },
+          get_park_id:function(zone_id){
+            /* given zone id returns the associated proposal_park id */
+            let vm = this;
+
+            var ids = []
+            var park_ids = Object.keys(vm.park_map);
+            for (var i=0; i<park_ids.length; i++){ 
+              var park_id = park_ids[i]
+              var zone_ids = vm.park_map[park_id]
+              if (zone_ids.indexOf(zone_id) > -1) {
+                return park_id;
+              }
+            }
+            return null;
+          },
+
+          get_park_map:function(){
+            /* dictionary key:park id,  value:list zone ids
+               eg. {park_id: zone_list} ==> { "4":[5,4,1], "170":[10,7,6,8,9], "171":[11] } */
+            let vm = this;
+
+            var park_map = {};
+            //var zone_map = {};
+            for (var i=0; i<vm.marine_parks.length; i++){ 
+              var park = vm.marine_parks[i]
+
+              var ids = [];
+              for (var j=0; j<park.children.length; j++) {
+                var zone_id = park.children[j].id
+                ids.push( zone_id )
+                //zone_map[zone_id] = park.id;
+              }
+              park_map[park.id] = ids;
+            }
+            return park_map;
+            //vm.zone_map = zone_map;
+          },
+
+          get_park_activities:function(){
+            /* dictionary key:park id,  value:list zone ids
+               eg. {park_id: zone_list} ==> { "4":[5,4,1], "170":[10,7,6,8,9], "171":[11] } */
+            let vm = this;
+
+            var park_map = {};
+            var park_activities = [];
+            var activities_by_zone = [];
+            for (var i=0; i<vm.selected_zone_ids.length; i++){ 
+              var zone_id = vm.selected_zone_ids[i]
+              var park_id = vm.get_park_id(zone_id)
+              if (park_id !== null) {
+                activities_by_zone.push( {'park': park_id, 'activities': vm.selected_activities, 'access_point': '' } )
+                park_activities.push({'zone': zone_id, 'activities': activities_by_zone})
+              } else {
+                console.log('ERROR: Park ID not found for zone_id ' + zone_id)
+              }
+            }
+            return park_activities;
+          },
+          _get_park_activities:function(){
+            /* dictionary key:park id,  value:list zone ids
+               eg. {park_id: zone_list} ==> { "4":[5,4,1], "170":[10,7,6,8,9], "171":[11] } */
+            let vm = this;
+
+            var park_map = {};
+            var park_activities = [];
+            for (var i=0; i<vm.marine_parks.length; i++){ 
+              var park = vm.marine_parks[i]
+              if (park.id in vm.park_map) {
+
+                var activities_by_zone = [];
+                for (var j=0; j<park.children.length; j++) {
+                  var zone_id = park.children[j].id
+
+                  var zone_ids = vm.park_map[park.id];
+                  if (zone_id in zone_ids) {
+                    activities_by_zone.push( {'zone': zone_id, 'activities': vm.selected_activities, 'access_point': '' } )
+                  } else {
+                    activities_by_zone.push( {'zone': [], 'activities': vm.selected_activities, 'access_point': '' } )
+                  }
+                }
+                park_activities.push({'park':park.id, 'activities': activities_by_zone})
+              }
+            }
+
+            return park_activities;
+          },
+
+          contains_park:function(park_id){
+            /* return the index position of the park if exists, else -1 */
+            let vm = this;
+
+            for (var i=0; i<vm.marine_parks_activities.length; i++) {
+              if(vm.marine_parks_activities[i].park==park_id) {
+                return i;
+              }
+            }
+            return -1;
+          },
+          contains_zone:function(activities, zone_id){
+            /* return the index position of the zone if exists, else -1 */
+            let vm = this;
+
+            for (var i=0; i<activities.length; i++) {
+              if(vm.activities[i].zone==zone_id) {
+                return i;
+              }
+            }
+            return -1;
+          },
+
+
+
+
           fetchMarineTreeview: function(){
             let vm = this;
 
@@ -304,7 +514,8 @@ from '@/utils/hooks'
                     }
                 ]
                 vm.marine_parks = response.body['marine_parks']
-
+                vm.park_map = vm.get_park_map();
+                vm.park_activities = vm.get_park_activities();
 
                 vm.required_documents_list = response.body['required_documents']
                 vm.fetchRequiredDocumentList();
@@ -386,33 +597,6 @@ from '@/utils/hooks'
             }
           }
           },
-          clickCategory: function(e, c){
-            let vm=this;
-            var checked=e.target.checked;
-            if(checked){
-              for(var i=0; i<c.activities.length; i++){
-                var index=this.selected_activities.indexOf(c.activities[i].id);
-                if(index==-1)
-                {
-                  var r = helpers.copyObject(this.selected_activities);
-                  r.push(c.activities[i].id);
-                  this.selected_activities=r
-                  
-                }
-              }
-            }
-            else{
-              for(var i=0; i<c.activities.length; i++){
-                var index=this.selected_activities.indexOf(c.activities[i].id);
-                if(index!=-1){
-                  var r = helpers.copyObject(this.selected_activities);
-                  r.splice(index,1);
-                  this.selected_activities=r
-                  //this.selected_parks.splice(index,1)
-                }
-              }
-            }
-          },
           edit_activities: function(park){
             let vm=this;
             //inserting a temporary variables checked and new_activities to store and display selected activities for each zone.
@@ -471,7 +655,7 @@ from '@/utils/hooks'
               var current_park=parks[i].park.id
               var current_activities=[]
               var current_zones=[]
-              
+
               for (var j = 0; j < parks[i].zones.length; j++) {
                 var park_activities=[];
                 for (var k = 0; k < parks[i].zones[j].park_activities.length; k++) {
@@ -487,26 +671,23 @@ from '@/utils/hooks'
                 all_activities.push({'key': park_activities})
                 //current_zones.push(parks[i].zones[j].zone)
               }
-               
+
                var data={
                 'park': current_park,
                 'activities': current_activities 
                }
                vm.marine_parks_activities.push(data)
-               
             }
-            
+
           for (var i=0; i<parks.length; i++)
-            { 
-              
+            {
               park_list.push({'park':parks[i].park.id, 'zones':parks[i].park.zone_ids})
             }
-          vm.selected_parks=park_list
+          vm.selected_zones=park_list
           //console.log(park_list)
           vm.selected_activities = vm.find_recurring(all_activities)
         },
         eventListeners: function(){
-            
         },
         },
         mounted: function(){
@@ -523,7 +704,8 @@ from '@/utils/hooks'
             vm.fetchMarineTreeview();
             //vm.fetchParks();
             //vm.fetchRequiredDocumentList();
-            vm.store_parks(vm.proposal.marine_parks);
+
+//            vm.store_parks(vm.proposal.marine_parks);
             //vm.eventListeners();
         }
     }

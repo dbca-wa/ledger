@@ -105,6 +105,8 @@
                 </form>
             </div>
 
+            <div>Selected_Parks: {{selected_parks}}</div><br>
+            <div>Selected_Parks_Activities: {{selected_parks_activities}}</div>
             <!--
             <div>Trail: {{selected_trails}}</div>
             <div>Activities: {{selected_trails_activities}}</div>

@@ -57,35 +57,40 @@ class ActivitySerializer(serializers.ModelSerializer):
 
 
 class ZoneSerializer(serializers.ModelSerializer):
+    label = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
     last_leaf = serializers.SerializerMethodField()
-    #allowed_activities=ActivitySerializer(many=True)
+    last_leaf = serializers.SerializerMethodField()
+    allowed_activities=ActivitySerializer(many=True)
     #children=ActivitySerializer(many=True, source='allowed_activities', context={'request': self.context.get('request'), 'customer_id': obj.id})
     #children=ActivitySerializer(many=True, source='allowed_activities')
-    children = serializers.SerializerMethodField()
+    #children = serializers.SerializerMethodField()
 
     class Meta:
         model = Zone
-        fields = ('id', 'name', 'can_edit', 'last_leaf','visible', 'children')
-        #fields = ('id', 'name', 'can_edit', 'last_leaf','visible', 'allowed_activities')
+        #fields = ('id', 'name', 'can_edit', 'last_leaf','visible', 'children')
+        fields = ('id', 'name', 'label', 'can_edit', 'last_leaf','visible', 'allowed_activities')
 
     def get_can_edit(self, obj):
-        #proposal = self.context['request'].GET.get('proposal')
-        #activities = ProposalParkActivity.objects.filter(proposal_park__park=obj.id, proposal_park__proposal=proposal)
-        #return True if activities else False
         return False
 
     def get_last_leaf(self, obj):
-        return False
+        return True
 
-    def get_children(self, obj):
-        """ The way ro push parent date to child level nested childen (ZoneSerializer --> ActivitySerializer)
+    def get_label(self, obj):
+        """ Pulled from parent (out serializer) --> ZoneSerializer
         """
-        children = obj.allowed_activities
-        serializer_context = {'request': self.context.get('request'),
-                              'parent_id': obj.id}
-        serializer = ActivitySerializer(children, many=True, context=serializer_context)
-        return serializer.data
+        return '{} - {}'.format(self.context.get('parent_name'), obj.name) if self.context.get('parent_id') else obj.name
+
+
+#    def get_children(self, obj):
+#        """ The way ro push parent date to child level nested childen (ZoneSerializer --> ActivitySerializer)
+#        """
+#        children = obj.allowed_activities
+#        serializer_context = {'request': self.context.get('request'),
+#                              'parent_id': obj.id}
+#        serializer = ActivitySerializer(children, many=True, context=serializer_context)
+#        return serializer.data
 
 class ParkFilterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -96,22 +101,31 @@ class MarineParkSerializer(serializers.ModelSerializer):
     can_edit = serializers.SerializerMethodField()
     last_leaf = serializers.SerializerMethodField()
     #zones=ZoneSerializer(many=True)
-    children=ZoneSerializer(many=True, source='zones')
+    #children=ZoneSerializer(many=True, source='zones')
+    children = serializers.SerializerMethodField()
 
     class Meta:
         model = Park
         fields=('id', 'name', 'can_edit', 'last_leaf', 'code', 'park_type', 'allowed_activities', 'zone_ids', 'adult_price', 'child_price', 'oracle_code', 'children' )
-        #fields=('pk', 'id', 'name', 'can_edit', 'last_leaf', 'code', 'park_type', 'zone_ids', 'adult_price', 'child_price', 'oracle_code', 'zones' )
-        #fields=('pk', 'id', 'name', 'can_edit', 'last_leaf', 'code', 'park_type', 'allowed_activities', 'zone_ids', 'adult_price', 'child_price', 'oracle_code', 'zones' )
 
     def get_can_edit(self, obj):
-        #proposal = self.context['request'].GET.get('proposal')
-        #activities = ProposalParkActivity.objects.filter(proposal_park__park=obj.id, proposal_park__proposal=proposal)
-        #return True if activities else False
         return False
 
     def get_last_leaf(self, obj):
         return False
+
+    def get_children(self, obj):
+        """ The way ro push parent date to child level nested childen (ZoneSerializer --> ActivitySerializer)
+        """
+        children = obj.zones
+        serializer_context = {
+            'request': self.context.get('request'),
+            'parent_id': obj.id,
+            'parent_name': obj.name
+        }
+        serializer = ZoneSerializer(children, many=True, context=serializer_context)
+        return serializer.data
+
 
 
 class ParkSerializer(serializers.ModelSerializer):

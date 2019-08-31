@@ -124,7 +124,7 @@ export default {
             return {
                 id: node.last_leaf ? node.id : node.name,
                 //id: node.last_leaf ? node.node_id : node.name,
-                label: node.name,
+                label: node.hasOwnProperty('label') ? node.label : node.name,
                 children: node.children,
                 isDisabled: node.is_disabled,
                 }
