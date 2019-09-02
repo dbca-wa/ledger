@@ -2,7 +2,7 @@
     <div>
         <div class="col-sm-4">
             <label for="entity-selector">Select entity</label>
-            <select class="form-control" v-model="selectedEntity" id="entity-selector">
+            <select :disabled="readonlyForm" class="form-control" v-model="selectedEntity" id="entity-selector">
                 <option value="call_email">Call / Email</option>
                 <option value="inspection">Inspection</option>
                 <option value="offence">Offence</option>
@@ -10,9 +10,9 @@
             </select>
         </div>
         <div class="col-sm-4">
-            <input :id="elemId" :class="classNames" :readonly="!isEditable" placeholder="Begin typing to search"/>
+            <input :id="elemId" class="form-control no-label" :readonly="readonlyForm" placeholder="Begin typing to search"/>
         </div>
-        <div class="col-sm-3 no-label">
+        <div class="col-sm-3 no-label" v-if="!readonlyForm">
             <a ref="add_weak_link" @click="callCreateWeakLink" class="btn btn-primary btn-block">Add</a>
         </div>
     </div>
@@ -37,20 +37,21 @@ export default {
         }
     },
     props: {
-        classNames: {
+       //  classNames: {
+       //      type: String,
+       //      required: false,
+       //      default: "form-control no-label"
+       //  },
+       maxItems: {
+           required: false,
+           default: 10
+       },
+       //  search_type: {
+       //      required: false,
+       //  },
+        readonlyForm: {
             required: false,
-            default: "form-control no-label"
-        },
-        maxItems: {
-            required: false,
-            default: 10
-        },
-        search_type: {
-            required: false,
-        },
-        isEditable: {
-            required: false,
-            default: true
+            default: false
         }
     },
     computed: {

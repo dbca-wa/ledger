@@ -274,13 +274,6 @@
                                     </div>
                                 </div>
                             </FormSection>
-                            <FormSection :formCollapse="false" label="Sanction Outcomes">
-                                <div class="col-sm-12 form-group"><div class="row">
-                                    <div class="col-sm-12">
-                                        
-                                    </div>
-                                </div></div>
-                            </FormSection>
                         </div>
                         <div :id="rTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Related Items">

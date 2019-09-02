@@ -56,7 +56,7 @@
                         Action 
                     </div>
                     <div class="panel-body panel-collapse">
-                        <div v-if="statusId ==='draft' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='draft' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow('forward_to_wildlife_protection_branch')" class="btn btn-primary btn-block">
                                   Forward to Wildlife Protection Branch
@@ -66,7 +66,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='draft' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='draft' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="forwardToRegions" @click="addWorkflow('forward_to_regions')" class="btn btn-primary btn-block">
                                   Forward to Regions
@@ -74,7 +74,7 @@
                           </div>
                         </div>
 
-                        <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="save" @click="save()" class="btn btn-primary btn-block">
                                   Save
@@ -85,7 +85,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='open_followup' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open_followup' && canUserAction" class="row action-button">
 
                         <!-- <div v-if="statusId ==='open_followup'" class="row action-button"> -->
                         <!-- <div class="row action-button"> -->
@@ -97,7 +97,7 @@
                           </div>
                         </div>
 
-                        <div v-if="statusId ==='open_followup' && this.call_email.can_user_action && this.offenceExists" class="row action-button">
+                        <div v-if="statusId ==='open_followup' && canUserAction && this.offenceExists" class="row action-button">
                           <div class="col-sm-12">
                                 <a @click="openSanctionOutcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
@@ -107,7 +107,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="allocateForFollowUp" @click="addWorkflow('allocate_for_follow_up')" class="btn btn-primary btn-block" >
                                   Allocate for Follow Up
@@ -117,7 +117,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <!--a ref="allocateForInspection" @click="addWorkflow('allocate_for_inspection')" class="btn btn-primary btn-block"-->
                                 <a ref="allocateForInspection" @click="allocateForInspection()" class="btn btn-primary btn-block" >
@@ -129,7 +129,7 @@
                           <div class="col-sm-12"/>
                         </div> -->
 
-                        <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="allocateForCase" @click="addWorkflow('allocate_for_case')" class="btn btn-primary btn-block" >
                                   Allocate for Case
@@ -139,7 +139,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId !=='closed' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId !=='closed' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                   Close
@@ -344,7 +344,7 @@
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
                                     <div class="col-sm-12" v-if="relatedItemsVisibility">
-                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_related_items="setRelatedItems"/>
+                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_related_items="setRelatedItems" :readonlyForm="!canUserAction"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -508,6 +508,9 @@ export default {
     },
     readonlyForm: function() {
         return !this.call_email.can_user_edit_form;
+    },
+    canUserAction: function() {
+        return this.call_email.can_user_action;
     },
     statusDisplay: function() {
       return this.call_email.status ? this.call_email.status.name : '';

@@ -409,7 +409,9 @@ def search_weak_links(request_data):
                 Q(offender__person__last_name__icontains=search_text)
                 )
     return_qs = []
-    for item in qs:
+
+    # First 10 records only
+    for item in qs[:10]:
 
         return_qs.append({
             'id': item.id,
