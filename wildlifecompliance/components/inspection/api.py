@@ -370,6 +370,13 @@ class InspectionViewSet(viewsets.ModelViewSet):
                             instance.inspection_team.add(user)
                         if not instance.inspection_team_lead or not team_member_list:
                            instance.inspection_team_lead = user
+                           instance.log_user_action(
+                               InspectionUserAction.ACTION_MAKE_TEAM_LEAD.format(
+                               user.get_full_name()), request)
+                        else: 
+                            instance.log_user_action(
+                                InspectionUserAction.ACTION_ADD_TEAM_MEMBER.format(
+                                user.get_full_name()), request)
                     if action == 'remove':
                         if user in team_member_list:
                             instance.inspection_team.remove(user)
@@ -378,10 +385,16 @@ class InspectionViewSet(viewsets.ModelViewSet):
                             instance.inspection_team_lead = team_member_list[0]
                         else:
                             instance.inspection_team_lead_id = None
+                        instance.log_user_action(
+                            InspectionUserAction.ACTION_REMOVE_TEAM_MEMBER.format(
+                            user.get_full_name()), request)
                     if action == 'make_team_lead':
                         if user not in team_member_list:
                             instance.inspection_team.add(user)
                         instance.inspection_team_lead = user
+                        instance.log_user_action(
+                                InspectionUserAction.ACTION_MAKE_TEAM_LEAD.format(
+                                user.get_full_name()), request)
                     instance.save()
                     if workflow:
                         return instance

@@ -250,6 +250,9 @@ class InspectionUserAction(UserAction):
     ACTION_ENDORSEMENT = "Endorse {}"
     ACTION_ADD_WEAK_LINK = "Create manual link between Inspection: {} and {}: {}"
     ACTION_REMOVE_WEAK_LINK = "Remove manual link between Inspection: {} and {}: {}"
+    ACTION_MAKE_TEAM_LEAD = "Make {} team lead"
+    ACTION_ADD_TEAM_MEMBER = "Add {} to team"
+    ACTION_REMOVE_TEAM_MEMBER = "Remove {} from team"
 
     class Meta:
         app_label = 'wildlifecompliance'
