@@ -15,7 +15,10 @@ from wildlifecompliance.components.main.serializers import (
     RelatedItemsSerializer,
 )
 from wildlifecompliance.components.main.models import WeakLinks
-from wildlifecompliance.components.main.related_item import get_related_items
+from wildlifecompliance.components.main.related_item import (
+       get_related_items, 
+       format_model_name
+       )
 from django.contrib.auth.models import ContentType
 
 
@@ -76,6 +79,23 @@ class CreateWeakLinkView(views.APIView):
                             )
                     # derive parent (calling) object instance from weak_link_instance
                     calling_instance = weak_link_instance.first_content_type.model_class().objects.get(id=first_object_id)
+                    secondary_instance = weak_link_instance.second_content_type.model_class().objects.get(id=second_object_id)
+
+                    # log user action for both calling and secondary instances
+                    calling_instance.log_user_action(
+                        calling_instance.action_logs.model.ACTION_ADD_WEAK_LINK.format(
+                        calling_instance.get_related_items_identifier,
+                        format_model_name(second_content_type.model),
+                        secondary_instance.get_related_items_identifier
+                        ), 
+                        request)
+                    secondary_instance.log_user_action(
+                        secondary_instance.action_logs.model.ACTION_ADD_WEAK_LINK.format(
+                        secondary_instance.get_related_items_identifier,
+                        format_model_name(first_content_type.model),
+                        calling_instance.get_related_items_identifier
+                        ), 
+                        request)
 
                     # get related items of calling_instance
                     related_items = get_related_items(calling_instance)
@@ -134,7 +154,24 @@ class RemoveWeakLinkView(views.APIView):
 
                     # derive parent (calling) object instance from ContentType
                     calling_instance = first_content_type.model_class().objects.get(id=first_object_id)
+                    secondary_instance = weak_link_instance.second_content_type.model_class().objects.get(id=second_object_id)
 
+                    # log user action for both calling and secondary instances
+
+                    calling_instance.log_user_action(
+                        calling_instance.action_logs.model.ACTION_REMOVE_WEAK_LINK.format(
+                        calling_instance.get_related_items_identifier,
+                        format_model_name(second_content_type.model),
+                        secondary_instance.get_related_items_identifier
+                        ), 
+                        request)
+                    secondary_instance.log_user_action(
+                        secondary_instance.action_logs.model.ACTION_REMOVE_WEAK_LINK.format(
+                        secondary_instance.get_related_items_identifier,
+                        format_model_name(first_content_type.model),
+                        calling_instance.get_related_items_identifier
+                        ), 
+                        request)
                     # get related items of calling_instance
                     related_items = get_related_items(calling_instance)
                     return Response(related_items)

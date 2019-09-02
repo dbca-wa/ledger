@@ -4,63 +4,6 @@
           <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                        <div class="form-group" v-if="!this.workflow_type">
-                          <div class="row">
-                            <div class="col-sm-3">
-                              <label>Region</label>
-                            </div>
-                            <div class="col-sm-9">
-                              <select class="form-control col-sm-9" @change.prevent="updateDistricts()" v-model="region_id">
-                                <option  v-for="option in regions" :value="option.id" v-bind:key="option.id">
-                                  {{ option.display_name }} 
-                                </option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="form-group" v-if="!this.workflow_type">
-                          <div class="row">
-                            <div class="col-sm-3">
-                              <label>District</label>
-                            </div>
-                            <div class="col-sm-9">
-                              <select class="form-control" @change.prevent="updateAllocatedGroup()" v-model="district_id">
-                                <option  v-for="option in availableDistricts" :value="option.id" v-bind:key="option.id">
-                                  {{ option.display_name }} 
-                                </option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="form-group" v-if="allocateToVisibility">
-                          <div class="row">
-                            <div class="col-sm-3">
-                              <label>Allocate to</label>
-                            </div>
-                            <div class="col-sm-9">
-                              <select class="form-control" v-model="assigned_to_id">
-                                <option  v-for="option in allocatedGroup" :value="option.id" v-bind:key="option.id">
-                                  {{ option.full_name }} 
-                                </option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="form-group" v-if="!this.workflow_type">
-                          <div class="row">
-                            <div class="col-sm-3">
-                              <label>Inspection Type</label>
-                            </div>
-                            <div class="col-sm-9">
-                              <select class="form-control" v-model="inspection_type_id">
-                                <option  v-for="option in inspectionTypes" :value="option.id" v-bind:key="option.id">
-                                  {{ option.inspection_type }}
-                                </option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
 
                         <div class="form-group">
                           <div class="row">
@@ -77,10 +20,7 @@
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
-            			        <div class="col-sm-9" v-if="createInspectionFileField">
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="inspection.createInspectionProcessCommsLogsDocumentUrl" @create-parent="createDocumentActionUrl"/>
-                                </div>
-            			        <div class="col-sm-9" v-else>
+            			        <div class="col-sm-9">
                                     <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="inspection.commsLogsDocumentUrl"/>
                                 </div>
                             </div>
@@ -165,9 +105,7 @@ export default {
           }
       },
       modalTitle: function() {
-          if (!this.workflow_type) {
-              return "Create New Inspection";
-          } else if (this.workflow_type === 'send_to_manager') {
+          if (this.workflow_type === 'send_to_manager') {
               return "Send to Manager";
           } else if (this.workflow_type === 'request_amendment') {
               return "Request Amendment";
@@ -175,30 +113,11 @@ export default {
               return "Close Inspection";
           }
       },
-      allocateToVisibility: function() {
-          if (this.workflow_type === 'request_amendment') {
-              return true
-          } else if (!this.workflow_type) {
-              return true
-          } else {
-              return false
-          }
-      },
       groupPermission: function() {
-          if (!this.workflow_type) {
-              return "officer";
-          } else if (this.workflow_type === 'send_to_manager') {
+          if (this.workflow_type === 'send_to_manager') {
               return "manager";
           } else if (this.workflow_type === 'request_amendment') {
               return "officer";
-          }
-      },
-      createInspectionFileField: function() {
-          //if (!(this.inspection && this.inspection.id)) {
-          if (!this.workflow_type) {
-              return true;
-          } else {
-              return false;
           }
       },
     },
@@ -216,32 +135,33 @@ export default {
       ...mapActions({
           loadAllocatedGroup: 'loadAllocatedGroup',
       }),
-      updateDistricts: function() {
-        // this.district_id = null;
-        this.availableDistricts = [];
-        for (let record of this.regionDistricts) {
-          if (this.region_id === record.id) {
-            for (let district of record.districts) {
-              for (let district_record of this.regionDistricts) {
-                if (district_record.id === district) {
-                  this.availableDistricts.push(district_record)
-                }
-              }
-            }
-          }
-        }
-        console.log(this.availableDistricts);
-        this.availableDistricts.splice(0, 0, 
-        {
-          id: "", 
-          display_name: "",
-          district: "",
-          districts: [],
-          region: null,
-        });
-        // ensure security group members list is up to date
-        this.updateAllocatedGroup();
-      },
+      // updateDistricts: function() {
+      //   // this.district_id = null;
+      //   this.availableDistricts = [];
+      //   for (let record of this.regionDistricts) {
+      //     if (this.region_id === record.id) {
+      //       for (let district of record.districts) {
+      //         for (let district_record of this.regionDistricts) {
+      //           if (district_record.id === district) {
+      //             this.availableDistricts.push(district_record)
+      //           }
+      //         }
+      //       }
+      //     }
+      //   }
+      //   console.log(this.availableDistricts);
+      //   this.availableDistricts.splice(0, 0, 
+      //   {
+      //     id: "", 
+      //     display_name: "",
+      //     district: "",
+      //     districts: [],
+      //     region: null,
+      //   });
+      //   // ensure security group members list is up to date
+      //   this.updateAllocatedGroup();
+      // },
+      // can delete?
       updateAllocatedGroup: async function() {
           console.log("updateAllocatedGroup");
           this.errorResponse = "";
@@ -272,22 +192,8 @@ export default {
           const response = await this.sendData();
           console.log(response);
           if (response.ok) {
-              // For Inspection Dashboard
-              if (this.$parent.$refs.inspection_table) {
-                  this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
-              }
-              // For CallEmail related items table
-              if (this.parent_call_email) {
-                  //await this.parent_update_function({
-                  await this.loadCallEmail({
-                      call_email_id: this.call_email.id,
-                  });
-              }
-              if (this.$parent.$refs.related_items_table) {
-                  this.$parent.constructRelatedItemsTable();
-              }
               this.close();
-              //this.$router.push({ name: 'internal-inspection-dash' });
+              this.$router.push({ name: 'internal-inspection-dash' });
           }
       },
       cancel: async function() {
@@ -300,21 +206,17 @@ export default {
           this.isModalOpen = false;
       },
       sendData: async function() {
-          let post_url = '';
-          if (this.inspection && this.inspection.id) {
-              post_url = '/api/inspection/' + this.inspection.id + '/workflow_action/'
-          } else {
-                post_url = '/api/inspection/'
-          }
+          let post_url = '/api/inspection/' + this.inspection.id + '/workflow_action/'
+          
           let payload = new FormData();
           payload.append('details', this.workflowDetails);
           this.$refs.comms_log_file.commsLogId ? payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
-          this.parent_call_email ? payload.append('call_email_id', this.call_email.id) : null;
-          this.district_id ? payload.append('district_id', this.district_id) : null;
-          this.assigned_to_id ? payload.append('assigned_to_id', this.assigned_to_id) : null;
-          this.inspection_type_id ? payload.append('inspection_type_id', this.inspection_type_id) : null;
-          this.region_id ? payload.append('region_id', this.region_id) : null;
-          this.allocated_group_id ? payload.append('allocated_group_id', this.allocated_group_id) : null;
+          //this.parent_call_email ? payload.append('call_email_id', this.call_email.id) : null;
+          //this.district_id ? payload.append('district_id', this.district_id) : null;
+          //this.assigned_to_id ? payload.append('assigned_to_id', this.assigned_to_id) : null;
+          //this.inspection_type_id ? payload.append('inspection_type_id', this.inspection_type_id) : null;
+          //this.region_id ? payload.append('region_id', this.region_id) : null;
+          //this.allocated_group_id ? payload.append('allocated_group_id', this.allocated_group_id) : null;
           this.workflow_type ? payload.append('workflow_type', this.workflow_type) : null;
           //!payload.has('allocated_group') ? payload.append('allocated_group', this.allocatedGroup) : null;
 
@@ -342,37 +244,37 @@ export default {
 
     },
     created: async function() {
-        // regions
-        let returned_regions = await cache_helper.getSetCacheList('Regions', '/api/region_district/get_regions/');
-        Object.assign(this.regions, returned_regions);
-        // blank entry allows user to clear selection
-        this.regions.splice(0, 0, 
-            {
-              id: "", 
-              display_name: "",
-              district: "",
-              districts: [],
-              region: null,
-            });
-        // regionDistricts
-        let returned_region_districts = await cache_helper.getSetCacheList(
-            'RegionDistricts', 
-            api_endpoints.region_district
-            );
-        Object.assign(this.regionDistricts, returned_region_districts);
+        // // regions
+        // let returned_regions = await cache_helper.getSetCacheList('Regions', '/api/region_district/get_regions/');
+        // Object.assign(this.regions, returned_regions);
+        // // blank entry allows user to clear selection
+        // this.regions.splice(0, 0, 
+        //     {
+        //       id: "", 
+        //       display_name: "",
+        //       district: "",
+        //       districts: [],
+        //       region: null,
+        //     });
+        // // regionDistricts
+        // let returned_region_districts = await cache_helper.getSetCacheList(
+        //     'RegionDistricts', 
+        //     api_endpoints.region_district
+        //     );
+        // Object.assign(this.regionDistricts, returned_region_districts);
 
-        // inspection_types
-        let returned_inspection_types = await cache_helper.getSetCacheList(
-            'InspectionTypes',
-            api_endpoints.inspection_types
-            );
-        Object.assign(this.inspectionTypes, returned_inspection_types);
-        // blank entry allows user to clear selection
-        this.inspectionTypes.splice(0, 0, 
-            {
-              id: "", 
-              description: "",
-            });
+        // // inspection_types
+        // let returned_inspection_types = await cache_helper.getSetCacheList(
+        //     'InspectionTypes',
+        //     api_endpoints.inspection_types
+        //     );
+        // Object.assign(this.inspectionTypes, returned_inspection_types);
+        // // blank entry allows user to clear selection
+        // this.inspectionTypes.splice(0, 0, 
+        //     {
+        //       id: "", 
+        //       description: "",
+        //     });
         // Get parent component details from vuex
         if (this.inspection && this.inspection.id) {
             this.inspection_type_id = this.inspection.inspection_type_id;

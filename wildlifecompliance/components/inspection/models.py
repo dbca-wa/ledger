@@ -70,10 +70,10 @@ class Inspection(RevisionedMixin):
     STATUS_CLOSED = 'closed'
     STATUS_CHOICES = (
             (STATUS_OPEN, 'Open'),
-            (STATUS_WITH_MANAGER, 'With Manager'),
-            (STATUS_REQUEST_AMENDMENT, 'Request Amendment'),
+            #(STATUS_WITH_MANAGER, 'With Manager'),
+            #(STATUS_REQUEST_AMENDMENT, 'Request Amendment'),
             (STATUS_ENDORSEMENT, 'Awaiting Endorsement'),
-            (STATUS_SANCTION_OUTCOME, 'Awaiting Sanction Outcomes'),
+            #(STATUS_SANCTION_OUTCOME, 'Awaiting Sanction Outcomes'),
             (STATUS_DISCARDED, 'Discarded'),
             (STATUS_CLOSED, 'Closed')
             )
@@ -248,6 +248,8 @@ class InspectionUserAction(UserAction):
     ACTION_CLOSED = "Close Inspection {}"
     ACTION_REQUEST_AMENDMENT = "Request amendment for {}"
     ACTION_ENDORSEMENT = "Endorse {}"
+    ACTION_ADD_WEAK_LINK = "Create manual link between Inspection: {} and {}: {}"
+    ACTION_REMOVE_WEAK_LINK = "Remove manual link between Inspection: {} and {}: {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

@@ -11,7 +11,7 @@ from utils import approved_related_item_models
 class RelatedItem:
 
     def __init__(self, model_name, identifier, descriptor, 
-            action_url=None, weak_link=False, second_object_id=None, second_content_type=None):
+            action_url, weak_link=False, second_object_id=None, second_content_type=None):
         self.model_name = model_name
         self.identifier = identifier
         self.descriptor = descriptor
@@ -108,7 +108,11 @@ def get_related_items(entity, **kwargs):
                         descriptor = link.second_content_object.get_related_items_descriptor,
                         second_object_id = link.second_content_object.id,
                         second_content_type = link_content_type.model,
-                        weak_link = True
+                        weak_link = True,
+                        action_url = format_url(
+                                model_name=link_content_type.model,
+                                obj_id=link.second_content_object.id
+                                )
                         )
                 return_list.append(related_item)
 
@@ -129,7 +133,11 @@ def get_related_items(entity, **kwargs):
                         descriptor = link.first_content_object.get_related_items_descriptor,
                         second_object_id = link.first_content_object.id,
                         second_content_type = link_content_type.model,
-                        weak_link = True
+                        weak_link = True,
+                        action_url = format_url(
+                                model_name=link_content_type.model,
+                                obj_id=link.first_content_object.id
+                                )
                         )
                 return_list.append(related_item)
         
