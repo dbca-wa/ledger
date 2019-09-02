@@ -94,7 +94,7 @@
                             <li class="nav-item active"><a data-toggle="tab" :href="'#'+offenceTab">Offence</a></li>
                             <li class="nav-item"><a data-toggle="tab" :href="'#'+detailsTab">Details</a></li>
                             <li class="nav-item"><a data-toggle="tab" :href="'#'+offenderTab">Offender(s)</a></li>
-                            <li class="nav-item"><a data-toggle="tab" :href="'#'+locationTab">Location</a></li>
+                            <li class="nav-item"><a data-toggle="tab" :href="'#'+locationTab" @click="mapOffenceClicked">Location</a></li>
                             <li class="nav-item"><a data-toggle="tab" :href="'#'+relatedItemsTab">Related Items</a></li>
                         </ul>
                         <div class="tab-content">
@@ -222,7 +222,36 @@
                             </div>
                             <div :id="locationTab" class="tab-pane face in">
                                 <FormSection :formCollapse="false" label="Location" Index="3">
+                                    <MapLocation v-if="offence.location" v-bind:key="locationTab" ref="mapLocationComponent" :marker_longitude="offence.location.geometry.coordinates[0]" :marker_latitude="offence.location.geometry.coordinates[1]" @location-updated="locationUpdated"/>
+        <div :id="idLocationFieldsAddress">
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Street</label>
+                <input class="form-control" v-model="offence.location.properties.street" readonly />
+            </div></div>
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Town/Suburb</label>
+                <input class="form-control" v-model="offence.location.properties.town_suburb" readonly />
+            </div></div>
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">State</label>
+                <input class="form-control" v-model="offence.location.properties.state" readonly />
+            </div></div>
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Postcode</label>
+                <input class="form-control" v-model="offence.location.properties.postcode" readonly />
+            </div></div>
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Country</label>
+                <input class="form-control" v-model="offence.location.properties.country" readonly />
+            </div></div>
+        </div>
 
+        <div :id="idLocationFieldsDetails">
+            <div class="col-sm-12 form-group"><div class="row">
+                <label class="col-sm-4">Details</label>
+                <textarea class="form-control location_address_field" v-model="offence.location.properties.details" />
+            </div></div>
+        </div>
                                 </FormSection>
                             </div>
                             <div :id="relatedItemsTab" class="tab-pane face in">
@@ -242,7 +271,6 @@
 import Vue from "vue";
 import FormSection from "@/components/forms/section_toggle.vue";
 import datatable from '@vue-utils/datatable.vue'
-//import utils from "@/components/external/utils";
 import utils from "../utils";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
@@ -251,7 +279,9 @@ import filefield from '@/components/common/compliance_file.vue';
 import OffenceWorkflow from './offence_workflow';
 import PersonSearch from "@common-components/search_person.vue";
 import CreateNewPerson from "@common-components/create_new_person.vue";
+import MapLocation from "../../common/map_location";
 import 'bootstrap/dist/css/bootstrap.css';
+import "awesomplete/awesomplete.css";
 
 export default {
     name: 'ViewOffence',
@@ -274,15 +304,44 @@ export default {
             workflow_type :'',
             workflowBindId :'',
             offender_search_type: "individual",
-            offenceTab: 'offenceTab' + this._uid,
-            detailsTab: 'detailsTab' + this._uid,
-            offenderTab: 'offenderTab' + this._uid,
-            locationTab: 'locationTab' + this._uid,
-            relatedItemsTab: 'relatedItemsTab' + this._uid,
+            offenceTab: 'offenceTab' + vm._uid,
+            detailsTab: 'detailsTab' + vm._uid,
+            offenderTab: 'offenderTab' + vm._uid,
+            locationTab: 'locationTab' + vm._uid,
+            relatedItemsTab: 'relatedItemsTab' + vm._uid,
             displayCreateNewPerson: false,
+            idLocationFieldsAddress: vm.guid + "LocationFieldsAddress",
+            idLocationFieldsDetails: vm.guid + "LocationFieldsDetails",
 
             offence: {
-                // Data is retrieved form the database when created()
+                id: null,
+                call_email_id: null,
+                inspection_id: null,
+                identifier: '',
+                status: 'draft',
+                offenders: [],
+                alleged_offences: [],
+                location: {
+                    type: 'Feature',
+                    properties: {
+                        town_suburb: null,
+                        street: null,
+                        state: 'WA',
+                        postcode: null,
+                        country: 'Australia',
+                        details: ''
+                    },
+                    geometry: {
+                        'type': 'Point',
+                        'coordinates': []
+                    }
+                },
+                occurrence_from_to: true,
+                occurrence_date_from: null,
+                occurrence_date_to: null,
+                occurrence_time_from: null,
+                occurrence_time_to: null,
+                details: ''
             },
             current_alleged_offence: {  // Store the alleged offence temporarily once selected in awesomplete. Cleared when clicking on the "Add" button.
                 id: null,
@@ -405,6 +464,7 @@ export default {
         CommsLogs,
         datatable,
         PersonSearch,
+        MapLocation,
         CreateNewPerson,
     },
     computed: {
@@ -473,16 +533,118 @@ export default {
         },
     },
     methods: {
-        ...mapActions('offenceStore', {
-            //loadOffence: 'loadOffence',
-            setAllegedOffenceIds: "setAllegedOffenceIds",
-            setOffenders: "setOffenders",
-            setRegionId: "setRegionId",
-            setDistrictId: "setDistrictId",
-            setAllocatedGroupId: "setAllocatedGroupId",
-            saveOffence: "saveOffence",
-            setOffenceEmpty: "setOffenceEmpty"
-        }),
+        showHideAddressDetailsFields: function(showAddressFields, showDetailsFields) {
+          if (showAddressFields) {
+            $("#" + this.idLocationFieldsAddress).fadeIn();
+          } else {
+            $("#" + this.idLocationFieldsAddress).fadeOut();
+          }
+          if (showDetailsFields) {
+            $("#" + this.idLocationFieldsDetails).fadeIn();
+          } else {
+            $("#" + this.idLocationFieldsDetails).fadeOut();
+          }
+        },
+        reverseGeocoding: function(coordinates_4326) {
+            console.log('reverseGeocoding');
+            console.log('coordinates_4326');
+            console.log(coordinates_4326);
+
+          var self = this;
+
+          $.ajax({
+            url:
+              "https://mapbox.dpaw.wa.gov.au/geocoding/v5/mapbox.places/" +
+              coordinates_4326.lng +
+              "," +
+              coordinates_4326.lat +
+              ".json?" +
+              $.param({
+                limit: 1,
+                types: "address"
+              }),
+            dataType: "json",
+            success: function(data, status, xhr) {
+                console.log('reverseGeo success');
+                console.log(data);
+              let address_found = false;
+              if (data.features && data.features.length > 0) {
+                for (var i = 0; i < data.features.length; i++) {
+                  if (data.features[i].place_type.includes("address")) {
+                    self.setAddressFields(data.features[i]);
+                    address_found = true;
+                  }
+                }
+              }
+              if (address_found) {
+                self.showHideAddressDetailsFields(true, false);
+                self.setLocationDetailsFieldEmpty();
+              } else {
+                self.showHideAddressDetailsFields(false, true);
+                self.setLocationAddressEmpty();
+              }
+            }
+          });
+        },
+        setAddressFields(feature) {
+          let state_abbr_list = {
+            "New South Wales": "NSW",
+            Queensland: "QLD",
+            "South Australia": "SA",
+            Tasmania: "TAS",
+            Victoria: "VIC",
+            "Western Australia": "WA",
+            "Northern Territory": "NT",
+            "Australian Capital Territory": "ACT"
+          };
+          let address_arr = feature.place_name.split(",");
+
+          /* street */
+          this.offence.location.properties.street = address_arr[0];
+
+          /*
+           * Split the string into suburb, state and postcode
+           */
+          let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
+          let result = reg.exec(address_arr[1]);
+          /* suburb */
+          this.offence.location.properties.town_suburb = result[1].trim();
+
+          /* state */
+          let state_abbr = state_abbr_list[result[2].trim()];
+          this.offence.location.properties.state = state_abbr;
+
+          /* postcode */
+          this.offence.location.properties.postcode = result[3].trim();
+          /* country */
+
+          this.offence.location.properties.country = "Australia";
+        },
+        setLocationAddressEmpty() {
+            this.offence.location.properties.town_suburb = "";
+            this.offence.location.properties.street = "";
+            this.offence.location.properties.state = "";
+            this.offence.location.properties.postcode = "";
+            this.offence.location.properties.country = "";
+        },
+        setLocationDetailsFieldEmpty() {
+            this.offence.location.properties.details = "";
+        },
+        locationUpdated: function(latlng){
+            console.log('locationUpdated');
+            // Update coordinate
+            this.offence.location.geometry.coordinates[1] = latlng.lat;
+            this.offence.location.geometry.coordinates[0] = latlng.lng;
+            // Update Address/Details
+            this.reverseGeocoding(latlng);
+        },
+        mapOffenceClicked: function() {
+            // Call this function to render the map correctly
+            // In some case, leaflet map is not rendered correctly...   Just partialy shown...
+            if(this.$refs.mapLocationComponent){
+                this.$refs.mapLocationComponent.invalidateSize();
+            }
+        },
         newPersonCreated: function(obj) {
           if(obj.person){
             this.setCurrentOffender('individual', obj.person.id);
