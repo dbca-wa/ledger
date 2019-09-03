@@ -551,6 +551,7 @@ class CallEmailLogEntry(CommunicationsLogEntry):
 
 
 class CallEmailUserAction(UserAction):
+    ACTION_CREATE_CALL_EMAIL = "Create Call/Email {}"
     ACTION_SAVE_CALL_EMAIL_ = "Save Call/Email {}"
     ACTION_FORWARD_TO_REGIONS = "Forward Call/Email {} to regions"
     ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH = "Forward Call/Email {} to Wildlife Protection Branch"

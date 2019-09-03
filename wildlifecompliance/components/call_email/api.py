@@ -476,6 +476,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     new_instance = serializer.save()
+                    new_instance.log_user_action(
+                            CallEmailUserAction.ACTION_CREATE_CALL_EMAIL.format(
+                            new_instance.number), request)
                     new_returned = serializer.data
                     # Ensure classification_id and report_type_id is returned for Vue template evaluation                
                     # new_returned.update({'classification_id': request_data.get('classification_id')})

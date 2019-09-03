@@ -587,6 +587,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     instance = serializer.save()
+                    instance.log_user_action(
+                            InspectionUserAction.ACTION_CREATE_INSPECTION.format(
+                            instance.number), request)
                     if request.data.get('allocated_group_id'):
                         res = self.workflow_action(request, instance)
                         return res
