@@ -205,7 +205,7 @@
                                     <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
                                 </div-->
                                 <div class="col-sm-2">
-                                    <input type="button" class="btn btn-primary" value="Create New Person" @click.prevent="createNewPersonClicked()" />
+                                    <input type="button" class="btn btn-primary" :value="createNewPersonOrganisationTitle" @click.prevent="createNewPersonClicked()" />
                                 </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
@@ -543,7 +543,14 @@ export default {
         } else {
             return false;
         }
-    }
+    },
+    createNewPersonOrganisationTitle: function() {
+        if (this.inspection.party_inspected === 'organisation') {
+            return "Create New Organisation"
+        } else if (this.inspection.party_inspected === 'individual') {
+            return "Create New Person"
+        }
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -660,9 +667,9 @@ export default {
     },
     save: async function () {
         if (this.inspection.id) {
-            await this.saveInspection({ route: false, crud: 'save' });
+            await this.saveInspection();
         } else {
-            await this.saveInspection({ route: false, crud: 'create'});
+            await this.saveInspection({ create: true });
             this.$nextTick(function () {
                 this.$router.push(
                   { name: 'view-inspection', 
@@ -673,13 +680,10 @@ export default {
     },
     saveExit: async function() {
       if (this.inspection.id) {
-        await this.saveInspection({ route: true, crud: 'save' });
+        await this.saveInspection();
       } else {
-        await this.saveInspection({ route: true, crud: 'create'});
+        await this.saveInspection({ create: true });
       }
-    },
-    duplicate: async function() {
-      await this.saveInspection({ route: false, crud: 'duplicate'});
     },
     addEventListeners: function() {
       let vm = this;

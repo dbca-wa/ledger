@@ -614,8 +614,9 @@ class CallEmailViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-    @detail_route(methods=['POST', ])
-    def call_email_save(self, request, *args, **kwargs):
+    #@detail_route(methods=['POST', ])
+    #def call_email_save(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         instance = self.get_object()
         try:
             with transaction.atomic():

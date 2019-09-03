@@ -151,6 +151,8 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'call_email_id',
                 'inspection_report',
                 'schema',
+                'region_id',
+                'district_id',
                 )
         read_only_fields = (
                 'id',

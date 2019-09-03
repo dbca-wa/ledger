@@ -342,7 +342,7 @@ export default {
       createDocumentActionUrl: async function(done) {
         if (!this.inspection.id) {
             // create inspection and update vuex
-            let returned_inspection = await this.saveInspection({ route: false, crud: 'create', internal: true })
+            let returned_inspection = await this.saveInspection({ create: true, internal: true })
             await this.loadInspection({inspection_id: returned_inspection.body.id});
         }
         // populate filefield document_action_url
