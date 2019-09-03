@@ -62,7 +62,6 @@
                                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                                         <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>
-                                        <!--<input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()"/>-->
                                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                                       </p>
                                     </div>

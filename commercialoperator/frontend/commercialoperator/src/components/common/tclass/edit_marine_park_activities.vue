@@ -19,7 +19,7 @@
                                   <label class="control-label">Activities</label>
                                   <div class="" v-for="a in allowed_activities">
                                     <div class="form-check">
-                                      <input :onclick="isClickable" class="form-check-input" v-model="new_activities" :value="a.id" ref="Checkbox" type="checkbox" data-parsley-required  />
+                                      <input :onclick="isClickable" class="form-check-input" v-model="new_activities" :value="a.id" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
                                       {{ a.name }}
                                     </div>
                                   </div>
@@ -31,7 +31,7 @@
                                         <label class="control-label pull-left"  for="Name">Point of access</label>
                                     </div>
                                     <div class="form-horizontal col-sm-9">
-                                        <input class="form-control" name="access_point" ref="access_point" v-model="access_point" type="text">
+                                        <input class="form-control" name="access_point" ref="access_point" v-model="access_point" type="text" :disabled="!canEditActivities">
                                     </div>
                                   </div>
                                 </div>
@@ -43,7 +43,7 @@
             </div>
             <div slot="footer">
                 <button type="button" v-if="issuingVehicle" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Processing</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
+                <button type="button" v-else class="btn btn-default" @click="ok" :disabled="!canEditActivities">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -63,20 +63,10 @@ export default {
         alert
     },
     props:{
-        /*
-        allowed_activities:{
-            type: Object,
-            required:true
-        },
-        park_id:{
-            type: Number,
-            required:true
-        },
-        zone_id:{
-            type: Number,
-            required:true
-        },
-        */
+        canEditActivities:{
+          type: Boolean,
+          default: true
+        }
     },
     data:function () {
         let vm = this;
@@ -106,8 +96,6 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            //title: vm.zone_label ? 'Edit Access and Activities for '+ vm.zone_label : 'Edit Access and Activities',
-            //title: 'Edit Access and Activities for '+ vm.zone_label,
         }
     },
     computed: {
@@ -124,28 +112,6 @@ export default {
             let vm =this;
             var new_activities=[]
 
-            /*
-            var zone_data={
-              'zone': zone_id,
-              'activities': vm.selected_activities
-              'access': current_access
-            }
-
-            if( park_idx > -1) {
-              vm.marine_parks_activities[park_idx].activities.push( zone_data )
-            } else {
-              var zone_activities=[];
-              zone_activities.push(zone_data)
-
-              data={
-                'park': parseInt(park_id),
-                'activities': zone_activities,
-              }
-              vm.marine_parks_activities.push(data);
-            }
-            */
-
-
             var data={
                 'zone': vm.zone_id,
                 'activities':vm.new_activities,
@@ -156,6 +122,7 @@ export default {
             vm.close(); 
         },
 
+        /*
         _ok:function () {
             let vm =this;
                 var allowed_activities_id=[]
@@ -172,6 +139,7 @@ export default {
                 vm.$emit('refreshSelectionFromResponse',vm.park.id, new_activities);
             vm.close(); 
         },
+        */
         cancel:function () {
             this.close()
         },
@@ -184,27 +152,6 @@ export default {
             $('.has-error').removeClass('has-error');
             //this.validation_form.resetForm();
         },
-        /*
-        fetchAccessTypes: function(){
-            let vm=this;
-            Vue.http.get('/api/access_types.json').then((res) => {
-                      vm.access_types=res.body; 
-                },
-              err => { 
-                        console.log(err);
-                  });
-        },
-
-        fetchAllowedActivities: function(park_id){
-            let vm=this;
-            Vue.http.get(helpers.add_endpoint_json(api_endpoints.parks,park_id+'/allowed_activities')).then((res) => {
-                      vm.allowed_activities=res.body;                 
-                },
-              err => { 
-                        console.log(err);
-                  });
-        },
-        */
         addFormValidations: function() {
         },
        eventListeners:function () {
@@ -212,7 +159,6 @@ export default {
    },
    mounted:function () {
         let vm =this;
-        //vm.fetchAccessTypes();        
         vm.form = document.forms.marineActivitiesForm;
         //vm.addFormValidations();
         this.$nextTick(()=>{

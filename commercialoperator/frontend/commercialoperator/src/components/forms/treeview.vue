@@ -13,6 +13,7 @@
             :default-expand-level="default_expand_level"
             :normalizer="normalizer"
             :open-direction="open_direction"
+            :disabled="disabled"
             open-on-focus="true"
             limit="20"
             >
@@ -111,6 +112,10 @@ export default {
             default: 'bottom'
         },
         allow_edit:{
+            type: Boolean,
+            default: false
+        },
+        disabled:{
             type: Boolean,
             default: false
         },

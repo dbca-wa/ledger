@@ -18,7 +18,7 @@
                                     <div>
                                         <!--<pre>{{ selected_activities }}</pre>-->
                                         <label class="control-label">Select the required activities</label>
-                                        <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="marine_activity_options" :default_expand_level="1"></TreeSelect>
+                                        <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="marine_activity_options" :default_expand_level="1" :disabled="!canEditActivities"></TreeSelect>
                                     </div>
                                 </div>
                             </form>
@@ -30,45 +30,11 @@
                                     <div>
                                         <!--<pre>{{ selected_activities }}</pre>-->
                                         <label class="control-label">Select the parks for which the activities are required</label>
-                                        <TreeSelect :proposal="proposal" :value.sync="selected_zone_ids" :options="marine_park_options" :default_expand_level="1" allow_edit="true"></TreeSelect>
+                                        <TreeSelect :proposal="proposal" :value.sync="selected_zone_ids" :options="marine_park_options" :default_expand_level="1" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
                                     </div>
                                 </div>
                             </form>
                         </div>
-
-
-                        <!--
-                        <div class="form-horizontal col-sm-12 borderDecoration">
-                            <label class="control-label">Select required activities</label>
-                            <div  class="" v-for="category in marine_activities" >
-                                <div class="form-check">
-                                    <input @click="clickCategory($event, category)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
-                                    {{ category.name }}
-                                </div>
-                                <div class="col-sm-12" v-for="activity in category.activities">
-                                    <div class="form-check ">
-                                        <input :onclick="isClickable"  :value="activity.id" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_activities" data-parsley-required :disabled="!canEditActivities"/>
-                                        {{ activity.name }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-horizontal col-sm-12 borderDecoration">
-                            <label class="control-label"> Select the parks for which the activities are required</label>
-                            <div class="list-group list-group-root well">
-                                <div class="" v-for="p in marine_parks">
-                                  <div class="form-check col-sm-12 list-group-item">
-                                    <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities"/>
-                                  {{ p.name }}
-                                    <span><a @click="edit_activities(p)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
-                                  </div>
-                                </div>
-                            </div>
-                        </div>
-                        -->
-                        <!-- <div>{{selected_parks}}</div>
-                        <div>{{marine_parks_activities}}</div> -->
 
                         <div class="row"></div>
                         <div class="row"></div>
@@ -86,20 +52,22 @@
                             <VesselTable :url="vessels_url" :proposal="proposal" ref="vessel_table"></VesselTable>
                         </div>
                         <div class="form-horizontal col-sm-12">
-                        
+
                         </div>
                     </div>
                 </div>
                 <div>
-                  <editMarineParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editMarineParkActivities>
+                  <editMarineParkActivities ref="edit_activities" :proposal="proposal" :canEditActivities="canEditActivities" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editMarineParkActivities>
                 </div>
             </div>
         </div>
 
+        <!--
         <div>Selected_Activities: {{selected_activities}}</div><br>
         <div>selected_zone_ids: {{selected_zone_ids}}</div><br>
         <div>selected_zones: {{selected_zones}}</div><br>
         <div>Marine_Park_Activities: {{marine_parks_activities}}</div><br>
+        -->
 
     </div>
 </template>
@@ -156,7 +124,6 @@ from '@/utils/hooks'
         },
         watch: {
           selected_zone_ids: function() {
-          //selected_parks: function() {
             let vm = this;
 
             vm.selected_zones = []
@@ -172,12 +139,6 @@ from '@/utils/hooks'
             if (vm.proposal) {
                 vm.proposal.parks = vm.selected_zones
             }
-
-            /*
-            var removed_park=$(vm.selected_zones_before).not(vm.selected_zones).get();
-            var added_park=$(vm.selected_zones).not(vm.selected_zones_before).get();
-            vm.selected_zones_before=vm.selected_zones;
-            */
 
             try {
                 var removed_zone_ids=$(vm.selected_zone_ids_before).not(vm.selected_zone_ids).get();
@@ -274,7 +235,7 @@ from '@/utils/hooks'
           else{
 
             for (var i=0; i<vm.marine_parks_activities.length; i++)
-            { 
+            {
               if(added.length!=0){
                 for(var j=0; j<added.length; j++)
                 {
@@ -324,36 +285,6 @@ from '@/utils/hooks'
             return null;
           },
 
-          /*
-          get_park_zone_activity_ids:function(allowed_activities){
-            let vm = this;
-
-            var allowed_activity_ids = []
-            for (var i=0; i<allowed_activities.length; i++) {
-                allowed_activity_ids.push( allowed_activities[i].id )
-            }
-
-            var ids = []
-            for (var i=0; i<vm.selected_activities.length; i++) {
-                var selected_activity_id = vm.selected_activities[i]
-                if (allowed_activity_ids.indexOf(selected_activity_id) > -1) {
-                    ids.push( selected_activity_id )
-                }
-            }
-            return ids.filter(function(item, pos) { return ids.indexOf(item) == pos;  }) // returns unique array ids
-          },
-          get_park_zone_ids:function(park_id){
-            let vm = this;
-
-            var ids = []
-            for (var i=0; i<vm.marine_parks[park_id].zones.length; i++) {
-                for (var i=0; i<vm.selected_zones.zones.length; i++) {
-                    ids.push( vm.marine_parks[park_id].zones[i].id )
-                }
-            }
-            return ids.filter(function(item, pos) { return ids.indexOf(item) == pos;  }) // returns unique array ids
-          },
-          */
           get_park_id:function(zone_id){
             /* given zone id returns the associated proposal_park id */
             let vm = this;
@@ -376,7 +307,6 @@ from '@/utils/hooks'
             let vm = this;
 
             var park_map = {};
-            //var zone_map = {};
             for (var i=0; i<vm.marine_parks.length; i++){ 
               var park = vm.marine_parks[i]
 
@@ -384,12 +314,10 @@ from '@/utils/hooks'
               for (var j=0; j<park.children.length; j++) {
                 var zone_id = park.children[j].id
                 ids.push( zone_id )
-                //zone_map[zone_id] = park.id;
               }
               park_map[park.id] = ids;
             }
             return park_map;
-            //vm.zone_map = zone_map;
           },
 
           get_park_activities:function(){
@@ -537,6 +465,7 @@ from '@/utils/hooks'
             this.$refs.edit_activities.zone_label = label;
             this.$refs.edit_activities.isModalOpen = true;
           },
+          /*
           _edit_activities: function(park){
             let vm=this;
             //inserting a temporary variables checked and new_activities to store and display selected activities for each zone.
@@ -560,6 +489,7 @@ from '@/utils/hooks'
             this.$refs.edit_activities.park=park;
             this. $refs.edit_activities.isModalOpen = true;
           },
+          */
 
 
           refreshSelectionFromResponse: function(park_id, zone_id, new_activities){
@@ -570,13 +500,6 @@ from '@/utils/hooks'
               vm.marine_parks_activities[park_idx].activities.splice(zone_idx,1)
               vm.marine_parks_activities[park_idx].activities.push( new_activities );
 
-              /*
-              for (var j=0; j<vm.marine_parks_activities.length; j++){
-                if(vm.marine_parks_activities[j].park==park_id){ 
-                  vm.marine_parks_activities[j].activities= new_activities;
-                }
-              }
-              */
               vm.checkRequiredDocuements(vm.marine_parks_activities)
           },
           find_recurring: function(array){
@@ -627,13 +550,6 @@ from '@/utils/hooks'
                vm.marine_parks_activities.push(data)
             }
 
-          /*
-          var park_list=[]
-          for (var i=0; i<parks.length; i++) {
-            zone_list.push({'park':parks[i].park.id, 'zones':parks[i].park.zone_ids})
-          }
-          vm.selected_zones = zone_list
-          */
           vm.selected_zone_ids=zone_ids
           vm.selected_activities = vm.find_recurring(all_activities)
         },
@@ -644,17 +560,7 @@ from '@/utils/hooks'
         mounted: function(){
             let vm = this;
             vm.proposal.marine_parks_activities=[];
-            /*
-            Vue.http.get('/api/marine_activities.json').then((res) => {
-                      vm.marine_activities=res.body;                 
-            },
-            err => { 
-                   console.log(err);
-            });
-            */
             vm.fetchMarineTreeview();
-            //vm.fetchParks();
-            //vm.fetchRequiredDocumentList();
 
             vm.store_parks(vm.proposal.marine_parks);
             //vm.eventListeners();

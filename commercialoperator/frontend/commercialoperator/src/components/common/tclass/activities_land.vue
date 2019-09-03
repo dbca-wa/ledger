@@ -23,7 +23,7 @@
                                 <TreeSelect ref="selected_access" :proposal="proposal" @value="selected_access=$event" :value="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
                                 <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
                                 -->
-                                <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+                                <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1" :disabled="!canEditActivities"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -35,7 +35,7 @@
                         <div>
                             <!--<pre>{{ selected_activities }}</pre>-->
                             <label class="control-label">Select the required activities</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="land_activity_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="land_activity_options" :default_expand_level="1" :disabled="!canEditActivities"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -47,7 +47,7 @@
                         <div>
                             <!--<pre>{{ selected_parks }}</pre>-->
                             <label class="control-label">Select Parks</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_parks" :options="park_options" :default_expand_level="1" allow_edit="true"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_parks" :options="park_options" :default_expand_level="1" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -87,7 +87,7 @@
                             <!--<pre>{{ trail_activities }}</pre>-->
                             <!--<pre>{{ selected_trails_activities }}</pre>-->
                             <label class="control-label">Select the required activities for trails</label>
-                            <TreeSelect :proposal="proposal" :value.sync="trail_activities" :options="trail_activity_options" :default_expand_level="1"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="trail_activities" :options="trail_activity_options" :default_expand_level="1" :disabled="!canEditActivities"></TreeSelect>
                         </div>
                     </div>
                 </form>
@@ -99,15 +99,15 @@
                         <div>
                             <!--<pre>{{ selected_trail_ids }}</pre>-->
                             <label class="control-label">Select the required activities</label>
-                            <TreeSelect :proposal="proposal" :value.sync="selected_trail_ids" :options="trail_options" :default_expand_level="1" open_direction="top" allow_edit="true"></TreeSelect>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_trail_ids" :options="trail_options" :default_expand_level="1" open_direction="top" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
                         </div>
                     </div>
                 </form>
             </div>
 
+            <!--
             <div>Selected_Parks: {{selected_parks}}</div><br>
             <div>Selected_Parks_Activities: {{selected_parks_activities}}</div>
-            <!--
             <div>Trail: {{selected_trails}}</div>
             <div>Activities: {{selected_trails_activities}}</div>
             -->
@@ -124,10 +124,10 @@
 
 
       <div>
-              <editParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
+              <editParkActivities ref="edit_activities" :proposal="proposal" :canEditActivities="canEditActivities" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
       </div>
       <div>
-              <editTrailActivities ref="edit_sections" :proposal="proposal" @refreshTrailFromResponse="refreshTrailFromResponse"></editTrailActivities>
+              <editTrailActivities ref="edit_sections" :proposal="proposal" :canEditActivities="canEditActivities" @refreshTrailFromResponse="refreshTrailFromResponse"></editTrailActivities>
       </div>
 
 
@@ -227,12 +227,6 @@ export default {
                 }
             }
 
-            /*
-            var removed_trail=$(vm.selected_trails_before).not(vm.selected_trails).get();
-            var added_trail=$(vm.selected_trails).not(vm.selected_trails_before).get();
-            vm.selected_trails_before=vm.selected_trails;
-            */
-
             try {
                 var removed_trail_id=$(vm.selected_trail_ids_before).not(vm.selected_trail_ids).get();
             } catch (error) {
@@ -314,11 +308,6 @@ export default {
             }
           },
 
-//          selected_regions: function(val){
-//            let vm=this;
-//            var added_region=$(vm.selected_regions).not(vm.selected_regions_before).get();
-//          },
-
           selected_parks: function(){
             let vm = this;
             var removed_park=$(vm.selected_parks_before).not(vm.selected_parks).get();
@@ -387,7 +376,7 @@ export default {
                }
           }
           else{
-            
+
             for (var i=0; i<vm.selected_parks_activities.length; i++)
             { 
               if(added.length!=0){
@@ -429,7 +418,7 @@ export default {
           }
           else{
             for (var i=0; i<vm.selected_parks_activities.length; i++)
-            { 
+            {
               if(added.length!=0){
 
                 for(var j=0; j<added.length; j++)
