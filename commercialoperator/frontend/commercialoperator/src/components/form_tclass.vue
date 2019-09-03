@@ -37,7 +37,7 @@
               </li>
               <li v-if="is_external" class="nav-item" id="li-training">
                 <a class="nav-link" id="pills-online-training-tab" data-toggle="pill" href="#pills-online-training" role="tab" aria-controls="pills-online-training" aria-selected="false">
-                  5. Online Training
+                  5. Questionnaire
                 </a>
               </li>
               <li v-if="is_external" class="nav-item" id="li-payment">

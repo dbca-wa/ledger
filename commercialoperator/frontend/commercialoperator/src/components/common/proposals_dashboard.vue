@@ -162,7 +162,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Action"
+                "Number","Licence Type","Submitter","Applicant","Status","Lodged on","Action"
             ],
 
             proposal_ex_options:{
@@ -292,7 +292,7 @@ export default {
                 */
             },
             proposal_headers:[
-                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action",
+                "Number","Licence Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action",
             ],
             proposal_options:{
                 autoWidth: false,
