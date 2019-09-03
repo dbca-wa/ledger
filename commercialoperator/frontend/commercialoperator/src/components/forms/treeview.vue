@@ -170,6 +170,8 @@ export default {
         edit_activities:function(node){
             if (node.raw.hasOwnProperty('sections')) {
                 this.$parent.edit_sections(node)
+            } else if (node.raw.hasOwnProperty('allowed_zone_activities')) {
+                this.$parent.edit_activities(node)
             } else {
                 this.$parent.edit_activities(node)
             }

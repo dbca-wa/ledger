@@ -58,10 +58,11 @@ class ActivitySerializer(serializers.ModelSerializer):
 
 class ZoneSerializer(serializers.ModelSerializer):
     label = serializers.SerializerMethodField()
+    park_id = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
     last_leaf = serializers.SerializerMethodField()
     last_leaf = serializers.SerializerMethodField()
-    allowed_activities=ActivitySerializer(many=True)
+    allowed_zone_activities=ActivitySerializer(many=True, source='allowed_activities')
     #children=ActivitySerializer(many=True, source='allowed_activities', context={'request': self.context.get('request'), 'customer_id': obj.id})
     #children=ActivitySerializer(many=True, source='allowed_activities')
     #children = serializers.SerializerMethodField()
@@ -69,10 +70,10 @@ class ZoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Zone
         #fields = ('id', 'name', 'can_edit', 'last_leaf','visible', 'children')
-        fields = ('id', 'name', 'label', 'can_edit', 'last_leaf','visible', 'allowed_activities')
+        fields = ('id', 'name', 'label', 'park_id', 'can_edit', 'last_leaf','visible', 'allowed_zone_activities')
 
     def get_can_edit(self, obj):
-        return False
+        return True
 
     def get_last_leaf(self, obj):
         return True
@@ -81,6 +82,12 @@ class ZoneSerializer(serializers.ModelSerializer):
         """ Pulled from parent (out serializer) --> ZoneSerializer
         """
         return '{} - {}'.format(self.context.get('parent_name'), obj.name) if self.context.get('parent_id') else obj.name
+
+    def get_park_id(self, obj):
+        """ Pulled from parent (out serializer) --> ZoneSerializer
+        """
+        return self.context.get('parent_id')
+
 
 
 #    def get_children(self, obj):

@@ -688,7 +688,7 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
                 other_details_data['preferred_licence_period']=instance.other_details.preferred_licence_period
             serializer = ProposalOtherDetailsSerializer(instance.other_details,data=other_details_data)
             serializer.is_valid(raise_exception=True)
-            serializer.save() 
+            serializer.save()
             #select_parks_activities=sc['selected_parks_activities']
             #select_trails_activities=sc['selected_trails_activities']
 
