@@ -45,8 +45,9 @@ export default {
             if (!vm.eventInitialised){
                 $('.panelClicker[data-toggle="collapse"]').on('click',function () {
                     var chev = $(this).children()[0];
+            console.log(chev);
                     window.setTimeout(function () {
-                        $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-down");
+                        $(chev).toggleClass("glyphicon-chevron-down glyphicon-chevron-up");
                     },100);
                 });
                 this.eventInitialised = true;

@@ -1,4 +1,3 @@
-
 <template lang="html">
     <div>
         <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large force>
@@ -71,7 +70,7 @@
                                         <select class="form-control" v-on:change="offenceSelected($event)" v-bind:value="sanction_outcome.current_offence.id">
                                             <option value=""></option>
                                             <option v-for="option in options_for_offences" v-bind:value="option.id" v-bind:key="option.id">
-                                                {{ option.identifier }} 
+                                                {{ option.lodgement_number + ': ' + option.identifier }} 
                                             </option>
                                         </select>
                                     </div>
@@ -234,6 +233,13 @@
                 </div>
             </div>
             <div slot="footer">
+                <div v-if="errorResponse" class="form-group">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <strong>Error: {{ errorResponse }}</strong>
+                        </div>
+                    </div>
+                </div>
                 <button type="button" v-if="processingDetails" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Adding</button>
                 <button type="button" :disabled="!displaySendToManagerButton" class="btn btn-default" @click="ok">Send to Manager</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
@@ -272,6 +278,10 @@ export default {
       availableDistricts: [], // this is generated from the regionDistricts[] above
       documentActionUrl: null,
       elem_paper_id_notice: null,
+      errorResponse: "",
+
+      // allocatedGroup: [], // This stores members of the allocatedGroup
+      // allocated_group_id: null,
 
       // This is the object to be sent to the server when saving
       sanction_outcome: {
@@ -288,6 +298,8 @@ export default {
         description: "",
         date_of_issue: null,
         time_of_issue: null,
+        // allocatedGroup: [],
+        // allocated_group_id: null,
 
         remediation_actions: []
       },
@@ -368,6 +380,12 @@ export default {
       }
     };
   },
+  props:{
+        workflow_type: {
+            type: String,
+            default: 'send_to_manager',
+        },
+  },
   components: {
     modal,
     datatable,
@@ -417,11 +435,6 @@ export default {
         this.currentRegionIdChanged();
       }
     },
-    // current_district_id: {
-    //   handler: function() {
-    //     this.currentDistrictIdChanged();
-    //   }
-    // }
   },
   computed: {
     ...mapGetters("offenceStore", {
@@ -481,7 +494,10 @@ export default {
       } else {
         return null;
       }
-    }
+    },
+    groupPermission: function() {
+      return "manager"; // Send to manager
+    },
   },
   methods: {
     ...mapActions("offenceStore", {}),
@@ -489,6 +505,33 @@ export default {
       await this.sendData();
       this.close();
     },
+    ...mapActions({
+      loadAllocatedGroup: 'loadAllocatedGroup',  // defined in store/modules/user.js
+    }),
+    // updateAllocatedGroup: async function() {
+    //     this.errorResponse = "";
+    //     if (this.regionDistrictId) {
+    //         let allocatedGroupResponse = await this.loadAllocatedGroup({
+    //           region_district_id: this.regionDistrictId,
+    //           group_permission: this.groupPermission,
+    //         });
+    //         if (allocatedGroupResponse.ok) {
+    //             // Update member list
+    //             Vue.set(this, 'allocatedGroup', allocatedGroupResponse.body.allocated_group);
+    //             // Update group id
+    //             this.allocated_group_id = allocatedGroupResponse.body.group_id;
+    //         } else {
+    //             // Display http error response on modal
+    //             this.errorResponse = allocatedGroupResponse.statusText;
+    //         }
+    //         // Display empty group error on modal
+    //         if (!this.errorResponse &&
+    //             this.allocatedGroup &&
+    //             this.allocatedGroup.length <= 1) {
+    //             this.errorResponse = 'This group has no members';
+    //         }
+    //     }
+    // },
     cancel: async function() {
         if(this.$refs.sanction_outcome_file) {
             await this.$refs.sanction_outcome_file.cancel();
@@ -578,12 +621,7 @@ export default {
         districts: [],
         region: null
       });
-      // ensure security group members list is up to date
-      // this.updateAllocatedGroup();
     },
-    // updateAllocatedGroup: function() {
-    //   console.log('implement updateAllocatedGroup()');
-    // },
     addEventListeners: function() {
       let vm = this;
       let el_issue_date = $(vm.$refs.dateOfIssuePicker);
@@ -750,9 +788,8 @@ export default {
 
         payload.call_email_id = this.$parent.call_email ? this.$parent.call_email.id : null;
         payload.inspection_id = this.$parent.inspection ? this.$parent.inspection.id : null;
+        payload.workflow_type = 'send_to_manager'  // Because this modal is used only when creating new sanction outcome to send to manager
 
-        // Set set_sequence to generate lodgement number at the backend
-        // payload.set_sequence = true;
         console.log(payload);
         const savedObj = await Vue.http.post(fetchUrl, payload);
         await swal("Saved", "The record has been saved", "success");
@@ -805,12 +842,15 @@ export default {
           returned = await Vue.http.get("/api/offence/filter_by_call_email.json", {
               params: { call_email_id: this.$parent.call_email.id }
           });
+        this.options_for_offences = returned.body;
       } else if (this.$parent.inspection) {
           returned = await Vue.http.get("/api/offence/filter_by_inspection.json", {
               params: { inspection_id: this.$parent.inspection.id }
           });
+        this.options_for_offences = returned.body;
+      } else if (this.$parent.offence) {
+        this.options_for_offences = [this.$parent.offence];
       }
-      this.options_for_offences = returned.body;
     },
     createDocumentActionUrl: async function() {
         // create sanction outcome and get id
@@ -850,6 +890,10 @@ export default {
 };
 </script>
 
-<style>
-
+<style lang="css" scoped>
+.tab-content {
+  background: white;
+  padding: 10px;
+  border: solid 1px lightgray;
+}
 </style>

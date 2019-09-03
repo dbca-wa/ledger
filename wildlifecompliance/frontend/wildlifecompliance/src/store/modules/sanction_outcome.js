@@ -17,14 +17,17 @@ export const sanctionOutcomeStore = {
     },
     mutations: {
         updateSanctionOutcome(state, sanction_outcome) {
-            console.log('updateSanctionOutcome');
-            console.log(sanction_outcome);
             Vue.set(state, 'sanction_outcome', {
                 ...sanction_outcome
             });
             if (state.sanction_outcome.date_of_issue) {
                 state.sanction_outcome.date_of_issue = moment(state.sanction_outcome.date_of_issue, 'YYYY-MM-DD').format('DD/MM/YYYY');
             }
+            let commsLogsDocumentUrl = helpers.add_endpoint_join(
+                api_endpoints.sanction_outcome,
+                state.sanction_outcome.id + "/process_comms_log_document/"
+                )
+            Vue.set(state.sanction_outcome, 'commsLogsDocumentUrl', commsLogsDocumentUrl); 
         },
     },
     actions: {

@@ -1,0 +1,8 @@
+{%  extends 'wildlifecompliance/emails/base_email.html' %}
+
+{%  block content %}
+        <p>This Sanction Outcome has been forwarded to you:</p>
+        <p><strong>Sanction Outcome: <a href="{{url}}">{{ sanction_outcome.lodgement_number }}</a> </strong></p>
+        <p><strong>Message:  {{ workflow_entry_details }}</a></strong></p>
+        <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
+{%  endblock %}

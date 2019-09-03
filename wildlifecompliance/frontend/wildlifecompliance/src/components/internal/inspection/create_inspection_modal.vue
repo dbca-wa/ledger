@@ -135,12 +135,6 @@ export default {
             allocatedGroup: [],
             allocated_group_id: null,
             documentActionUrl: '',
-            // files: [
-            //         {
-            //             'file': null,
-            //             'name': ''
-            //         }
-            //     ]
       }
     },
     components: {

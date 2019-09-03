@@ -1,5 +1,5 @@
 <template>
-    <div class="container" id="internalInspectionDash">
+    <div class="container" id="internalSanctionOutcomeDash">
         <FormSection :label="`Sanction Outcome`" :Index="`0`">
 
         <div class="row">
@@ -186,14 +186,14 @@ export default {
                         searchable: true,
                         orderable: false,
                         mRender: function (data, type, row){
-                            return 'Not implemented';
+                            return '---';
                         }
                     },
                     {
                         searchable: true,
                         orderable: false,
                         mRender: function (data, type, row){
-                            return 'Not implemented';
+                            return '---';
                         }
                     },
                     {
