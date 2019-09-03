@@ -4,7 +4,7 @@ from ledger.accounts.models import RevisionedMixin, EmailUser, Organisation
 from wildlifecompliance.components.call_email.models import Location, CallEmail
 from wildlifecompliance.components.inspection.models import Inspection
 from wildlifecompliance.components.main.models import Document
-from wildlifecompliance.components.users.models import RegionDistrict
+from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 
 class SectionRegulation(RevisionedMixin):
@@ -25,12 +25,18 @@ class SectionRegulation(RevisionedMixin):
 
 
 class Offence(RevisionedMixin):
+    STATUS_DRAFT = 'draft'
+    STATUS_OPEN = 'open'
+    STATUS_CLOSED = 'closed'
+    STATUS_CLOSING = 'closing'
+    STATUS_DISCARDED = 'discarded'
+
     STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('open', 'Open'),
-        ('closing', 'Closing'),
-        ('closed', 'Closed'),
-        ('discarded', 'Discarded'),
+        (STATUS_DRAFT, 'Draft'),
+        (STATUS_OPEN, 'Open'),
+        (STATUS_CLOSING, 'Closing'),
+        (STATUS_CLOSED, 'Closed'),
+        (STATUS_DISCARDED, 'Discarded'),
     )
 
     identifier = models.CharField(
@@ -71,6 +77,18 @@ class Offence(RevisionedMixin):
         blank=True,
     )
     details = models.TextField(blank=True)
+    assigned_to = models.ForeignKey(
+        EmailUser,
+        related_name='offence_assigned_to',
+        null=True
+    )
+    allocated_group = models.ForeignKey(
+        CompliancePermissionGroup,
+        related_name='offence_allocated_group',
+        null=True
+    )
+    region = models.ForeignKey(RegionDistrict, related_name='offence_region', null=True,)
+    district = models.ForeignKey(RegionDistrict, related_name='offence_district', null=True,)
 
     class Meta:
         app_label = 'wildlifecompliance'

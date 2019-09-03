@@ -37,7 +37,13 @@ export const offenceStore = {
             occurrence_date_to: null,
             occurrence_time_from: null,
             occurrence_time_to: null,
-            details: ''
+            details: '',
+            region_id: null,
+            district_id: null,
+            assigned_to_id: null,
+            allocated_group: [],
+            allocated_group_id: null,
+            lodgement_number: '',
         }
     },
     getters: {
@@ -70,6 +76,15 @@ export const offenceStore = {
         },
         updateCallEmailId(state, id) {
             state.offence.call_email_id = id;
+        },
+        updateRegionId(state, id) {
+            state.offence.region_id = id;
+        },
+        updateDistrictId(state, id) {
+            state.offence.district_id = id;
+        },
+        updateAllocatedGroupId(state, id) {
+            state.offence.allocated_group_id = id;
         },
         updateInspectionId(state, id) {
             state.offence.inspection_id = id;
@@ -144,12 +159,9 @@ export const offenceStore = {
                 console.log(err);
             }
         },
-        async saveOffence({dispatch, state}){
-            console.log('saveOffence');
-            console.log(state.offence);
-
+        async createOffence({dispatch, state}){
             try{
-                let fetchUrl = helpers.add_endpoint_json(api_endpoints.offence, 'offence_save');
+                let fetchUrl = '/api/offence/';
 
                 let payload = new Object();
                 Object.assign(payload, state.offence);
@@ -198,6 +210,15 @@ export const offenceStore = {
         },
         setCallEmailId({ commit, }, id){
             commit("updateCallEmailId", id);
+        },
+        setRegionId({ commit, }, id){
+            commit("updateRegionId", id);
+        },
+        setDistrictId({ commit, }, id){
+            commit("updateDistrictId", id);
+        },
+        setAllocatedGroupId({ commit, }, id){
+            commit("updateAllocatedGroupId", id);
         },
         setInspectionId({ commit, }, id){
             commit("updateInspectionId", id);

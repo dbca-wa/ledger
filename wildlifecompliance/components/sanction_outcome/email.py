@@ -16,25 +16,25 @@ logger = logging.getLogger(__name__)
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
 
 
-class InspectionForwardNotificationEmail(TemplateEmailBase):
-    subject = 'Forwarded Inspection'
-    html_template = 'wildlifecompliance/emails/send_inspection_forward_notification.html'
-    txt_template = 'wildlifecompliance/emails/send_inspection_forward_notification.txt'
+class SanctionOutcomeIssueNotificationEmail(TemplateEmailBase):
+    subject = 'Issued Sanction Outcome'
+    html_template = 'wildlifecompliance/emails/issue_sanction_outcome_notification.html'
+    txt_template = 'wildlifecompliance/emails/issue_sanction_outcome_notification.txt'
 
 
-def send_mail(select_group, inspection, workflow_entry, request=None):
-    email = InspectionForwardNotificationEmail()
+def send_mail(select_group, obj, workflow_entry, request=None):
+    email = SanctionOutcomeIssueNotificationEmail()
     if request.data.get('email_subject'):
         email.subject = request.data.get('email_subject')
     url = request.build_absolute_uri(
         reverse(
-            'internal-inspection-detail',
+            'internal-sanction-outcome-detail',
             kwargs={
-                'inspection_id': inspection.id
+                'sanction_outcome_id': obj.id
                 }))
     context = {
         'url': url,
-        'inspection': inspection,
+        'sanction_outcome': obj,
         'workflow_entry_details': request.data.get('details'),
     }
     email_group = [item.email for item in select_group]

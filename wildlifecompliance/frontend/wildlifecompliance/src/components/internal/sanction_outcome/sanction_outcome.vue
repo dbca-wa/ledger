@@ -29,12 +29,11 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                
-                                <select :disabled="!sanction_outcome.user_in_group" class="form-control" v-model="sanction_outcome.assigned_to_id" @change="updateAssignedToId()">
-                                    <option  v-for="option in sanction_outcome.allocated_group" :value="option.id" v-bind:key="option.id">
-                                    {{ option.full_name }} 
-                                    </option>
-                                </select>
+                                    <select :disabled="!sanction_outcome.user_in_group" class="form-control" v-model="sanction_outcome.assigned_to_id" @change="updateAssignedToId()">
+                                        <option  v-for="option in sanction_outcome.allocated_group" :value="option.id" v-bind:key="option.id">
+                                        {{ option.full_name }} 
+                                        </option>
+                                    </select>
                                 </div>
                             </div>
                             </div>
@@ -52,29 +51,59 @@
                             Action 
                         </div>
                         <div class="panel-body panel-collapse">
-                            <div  class="row action-button">
-                                <!-- <div v-if="!readonlyForm" class="col-sm-12"> -->
+                            <div v-if="visibilityWithdrawButton" class="row action-button">
                                 <div class="col-sm-12">
-                                    <a ref="close" @click="endorseClicked" class="btn btn-primary btn-block">
+                                    <a @click="addWorkflow('withdraw')" class="btn btn-primary btn-block">
+                                        Withdraw
+                                    </a>
+                                </div>
+                            </div>
+                            <div v-else>
+                                Withdraw
+                            </div>
+
+                            <div v-if="visibilitySendToManagerButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="addWorkflow('send_to_manager')" class="btn btn-primary btn-block">
+                                        Send To Manager
+                                    </a>
+                                </div>
+                            </div>
+                            <div v-else>
+                                Send To Manager
+                            </div>
+
+                            <div v-if="visibilityEndorseButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="addWorkflow('endorse')" class="btn btn-primary btn-block">
                                         Endorse
                                     </a>
                                 </div>
                             </div>
+                            <div v-else>
+                                Endorse
+                            </div>
 
-                            <div  class="row action-button">
+                            <div v-if="visibilityDeclineButton" class="row action-button">
                                 <div class="col-sm-12">
-                                    <a ref="close" @click="declineClicked" class="btn btn-primary btn-block">
+                                    <a @click="addWorkflow('decline')" class="btn btn-primary btn-block">
                                         Decline
                                     </a>
                                 </div>
                             </div>
+                            <div v-else>
+                                Declilne
+                            </div>
 
-                            <div  class="row action-button">
+                            <div v-if="visibilityReturnToOfficerButton" class="row action-button">
                                 <div class="col-sm-12">
-                                    <a ref="close" @click="returnToOfficerClicked" class="btn btn-primary btn-block">
+                                    <a @click="addWorkflow('return_to_officer')" class="btn btn-primary btn-block">
                                         Return to Officer
                                     </a>
                                 </div>
+                            </div>
+                            <div v-else>
+                                Return to Officer
                             </div>
                         </div>
                     </div>
@@ -132,9 +161,9 @@
                                             <label>Issued on paper?</label>
                                         </div>
                                         <div class="col-sm-6">
-                                            <input class="col-sm-1" id="issued_on_paper_yes" type="radio" v-model="sanction_outcome.issued_on_paper" :value="true" />
+                                            <input :disabled="readonlyForm" class="col-sm-1" id="issued_on_paper_yes" type="radio" v-model="sanction_outcome.issued_on_paper" :value="true" />
                                             <label class="col-sm-1 radio-button-label" for="issued_on_paper_yes">Yes</label>
-                                            <input class="col-sm-1" id="issued_on_paper_no" type="radio" v-model="sanction_outcome.issued_on_paper" :value="false" />
+                                            <input :disabled="readonlyForm" class="col-sm-1" id="issued_on_paper_no" type="radio" v-model="sanction_outcome.issued_on_paper" :value="false" />
                                             <label class="col-sm-1 radio-button-label" for="issued_on_paper_no">No</label>
                                         </div>
                                     </div></div>
@@ -149,7 +178,7 @@
                                             <label>Description</label>
                                         </div>
                                         <div class="col-sm-6">
-                                            <textarea class="form-control" placeholder="add description" id="sanction-outcome-description" v-model="sanction_outcome.description"/>
+                                            <textarea :disabled="readonlyForm" class="form-control" placeholder="add description" id="sanction-outcome-description" v-model="sanction_outcome.description"/>
                                         </div>
                                     </div></div>
 
@@ -181,6 +210,10 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="workflow_type">
+            <SanctionOutcomeWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
+        </div>
     </div>
 </template>
 
@@ -191,19 +224,28 @@ import datatable from '@vue-utils/datatable.vue'
 import utils from "@/components/external/utils";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import CommsLogs from "@common-components/comms_logs.vue";
 import filefield from '@/components/common/compliance_file.vue';
+import SanctionOutcomeWorkflow from './sanction_outcome_workflow';
 import 'bootstrap/dist/css/bootstrap.css';
 
 export default {
     name: 'ViewSanctionOutcome',
     data() {
         let vm = this;
+        vm.STATUS_DRAFT = 'draft';
+        vm.STATUS_AWAITING_ENDORSEMENT = 'awaiting_endorsement';
+        vm.STATUS_AWAITING_REVIEW = 'awaiting_review';
+        vm.STATUS_AWAITING_AMENDMENT = 'awaiting_amendment';
+        vm.STATUS_AWAITING_PAYMENT = 'awaiting_payment';
+        vm.STATUS_DECLINED = 'declined';
+
         return {
-            soTab: 'soTab'+this._uid,
-            deTab: 'deTab'+this._uid,
-            reTab: 'reTab'+this._uid,
+            workflow_type :'',
+            workflowBindId :'',
+            soTab: 'soTab' + this._uid,
+            deTab: 'deTab' + this._uid,
+            reTab: 'reTab' + this._uid,
             comms_url: helpers.add_endpoint_json(
                 api_endpoints.sanction_outcome,
                 this.$route.params.sanction_outcome_id + "/comms_log"
@@ -220,26 +262,13 @@ export default {
     },
     components: {
         FormSection,
+        SanctionOutcomeWorkflow,
         CommsLogs,
     },
-    beforeRouteEnter: function(to, from, next) {
-        console.log('beforeRouteEnter');
-
-        console.log('to');
-        console.log(to);
-        console.log('from');
-        console.log(from);
-        console.log('next');
-        console.log(next);
-
-        next(async (vm) => {
-            console.log(vm);
-            console.log('aho2');
-            await vm.loadSanctionOutcome({ sanction_outcome_id: to.params.sanction_outcome_id });
-        });
-    },
-    created: function() {
-        console.log('created');
+    created: async function() {
+        if (this.$route.params.sanction_outcome_id) {
+            await this.loadSanctionOutcome({ sanction_outcome_id: this.$route.params.sanction_outcome_id });
+        }
     },
     mounted: function() {
         console.log('mounted');
@@ -252,7 +281,13 @@ export default {
             return true;
         },
         statusDisplay: function() {
-            return 'TODO: Implement';
+            let ret = '';
+            if (this.sanction_outcome){
+                if (this.sanction_outcome.status){
+                    ret = this.sanction_outcome.status.name;
+                }
+            }
+            return ret;
         },
         typeDisplay: function() {
             let ret = '';
@@ -291,28 +326,75 @@ export default {
                 ret = this.sanction_outcome.lodgement_number;
             }
             return ret;
+        },
+        canUserAction: function() {
+            return this.sanction_outcome.can_user_action;
+        },
+        visibilityWithdrawButton: function() {
+            let visibility = false;
+            if (this.canUserAction){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_PAYMENT){
+                    visibility = true;
+                }
+            }
+            return visibility;
+        },
+        visibilitySendToManagerButton: function() {
+            let visibility = false;
+            if (this.canUserAction){
+                if (this.sanction_outcome.status.id === this.STATUS_DRAFT || this.sanction_outcome.status.id === this.STATUS_AWAITING_AMENDMENT){
+                    visibility = true;
+                }
+            }
+            return visibility;
+        },
+        visibilityEndorseButton: function() {
+            let visibility = false;
+            if (this.canUserAction){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDORSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
+                    visibility = true;
+                }
+            }
+            return visibility;
+        },
+        visibilityDeclineButton: function() {
+            let visibility = false;
+            if (this.canUserAction){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDORSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
+                    visibility = true;
+                }
+            }
+            return visibility;
+        },
+        visibilityReturnToOfficerButton: function() {
+            let visibility = false;
+            if (this.canUserAction){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
+                    visibility = true;
+                }
+            }
+            return visibility;
         }
     },
     methods: {
         ...mapActions('sanctionOutcomeStore', {
             loadSanctionOutcome: 'loadSanctionOutcome',
-            // saveSanctionOutcome: 'saveSanctionOutcome',
-            // setSanctionOutcome: 'setSanctionOutcome', 
-            // setPlannedForTime: 'setPlannedForTime',
-            // modifyInspectionTeam: 'modifyInspectionTeam',
-            // setPartyInspected: 'setPartyInspected',
+            setSanctionOutcome: 'setSanctionOutcome', 
         }),
-        endorseClicked: function(e) {
-            console.log('endorse clicked');
-            console.log(e);
+        addWorkflow(workflow_type) {
+            this.workflow_type = workflow_type;
+            this.updateWorkflowBindId();
+            this.$nextTick(() => {
+                this.$refs.add_workflow.isModalOpen = true;
+            });
         },
-        declineClicked: function(e) {
-            console.log('decline clicked');
-            console.log(e);
-        },
-        returnToOfficerClicked: function(e) {
-            console.log('returnToOfficer clicked');
-            console.log(e);
+        updateWorkflowBindId: function() {
+            let timeNow = Date.now()
+            if (this.workflow_type) {
+                this.workflowBindId = this.workflow_type + '_' + timeNow.toString();
+            } else {
+                this.workflowBindId = timeNow.toString();
+            }
         },
         updateAssignedToId: async function (user) {
             let url = helpers.add_endpoint_join(
@@ -331,7 +413,7 @@ export default {
                 url,
                 payload
             );
-            await this.setInspection(res.body); 
+            await this.setSanctionOutcome(res.body); 
         },
     }
 }

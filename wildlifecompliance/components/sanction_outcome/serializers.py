@@ -2,9 +2,13 @@ from rest_framework import serializers
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
 from wildlifecompliance.components.main.fields import CustomChoiceField
+from wildlifecompliance.components.main.related_item import get_related_items
+from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer, OffenderSerializer, \
     OffenceSerializer
-from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
+from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction, \
+    SanctionOutcomeCommsLogEntry, SanctionOutcomeUserAction
+from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
 
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
@@ -13,6 +17,11 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
     alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
     offender = OffenderSerializer(read_only=True,)
     offence = OffenceSerializer(read_only=True,)
+    allocated_group = serializers.SerializerMethodField()
+    user_in_group = serializers.SerializerMethodField()
+    can_user_action = serializers.SerializerMethodField()
+    user_is_assignee = serializers.SerializerMethodField()
+    related_items = serializers.SerializerMethodField()
 
     class Meta:
         model = SanctionOutcome
@@ -32,8 +41,72 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
             'description',
             'date_of_issue',
             'time_of_issue',
+            'assigned_to_id',
+            'allocated_group',
+            'allocated_group_id',
+            'user_in_group',
+            'can_user_action',
+            'user_is_assignee',
+            'related_items',
         )
         read_only_fields = ()
+
+    def get_allocated_group(self, obj):
+        allocated_group = [{
+            'email': '',
+            'first_name': '',
+            'full_name': '',
+            'id': None,
+            'last_name': '',
+            'title': '',
+        }]
+        returned_allocated_group = CompliancePermissionGroupMembersSerializer(instance=obj.allocated_group)
+        for member in returned_allocated_group.data['members']:
+            allocated_group.append(member)
+
+        return allocated_group
+
+    def get_user_in_group(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if obj.allocated_group:
+            for member in obj.allocated_group.members:
+                if user_id == member.id:
+                    return True
+        return False
+
+    def get_can_user_action(self, obj):
+        # User can have action buttons
+        # when user is assigned to the target object or
+        # when user is a member of the allocated group and no one is assigned to the target object
+        user_id = self.context.get('request', {}).user.id
+        if user_id == obj.assigned_to_id:
+            return True
+        elif obj.allocated_group and not obj.assigned_to_id:
+            if user_id in [member.id for member in obj.allocated_group.members]:
+                return True
+
+        return False
+
+    def get_user_is_assignee(self, obj):
+        user_id = self.context.get('request', {}).user.id
+        if user_id == obj.assigned_to_id:
+            return True
+
+        return False
+
+    def get_related_items(self, obj):
+        return get_related_items(obj)
+
+
+class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
+    assigned_to_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+
+    class Meta:
+        model = SanctionOutcome
+        fields = (
+            'assigned_to_id',
+        )
 
 
 class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
@@ -69,7 +142,7 @@ class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
         process_url = '<a href=/internal/sanction_outcome/' + str(obj.id) + '>Process</a>'
         returned_url = ''
 
-        if obj.status == 'closed':
+        if obj.status == SanctionOutcome.STATUS_CLOSED:
             returned_url = view_url
         elif user_id == obj.assigned_to_id:
             returned_url = process_url
@@ -123,3 +196,40 @@ class SaveRemediationActionSerializer(serializers.ModelSerializer):
             'due_date',
             'sanction_outcome_id',
         )
+
+
+class SanctionOutcomeCommsLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SanctionOutcomeCommsLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self, obj):
+        return [[d.name, d._file.url] for d in obj.documents.all()]
+
+
+class SanctionOutcomeUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+
+    class Meta:
+        model = SanctionOutcomeUserAction
+        fields = '__all__'
+
+
+class SanctionOutcomeCommsLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SanctionOutcomeCommsLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self, obj):
+        return [[d.name, d._file.url] for d in obj.documents.all()]
+

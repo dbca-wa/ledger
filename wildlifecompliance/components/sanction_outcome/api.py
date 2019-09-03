@@ -1,4 +1,5 @@
 import json
+import logging
 import traceback
 
 from datetime import datetime
@@ -10,7 +11,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
 
-from rest_framework import viewsets, serializers
+from rest_framework import viewsets, serializers, status
 from rest_framework.decorators import list_route, detail_route, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -21,11 +22,17 @@ from wildlifecompliance.components.main.api import process_generic_document
 
 from wildlifecompliance.components.call_email.models import CallEmail, CallEmailUserAction
 from wildlifecompliance.components.inspection.models import Inspection, InspectionUserAction
-from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction
+from wildlifecompliance.components.main.email import prepare_mail
+from wildlifecompliance.components.sanction_outcome.email import send_mail
+from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction, \
+    SanctionOutcomeCommsLogEntry
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
-    SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer, SanctionOutcomeDatatableSerializer
+    SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer, SanctionOutcomeDatatableSerializer, \
+    UpdateAssignedToIdSerializer, SanctionOutcomeCommsLogEntrySerializer, SanctionOutcomeUserActionSerializer
 from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.helpers import is_internal
+
+logger = logging.getLogger('compliancemanagement')
 
 
 class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
@@ -174,9 +181,133 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
 
             return Response(serializer.data)
 
+    def get_compliance_permission_groups(self, region_district_id, workflow_type):
+        """
+        Determine which CompliancePermissionGroup this sanction outcome should belong to
+        :param region_district_id: The regionDistrict id this sanction outcome is in
+        :param workflow_type: string like 'send_to_manager', 'return_to_officer', ...
+        :return: CompliancePermissionGroup quersyet
+        """
+        # 1. Determine regionDistrict of this sanction outcome
+        region_district = RegionDistrict.objects.filter(id=region_district_id)
+
+        # 2. Determine which permission(s) is going to be apllied
+        compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+        codename = 'officer'
+        if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:
+            codename = 'manager'
+        elif workflow_type == SanctionOutcome.WORKFLOW_DECLINE:
+            codename = '---'
+        elif workflow_type == SanctionOutcome.WORKFLOW_ENDORSE:
+            codename = 'infringement_notice_coordinator'
+        elif workflow_type == SanctionOutcome.WORKFLOW_RETURN_TO_OFFICER:
+            codename = 'officer'
+        elif workflow_type == SanctionOutcome.WORKFLOW_WITHDRAW:
+            codename = '---'
+        elif workflow_type == SanctionOutcome.WORKFLOW_CLOSE:
+            codename = '---'
+        else:
+            # Should not reach here
+            # instance.save()
+            pass
+
+        permissions = Permission.objects.filter(codename=codename, content_type_id=compliance_content_type.id)
+
+        # 3. Find groups which has the permission(s) determined above in the regionDistrict.
+        groups = CompliancePermissionGroup.objects.filter(region_district__in=region_district, permissions__in=permissions)
+
+        return groups
+
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def update_assigned_to_id(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = None
+
+            validation_serializer = SanctionOutcomeSerializer(instance, context={'request': request})
+            user_in_group = validation_serializer.data.get('user_in_group')
+
+            if request.data.get('current_user') and user_in_group:
+                serializer = UpdateAssignedToIdSerializer(
+                    instance=instance,
+                    data={
+                        'assigned_to_id': request.user.id,
+                    }
+                )
+            elif user_in_group:
+                serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
+
+            if serializer:
+                serializer.is_valid(raise_exception=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return_serializer = SanctionOutcomeSerializer(instance=instance,
+                                                             context={'request': request}
+                                                             )
+                    headers = self.get_success_headers(return_serializer.data)
+                    return Response(
+                        return_serializer.data,
+                        status=status.HTTP_201_CREATED,
+                        headers=headers
+                    )
+            else:
+                return Response(validation_serializer.data,
+                                status=status.HTTP_201_CREATED
+                                )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def action_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.action_logs.all()
+            serializer = SanctionOutcomeUserActionSerializer(qs, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET', ])
+    def comms_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            qs = instance.comms_logs.all()
+            serializer = SanctionOutcomeCommsLogEntrySerializer(qs, many=True)
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     @list_route(methods=['POST',])
     def sanction_outcome_save(self, request, *args, **kwargs):
-
+        """
+        Create new sanction outcome from the modal
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         try:
             with transaction.atomic():
                 res_json = {}
@@ -187,12 +318,16 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 request_data['offence_id'] = request_data.get('current_offence', {}).get('id', None);
                 request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
 
-                # Retrieve group
+                workflow_type = request_data.get('workflow_type', '')
+
                 regionDistrictId = request_data['district_id'] if request_data['district_id'] else request_data['region_id']
-                region_district = RegionDistrict.objects.get(id=regionDistrictId)
-                compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
-                permission = Permission.objects.filter(codename='manager').filter(content_type_id=compliance_content_type.id).first()
-                group = CompliancePermissionGroup.objects.filter(region_district=region_district).filter(permissions=permission).first()
+                groups = self.get_compliance_permission_groups(regionDistrictId, workflow_type)
+
+                if groups.count() == 1:
+                    group = groups.first()
+                elif groups.count() > 1:
+                    group = groups.first()
+
                 request_data['allocated_group_id'] = group.id
 
                 # Save sanction outcome (offence, offender, alleged_offences)
@@ -202,16 +337,16 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 else:
                     serializer = SaveSanctionOutcomeSerializer(data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
-                saved_obj = serializer.save()
+                instance = serializer.save()
 
-                # if request_data.get('set_sequence'):
-                #     # Only when requested, we generate a new lodgement number
-                #     saved_obj.set_sequence()
-                #     saved_obj.save()
+                if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:
+                    instance.send_to_manager(request)
+                elif not workflow_type:
+                    instance.save()
 
                 # Save remediation action, and link to the sanction outcome
                 for dict in request_data['remediation_actions']:
-                    dict['sanction_outcome_id'] = saved_obj.id
+                    dict['sanction_outcome_id'] = instance.id
                     remediation_action = SaveRemediationActionSerializer(data=dict)
                     if remediation_action.is_valid(raise_exception=True):
                         remediation_action.save()
@@ -225,6 +360,20 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 if request_data.get('inspection_id'):
                     inspection = Inspection.objects.get(id=request_data.get('inspection_id'))
                     inspection.log_user_action(InspectionUserAction.ACTION_SANCTION_OUTCOME.format(inspection.number), request)
+
+                # Create/Retrieve comms log entry
+                comms_log_id = request.data.get('comms_log_id')
+                if comms_log_id and comms_log_id is not 'null':
+                    workflow_entry = instance.comms_logs.get(id=comms_log_id)
+                else:
+                    workflow_entry = self.add_comms_log(request, instance, workflow=True)
+
+                # Update the entry above with email_data
+                email_data = prepare_mail(request, instance, workflow_entry, send_mail)
+                serializer = SanctionOutcomeCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+
                 # Return
                 return HttpResponse(res_json, content_type='application/json')
 
@@ -294,4 +443,129 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def process_comms_log_document(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            returned_data = process_generic_document(
+                request,
+                instance,
+                document_type='comms_log'
+            )
+            if returned_data:
+                return Response(returned_data)
+            else:
+                return Response()
 
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e, 'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST'])
+    @renderer_classes((JSONRenderer,))
+    def workflow_action(self, request, instance=None, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                if not instance:
+                    instance = self.get_object()
+
+                comms_log_id = request.data.get('comms_log_id')
+                if comms_log_id and comms_log_id is not 'null':
+                    workflow_entry = instance.comms_logs.get(id=comms_log_id)
+                else:
+                    workflow_entry = self.add_comms_log(request, instance, workflow=True)
+
+                # Set status
+                workflow_type = request.data.get('workflow_type')
+                if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:
+                    instance.send_to_manager(request)
+                elif workflow_type == SanctionOutcome.WORKFLOW_DECLINE:
+                    instance.decline(request)
+                elif workflow_type == SanctionOutcome.WORKFLOW_ENDORSE:
+                    instance.endorse(request)
+                elif workflow_type == SanctionOutcome.WORKFLOW_RETURN_TO_OFFICER:
+                    instance.return_to_officer(request)
+                elif workflow_type == SanctionOutcome.WORKFLOW_WITHDRAW:
+                    instance.withdraw(request)
+                else:
+                    # Should not reach here
+                    # instance.save()
+                    pass
+
+                # Log parent actions and update status
+                # self.update_parent(request, instance)
+
+                # if instance.assigned_to_id:
+                #     instance = self.modify_inspection_team(request, instance, workflow=True, user_id=instance.assigned_to_id)
+
+                # Send email and Log it
+                email_data = prepare_mail(request, instance, workflow_entry, send_mail)
+                serializer = SanctionOutcomeCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+
+                return_serializer = SanctionOutcomeSerializer(instance=instance, context={'request': request})
+                headers = self.get_success_headers(return_serializer.data)
+                return Response(
+                    return_serializer.data,
+                    status=status.HTTP_201_CREATED,
+                    headers=headers
+                )
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def add_comms_log(self, request, instance=None, workflow=False, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                # create sanction outcome instance if not passed to this method
+                if not instance:
+                    instance = self.get_object()
+                # add sanction outcome attribute to request_data
+                request_data = request.data.copy()
+                request_data['sanction_outcome'] = u'{}'.format(instance.id)
+                if request_data.get('comms_log_id'):
+                    comms = SanctionOutcomeCommsLogEntry.objects.get(
+                        id=request_data.get('comms_log_id')
+                    )
+                    serializer = SanctionOutcomeCommsLogEntrySerializer(
+                        instance=comms,
+                        data=request.data)
+                else:
+                    serializer = SanctionOutcomeCommsLogEntrySerializer(
+                        data=request_data
+                    )
+                serializer.is_valid(raise_exception=True)
+                # overwrite comms with updated instance
+                comms = serializer.save()
+
+                if workflow:
+                    return comms
+                else:
+                    return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))

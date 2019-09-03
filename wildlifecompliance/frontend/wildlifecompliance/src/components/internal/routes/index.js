@@ -15,6 +15,8 @@ import InspectionDashTable from '../inspection/inspection_dashboard.vue'
 import Inspection from '../inspection/inspection.vue'
 import SanctionOutcomeDashTable from '../sanction_outcome/sanction_outcome_dashboard.vue'
 import SanctionOutcome from '../sanction_outcome/sanction_outcome.vue'
+import OffenceDashTable from '../offence/offence_dashboard.vue'
+import Offence from '../offence/offence.vue'
 
 export default
 {
@@ -54,6 +56,27 @@ export default
                     path: ':inspection_id',
                     component: Inspection,
                     name:"view-inspection"
+                },
+            ]
+        },
+        {
+            path: 'offence',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: '/',
+                    component: OffenceDashTable,
+                    name:"internal-offence-dash"
+                },
+                {
+                    path: ':offence_id',
+                    component: Offence,
+                    name:"view-offence"
                 },
             ]
         },
