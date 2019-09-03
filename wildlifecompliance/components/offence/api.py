@@ -7,7 +7,8 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.db.models import Q
 from rest_framework import viewsets, filters, serializers, status
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import detail_route, list_route, renderer_classes
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
@@ -193,10 +194,72 @@ class OffenceViewSet(viewsets.ModelViewSet):
             #instance.inspection.status = 'open_inspection'
             #instance.inspection.save()
 
+    @detail_route(methods=['POST', ])
+    @renderer_classes((JSONRenderer,))
+    def update_offence(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request_data = request.data
+
+                # 1. Save Location
+                if (
+                        request_data.get('location', {}).get('geometry', {}).get('coordinates', {}) or
+                        request_data.get('location', {}).get('properties', {}).get('postcode', {}) or
+                        request_data.get('location', {}).get('properties', {}).get('details', {})
+                ):
+                    location_request_data = request.data.get('location')
+                    returned_location = save_location(location_request_data)
+                    if returned_location:
+                        request_data.update({'location_id': returned_location.get('id')})
+
+                # 2. Save Offence
+                serializer = SaveOffenceSerializer(instance, data=request_data)
+                serializer.is_valid(raise_exception=True)
+                saved_offence_instance = serializer.save()  # Here, relations between this offence and location, and this offence and call_email/inspection are created
+
+                for dict in request_data['alleged_offences']:
+                    alleged_offence = SectionRegulation.objects.get(id=dict['id'])
+                    saved_offence_instance.alleged_offences.add(alleged_offence)
+                saved_offence_instance.save()
+
+                # 4. Create relations between this offence and offender(s)
+                for dict in request_data['offenders']:
+                    if dict['data_type'] == 'individual':
+                        offender = EmailUser.objects.get(id=dict['id'])
+                        serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'person_id': offender.id})
+                        serializer_offender.is_valid(raise_exception=True)
+                        serializer_offender.save()
+                    elif dict['data_type'] == 'organisation':
+                        offender = Organisation.objects.get(id=dict['id'])
+                        serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'organisation_id': offender.id})
+                        serializer_offender.is_valid(raise_exception=True)
+                        serializer_offender.save()
+
+                # 4. Return Json
+                headers = self.get_success_headers(serializer.data)
+                return_serializer = OffenceSerializer(saved_offence_instance, context={'request': request})
+                # return_serializer = InspectionSerializer(saved_instance, context={'request': request})
+                return Response(
+                    return_serializer.data,
+                    status=status.HTTP_201_CREATED,
+                    headers=headers
+                )
+
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
     # @list_route(methods=['POST', ])
     # def offence_save(self, request, *args, **kwargs):
     def create(self, request, *args, **kwargs):
-        print(request.data)
         try:
             with transaction.atomic():
                 request_data = request.data
@@ -216,7 +279,6 @@ class OffenceViewSet(viewsets.ModelViewSet):
                 serializer = SaveOffenceSerializer(data=request_data)
                 serializer.is_valid(raise_exception=True)
                 saved_offence_instance = serializer.save()  # Here, relations between this offence and location, and this offence and call_email/inspection are created
-                print(serializer.data)
 
                 # 2. Update parents
                 self.update_parent(request, saved_offence_instance)

@@ -550,7 +550,8 @@ export default {
     methods: {
         save: async function() {
             try{
-                let fetchUrl = helpers.add_endpoint_json(api_endpoints.offence, 'offence_save');
+                let fetchUrl = helpers.add_endpoint_json(api_endpoints.offence, this.offence.id + '/update_offence');
+                //fetchUrl = '/api/offence/' + this.offence.id + '/update_offence.json';
 
                 let payload = new Object();
                 Object.assign(payload, this.offence);
@@ -562,10 +563,19 @@ export default {
                 }
                 payload.status = 'open'
 
-                console.log('save');
-                console.log(payload);
+                  // Collect offenders data from the datatable, and set them to the vuex
+                  let offenders = this.$refs.offender_table.vmDataTable.rows().data().toArray();
+                  payload.offenders = offenders;
+
+                  // Collect alleged offence data from the datatable, and set them to the vuex
+                  let alleged_offences = this.$refs.alleged_offence_table.vmDataTable.rows().data().toArray();
+                  let alleged_offence_ids = alleged_offences.map(a => {
+                    return { id: a.id }; // We just need id to create relations between the offence and the alleged offence(s)
+                  });
+                  payload.alleged_offendces = alleged_offence_ids;
+
                 const savedOffence = await Vue.http.post(fetchUrl, payload);
-                await dispatch("setOffence", savedOffence.body);
+                Vue.set(this, 'offence', savedOffence.body);
                 await swal("Saved", "The record has been saved", "success");
                 return savedOffence;
             } catch (err) {

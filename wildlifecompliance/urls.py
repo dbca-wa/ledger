@@ -83,7 +83,7 @@ router.register(r'compliancepermissiongroup', users_api.CompliancePermissionGrou
 router.register(r'region_district', users_api.RegionDistrictViewSet)
 router.register(r'case_priorities', call_email_api.CasePriorityViewSet)
 router.register(r'inspection_types', inspection_api.InspectionTypeViewSet)
-router.register(r'offence', offence_api.OffenceViewSet)
+# router.register(r'offence', offence_api.OffenceViewSet)
 router.register(r'call_email_paginated', call_email_api.CallEmailPaginatedViewSet)
 router.register(r'inspection', inspection_api.InspectionViewSet)
 router.register(r'inspection_paginated', inspection_api.InspectionPaginatedViewSet)
