@@ -3,7 +3,7 @@ from rest_framework import serializers
 from ledger.accounts.models import Organisation
 from wildlifecompliance.components.call_email.serializers import LocationSerializer, EmailUserSerializer
 from wildlifecompliance.components.main.fields import CustomChoiceField
-from wildlifecompliance.components.main.models import get_related_items
+from wildlifecompliance.components.main.related_item import get_related_items
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
 from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
