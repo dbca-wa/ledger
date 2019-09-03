@@ -88,11 +88,11 @@
                         </div>
                         <div class="panel-body collapse in" :id="pBody2">
                             <div>
-                                <label for="" class="control-label" >Application Type * <a :href="proposal_type_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
+                                <label for="" class="control-label" >Licence Type * <a :href="proposal_type_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
                                 <div class="col-sm-12">
                                     <div class="form-group">
                                         <select class="form-control" style="width:40%" v-model="selected_application_id" @change="chainedSelectAppType(selected_application_id)">
-											<option value="" selected disabled>Select application type*</option>
+											<option value="" selected disabled>Select Licence type*</option>
                                             <option v-for="application_type in application_types" :value="application_type.value">
                                                 {{ application_type.text }}
                                             </option>
@@ -267,8 +267,11 @@ export default {
     manyDistricts: function() {
       return this.districts.length > 1;
     },
+    // proposal_type_help_url: function() {
+    //   return this.site_url + "help/commercialoperator/user/#apply_proposal_type"
+    // },
     proposal_type_help_url: function() {
-      return this.site_url + "help/commercialoperator/user/#apply_proposal_type"
+      return api_endpoints.proposal_type_help_url;
     },
     region_help_url: function() {
       return this.site_url + "help/commercialoperator/user/#apply_region"

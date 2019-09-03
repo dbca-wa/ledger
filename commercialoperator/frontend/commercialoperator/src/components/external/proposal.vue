@@ -176,6 +176,8 @@ export default {
       let vm = this;
       //vm.form=document.forms.new_proposal;
       vm.save_applicant_data();
+      //await vm.save_applicant_data();
+
       let formData = vm.set_formData()
       //vm.save_applicant_data();
 
@@ -410,7 +412,7 @@ export default {
 
         swal({
             title: vm.submit_text() + " Application",
-            text: "Are you sure you want to " + vm.submit_text()+ " this application?",
+            text: "Are you sure you want to " + vm.submit_text().toLowerCase()+ " this application?",
             type: "question",
             showCancelButton: true,
             confirmButtonText: vm.submit_text()

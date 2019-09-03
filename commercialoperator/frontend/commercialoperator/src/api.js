@@ -68,5 +68,7 @@ module.exports = {
     //dep_name_short: 'DBCA',
     system_name: 'Commercial Operator Licensing System',
     //system_name_short: 'DAS',
+    payment_help_url: 'https://parks.dpaw.wa.gov.au/for-business/training-accreditation-insurance-fees',
+    proposal_type_help_url: ' https://parks.dbca.wa.gov.au/for-business/commercial-operations-licensing',
 
 }
