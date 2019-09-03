@@ -105,37 +105,32 @@ export const inspectionStore = {
             }
         },
         
-        async saveInspection({ dispatch, state }, { route, crud, internal }) {
-            console.log(crud)
+        async saveInspection({ dispatch, state }, { create, internal }) {
             let inspectionId = null;
             let savedInspection = null;
             try {
-                let fetchUrl = null;
-                if (crud === 'create' || crud === 'duplicate') {
-                    fetchUrl = api_endpoints.inspection;
-                } else {
-                    fetchUrl = helpers.add_endpoint_join(
-                        api_endpoints.inspection, 
-                        state.inspection.id + "/inspection_save/"
-                        )
-                }
-
                 let payload = {};
                 Object.assign(payload, state.inspection);
+                console.log(payload);
                 if (payload.planned_for_date) {
                     payload.planned_for_date = moment(payload.planned_for_date, 'DD/MM/YYYY').format('YYYY-MM-DD');
                 } else if (payload.planned_for_date === '') {
                     payload.planned_for_date = null;
                 }
-                if (crud == 'duplicate') {
-                    payload.id = null;
-                    payload.location_id = null;
-                    if (payload.location) {
-                        payload.location.id = null;
-                    }
-                }
 
-                savedInspection = await Vue.http.post(fetchUrl, payload);
+                let fetchUrl = null;
+                if (create) {
+                    fetchUrl = api_endpoints.inspection;
+                    savedInspection = await Vue.http.post(fetchUrl, payload);
+                } else {
+                    // update Inspection
+                    fetchUrl = helpers.add_endpoint_join(
+                        api_endpoints.inspection,
+                        //state.inspection.id + "/inspection_save/"
+                        state.inspection.id + '/'
+                        )
+                        savedInspection = await Vue.http.put(fetchUrl, payload);
+                }
                 await dispatch("setInspection", savedInspection.body);
                 inspectionId = savedInspection.body.id;
 
@@ -149,25 +144,14 @@ export const inspectionStore = {
                 }
                 return window.location.href = "/internal/inspection/";
             }
-            if (crud === 'duplicate') {
-                return window.location.href = "/internal/inspection/" + inspectionId;
-            }
-            else if (crud === 'create' && internal) {
+            // internal arg used when file upload triggers record creation
+            if (internal) {
                 console.log("modal file create")
                 return savedInspection;
             }
-            // Below needs to be reviewed
-            else if (crud !== 'create') {
-                if (!internal) {
-                    await swal("Saved", "The record has been saved", "success");
-                } else {
-                    return savedInspection;
-                }
-            }
-            if (route) {
-                return window.location.href = "/internal/inspection/";
-            } else {
-                return inspectionId;
+            // update inspection
+            else if (!create) {
+                await swal("Saved", "The record has been saved", "success");
             }
         },
         

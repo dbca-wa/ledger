@@ -309,7 +309,12 @@ export default {
           this.isModalOpen = false;
       },
       sendData: async function() {
-          let post_url = '/api/inspection/'
+          let post_url = '';
+          if (!this.inspection.id) {
+              post_url = '/api/inspection/';
+          } else {
+              post_url = '/api/inspection/' + this.inspection.id + '/workflow_action/';
+          }
           
           let payload = new FormData();
           payload.append('details', this.inspectionDetails);
@@ -337,7 +342,7 @@ export default {
       createDocumentActionUrl: async function(done) {
         if (!this.inspection.id) {
             // create inspection and update vuex
-            let returned_inspection = await this.saveInspection({ route: false, crud: 'create', internal: true })
+            let returned_inspection = await this.saveInspection({ create: true, internal: true })
             await this.loadInspection({inspection_id: returned_inspection.body.id});
         }
         // populate filefield document_action_url

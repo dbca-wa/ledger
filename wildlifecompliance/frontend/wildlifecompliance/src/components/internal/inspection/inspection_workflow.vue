@@ -135,33 +135,6 @@ export default {
       ...mapActions({
           loadAllocatedGroup: 'loadAllocatedGroup',
       }),
-      // updateDistricts: function() {
-      //   // this.district_id = null;
-      //   this.availableDistricts = [];
-      //   for (let record of this.regionDistricts) {
-      //     if (this.region_id === record.id) {
-      //       for (let district of record.districts) {
-      //         for (let district_record of this.regionDistricts) {
-      //           if (district_record.id === district) {
-      //             this.availableDistricts.push(district_record)
-      //           }
-      //         }
-      //       }
-      //     }
-      //   }
-      //   console.log(this.availableDistricts);
-      //   this.availableDistricts.splice(0, 0, 
-      //   {
-      //     id: "", 
-      //     display_name: "",
-      //     district: "",
-      //     districts: [],
-      //     region: null,
-      //   });
-      //   // ensure security group members list is up to date
-      //   this.updateAllocatedGroup();
-      // },
-      // can delete?
       updateAllocatedGroup: async function() {
           console.log("updateAllocatedGroup");
           this.errorResponse = "";
@@ -211,30 +184,25 @@ export default {
           let payload = new FormData();
           payload.append('details', this.workflowDetails);
           this.$refs.comms_log_file.commsLogId ? payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
-          //this.parent_call_email ? payload.append('call_email_id', this.call_email.id) : null;
-          //this.district_id ? payload.append('district_id', this.district_id) : null;
-          //this.assigned_to_id ? payload.append('assigned_to_id', this.assigned_to_id) : null;
-          //this.inspection_type_id ? payload.append('inspection_type_id', this.inspection_type_id) : null;
-          //this.region_id ? payload.append('region_id', this.region_id) : null;
-          //this.allocated_group_id ? payload.append('allocated_group_id', this.allocated_group_id) : null;
           this.workflow_type ? payload.append('workflow_type', this.workflow_type) : null;
-          //!payload.has('allocated_group') ? payload.append('allocated_group', this.allocatedGroup) : null;
 
-          try {
-              let res = await Vue.http.post(post_url, payload);
-              console.log(res);
-              if (res.ok) {
-                  return res
-              }
-          } catch(err) {
-                  this.errorResponse = err.statusText;
-              }
-          
+          let inspectionRes = await this.saveInspection({internal: true })
+          if (inspectionRes.ok) {
+              try {
+                  let res = await Vue.http.post(post_url, payload);
+                  console.log(res);
+                  if (res.ok) {
+                      return res
+                  }
+              } catch(err) {
+                      this.errorResponse = err.statusText;
+                  }
+          }
       },
       createDocumentActionUrl: async function(done) {
         if (!this.inspection.id) {
             // create inspection and update vuex
-            let returned_inspection = await this.saveInspection({ route: false, crud: 'create', internal: true })
+            let returned_inspection = await this.saveInspection({ create: true, internal: true })
             await this.loadInspection({inspection_id: returned_inspection.body.id});
         }
         // populate filefield document_action_url
@@ -244,38 +212,6 @@ export default {
 
     },
     created: async function() {
-        // // regions
-        // let returned_regions = await cache_helper.getSetCacheList('Regions', '/api/region_district/get_regions/');
-        // Object.assign(this.regions, returned_regions);
-        // // blank entry allows user to clear selection
-        // this.regions.splice(0, 0, 
-        //     {
-        //       id: "", 
-        //       display_name: "",
-        //       district: "",
-        //       districts: [],
-        //       region: null,
-        //     });
-        // // regionDistricts
-        // let returned_region_districts = await cache_helper.getSetCacheList(
-        //     'RegionDistricts', 
-        //     api_endpoints.region_district
-        //     );
-        // Object.assign(this.regionDistricts, returned_region_districts);
-
-        // // inspection_types
-        // let returned_inspection_types = await cache_helper.getSetCacheList(
-        //     'InspectionTypes',
-        //     api_endpoints.inspection_types
-        //     );
-        // Object.assign(this.inspectionTypes, returned_inspection_types);
-        // // blank entry allows user to clear selection
-        // this.inspectionTypes.splice(0, 0, 
-        //     {
-        //       id: "", 
-        //       description: "",
-        //     });
-        // Get parent component details from vuex
         if (this.inspection && this.inspection.id) {
             this.inspection_type_id = this.inspection.inspection_type_id;
             this.region_id = this.inspection.region_id;

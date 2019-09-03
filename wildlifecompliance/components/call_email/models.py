@@ -551,6 +551,7 @@ class CallEmailLogEntry(CommunicationsLogEntry):
 
 
 class CallEmailUserAction(UserAction):
+    ACTION_CREATE_CALL_EMAIL = "Create Call/Email {}"
     ACTION_SAVE_CALL_EMAIL_ = "Save Call/Email {}"
     ACTION_FORWARD_TO_REGIONS = "Forward Call/Email {} to regions"
     ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH = "Forward Call/Email {} to Wildlife Protection Branch"
@@ -561,8 +562,10 @@ class CallEmailUserAction(UserAction):
     ACTION_OFFENCE = "Create linked offence for Call/Email {}"
     ACTION_SANCTION_OUTCOME = "Create Sanction Outcome for Call/Email {}"
     ACTION_PERSON_SEARCH = "Linked person to Call/Email {}"
-    ACTION_ADD_WEAK_LINK = "Create manual link between Call/Email: {} and {}: {}"
-    ACTION_REMOVE_WEAK_LINK = "Remove manual link between Call/Email: {} and {}: {}"
+    # ACTION_ADD_WEAK_LINK = "Create manual link between Call/Email: {} and {}: {}"
+    # ACTION_REMOVE_WEAK_LINK = "Remove manual link between Call/Email: {} and {}: {}"
+    ACTION_ADD_WEAK_LINK = "Create manual link between {}: {} and {}: {}"
+    ACTION_REMOVE_WEAK_LINK = "Remove manual link between {}: {} and {}: {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

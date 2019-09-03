@@ -62,17 +62,17 @@ class Inspection(RevisionedMixin):
             (PARTY_ORGANISATION, 'organisation')
             )
     STATUS_OPEN = 'open'
-    STATUS_WITH_MANAGER = 'with_manager'
-    STATUS_REQUEST_AMENDMENT = 'request_amendment'
-    STATUS_ENDORSEMENT = 'endorsement'
-    STATUS_SANCTION_OUTCOME = 'sanction_outcome'
+    #STATUS_WITH_MANAGER = 'with_manager'
+    #STATUS_REQUEST_AMENDMENT = 'request_amendment'
+    STATUS_AWAIT_ENDORSEMENT = 'await_endorsement'
+    #STATUS_SANCTION_OUTCOME = 'sanction_outcome'
     STATUS_DISCARDED = 'discarded'
     STATUS_CLOSED = 'closed'
     STATUS_CHOICES = (
             (STATUS_OPEN, 'Open'),
             #(STATUS_WITH_MANAGER, 'With Manager'),
             #(STATUS_REQUEST_AMENDMENT, 'Request Amendment'),
-            (STATUS_ENDORSEMENT, 'Awaiting Endorsement'),
+            (STATUS_AWAIT_ENDORSEMENT, 'Awaiting Endorsement'),
             #(STATUS_SANCTION_OUTCOME, 'Awaiting Sanction Outcomes'),
             (STATUS_DISCARDED, 'Discarded'),
             (STATUS_CLOSED, 'Closed')
@@ -135,6 +135,16 @@ class Inspection(RevisionedMixin):
             related_name='inspection_inspection_type',
             null=True
             )
+    region = models.ForeignKey(
+        RegionDistrict, 
+        related_name='inspection_region', 
+        null=True
+    )
+    district = models.ForeignKey(
+        RegionDistrict, 
+        related_name='inspection_district', 
+        null=True
+    )
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -179,25 +189,25 @@ class Inspection(RevisionedMixin):
             return self.inspection_type.schema
 
     def send_to_manager(self, request):
-        self.status = self.STATUS_WITH_MANAGER
+        self.status = self.STATUS_AWAIT_ENDORSEMENT
         self.log_user_action(
             InspectionUserAction.ACTION_SEND_TO_MANAGER.format(self.number), 
             request)
         self.save()
 
     def request_amendment(self, request):
-        self.status = self.STATUS_REQUEST_AMENDMENT
+        self.status = self.STATUS_OPEN
         self.log_user_action(
             InspectionUserAction.ACTION_REQUEST_AMENDMENT.format(self.number), 
             request)
         self.save()
 
-    def endorsement(self, request):
-        self.status = self.STATUS_ENDORSEMENT
-        self.log_user_action(
-            InspectionUserAction.ACTION_ENDORSEMENT.format(self.number), 
-            request)
-        self.save()
+    # def endorsement(self, request):
+    #     self.status = self.STATUS_ENDORSEMENT
+    #     self.log_user_action(
+    #         InspectionUserAction.ACTION_ENDORSEMENT.format(self.number), 
+    #         request)
+    #     self.save()
 
     def close(self, request):
         self.status = self.STATUS_CLOSED
@@ -241,15 +251,18 @@ class InspectionCommsLogEntry(CommunicationsLogEntry):
 
 
 class InspectionUserAction(UserAction):
+    ACTION_CREATE_INSPECTION = "Create Inspection {}"
     ACTION_SAVE_INSPECTION_ = "Save Inspection {}"
-    ACTION_OFFENCE = "Create Offence {}"
-    ACTION_SANCTION_OUTCOME = "Create Sanction Outcome {}"
+    # ACTION_OFFENCE = "Create Offence {}"
+    # ACTION_SANCTION_OUTCOME = "Create Sanction Outcome {}"
     ACTION_SEND_TO_MANAGER = "Send Inspection {} to Manager"
     ACTION_CLOSED = "Close Inspection {}"
     ACTION_REQUEST_AMENDMENT = "Request amendment for {}"
     ACTION_ENDORSEMENT = "Endorse {}"
-    ACTION_ADD_WEAK_LINK = "Create manual link between Inspection: {} and {}: {}"
-    ACTION_REMOVE_WEAK_LINK = "Remove manual link between Inspection: {} and {}: {}"
+    # ACTION_ADD_WEAK_LINK = "Create manual link between Inspection: {} and {}: {}"
+    # ACTION_REMOVE_WEAK_LINK = "Remove manual link between Inspection: {} and {}: {}"
+    ACTION_ADD_WEAK_LINK = "Create manual link between {}: {} and {}: {}"
+    ACTION_REMOVE_WEAK_LINK = "Remove manual link between {}: {} and {}: {}"
     ACTION_MAKE_TEAM_LEAD = "Make {} team lead"
     ACTION_ADD_TEAM_MEMBER = "Add {} to team"
     ACTION_REMOVE_TEAM_MEMBER = "Remove {} from team"

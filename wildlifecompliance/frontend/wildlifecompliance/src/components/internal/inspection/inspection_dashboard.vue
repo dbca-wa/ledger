@@ -276,7 +276,7 @@
                 this.createInspectionBindId = 'inspection' + timeNow.toString();
             },
             createInspectionUrl: async function () {
-                const newInspectionId = await this.saveInspection({ route: false, crud: 'create'});
+                const newInspectionId = await this.saveInspection({ create: true });
                 
                 this.$router.push({
                     name: 'view-inspection', 

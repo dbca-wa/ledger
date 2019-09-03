@@ -205,7 +205,7 @@
                                     <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
                                 </div-->
                                 <div class="col-sm-2">
-                                    <input type="button" class="btn btn-primary" value="Create New Person" @click.prevent="createNewPersonClicked()" />
+                                    <input type="button" class="btn btn-primary" :value="createNewPersonOrganisationTitle" @click.prevent="createNewPersonClicked()" />
                                 </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
@@ -305,7 +305,9 @@
         <!--div v-if="workflow_type">
           <InspectionWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
         </div-->
-        <Offence ref="offence" :parent_update_function="loadInspection" />
+        <div v-if="offenceInitialised">
+            <Offence ref="offence" :parent_update_function="loadInspection" />
+        </div>
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
@@ -440,6 +442,7 @@ export default {
       ),
       //workflowBindId: '',
       sanctionOutcomeInitialised: false,
+      offenceInitialised: false,
     };
   },
   components: {
@@ -540,7 +543,14 @@ export default {
         } else {
             return false;
         }
-    }
+    },
+    createNewPersonOrganisationTitle: function() {
+        if (this.inspection.party_inspected === 'organisation') {
+            return "Create New Organisation"
+        } else if (this.inspection.party_inspected === 'individual') {
+            return "Create New Person"
+        }
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -600,12 +610,13 @@ export default {
       this.sanctionOutcomeInitialised = true;
       this.$nextTick(() => {
           this.$refs.sanction_outcome.isModalOpen = true;
-          this.constructRelatedItemsTable();
       });
     },
     open_offence(){
       this.offenceInitialised = true;
-      this.$refs.offence.isModalOpen = true;
+      this.$nextTick(() => {
+          this.$refs.offence.isModalOpen = true;
+      });
     },
     createNewPersonClicked: function() {
       this.newPersonBeingCreated = true;
@@ -646,30 +657,6 @@ export default {
             this.workflowBindId = timeNow.toString();
         }
     },
-    constructRelatedItemsTable: function() {
-        console.log('constructRelatedItemsTable');
-        
-        let vm = this;
-        
-        vm.$refs.related_items_table.vmDataTable.clear().draw();
-
-        if(vm.inspection.related_items){
-          for(let i = 0; i<vm.inspection.related_items.length; i++){
-            let already_exists = vm.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(vm.inspection.related_items[i].id);
-
-            if (!already_exists){
-                vm.$refs.related_items_table.vmDataTable.row.add(
-                    {
-                        'identifier': vm.inspection.related_items[i].identifier,
-                        'descriptor': vm.inspection.related_items[i].descriptor,
-                        'model_name': vm.inspection.related_items[i].model_name,
-                        'Action': vm.inspection.related_items[i],
-                    }
-                ).draw();
-            }
-          }
-        }
-    },
     addWorkflow(workflow_type) {
       this.workflow_type = workflow_type;
       this.updateWorkflowBindId();
@@ -680,9 +667,9 @@ export default {
     },
     save: async function () {
         if (this.inspection.id) {
-            await this.saveInspection({ route: false, crud: 'save' });
+            await this.saveInspection();
         } else {
-            await this.saveInspection({ route: false, crud: 'create'});
+            await this.saveInspection({ create: true });
             this.$nextTick(function () {
                 this.$router.push(
                   { name: 'view-inspection', 
@@ -693,13 +680,10 @@ export default {
     },
     saveExit: async function() {
       if (this.inspection.id) {
-        await this.saveInspection({ route: true, crud: 'save' });
+        await this.saveInspection();
       } else {
-        await this.saveInspection({ route: true, crud: 'create'});
+        await this.saveInspection({ create: true });
       }
-    },
-    duplicate: async function() {
-      await this.saveInspection({ route: false, crud: 'duplicate'});
     },
     addEventListeners: function() {
       let vm = this;
