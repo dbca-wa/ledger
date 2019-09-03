@@ -561,8 +561,10 @@ class CallEmailUserAction(UserAction):
     ACTION_OFFENCE = "Create linked offence for Call/Email {}"
     ACTION_SANCTION_OUTCOME = "Create Sanction Outcome for Call/Email {}"
     ACTION_PERSON_SEARCH = "Linked person to Call/Email {}"
-    ACTION_ADD_WEAK_LINK = "Create manual link between Call/Email: {} and {}: {}"
-    ACTION_REMOVE_WEAK_LINK = "Remove manual link between Call/Email: {} and {}: {}"
+    # ACTION_ADD_WEAK_LINK = "Create manual link between Call/Email: {} and {}: {}"
+    # ACTION_REMOVE_WEAK_LINK = "Remove manual link between Call/Email: {} and {}: {}"
+    ACTION_ADD_WEAK_LINK = "Create manual link between {}: {} and {}: {}"
+    ACTION_REMOVE_WEAK_LINK = "Remove manual link between {}: {} and {}: {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

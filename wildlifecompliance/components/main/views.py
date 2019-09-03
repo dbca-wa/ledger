@@ -79,11 +79,12 @@ class CreateWeakLinkView(views.APIView):
                             )
                     # derive parent (calling) object instance from weak_link_instance
                     calling_instance = weak_link_instance.first_content_type.model_class().objects.get(id=first_object_id)
-                    secondary_instance = weak_link_instance.second_content_type.model_class().objects.get(id=second_object_id)
+                    secondary_instance = weak_link_instance.second_content_type.model_class().objects.get(id=second_object_id_int)
 
                     # log user action for both calling and secondary instances
                     calling_instance.log_user_action(
                         calling_instance.action_logs.model.ACTION_ADD_WEAK_LINK.format(
+                        format_model_name(first_content_type.model),
                         calling_instance.get_related_items_identifier,
                         format_model_name(second_content_type.model),
                         secondary_instance.get_related_items_identifier
@@ -91,9 +92,10 @@ class CreateWeakLinkView(views.APIView):
                         request)
                     secondary_instance.log_user_action(
                         secondary_instance.action_logs.model.ACTION_ADD_WEAK_LINK.format(
-                        secondary_instance.get_related_items_identifier,
                         format_model_name(first_content_type.model),
-                        calling_instance.get_related_items_identifier
+                        calling_instance.get_related_items_identifier,
+                        format_model_name(second_content_type.model),
+                        secondary_instance.get_related_items_identifier
                         ), 
                         request)
 
@@ -115,11 +117,14 @@ class RemoveWeakLinkView(views.APIView):
     def post(self, request, format=None):
         try:
             with transaction.atomic():
+                # These are the presumptive first_content and second_content values, but may be reversed
                 first_content_type_str = request.data.get('first_content_type')
                 first_object_id = request.data.get('first_object_id')
                 second_content_type_str = request.data.get('second_content_type')
                 second_object_id = request.data.get('second_object_id')
                 can_user_action = request.data.get('can_user_action')
+                calling_instance = None
+                paired_instance = None
 
                 if can_user_action:
                     # transform request data to search for Weak Link obj to delete
@@ -131,7 +136,6 @@ class RemoveWeakLinkView(views.APIView):
                             app_label='wildlifecompliance', 
                             model=second_content_type_str)
 
-                    # If weak link obj not found, test for object with first and second fields reversed and delete that instead.
                     weak_link_qs = WeakLinks.objects.filter(
                             first_content_type_id = first_content_type.id,
                             first_object_id = first_object_id,
@@ -140,8 +144,30 @@ class RemoveWeakLinkView(views.APIView):
                             )
                     if weak_link_qs:
                         weak_link_instance = weak_link_qs[0]
+                        calling_instance = first_content_type.model_class().objects.get(id=first_object_id)
+                        paired_instance = weak_link_instance.second_content_type.model_class().objects.get(id=second_object_id_int)
+
+                        # calling instance will be Weak Link originator
+                        calling_instance.log_user_action(
+                            calling_instance.action_logs.model.ACTION_REMOVE_WEAK_LINK.format(
+                            format_model_name(first_content_type.model),
+                            calling_instance.get_related_items_identifier,
+                            format_model_name(second_content_type.model),
+                            paired_instance.get_related_items_identifier
+                            ),
+                            request)
+                        paired_instance.log_user_action(
+                            paired_instance.action_logs.model.ACTION_REMOVE_WEAK_LINK.format(
+                            format_model_name(first_content_type.model),
+                            calling_instance.get_related_items_identifier,
+                            format_model_name(second_content_type.model),
+                            paired_instance.get_related_items_identifier
+                            ), 
+                            request)
+                        # delete from db
                         weak_link_instance.delete()
                     else:
+                    # If weak link obj not found, test for object with first and second fields reversed and delete that instead.
                         weak_link_qs = WeakLinks.objects.filter(
                                 first_content_type_id = second_content_type.id,
                                 first_object_id = second_object_id_int,
@@ -150,28 +176,30 @@ class RemoveWeakLinkView(views.APIView):
                                 )
                         if weak_link_qs:
                             weak_link_instance = weak_link_qs[0]
+                            # primary object
+                            paired_instance = second_content_type.model_class().objects.get(id=second_object_id_int)
+                            # secondary object
+                            calling_instance = weak_link_instance.second_content_type.model_class().objects.get(id=first_object_id)
+
+                            # must reverse first_content and second_content positions
+                            paired_instance.log_user_action(
+                                paired_instance.action_logs.model.ACTION_REMOVE_WEAK_LINK.format(
+                                format_model_name(second_content_type.model),
+                                paired_instance.get_related_items_identifier,
+                                format_model_name(first_content_type.model),
+                                calling_instance.get_related_items_identifier
+                                ), 
+                                request)
+                            calling_instance.log_user_action(
+                                calling_instance.action_logs.model.ACTION_REMOVE_WEAK_LINK.format(
+                                format_model_name(second_content_type.model),
+                                paired_instance.get_related_items_identifier,
+                                format_model_name(first_content_type.model),
+                                calling_instance.get_related_items_identifier
+                                ), 
+                                request)
+                            # delete from db
                             weak_link_instance.delete()
-
-                    # derive parent (calling) object instance from ContentType
-                    calling_instance = first_content_type.model_class().objects.get(id=first_object_id)
-                    secondary_instance = weak_link_instance.second_content_type.model_class().objects.get(id=second_object_id)
-
-                    # log user action for both calling and secondary instances
-
-                    calling_instance.log_user_action(
-                        calling_instance.action_logs.model.ACTION_REMOVE_WEAK_LINK.format(
-                        calling_instance.get_related_items_identifier,
-                        format_model_name(second_content_type.model),
-                        secondary_instance.get_related_items_identifier
-                        ), 
-                        request)
-                    secondary_instance.log_user_action(
-                        secondary_instance.action_logs.model.ACTION_REMOVE_WEAK_LINK.format(
-                        secondary_instance.get_related_items_identifier,
-                        format_model_name(first_content_type.model),
-                        calling_instance.get_related_items_identifier
-                        ), 
-                        request)
                     # get related items of calling_instance
                     related_items = get_related_items(calling_instance)
                     return Response(related_items)

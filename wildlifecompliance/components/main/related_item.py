@@ -38,11 +38,11 @@ def format_url(model_name, obj_id):
         lower_model_name = model_name.lower()
         obj_id_str = str(obj_id)
         switcher = {
-                'callemail': '<a href=/internal/call_email/' + obj_id_str + '>View</a>',
-                'inspection': '<a href=/internal/inspection/' + obj_id_str + '>View</a>',
-                'offence': '<a href=/internal/offence/' + obj_id_str + '>View</a>',
-                'sanctionoutcome': '<a href=/internal/sanction_outcome/' + obj_id_str + '>View</a>',
-                'case': '<a href=/internal/case/' + obj_id_str + '>View</a>',
+                'callemail': '<a href=/internal/call_email/' + obj_id_str + ' target="_blank">View</a>',
+                'inspection': '<a href=/internal/inspection/' + obj_id_str + ' target="_blank">View</a>',
+                'offence': '<a href=/internal/offence/' + obj_id_str + ' target="_blank">View</a>',
+                'sanctionoutcome': '<a href=/internal/sanction_outcome/' + obj_id_str + ' target="_blank">View</a>',
+                'case': '<a href=/internal/case/' + obj_id_str + ' target="_blank">View</a>',
                 }
         return switcher.get(lower_model_name, '')
 

@@ -621,7 +621,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
             instance.call_email.status = 'open_inspection'
             instance.call_email.save()
 
-
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def workflow_action(self, request, instance=None, *args, **kwargs):
@@ -655,6 +654,7 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 instance.inspection_type_id = None if not request.data.get('inspection_type_id') else request.data.get('inspection_type_id')
                 instance.allocated_group_id = None if not request.data.get('allocated_group_id') else request.data.get('allocated_group_id')
                 instance.call_email_id = None if not request.data.get('call_email_id') else request.data.get('call_email_id')
+                instance.details = None if not request.data.get('details') else request.data.get('details')
 
                 instance.save()
                 # Log parent actions and update status
