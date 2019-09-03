@@ -70,7 +70,7 @@
                                         <select class="form-control" v-on:change="offenceSelected($event)" v-bind:value="sanction_outcome.current_offence.id">
                                             <option value=""></option>
                                             <option v-for="option in options_for_offences" v-bind:value="option.id" v-bind:key="option.id">
-                                                {{ option.identifier }} 
+                                                {{ option.lodgement_number + ': ' + option.identifier }} 
                                             </option>
                                         </select>
                                     </div>
@@ -842,12 +842,15 @@ export default {
           returned = await Vue.http.get("/api/offence/filter_by_call_email.json", {
               params: { call_email_id: this.$parent.call_email.id }
           });
+        this.options_for_offences = returned.body;
       } else if (this.$parent.inspection) {
           returned = await Vue.http.get("/api/offence/filter_by_inspection.json", {
               params: { inspection_id: this.$parent.inspection.id }
           });
+        this.options_for_offences = returned.body;
+      } else if (this.$parent.offence) {
+        this.options_for_offences = [this.$parent.offence];
       }
-      this.options_for_offences = returned.body;
     },
     createDocumentActionUrl: async function() {
         // create sanction outcome and get id

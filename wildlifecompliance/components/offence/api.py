@@ -18,7 +18,7 @@ from wildlifecompliance.components.call_email.models import Location, CallEmailU
 from wildlifecompliance.components.inspection.models import InspectionUserAction, Inspection
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
 from wildlifecompliance.components.main.api import save_location
-from wildlifecompliance.components.offence.models import Offence, SectionRegulation
+from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
 from wildlifecompliance.components.offence.serializers import OffenceSerializer, SectionRegulationSerializer, \
     SaveOffenceSerializer, SaveOffenderSerializer, OrganisationSerializer, OffenceDatatableSerializer
 from wildlifecompliance.helpers import is_internal
@@ -161,7 +161,7 @@ class OffenceViewSet(viewsets.ModelViewSet):
         except:
             queryset = self.get_queryset()
 
-        serializer = OffenceSerializer(queryset, many=True)
+        serializer = OffenceSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
     
     @list_route(methods=['GET', ])
@@ -174,7 +174,7 @@ class OffenceViewSet(viewsets.ModelViewSet):
         except:
             queryset = self.get_queryset()
 
-        serializer = OffenceSerializer(queryset, many=True)
+        serializer = OffenceSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
     
     def update_parent(self, request, instance, *args, **kwargs):
@@ -214,27 +214,54 @@ class OffenceViewSet(viewsets.ModelViewSet):
                         request_data.update({'location_id': returned_location.get('id')})
 
                 # 2. Save Offence
-                serializer = SaveOffenceSerializer(instance, data=request_data)
+                serializer = SaveOffenceSerializer(instance, data=request_data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 saved_offence_instance = serializer.save()  # Here, relations between this offence and location, and this offence and call_email/inspection are created
 
-                for dict in request_data['alleged_offences']:
-                    alleged_offence = SectionRegulation.objects.get(id=dict['id'])
+                # 3. Save alleged offences
+                ids_received = set([d['id'] for d in request_data['alleged_offences']])
+                ids_stored = set(instance.alleged_offences.values_list('id', flat=True))  # making queryset to list
+                ids_to_be_deleted = list(ids_stored - ids_received)  # calculate with set (not list)
+                ids_to_be_added = list(ids_received - ids_stored)
+
+                for id in ids_to_be_added:
+                    alleged_offence = SectionRegulation.objects.get(id=id)
                     saved_offence_instance.alleged_offences.add(alleged_offence)
+                for id in ids_to_be_deleted:
+                    alleged_offence = SectionRegulation.objects.get(id=id)
+                    saved_offence_instance.alleged_offences.remove(alleged_offence)
+
                 saved_offence_instance.save()
 
                 # 4. Create relations between this offence and offender(s)
-                for dict in request_data['offenders']:
-                    if dict['data_type'] == 'individual':
-                        offender = EmailUser.objects.get(id=dict['id'])
-                        serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'person_id': offender.id})
-                        serializer_offender.is_valid(raise_exception=True)
-                        serializer_offender.save()
-                    elif dict['data_type'] == 'organisation':
-                        offender = Organisation.objects.get(id=dict['id'])
-                        serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'organisation_id': offender.id})
-                        serializer_offender.is_valid(raise_exception=True)
-                        serializer_offender.save()
+                # individual
+                ids_received_individual = [item['id'] if item['data_type'] == 'individual' else '' for item in request_data['offenders']]
+                ids_received_individual = set(filter(None, ids_received_individual))  # Remove all the empty string inserted above
+                ids_stored_individual = set(Offender.objects.filter(offence=saved_offence_instance, person__isnull=False, removed=False).values_list('person_id', flat=True))
+                ids_to_be_deleted_individual = list(ids_stored_individual - ids_received_individual)
+                ids_to_be_added_individual = list(ids_received_individual - ids_stored_individual)
+
+                # organisation
+                ids_received_organisation = [item['id'] if item['data_type'] == 'organisation' else '' for item in request_data['offenders']]
+                ids_received_organisation = set(filter(None, ids_received_organisation))  # Remove all the empty string inserted above
+                ids_stored_organisation = set(Offender.objects.filter(offence=saved_offence_instance, organisation__isnull=False, removed=False).values_list('organisation_id', flat=True))
+                ids_to_be_deleted_organisation = list(ids_stored_organisation - ids_received_organisation)
+                ids_to_be_added_organisation = list(ids_received_organisation - ids_stored_organisation)
+
+                for id in ids_to_be_added_individual:
+                    serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'person_id': id})
+                    serializer_offender.is_valid(raise_exception=True)
+                    serializer_offender.save()
+                for id in ids_to_be_added_organisation:
+                    serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'organisation_id': id})
+                    serializer_offender.is_valid(raise_exception=True)
+                    serializer_offender.save()
+                for id in ids_to_be_deleted_individual:
+                    offender = Offender.objects.filter(person__id=id, offence__id=saved_offence_instance.id)  # Should be one record
+                    offender.update(removed=True)
+                for id in ids_to_be_deleted_organisation:
+                    offender = Offender.objects.filter(organisation__id=id, offence__id=saved_offence_instance.id)  # Should be one record
+                    offender.update(removed=True)
 
                 # 4. Return Json
                 headers = self.get_success_headers(serializer.data)

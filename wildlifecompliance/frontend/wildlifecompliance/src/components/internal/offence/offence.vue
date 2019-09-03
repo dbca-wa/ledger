@@ -268,6 +268,9 @@
                 </div>
             </div>
         </div>
+        <div v-if="sanctionOutcomeInitialised">
+            <SanctionOutcome ref="sanction_outcome" />
+        </div>
     </div>
 </template>
 
@@ -284,6 +287,7 @@ import OffenceWorkflow from './offence_workflow';
 import PersonSearch from "@common-components/search_person.vue";
 import CreateNewPerson from "@common-components/create_new_person.vue";
 import MapLocation from "../../common/map_location";
+import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import 'bootstrap/dist/css/bootstrap.css';
 import "awesomplete/awesomplete.css";
 import RelatedItems from "@common-components/related_items.vue";
@@ -318,6 +322,7 @@ export default {
             displayCreateNewPerson: false,
             idLocationFieldsAddress: vm.guid + "LocationFieldsAddress",
             idLocationFieldsDetails: vm.guid + "LocationFieldsDetails",
+            sanctionOutcomeInitialised: false,
 
             offence: {
                 id: null,
@@ -473,6 +478,7 @@ export default {
         MapLocation,
         CreateNewPerson,
         RelatedItems,
+        SanctionOutcome,
     },
     computed: {
         ...mapGetters('offenceStore', {
@@ -563,6 +569,8 @@ export default {
                 }
                 payload.status = 'open'
 
+                console.log('aho tables');
+
                   // Collect offenders data from the datatable, and set them to the vuex
                   let offenders = this.$refs.offender_table.vmDataTable.rows().data().toArray();
                   payload.offenders = offenders;
@@ -572,7 +580,7 @@ export default {
                   let alleged_offence_ids = alleged_offences.map(a => {
                     return { id: a.id }; // We just need id to create relations between the offence and the alleged offence(s)
                   });
-                  payload.alleged_offendces = alleged_offence_ids;
+                  payload.alleged_offences = alleged_offence_ids;
 
                 const savedOffence = await Vue.http.post(fetchUrl, payload);
                 Vue.set(this, 'offence', savedOffence.body);
@@ -588,7 +596,10 @@ export default {
 
         },
         openSanctionOutcome: function() {
-
+          this.sanctionOutcomeInitialised = true;
+          this.$nextTick(() => {
+              this.$refs.sanction_outcome.isModalOpen = true;
+          });
         },
         addWorkflow: function(workflow_type) {
 
@@ -1118,6 +1129,7 @@ export default {
           );
         },
         loadOffence: async function (offence_id) {
+            console.log('loadOffence');
             let returnedOffence = await Vue.http.get(helpers.add_endpoint_json(api_endpoints.offence, offence_id));
             if (returnedOffence.body.occurrence_date_to) {
                 returnedOffence.body.occurrence_date_to = moment(returnedOffence.body.occurrence_date_to, 'YYYY-MM-DD').format('DD/MM/YYYY');
