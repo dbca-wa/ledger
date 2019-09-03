@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from wildlifecompliance.components.main.models import CommunicationsLogEntry
 from ledger.accounts.models import EmailUser
+from wildlifecompliance.components.main.models import WeakLinks
 
 
 class CommunicationLogEntrySerializer(serializers.ModelSerializer):
@@ -41,6 +42,16 @@ class SearchKeywordSerializer(serializers.Serializer):
         required=False
     )
 
-
 class SearchReferenceSerializer(serializers.Serializer):
     url_string = serializers.CharField()
+
+
+class RelatedItemsSerializer(serializers.Serializer):
+    descriptor = serializers.CharField()
+    identifier = serializers.CharField()
+    model_name = serializers.CharField()
+    second_object_id = serializers.IntegerField(allow_null=True)
+    second_content_type = serializers.CharField(allow_blank=True)
+    weak_link = serializers.BooleanField()
+    action_url = serializers.CharField(allow_blank=True)
+

@@ -205,7 +205,7 @@
                                     <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
                                 </div-->
                                 <div class="col-sm-2">
-                                    <input type="button" class="btn btn-primary" value="Create New Person" @click.prevent="createNewPersonClicked()" />
+                                    <input type="button" class="btn btn-primary" :value="createNewPersonOrganisationTitle" @click.prevent="createNewPersonClicked()" />
                                 </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
@@ -274,19 +274,12 @@
                                     </div>
                                 </div>
                             </FormSection>
-                            <FormSection :formCollapse="false" label="Sanction Outcomes">
-                                <div class="col-sm-12 form-group"><div class="row">
-                                    <div class="col-sm-12">
-                                        
-                                    </div>
-                                </div></div>
-                            </FormSection>
                         </div>
                         <div :id="rTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
-                                    <div class="col-sm-12">
-                                        <RelatedItems v-bind:key="relatedItemsBindId"/>
+                                    <div class="col-sm-12" v-if="relatedItemsVisibility">
+                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_related_items="setRelatedItems"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -312,11 +305,13 @@
         <!--div v-if="workflow_type">
           <InspectionWorkflow ref="add_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
         </div-->
-        <Offence ref="offence" :parent_update_function="loadInspection" />
+        <div v-if="offenceInitialised">
+            <Offence ref="offence" :parent_update_function="loadInspection" />
+        </div>
         <div v-if="sanctionOutcomeInitialised">
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadInspection"/>
         </div>
-        <InspectionModal ref="inspection_modal" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
+        <InspectionWorkflow ref="inspection_workflow" :workflow_type="workflow_type" v-bind:key="workflowBindId" />
     </div>
 </template>
 <script>
@@ -335,7 +330,7 @@ import 'eonasdan-bootstrap-datetimepicker';
 import Offence from '../offence/offence';
 import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
-import InspectionModal from './inspection_modal.vue';
+import InspectionWorkflow from './inspection_workflow.vue';
 import RelatedItems from "@common-components/related_items.vue";
 
 
@@ -447,6 +442,7 @@ export default {
       ),
       //workflowBindId: '',
       sanctionOutcomeInitialised: false,
+      offenceInitialised: false,
     };
   },
   components: {
@@ -458,16 +454,8 @@ export default {
     Offence,
     SanctionOutcome,
     filefield,
-    InspectionModal,
+    InspectionWorkflow,
     RelatedItems,
-  },
-  watch: {
-      inspection: {
-          handler: function (){
-              this.constructRelatedItemsTable();
-          },
-          deep: true
-      },
   },
   computed: {
     ...mapGetters('inspectionStore', {
@@ -481,6 +469,9 @@ export default {
     },
     readonlyForm: function() {
         return !this.inspection.can_user_action;
+    },
+    canUserAction: function() {
+        return this.inspection.can_user_action;
     },
     inspectionReportExists: function() {
         return this.inspection.inspection_report.length > 0 ? true : false;
@@ -506,6 +497,13 @@ export default {
     endorseVisibility: function() {
         if (this.inspection.status && !this.readonlyForm) {
             return this.inspection.status.id === 'with_manager' ? true : false;
+        } else {
+            return false;
+        }
+    },
+    testProblem: function() {
+        if (this.canUserAction) {
+            return true;
         } else {
             return false;
         }
@@ -539,6 +537,20 @@ export default {
             return timeNow.toString();
         }
     },
+    relatedItemsVisibility: function() {
+        if (this.inspection && this.inspection.id) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+    createNewPersonOrganisationTitle: function() {
+        if (this.inspection.party_inspected === 'organisation') {
+            return "Create New Organisation"
+        } else if (this.inspection.party_inspected === 'individual') {
+            return "Create New Person"
+        }
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -553,6 +565,7 @@ export default {
       setPlannedForTime: 'setPlannedForTime',
       modifyInspectionTeam: 'modifyInspectionTeam',
       setPartyInspected: 'setPartyInspected',
+      setRelatedItems: 'setRelatedItems',
     }),
     newPersonCreated: function(obj) {
         console.log(obj);
@@ -582,7 +595,7 @@ export default {
                     this.inspection.inspection_type_id + '/get_schema',
                     );
       let returned_schema = await cache_helper.getSetCache(
-        'Inspection_InspectionTypeSchema', 
+        'InspectionTypeSchema', 
         this.inspection.id.toString(),
         url);
       if (returned_schema) {
@@ -597,12 +610,13 @@ export default {
       this.sanctionOutcomeInitialised = true;
       this.$nextTick(() => {
           this.$refs.sanction_outcome.isModalOpen = true;
-          this.constructRelatedItemsTable();
       });
     },
     open_offence(){
       this.offenceInitialised = true;
-      this.$refs.offence.isModalOpen = true;
+      this.$nextTick(() => {
+          this.$refs.offence.isModalOpen = true;
+      });
     },
     createNewPersonClicked: function() {
       this.newPersonBeingCreated = true;
@@ -643,43 +657,19 @@ export default {
             this.workflowBindId = timeNow.toString();
         }
     },
-    constructRelatedItemsTable: function() {
-        console.log('constructRelatedItemsTable');
-        
-        let vm = this;
-        
-        vm.$refs.related_items_table.vmDataTable.clear().draw();
-
-        if(vm.inspection.related_items){
-          for(let i = 0; i<vm.inspection.related_items.length; i++){
-            let already_exists = vm.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(vm.inspection.related_items[i].id);
-
-            if (!already_exists){
-                vm.$refs.related_items_table.vmDataTable.row.add(
-                    {
-                        'identifier': vm.inspection.related_items[i].identifier,
-                        'descriptor': vm.inspection.related_items[i].descriptor,
-                        'model_name': vm.inspection.related_items[i].model_name,
-                        'Action': vm.inspection.related_items[i],
-                    }
-                ).draw();
-            }
-          }
-        }
-    },
     addWorkflow(workflow_type) {
       this.workflow_type = workflow_type;
       this.updateWorkflowBindId();
       this.$nextTick(() => {
-        this.$refs.inspection_modal.isModalOpen = true;
+        this.$refs.inspection_workflow.isModalOpen = true;
       });
       // this.$refs.add_workflow.isModalOpen = true;
     },
     save: async function () {
         if (this.inspection.id) {
-            await this.saveInspection({ route: false, crud: 'save' });
+            await this.saveInspection();
         } else {
-            await this.saveInspection({ route: false, crud: 'create'});
+            await this.saveInspection({ create: true });
             this.$nextTick(function () {
                 this.$router.push(
                   { name: 'view-inspection', 
@@ -690,13 +680,10 @@ export default {
     },
     saveExit: async function() {
       if (this.inspection.id) {
-        await this.saveInspection({ route: true, crud: 'save' });
+        await this.saveInspection();
       } else {
-        await this.saveInspection({ route: true, crud: 'create'});
+        await this.saveInspection({ create: true });
       }
-    },
-    duplicate: async function() {
-      await this.saveInspection({ route: false, crud: 'duplicate'});
     },
     addEventListeners: function() {
       let vm = this;
@@ -763,7 +750,7 @@ export default {
 
       // inspection_types
       let returned_inspection_types = await cache_helper.getSetCacheList(
-          'Inspection_InspectionTypes',
+          'InspectionTypes',
           api_endpoints.inspection_types
           );
       Object.assign(this.inspectionTypes, returned_inspection_types);

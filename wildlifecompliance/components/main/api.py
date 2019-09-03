@@ -1,7 +1,5 @@
-from wildlifecompliance.components.call_email.models import Location #, CallEmail
-# from wildlifecompliance.components.users.models import CompliancePermissionGroup #, CallEmail
+from wildlifecompliance.components.call_email.models import Location
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
-#from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome
 from django.core.files.storage import default_storage 
 import os
 from django.core.files.base import ContentFile

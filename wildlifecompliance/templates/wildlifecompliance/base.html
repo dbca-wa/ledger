@@ -108,14 +108,16 @@
                                                     <form name="update-system-preference" method="post" action="/api/users/{{request.user.id}}/update_system_preference/">
                                                         {% csrf_token %}
                                                         <input type="hidden" name="prefer_compliance_management" value="True"/>
-                                                        <input type="submit" value="Show Compliance Management" />
+                                                        <input type="submit" class="submit" value="Show Compliance Management" />
                                                     </form>
+                                                <li role="separator" class="divider"></li>
                                                 {% elif is_compliance_internal_login and prefer_compliance_management %}
                                                     <form name="update-system-preference" method="post" action="/api/users/{{request.user.id}}/update_system_preference/">
                                                         {% csrf_token %}
                                                         <input type="hidden" name="prefer_compliance_management" value="False"/>
-                                                        <input type="submit" value="Show Wildlife Licencing" />
+                                                        <input type="submit" class="submit" value="Show Wildlife Licencing" />
                                                     </form>
+                                                <li role="separator" class="divider"></li>
                                                 {% endif %}
                                                 {% if is_wildlifecompliance_admin_login %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
@@ -186,3 +188,11 @@
         {% endblock %}
     </body>
 </html>
+<style>
+.submit {
+    background-color: transparent;
+    text-decoration: none;
+    border: none;
+    padding: 3px 20px;
+    }
+</style>

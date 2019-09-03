@@ -99,7 +99,7 @@ class InspectionFilterBackend(DatatablesFilterBackend):
             search_text_inspection_ids = []
             for inspection in queryset:
                 #lodged_on_str = time.strftime('%d/%m/%Y', call_email.lodged_on)
-                planned_for_str = inspection.planned_for_date.strftime('%d/%m/%Y')
+                planned_for_str = inspection.planned_for_date.strftime('%d/%m/%Y') if inspection.planned_for_date else ''
                 if (search_text in (inspection.number.lower() if inspection.number else '')
                     or search_text in (inspection.status.lower() if inspection.status else '')
                     or search_text in (inspection.inspection_type.description.lower() if inspection.inspection_type else '')
@@ -370,6 +370,13 @@ class InspectionViewSet(viewsets.ModelViewSet):
                             instance.inspection_team.add(user)
                         if not instance.inspection_team_lead or not team_member_list:
                            instance.inspection_team_lead = user
+                           instance.log_user_action(
+                               InspectionUserAction.ACTION_MAKE_TEAM_LEAD.format(
+                               user.get_full_name()), request)
+                        else: 
+                            instance.log_user_action(
+                                InspectionUserAction.ACTION_ADD_TEAM_MEMBER.format(
+                                user.get_full_name()), request)
                     if action == 'remove':
                         if user in team_member_list:
                             instance.inspection_team.remove(user)
@@ -378,10 +385,16 @@ class InspectionViewSet(viewsets.ModelViewSet):
                             instance.inspection_team_lead = team_member_list[0]
                         else:
                             instance.inspection_team_lead_id = None
+                        instance.log_user_action(
+                            InspectionUserAction.ACTION_REMOVE_TEAM_MEMBER.format(
+                            user.get_full_name()), request)
                     if action == 'make_team_lead':
                         if user not in team_member_list:
                             instance.inspection_team.add(user)
                         instance.inspection_team_lead = user
+                        instance.log_user_action(
+                                InspectionUserAction.ACTION_MAKE_TEAM_LEAD.format(
+                                user.get_full_name()), request)
                     instance.save()
                     if workflow:
                         return instance
@@ -409,9 +422,12 @@ class InspectionViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
-    @detail_route(methods=['POST', ])
+    #@detail_route(methods=['PUT', ])
     @renderer_classes((JSONRenderer,))
-    def inspection_save(self, request, workflow=False, *args, **kwargs):
+    #def inspection_save(self, request, workflow=False, *args, **kwargs):
+    def update(self, request, workflow=False, *args, **kwargs):
+        print("update")
+        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
@@ -574,6 +590,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
                     instance = serializer.save()
+                    instance.log_user_action(
+                            InspectionUserAction.ACTION_CREATE_INSPECTION.format(
+                            instance.number), request)
                     if request.data.get('allocated_group_id'):
                         res = self.workflow_action(request, instance)
                         return res
@@ -608,7 +627,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
             instance.call_email.status = 'open_inspection'
             instance.call_email.save()
 
-
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def workflow_action(self, request, instance=None, *args, **kwargs):
@@ -624,9 +642,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 else:
                     workflow_entry = self.add_comms_log(request, instance, workflow=True)
 
-                # Set Inspection status to open
-                #instance.status = 'open'
-                
                 # Set Inspection status depending on workflow type
                 workflow_type = request.data.get('workflow_type')
                 if workflow_type == 'send_to_manager':
@@ -635,17 +650,20 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     instance.request_amendment(request)
                 elif workflow_type == 'close':
                     instance.close(request)
-                
-                instance.region_id = None if not request.data.get('region_id') else request.data.get('region_id')
-                instance.district_id = None if not request.data.get('district_id') else request.data.get('district_id')
-                instance.assigned_to_id = None if not request.data.get('assigned_to_id') else request.data.get('assigned_to_id')
-                instance.inspection_type_id = None if not request.data.get('inspection_type_id') else request.data.get('inspection_type_id')
-                instance.allocated_group_id = None if not request.data.get('allocated_group_id') else request.data.get('allocated_group_id')
-                instance.call_email_id = None if not request.data.get('call_email_id') else request.data.get('call_email_id')
+
+                if not workflow_type:
+                    instance.region_id = None if not request.data.get('region_id') else request.data.get('region_id')
+                    instance.district_id = None if not request.data.get('district_id') else request.data.get('district_id')
+                    instance.assigned_to_id = None if not request.data.get('assigned_to_id') else request.data.get('assigned_to_id')
+                    instance.inspection_type_id = None if not request.data.get('inspection_type_id') else request.data.get('inspection_type_id')
+                    instance.allocated_group_id = None if not request.data.get('allocated_group_id') else request.data.get('allocated_group_id')
+                    instance.call_email_id = None if not request.data.get('call_email_id') else request.data.get('call_email_id')
+                    instance.details = None if not request.data.get('details') else request.data.get('details')
 
                 instance.save()
                 # Log parent actions and update status
-                self.update_parent(request, instance)
+                if instance.call_email_id:
+                    self.update_parent(request, instance)
 
                 if instance.assigned_to_id:
                     instance = self.modify_inspection_team(request, instance, workflow=True, user_id=instance.assigned_to_id)

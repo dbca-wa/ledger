@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-
+import logging
 from django.db import models
 from django.db.models.query import QuerySet
 from django.utils.encoding import python_2_unicode_compatible
@@ -9,7 +9,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from utils import approved_related_item_models
 
+logger = logging.getLogger(__name__)
 
 @python_2_unicode_compatible
 class Sequence(models.Model):
@@ -173,100 +175,24 @@ class WeakLinks(models.Model):
     class Meta:
         app_label = 'wildlifecompliance'
 
-# list of approved related item models
-#
-# (Call_email, 'C'), (Offence, 'O'), Email_User, Inspection, ...
-
-approved_related_item_models = [
-        'Offence',
-        'CallEmail',
-        'Inspection',
-        'SanctionOutcome',
-        'Case',
-        ]
-
-def format_model_name(model_name):
-    if model_name:
-        lower_model_name = model_name.lower()
-        switcher = {
-                'callemail': 'Call / Email',
-                'inspection': 'Inspection',
-                'offence': 'Offence',
-                'sanctionoutcome': 'Sanction Outcome',
-                'case': 'Case',
-                }
-        return switcher.get(lower_model_name, '')
-
-def get_related_items(instance, **kwargs):
-    return_list = []
-    # Strong links
-    for f in instance._meta.get_fields():
-        if f.is_relation and f.related_model.__name__ in approved_related_item_models:
-            if f.is_relation and f.one_to_many:
-
-                if instance._meta.model_name == 'callemail':
-                    field_objects = f.related_model.objects.filter(call_email_id=instance.id)
-                elif instance._meta.model_name == 'inspection':
-                    field_objects = f.related_model.objects.filter(inspection_id=instance.id)
-                for field_object in field_objects:
-                    return_list.append(
-                        {   'model_name': format_model_name(f.related_model.__name__),
-                            'identifier': field_object.get_related_items_identifier,
-                            'descriptor': field_object.get_related_items_descriptor
-                        })
-            elif f.is_relation:
-                field_value = f.value_from_object(instance)
-
-                if field_value:
-                    field_object = f.related_model.objects.get(id=field_value)
-
-                    return_list.append(
-                        {   'model_name': format_model_name(f.name),
-                            'identifier': field_object.get_related_items_identifier, 
-                            'descriptor': field_object.get_related_items_descriptor
-                        })
-    # Weak links - first pass with instance as first_content_object
-    instance_content_type = ContentType.objects.get_for_model(type(instance))
-
-    weak_links = WeakLinks.objects.filter(
-            first_content_type__pk=instance_content_type.id,
-            first_object_id=instance.id
-            )
-    for link in weak_links:
-        link_content_type = ContentType.objects.get_for_model(
-                type(
-                    link.second_content_object
-                    ))
-        return_list.append(
-            {   'model_name': format_model_name(link_content_type.model),
-                'identifier': link.second_content_object.get_related_items_identifier, 
-                'descriptor': link.second_content_object.get_related_items_descriptor
-            })
-    # Weak links - first pass with instance as second_content_object
-    weak_links = WeakLinks.objects.filter(
-            second_content_type__pk=instance_content_type.id,
-            second_object_id=instance.id
-            )
-    for link in weak_links:
-        link_content_type = ContentType.objects.get_for_model(
-                type(
-                    link.first_content_object
-                    ))
-        return_list.append(
-            {   'model_name': format_model_name(link_content_type.model),
-                'identifier': link.first_content_object.get_related_items_identifier, 
-                'descriptor': link.first_content_object.get_related_items_descriptor
-            })
-    return return_list       
-
-# Examples of model properties for get_related_items
-@property
-def get_related_items_identifier(self):
-    return self.id
-
-@property
-def get_related_items_descriptor(self):
-    return '{0}, {1}'.format(self.street, self.wkb_geometry)
-
-
+    def save(self, *args, **kwargs):
+        # test for existing object with first and second fields reversed.  If exists, don't create duplicate.
+        duplicate = WeakLinks.objects.filter(
+                first_content_type = self.second_content_type,
+                second_content_type = self.first_content_type,
+                first_object_id = self.second_object_id,
+                second_object_id = self.first_object_id
+                )
+        if self.second_content_type and self.second_content_type.model not in [i.lower() for i in approved_related_item_models]:
+            log_message =  'Incorrect model type - no record created for {} with pk {}'.format(
+                        self.first_content_type.model,
+                        self.first_object_id)
+            logger.debug(log_message)
+        elif duplicate:
+            log_message =  'Duplicate - no record created for {} with pk {}'.format(
+                        self.first_content_type.model,
+                        self.first_object_id)
+            logger.debug(log_message)
+        else:
+            super(WeakLinks, self).save(*args,**kwargs)
 
