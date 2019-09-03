@@ -89,12 +89,14 @@ router.register(r'compliancepermissiongroup', users_api.CompliancePermissionGrou
 router.register(r'region_district', users_api.RegionDistrictViewSet)
 router.register(r'case_priorities', call_email_api.CasePriorityViewSet)
 router.register(r'inspection_types', inspection_api.InspectionTypeViewSet)
-router.register(r'offence', offence_api.OffenceViewSet)
+# router.register(r'offence', offence_api.OffenceViewSet)
 router.register(r'call_email_paginated', call_email_api.CallEmailPaginatedViewSet)
 router.register(r'inspection', inspection_api.InspectionViewSet)
 router.register(r'inspection_paginated', inspection_api.InspectionPaginatedViewSet)
 router.register(r'sanction_outcome', sanction_outcome_api.SanctionOutcomeViewSet)
 router.register(r'sanction_outcome_paginated', sanction_outcome_api.SanctionOutcomePaginatedViewSet)
+router.register(r'offence', offence_api.OffenceViewSet)
+router.register(r'offence_paginated', offence_api.OffencePaginatedViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),
@@ -191,7 +193,15 @@ urlpatterns = [
     # inspection emails to users
     url(r'^internal/inspection/(?P<inspection_id>\d+)/$', views.ApplicationView.as_view(),
         name='internal-inspection-detail'),
-    
+
+    # following url is defined so that to include url path when sending
+    # inspection emails to users
+    url(r'^internal/sanction_outcome/(?P<sanction_outcome_id>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-sanction-outcome-detail'),
+
+    url(r'^internal/offence/(?P<offence_id>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-offence-detail'),
+
     # url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
     url(r'^export/pdf/$', application_views.pdflatex, name='pdf_latex'),
     url(r'^mgt-commands/$',

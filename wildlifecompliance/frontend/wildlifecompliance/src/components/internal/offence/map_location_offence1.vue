@@ -96,18 +96,18 @@ export default {
       iconUrl: require("../../../assets/marker-gray-locked.svg"),
       ...baseDic
     });
-    vm.icon_enquiery = Leaf.icon({
-      iconUrl: require("../../../assets/marker-green-locked.svg"),
-      ...baseDic
-    });
-    vm.icon_complaint = Leaf.icon({
-      iconUrl: require("../../../assets/marker-red-locked.svg"),
-      ...baseDic
-    });
-    vm.icon_incident = Leaf.icon({
-      iconUrl: require("../../../assets/marker-yellow-locked.svg"),
-      ...baseDic
-    });
+   // vm.icon_enquiery = Leaf.icon({
+   //   iconUrl: require("../../../assets/marker-green-locked.svg"),
+   //   ...baseDic
+   // });
+   // vm.icon_complaint = Leaf.icon({
+   //   iconUrl: require("../../../assets/marker-red-locked.svg"),
+   //   ...baseDic
+   // });
+   // vm.icon_incident = Leaf.icon({
+   //   iconUrl: require("../../../assets/marker-yellow-locked.svg"),
+   //   ...baseDic
+   // });
     vm.guid = guid();
 
     return {
@@ -231,7 +231,7 @@ export default {
         { icon: vm.icon_default }
       ).on("click", function(ev) {
         //ev.preventDefault();
-        vm.feature_marker.setIcon(myIcon);
+        //vm.feature_marker.setIcon(myIcon);
       });
       //vm.feature_marker.bindTooltip("click to lock/unlock");
       vm.feature_marker.addTo(vm.mapOffence);
@@ -243,6 +243,9 @@ export default {
     // },
     reverseGeocoding: function(coordinates_4326) {
       var self = this;
+            console.log('reverseGeocoding');
+            console.log('coordinates_4326');
+            console.log(coordinates_4326);
 
       $.ajax({
         url:
