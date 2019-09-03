@@ -904,11 +904,13 @@ export default {
                 vm.updatingDetails = false;
                 vm.org = response.body;
                 if (vm.org.address == null){ vm.org.address = {}; }
+                if(!vm.isApplication){
                 swal(
                     'Saved',
                     'Organisation details have been saved',
                     'success'
                 )
+                }
             }, (error) => {
                 console.log(error);
                 vm.updatingDetails = false;
@@ -952,11 +954,13 @@ export default {
             }).then((response) => {
                 vm.updatingAddress = false;
                 vm.org = response.body;
+                if(!vm.isApplication){
                 swal(
                     'Saved',
                     'Address details have been saved',
                     'success'
                 )
+                }
                 if (vm.org.address == null){ vm.org.address = {}; }
             }, (error) => {
                 console.log(error);
