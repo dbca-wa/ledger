@@ -154,6 +154,7 @@ module.exports = {
     }
     div.dataTables_filter input {
         margin-left: 10px;
+        margin-right: 10px;
         display: inline-block;
     }
     div.dataTables_length select {
@@ -173,5 +174,8 @@ module.exports = {
         div.dataTables_filter, div.dataTables_paginate {
              float:right;
         }
+    }
+    .dataTables_wrapper .dt-buttons{
+    float: right;
     }
 </style>

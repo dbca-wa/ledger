@@ -12,7 +12,13 @@ from wildlifecompliance.components.applications.views import (
 )
 from wildlifecompliance.admin import wildlifecompliance_admin_site
 
-from wildlifecompliance.components.main.views import SearchKeywordsView, SearchReferenceView
+from wildlifecompliance.components.main.views import (
+        SearchKeywordsView, 
+        SearchReferenceView,
+        SearchWeakLinksView,
+        CreateWeakLinkView,
+        RemoveWeakLinkView,
+        )
 from wildlifecompliance.components.applications import views as application_views
 from wildlifecompliance.components.offence.api import OffenceViewSet
 from wildlifecompliance.components.users import api as users_api
@@ -122,6 +128,15 @@ api_patterns = [url(r'^api/my_user_details/$',
                 url(r'^api/search_reference',
                     SearchReferenceView.as_view(),
                     name='search_reference'),
+                url(r'^api/search_weak_links',
+                    SearchWeakLinksView.as_view(),
+                    name='search_weak_links'),
+                url(r'^api/create_weak_link',
+                    CreateWeakLinkView.as_view(),
+                    name='create_weak_link'),
+                url(r'^api/remove_weak_link',
+                    RemoveWeakLinkView.as_view(),
+                    name='remove_weak_link'),
                 url(r'^api/',
                     include(router.urls))]
 

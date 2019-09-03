@@ -8,9 +8,13 @@ from django.utils.encoding import python_2_unicode_compatible
 from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import LicenceType
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
-from wildlifecompliance.components.organisations.models import Organisation
-from wildlifecompliance.components.main.models import CommunicationsLogEntry,\
-    UserAction, Document, get_related_items
+#from wildlifecompliance.components.organisations.models import Organisation
+from wildlifecompliance.components.main.models import (
+        CommunicationsLogEntry,
+        UserAction, 
+        Document,
+        )
+#from wildlifecompliance.components.main.related_items_utils import get_related_items
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 #from wildlifecompliance.components.main.models import InspectionType
 
@@ -187,7 +191,7 @@ class CallEmail(RevisionedMixin):
         (STATUS_DRAFT, 'Draft'),
         (STATUS_OPEN, 'Open'),
         (STATUS_OPEN_FOLLOWUP, 'Open (follow-up)'),
-        (STATUS_OPEN_FOLLOWUP, 'Open (Inspection)'),
+        (STATUS_OPEN_INSPECTION, 'Open (Inspection)'),
         (STATUS_OPEN_CASE, 'Open (Case)'),
         (STATUS_CLOSED, 'Closed'),
     )
@@ -312,7 +316,8 @@ class CallEmail(RevisionedMixin):
 
     @property
     def get_related_items_descriptor(self):
-        return '{0}, {1}'.format(self.status, self.caller)
+        #return '{0}, {1}'.format(self.status, self.caller)
+        return self.caller
     # @property
     # def related_items(self):
     #     return get_related_items(self)
@@ -546,6 +551,7 @@ class CallEmailLogEntry(CommunicationsLogEntry):
 
 
 class CallEmailUserAction(UserAction):
+    ACTION_CREATE_CALL_EMAIL = "Create Call/Email {}"
     ACTION_SAVE_CALL_EMAIL_ = "Save Call/Email {}"
     ACTION_FORWARD_TO_REGIONS = "Forward Call/Email {} to regions"
     ACTION_FORWARD_TO_WILDLIFE_PROTECTION_BRANCH = "Forward Call/Email {} to Wildlife Protection Branch"
@@ -556,6 +562,10 @@ class CallEmailUserAction(UserAction):
     ACTION_OFFENCE = "Create linked offence for Call/Email {}"
     ACTION_SANCTION_OUTCOME = "Create Sanction Outcome for Call/Email {}"
     ACTION_PERSON_SEARCH = "Linked person to Call/Email {}"
+    # ACTION_ADD_WEAK_LINK = "Create manual link between Call/Email: {} and {}: {}"
+    # ACTION_REMOVE_WEAK_LINK = "Remove manual link between Call/Email: {} and {}: {}"
+    ACTION_ADD_WEAK_LINK = "Create manual link between {}: {} and {}: {}"
+    ACTION_REMOVE_WEAK_LINK = "Remove manual link between {}: {} and {}: {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

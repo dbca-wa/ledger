@@ -56,7 +56,7 @@
                         Action 
                     </div>
                     <div class="panel-body panel-collapse">
-                        <div v-if="statusId ==='draft' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='draft' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="forwardToWildlifeProtectionBranch" @click="addWorkflow('forward_to_wildlife_protection_branch')" class="btn btn-primary btn-block">
                                   Forward to Wildlife Protection Branch
@@ -66,7 +66,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='draft' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='draft' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="forwardToRegions" @click="addWorkflow('forward_to_regions')" class="btn btn-primary btn-block">
                                   Forward to Regions
@@ -74,7 +74,7 @@
                           </div>
                         </div>
 
-                        <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="save" @click="save()" class="btn btn-primary btn-block">
                                   Save
@@ -85,7 +85,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='open_followup' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open_followup' && canUserAction" class="row action-button">
 
                         <!-- <div v-if="statusId ==='open_followup'" class="row action-button"> -->
                         <!-- <div class="row action-button"> -->
@@ -97,7 +97,7 @@
                           </div>
                         </div>
 
-                        <div v-if="statusId ==='open_followup' && this.call_email.can_user_action && this.offenceExists" class="row action-button">
+                        <div v-if="statusId ==='open_followup' && canUserAction && this.offenceExists" class="row action-button">
                           <div class="col-sm-12">
                                 <a @click="openSanctionOutcome()" class="btn btn-primary btn-block">
                                   Sanction Outcome
@@ -107,7 +107,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="allocateForFollowUp" @click="addWorkflow('allocate_for_follow_up')" class="btn btn-primary btn-block" >
                                   Allocate for Follow Up
@@ -117,7 +117,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <!--a ref="allocateForInspection" @click="addWorkflow('allocate_for_inspection')" class="btn btn-primary btn-block"-->
                                 <a ref="allocateForInspection" @click="allocateForInspection()" class="btn btn-primary btn-block" >
@@ -129,7 +129,7 @@
                           <div class="col-sm-12"/>
                         </div> -->
 
-                        <div v-if="statusId ==='open' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId ==='open' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="allocateForCase" @click="addWorkflow('allocate_for_case')" class="btn btn-primary btn-block" >
                                   Allocate for Case
@@ -139,7 +139,7 @@
                         <!-- <div class="row">
                           <div class="col-sm-12"/>
                         </div> -->
-                        <div v-if="statusId !=='closed' && this.call_email.can_user_action" class="row action-button">
+                        <div v-if="statusId !=='closed' && canUserAction" class="row action-button">
                           <div class="col-sm-12">
                                 <a ref="close" @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                   Close
@@ -344,7 +344,7 @@
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
                                     <div class="col-sm-12" v-if="relatedItemsVisibility">
-                                        <RelatedItems v-bind:key="relatedItemsBindId"/>
+                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_related_items="setRelatedItems" :readonlyForm="!canUserAction"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -375,7 +375,7 @@
             <SanctionOutcome ref="sanction_outcome" :parent_update_function="loadCallEmail"/>
         </div>
         <div v-if="inspectionInitialised">
-            <Inspection ref="inspection" :parent_update_function="loadCallEmail"/>
+            <Inspection ref="inspection"/>
         </div>
     </div>
 </template>
@@ -398,7 +398,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'eonasdan-bootstrap-datetimepicker';
 require("select2/dist/css/select2.min.css");
 require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
-import Inspection from '../inspection/inspection_modal';
+import Inspection from '../inspection/create_inspection_modal';
 import RelatedItems from "@common-components/related_items.vue";
 
 export default {
@@ -509,6 +509,9 @@ export default {
     readonlyForm: function() {
         return !this.call_email.can_user_edit_form;
     },
+    canUserAction: function() {
+        return this.call_email.can_user_action;
+    },
     statusDisplay: function() {
       return this.call_email.status ? this.call_email.status.name : '';
     },
@@ -563,9 +566,10 @@ export default {
       setOccurrenceTimeEnd: 'setOccurrenceTimeEnd',
       setTimeOfCall: 'setTimeOfCall',
       setDateOfCall: 'setDateOfCall',
+      setRelatedItems: 'setRelatedItems',
     }),
     ...mapActions({
-      saveFormData: "saveFormData",
+      saveFormData: 'saveFormData',
     }),
     updateWorkflowBindId: function() {
         let timeNow = Date.now()
@@ -596,7 +600,9 @@ export default {
     },
     allocateForInspection() {
       this.inspectionInitialised = true;
-      this.$refs.inspection.isModalOpen = true;
+        this.$nextTick(() => {
+          this.$refs.inspection.isModalOpen = true
+      });
     },
     save: async function () {
         if (this.call_email.id) {
@@ -779,7 +785,7 @@ export default {
 
     // regionDistricts
     let returned_region_districts = await cache_helper.getSetCacheList(
-      'CallEmail_RegionDistricts', 
+      'RegionDistricts', 
       api_endpoints.region_district
       );
     Object.assign(this.regionDistricts, returned_region_districts);

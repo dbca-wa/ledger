@@ -3,9 +3,11 @@
 {%  block content %}
         This Call/Email has been forwarded to you:
 
-        Call/Email : <a href="{{url}}">{{ call_email.number }}</a> 
+        Call/Email : {{ call_email.number }}
 
         Message:  {{ workflow_entry_details }}
+
+        Link: {{ url }}
 
         Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
 

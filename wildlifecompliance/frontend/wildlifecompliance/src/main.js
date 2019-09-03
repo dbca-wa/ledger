@@ -13,6 +13,7 @@ import RendererBlock from '@/components/common/renderer_block.vue';
 import ComplianceRendererBlock from '@/components/common/compliance_renderer_block.vue';
 import VueScrollTo from 'vue-scrollto';
 import Affix from 'vue-affix';
+import Vuelidate from 'vuelidate'
 
 require( '../node_modules/bootstrap/dist/css/bootstrap.css' );
 //require('../node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')
@@ -23,6 +24,7 @@ Vue.config.productionTip = false
 Vue.use( resource );
 Vue.use( VueScrollTo );
 Vue.use( Affix );
+Vue.use(Vuelidate)
 Vue.component('renderer-block', RendererBlock);
 Vue.component('compliance-renderer-block', ComplianceRendererBlock);
 

@@ -146,7 +146,8 @@ class SanctionOutcome(models.Model):
 
     @property
     def get_related_items_descriptor(self):
-        return '{0}, {1}'.format(self.identifier, self.description)
+        #return '{0}, {1}'.format(self.identifier, self.description)
+        return self.identifier
 
     @property
     def regionDistrictId(self):
@@ -301,6 +302,8 @@ class SanctionOutcomeUserAction(UserAction):
     # ACTION_ESCALATE_FOR_WITHDRAWAL = "Escalate Sanction Outcome {} for Withdrawal"
     # ACTION_RETURN_TO_INFRINGEMENT_NOTICE_COORDINATOR = "Return Sanction Outcome {} to Infringement Notice Coordinator"
     ACTION_CLOSE = "Close Sanction Outcome {}"
+    ACTION_ADD_WEAK_LINK = "Create manual link between Sanction Outcome: {} and {}: {}"
+    ACTION_REMOVE_WEAK_LINK = "Remove manual link between Sanction Outcome: {} and {}: {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

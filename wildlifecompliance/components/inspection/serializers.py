@@ -10,7 +10,7 @@ from wildlifecompliance.components.inspection.models import (
     InspectionCommsLogEntry,
     InspectionType,
     )
-from wildlifecompliance.components.main.models import get_related_items
+from wildlifecompliance.components.main.related_item import get_related_items
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
 from wildlifecompliance.components.users.serializers import (
     ComplianceUserDetailsOptimisedSerializer,
@@ -151,6 +151,8 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'call_email_id',
                 'inspection_report',
                 'schema',
+                'region_id',
+                'district_id',
                 )
         read_only_fields = (
                 'id',

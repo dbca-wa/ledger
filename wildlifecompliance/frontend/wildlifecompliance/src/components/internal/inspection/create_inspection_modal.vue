@@ -1,10 +1,10 @@
 <template lang="html">
-    <div id="InspectionWorkflow">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" :title="modalTitle" large force>
+    <div id="CreateInspection">
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Create New Inspection" large force>
           <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                        <div class="form-group" v-if="!this.workflow_type">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Region</label>
@@ -18,7 +18,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="form-group" v-if="!this.workflow_type">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>District</label>
@@ -32,7 +32,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="form-group" v-if="allocateToVisibility">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Allocate to</label>
@@ -47,7 +47,7 @@
                           </div>
                         </div>
 
-                        <div class="form-group" v-if="!this.workflow_type">
+                        <div class="form-group">
                           <div class="row">
                             <div class="col-sm-3">
                               <label>Inspection Type</label>
@@ -68,7 +68,7 @@
                                   <label class="control-label pull-left" for="details">Details</label>
                               </div>
             			      <div class="col-sm-6">
-                                  <textarea class="form-control" placeholder="add details" id="details" v-model="workflowDetails"/>
+                                  <textarea class="form-control" placeholder="add details" id="details" v-model="inspectionDetails"/>
                               </div>
                           </div>
                         </div>
@@ -77,11 +77,8 @@
                                 <div class="col-sm-3">
                                     <label class="control-label pull-left"  for="Name">Attachments</label>
                                 </div>
-            			        <div class="col-sm-9" v-if="createInspectionFileField">
+            			        <div class="col-sm-9">
                                     <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="inspection.createInspectionProcessCommsLogsDocumentUrl" @create-parent="createDocumentActionUrl"/>
-                                </div>
-            			        <div class="col-sm-9" v-else>
-                                    <filefield ref="comms_log_file" name="comms-log-file" :isRepeatable="true" :documentActionUrl="inspection.commsLogsDocumentUrl"/>
                                 </div>
                             </div>
                         </div>
@@ -94,7 +91,9 @@
                 <div v-if="errorResponse" class="form-group">
                     <div class="row">
                         <div class="col-sm-12">
-                            <strong>Error: {{ errorResponse }}</strong>
+                            <strong>
+                                <span style="white-space: pre;">{{ errorResponse }}</span>
+                            </strong>
                         </div>
                     </div>
                 </div>
@@ -110,9 +109,10 @@ import modal from '@vue-utils/bootstrap-modal.vue';
 import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
 import filefield from '@/components/common/compliance_file.vue';
+import { required, minLength, between } from 'vuelidate/lib/validators'
 
 export default {
-    name: "InspectionWorking",
+    name: "CreateInspection",
     data: function() {
       return {
             officers: [],
@@ -125,7 +125,7 @@ export default {
             casePriorities: [],
             inspectionTypes: [],
             externalOrganisations: [],
-            workflowDetails: '',
+            inspectionDetails: '',
             errorResponse: "",
             region_id: null,
             district_id: null,
@@ -141,61 +141,40 @@ export default {
       modal,
       filefield,
     },
-    props:{
-          workflow_type: {
-              type: String,
-              default: '',
-          },
-          parent_update_function: {
-              type: Function,
-          },
+    validations: {
+        region_id: {
+            required,
+        },
+        assigned_to_id: {
+            required,
+        },
+        inspection_type_id: {
+            required,
+        },
     },
+    // props:{
+    //       workflow_type: {
+    //           type: String,
+    //           default: '',
+    //       },
+    // },
     computed: {
       ...mapGetters('inspectionStore', {
         inspection: "inspection",
       }),
+      ...mapGetters('callemailStore', {
+        call_email: "call_email",
+      }),
+      parent_call_email: function() {
+          if (this.call_email && this.call_email.id) {
+              return true;
+          }
+      },
       regionDistrictId: function() {
           if (this.district_id || this.region_id) {
               return this.district_id ? this.district_id : this.region_id;
           } else {
               return null;
-          }
-      },
-      modalTitle: function() {
-          if (!this.workflow_type) {
-              return "Create New Inspection";
-          } else if (this.workflow_type === 'send_to_manager') {
-              return "Send to Manager";
-          } else if (this.workflow_type === 'request_amendment') {
-              return "Request Amendment";
-          } else if (this.workflow_type === 'close') {
-              return "Close Inspection";
-          }
-      },
-      allocateToVisibility: function() {
-          if (this.workflow_type === 'request_amendment') {
-              return true
-          } else if (!this.workflow_type) {
-              return true
-          } else {
-              return false
-          }
-      },
-      groupPermission: function() {
-          if (!this.workflow_type) {
-              return "officer";
-          } else if (this.workflow_type === 'send_to_manager') {
-              return "manager";
-          } else if (this.workflow_type === 'request_amendment') {
-              return "officer";
-          }
-      },
-      createInspectionFileField: function() {
-          //if (!(this.inspection && this.inspection.id)) {
-          if (!this.workflow_type) {
-              return true;
-          } else {
-              return false;
           }
       },
     },
@@ -212,6 +191,9 @@ export default {
       }),
       ...mapActions({
           loadAllocatedGroup: 'loadAllocatedGroup',
+      }),
+      ...mapActions('callemailStore', {
+          loadCallEmail: 'loadCallEmail',
       }),
       updateDistricts: function() {
         // this.district_id = null;
@@ -245,7 +227,7 @@ export default {
           if (this.regionDistrictId) {
               let allocatedGroupResponse = await this.loadAllocatedGroup({
               region_district_id: this.regionDistrictId,
-              group_permission: this.groupPermission,
+              group_permission: 'officer',
               });
               if (allocatedGroupResponse.ok) {
                   console.log(allocatedGroupResponse.body.allocated_group);
@@ -262,28 +244,53 @@ export default {
                   this.allocatedGroup.length <= 1) {
                   this.errorResponse = 'This group has no members';
               }
+          } else {
+              this.allocatedGroup = [];
           }
       },
 
       ok: async function () {
-          const response = await this.sendData();
-          console.log(response);
-          if (response.ok) {
-              // For Inspection Dashboard
-              if (this.$parent.$refs.inspection_table) {
-                  this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
+          let is_valid_form = this.isValidForm();
+          if (is_valid_form) {
+              const response = await this.sendData();
+              console.log(response);
+              if (response.ok) {
+                  // For Inspection Dashboard
+                  if (this.$parent.$refs.inspection_table) {
+                      this.$parent.$refs.inspection_table.vmDataTable.ajax.reload()
+                  }
+                  // For CallEmail related items table
+                  if (this.parent_call_email) {
+                      //await this.parent_update_function({
+                      await this.loadCallEmail({
+                          call_email_id: this.call_email.id,
+                      });
+                  }
+                  if (this.$parent.$refs.related_items_table) {
+                      this.$parent.constructRelatedItemsTable();
+                  }
+                  this.close();
+                  //this.$router.push({ name: 'internal-inspection-dash' });
               }
-              // For CallEmail related items table
-              if (this.$parent.call_email) {
-                  await this.parent_update_function({
-                      call_email_id: this.$parent.call_email.id,
-                  });
+          }
+      },
+      isValidForm: function() {
+          console.log("performValidation");
+          this.$v.$touch();
+          if (this.$v.$invalid) {
+              this.errorResponse = 'Invalid form:\n';
+              if (this.$v.region_id.$invalid) {
+                  this.errorResponse += 'Region is required\n';
               }
-              if (this.$parent.$refs.related_items_table) {
-                  this.$parent.constructRelatedItemsTable();
+              if (this.$v.assigned_to_id.$invalid) {
+                  this.errorResponse += 'Officer must be assigned\n';
               }
-              this.close();
-              this.$router.push({ name: 'internal-inspection-dash' });
+              if (this.$v.inspection_type_id.$invalid) {
+                  this.errorResponse += 'Choose Inspection Type\n';
+              }
+              return false;
+          } else {
+              return true;
           }
       },
       cancel: async function() {
@@ -297,21 +304,22 @@ export default {
       },
       sendData: async function() {
           let post_url = '';
-          if (this.inspection && this.inspection.id) {
-              post_url = '/api/inspection/' + this.inspection.id + '/workflow_action/'
+          if (!this.inspection.id) {
+              post_url = '/api/inspection/';
           } else {
-                post_url = '/api/inspection/'
+              post_url = '/api/inspection/' + this.inspection.id + '/workflow_action/';
           }
-          let payload = new FormData(this.form);
-          payload.append('details', this.workflowDetails);
+          
+          let payload = new FormData();
+          payload.append('details', this.inspectionDetails);
           this.$refs.comms_log_file.commsLogId ? payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
-          this.$parent.call_email ? payload.append('call_email_id', this.$parent.call_email.id) : null;
+          this.parent_call_email ? payload.append('call_email_id', this.call_email.id) : null;
           this.district_id ? payload.append('district_id', this.district_id) : null;
           this.assigned_to_id ? payload.append('assigned_to_id', this.assigned_to_id) : null;
           this.inspection_type_id ? payload.append('inspection_type_id', this.inspection_type_id) : null;
           this.region_id ? payload.append('region_id', this.region_id) : null;
           this.allocated_group_id ? payload.append('allocated_group_id', this.allocated_group_id) : null;
-          this.workflow_type ? payload.append('workflow_type', this.workflow_type) : null;
+          //this.workflow_type ? payload.append('workflow_type', this.workflow_type) : null;
           //!payload.has('allocated_group') ? payload.append('allocated_group', this.allocatedGroup) : null;
 
           try {
@@ -321,14 +329,14 @@ export default {
                   return res
               }
           } catch(err) {
-                  this.errorResponse = err.statusText;
+                  this.errorResponse = 'Error:' + err.statusText;
               }
           
       },
       createDocumentActionUrl: async function(done) {
         if (!this.inspection.id) {
             // create inspection and update vuex
-            let returned_inspection = await this.saveInspection({ route: false, crud: 'create', internal: true })
+            let returned_inspection = await this.saveInspection({ create: true, internal: true })
             await this.loadInspection({inspection_id: returned_inspection.body.id});
         }
         // populate filefield document_action_url
@@ -339,7 +347,7 @@ export default {
     },
     created: async function() {
         // regions
-        let returned_regions = await cache_helper.getSetCacheList('CallEmail_Regions', '/api/region_district/get_regions/');
+        let returned_regions = await cache_helper.getSetCacheList('Regions', '/api/region_district/get_regions/');
         Object.assign(this.regions, returned_regions);
         // blank entry allows user to clear selection
         this.regions.splice(0, 0, 
@@ -352,7 +360,7 @@ export default {
             });
         // regionDistricts
         let returned_region_districts = await cache_helper.getSetCacheList(
-            'CallEmail_RegionDistricts', 
+            'RegionDistricts', 
             api_endpoints.region_district
             );
         Object.assign(this.regionDistricts, returned_region_districts);
@@ -369,14 +377,14 @@ export default {
               id: "", 
               description: "",
             });
-
-        // Get parent component details from vuex
-        this.inspection_type_id = this.inspection.inspection_type_id;
-        this.region_id = this.inspection.region_id;
-        this.district_id = this.inspection.district_id;
+        // If exists, get parent component details from vuex
+        if (this.parent_call_email) {
+            this.region_id = this.call_email.region_id;
+            this.district_id = this.call_email.district_id;
+        }
 
         // If no Region/District selected, initialise region as Kensington
-        if (!this.inspection.region_id) {
+        if (!this.regionDistrictId) {
             for (let record of this.regionDistricts) {
                 if (record.district === 'KENSINGTON') {
                     this.district_id = null;
@@ -384,13 +392,10 @@ export default {
                 }
             }
         }
-        // ensure allocated group is current
+        // ensure availableDistricts and allocated group is current
+        this.updateDistricts();
         await this.updateAllocatedGroup();
     },
-    mounted: function() {
-        this.form = document.forms.forwardForm;
-      
-    }
 };
 </script>
 
