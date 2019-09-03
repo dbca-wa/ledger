@@ -193,8 +193,9 @@ class OffenceViewSet(viewsets.ModelViewSet):
             #instance.inspection.status = 'open_inspection'
             #instance.inspection.save()
 
-    @list_route(methods=['POST', ])
-    def offence_save(self, request, *args, **kwargs):
+    # @list_route(methods=['POST', ])
+    # def offence_save(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         print(request.data)
         try:
             with transaction.atomic():
@@ -255,7 +256,8 @@ class OffenceViewSet(viewsets.ModelViewSet):
 
                 # 4. Return Json
                 headers = self.get_success_headers(serializer.data)
-                return_serializer = OffenceSerializer(instance=saved_offence_instance)
+                return_serializer = OffenceSerializer(instance=saved_offence_instance, context={'request': request})
+                # return_serializer = InspectionSerializer(saved_instance, context={'request': request})
                 return Response(
                     return_serializer.data,
                     status=status.HTTP_201_CREATED,

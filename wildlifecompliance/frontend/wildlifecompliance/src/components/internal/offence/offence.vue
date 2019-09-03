@@ -75,7 +75,7 @@
 
                             <div v-if="visibilityCloseButton" class="row action-button">
                                 <div class="col-sm-12">
-                                    <a @click="workflow('close')" class="btn btn-primary btn-block">
+                                    <a @click="addWorkflow('close')" class="btn btn-primary btn-block">
                                         Close
                                     </a>
                                 </div>
@@ -183,7 +183,7 @@
                             </div>
                             <div :id="detailsTab" class="tab-pane face in">
                                 <FormSection :formCollapse="false" label="Details" Index="1">
-                                    (Renderer here)
+                                    <textarea class="form-control" placeholder="add details" v-model="offence.details" />
                                 </FormSection>
                             </div>
                             <div :id="offenderTab" class="tab-pane face in">
@@ -256,7 +256,11 @@
                             </div>
                             <div :id="relatedItemsTab" class="tab-pane face in">
                                 <FormSection :formCollapse="false" label="Related Items" Index="4">
-
+                                    <div class="col-sm-12 form-group"><div class="row">
+                                        <div class="col-sm-12">
+                                            <RelatedItems v-bind:key="relatedItemsBindId"/>
+                                        </div>
+                                    </div></div>
                                 </FormSection>
                             </div>
                         </div>
@@ -282,6 +286,8 @@ import CreateNewPerson from "@common-components/create_new_person.vue";
 import MapLocation from "../../common/map_location";
 import 'bootstrap/dist/css/bootstrap.css';
 import "awesomplete/awesomplete.css";
+import RelatedItems from "@common-components/related_items.vue";
+import moment from 'moment';
 
 export default {
     name: 'ViewOffence',
@@ -466,6 +472,7 @@ export default {
         PersonSearch,
         MapLocation,
         CreateNewPerson,
+        RelatedItems,
     },
     computed: {
         ...mapGetters('offenceStore', {
@@ -531,8 +538,51 @@ export default {
             }
             return visibility;
         },
+        relatedItemsBindId: function() {
+            let timeNow = Date.now()
+            if (this.offence && this.offence.id) {
+                return 'offence_' + this.offence.id + '_' + this._uid;
+            } else {
+                return timeNow.toString();
+            }
+        },
     },
     methods: {
+        save: async function() {
+            try{
+                let fetchUrl = helpers.add_endpoint_json(api_endpoints.offence, 'offence_save');
+
+                let payload = new Object();
+                Object.assign(payload, this.offence);
+                if (payload.occurrence_date_from) {
+                    payload.occurrence_date_from = moment(payload.occurrence_date_from, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                }
+                if (payload.occurrence_date_to) {
+                    payload.occurrence_date_to = moment(payload.occurrence_date_to, 'DD/MM/YYYY').format('YYYY-MM-DD');
+                }
+                payload.status = 'open'
+
+                console.log('save');
+                console.log(payload);
+                const savedOffence = await Vue.http.post(fetchUrl, payload);
+                await dispatch("setOffence", savedOffence.body);
+                await swal("Saved", "The record has been saved", "success");
+                return savedOffence;
+            } catch (err) {
+                if (err.body.non_field_errors){
+                    await swal("Error", err.body.non_field_errors[0], "error");
+                } else {
+                    await swal("Error", "There was an error saving the record", "error");
+                }
+            }
+
+        },
+        openSanctionOutcome: function() {
+
+        },
+        addWorkflow: function(workflow_type) {
+
+        },
         showHideAddressDetailsFields: function(showAddressFields, showDetailsFields) {
           if (showAddressFields) {
             $("#" + this.idLocationFieldsAddress).fadeIn();
@@ -546,10 +596,6 @@ export default {
           }
         },
         reverseGeocoding: function(coordinates_4326) {
-            console.log('reverseGeocoding');
-            console.log('coordinates_4326');
-            console.log(coordinates_4326);
-
           var self = this;
 
           $.ajax({
@@ -1063,6 +1109,12 @@ export default {
         },
         loadOffence: async function (offence_id) {
             let returnedOffence = await Vue.http.get(helpers.add_endpoint_json(api_endpoints.offence, offence_id));
+            if (returnedOffence.body.occurrence_date_to) {
+                returnedOffence.body.occurrence_date_to = moment(returnedOffence.body.occurrence_date_to, 'YYYY-MM-DD').format('DD/MM/YYYY');
+            }
+            if (returnedOffence.body.occurrence_date_from) {
+                returnedOffence.body.occurrence_date_from = moment(returnedOffence.body.occurrence_date_from, 'YYYY-MM-DD').format('DD/MM/YYYY');
+            }
             Vue.set(this, 'offence', returnedOffence.body);
             console.log('returnedOffence');
             console.log(returnedOffence);

@@ -208,6 +208,11 @@ def get_related_items(instance, **kwargs):
                     field_objects = f.related_model.objects.filter(call_email_id=instance.id)
                 elif instance._meta.model_name == 'inspection':
                     field_objects = f.related_model.objects.filter(inspection_id=instance.id)
+                elif instance._meta.model_name == 'offence':
+                    field_objects = f.related_model.objects.filter(offence_id=instance.id)
+                elif instance._meta.model_name == 'sanctionoutcome':
+                    field_objects = f.related_model.objects.filter(sanction_outcome_id=instance.id)
+
                 for field_object in field_objects:
                     return_list.append(
                         {   'model_name': format_model_name(f.related_model.__name__),

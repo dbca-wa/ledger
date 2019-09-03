@@ -3,6 +3,7 @@ from rest_framework import serializers
 from ledger.accounts.models import Organisation
 from wildlifecompliance.components.call_email.serializers import LocationSerializer, EmailUserSerializer
 from wildlifecompliance.components.main.fields import CustomChoiceField
+from wildlifecompliance.components.main.models import get_related_items
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
 from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
@@ -105,6 +106,10 @@ class OffenceSerializer(serializers.ModelSerializer):
     alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
     offenders = serializers.SerializerMethodField(read_only=True)
     allocated_group = serializers.SerializerMethodField()
+    user_in_group = serializers.SerializerMethodField()
+    can_user_action = serializers.SerializerMethodField()
+    user_is_assignee = serializers.SerializerMethodField()
+    related_items = serializers.SerializerMethodField()
 
     class Meta:
         model = Offence
@@ -119,6 +124,10 @@ class OffenceSerializer(serializers.ModelSerializer):
             'assigned_to_id',
             'allocated_group',
             'allocated_group_id',
+            'user_in_group',
+            'can_user_action',
+            'user_is_assignee',
+            'related_items',
             'district',
             'inspection_id',
             'occurrence_from_to',
@@ -153,6 +162,38 @@ class OffenceSerializer(serializers.ModelSerializer):
             allocated_group.append(member)
 
         return allocated_group
+
+    def get_user_in_group(self, obj):
+        user_id = self.context.get('request', {}).user.id
+
+        if obj.allocated_group:
+            for member in obj.allocated_group.members:
+                if user_id == member.id:
+                    return True
+        return False
+
+    def get_can_user_action(self, obj):
+        # User can have action buttons
+        # when user is assigned to the target object or
+        # when user is a member of the allocated group and no one is assigned to the target object
+        user_id = self.context.get('request', {}).user.id
+        if user_id == obj.assigned_to_id:
+            return True
+        elif obj.allocated_group and not obj.assigned_to_id:
+            if user_id in [member.id for member in obj.allocated_group.members]:
+                return True
+
+        return False
+
+    def get_user_is_assignee(self, obj):
+        user_id = self.context.get('request', {}).user.id
+        if user_id == obj.assigned_to_id:
+            return True
+
+        return False
+
+    def get_related_items(self, obj):
+        return get_related_items(obj)
 
 
 class SaveOffenceSerializer(serializers.ModelSerializer):

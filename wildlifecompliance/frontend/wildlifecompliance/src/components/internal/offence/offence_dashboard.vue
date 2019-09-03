@@ -130,7 +130,7 @@ export default {
                     {
                         data: 'offenders',
                         searchable: true,
-                        orderable: true,
+                        orderable: false,
                         mRender: function (data, type, row){
                             let ret = '';
                             for (let i=0; i<data.length; i++){
@@ -158,7 +158,7 @@ export default {
                     {
                         data: 'user_action',
                         searchable: false,
-                        orderable: true,
+                        orderable: false,
                         mRender: function (data, type, row){
                             if (data){
                                 return data;

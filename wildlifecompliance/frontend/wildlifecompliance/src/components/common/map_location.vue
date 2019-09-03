@@ -173,7 +173,7 @@ export default {
         { lon: latLngArr[1], lat: latLngArr[0] },
         { icon: vm.icon_default }
       ).on("click", function(ev) {
-        //vm.feature_marker.setIcon(myIcon);
+        vm.feature_marker.setIcon(myIcon);
       });
       //vm.feature_marker.bindTooltip("click to lock/unlock");
       vm.feature_marker.addTo(vm.mainMap);
@@ -281,11 +281,15 @@ export default {
 
             if (!this.feature_marker) {
                 this.addMarker(latlng);
+            } else {
+                this.feature_marker.setLatLng({
+                    lat: this.marker_lat,
+                    lng: this.marker_lng,
+                });
             }
-            this.feature_marker.setLatLng({
-                lat: this.marker_lat,
-                lng: this.marker_lng,
-            });
+
+                 
+
             //this.setMarkerCentre();
 
             this.$emit('location-updated', {'lat': this.marker_lat, 'lng': this.marker_lng});

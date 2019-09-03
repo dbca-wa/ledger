@@ -159,9 +159,9 @@ export const offenceStore = {
                 console.log(err);
             }
         },
-        async saveOffence({dispatch, state}){
+        async createOffence({dispatch, state}){
             try{
-                let fetchUrl = helpers.add_endpoint_json(api_endpoints.offence, 'offence_save');
+                let fetchUrl = '/api/offence/';
 
                 let payload = new Object();
                 Object.assign(payload, state.offence);

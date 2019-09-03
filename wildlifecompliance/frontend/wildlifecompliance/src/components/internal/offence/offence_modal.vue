@@ -358,7 +358,7 @@ export default {
       setDistrictId: "setDistrictId",
       setAllocatedGroupId: "setAllocatedGroupId",
       setInspectionId: "setInspectionId",
-      saveOffence: "saveOffence",
+      createOffence: "createOffence",
       setOffenceEmpty: "setOffenceEmpty"
     }),
     newPersonCreated: function(obj) {
@@ -570,16 +570,14 @@ export default {
       vm.setAllegedOffenceIds(alleged_offence_ids);
 
       try {
-          let res = await vm.saveOffence();;
+          let res = await vm.createOffence();;
           console.log(res);
           if (res.ok) {
             return res
           }
       } catch(err) {
-              this.errorResponse = err.statusText;
-          }
-      // TODO: send data to the server
-      //vm.saveOffence();
+          this.errorResponse = err.statusText;
+      }
     },
     addEventListeners: function() {
       let vm = this;
