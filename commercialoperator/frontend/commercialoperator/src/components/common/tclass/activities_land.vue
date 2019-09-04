@@ -98,7 +98,8 @@
                     <div class="col-sm-12" >
                         <div>
                             <!--<pre>{{ selected_trail_ids }}</pre>-->
-                            <label class="control-label">Select the required activities</label>
+                            <!-- <label class="control-label">Select the required activities</label> -->
+                            <label class="control-label">Select the long distance trails</label>
                             <TreeSelect :proposal="proposal" :value.sync="selected_trail_ids" :options="trail_options" :default_expand_level="1" open_direction="top" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
                         </div>
                     </div>
