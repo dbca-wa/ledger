@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, B
 from rest_framework.pagination import PageNumberPagination
 from django.urls import reverse
 from commercialoperator.components.main.models import Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, ActivityCategory, Activity, RequiredDocument, Question, GlobalSettings
-from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer, OracleSerializer, BookingSettlementReportSerializer
+from commercialoperator.components.main.serializers import RegionSerializer, DistrictSerializer, TenureSerializer, ApplicationTypeSerializer, ActivityMatrixSerializer,  AccessTypeSerializer, ParkSerializer, ParkFilterSerializer, TrailSerializer, ActivitySerializer, ActivityCategorySerializer, RequiredDocumentSerializer, QuestionSerializer, GlobalSettingsSerializer, OracleSerializer, BookingSettlementReportSerializer, LandActivityTabSerializer, MarineActivityTabSerializer
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from commercialoperator.components.proposals.models import Proposal
@@ -19,6 +19,7 @@ from commercialoperator.components.proposals.serializers import ProposalSerializ
 from commercialoperator.components.bookings.utils import oracle_integration
 from commercialoperator.components.bookings import reports
 from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
+from collections import namedtuple
 import json
 from decimal import Decimal
 
@@ -75,6 +76,43 @@ class ParkFilterViewSet(viewsets.ReadOnlyModelViewSet):
 class GlobalSettingsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = GlobalSettings.objects.all().order_by('id')
     serializer_class = GlobalSettingsSerializer
+
+class LandActivityTabViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    A simple ViewSet for listing the various serialized viewsets in a single container
+    """
+    def list(self, request):
+        #Container = namedtuple('ActivityLandTab', ('access_types', 'activity_types', 'regions'))
+        Container = namedtuple('ActivityLandTab', ('access_types', 'land_activity_types', 'marine_activity_types', 'trails', 'marine_activities', 'land_required_documents', 'regions'))
+        container = Container(
+            access_types=AccessType.objects.all().order_by('id'),
+            land_activity_types=Activity.objects.filter(activity_category__activity_type='land').order_by('id'),
+            marine_activity_types=Activity.objects.filter(activity_category__activity_type='marine').order_by('id'),
+            trails=Trail.objects.all().order_by('id'),
+            marine_activities=ActivityCategory.objects.filter(activity_type='marine').order_by('id'),
+            land_required_documents=RequiredDocument.objects.filter().order_by('id'),
+            regions=Region.objects.all().order_by('id'),
+        )
+        serializer = LandActivityTabSerializer(container)
+        return Response(serializer.data)
+
+
+class MarineActivityTabViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    A simple ViewSet for listing the various serialized viewsets in a single container
+    """
+    def list(self, request):
+        #Container = namedtuple('ActivityLandTab', ('access_types', 'activity_types', 'regions'))
+        Container = namedtuple('ActivityMarineTab', ('marine_activities', 'marine_parks', 'required_documents'))
+        container = Container(
+            #marine_activity_types=Activity.objects.filter(activity_category__activity_type='marine').order_by('id'),
+            marine_activities=ActivityCategory.objects.filter(activity_type='marine').order_by('id'),
+            #marine_parks=ActivityCategory.objects.filter(activity_type='marine').order_by('id'),
+            marine_parks=Park.objects.filter(park_type='marine').order_by('id'),
+            required_documents=RequiredDocument.objects.filter().order_by('id'),
+        )
+        serializer = MarineActivityTabSerializer(container)
+        return Response(serializer.data)
 
 
 class ParkViewSet(viewsets.ReadOnlyModelViewSet):

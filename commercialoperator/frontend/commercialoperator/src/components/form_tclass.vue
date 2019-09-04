@@ -129,6 +129,7 @@
     import Organisation from '@/components/external/organisations/manage.vue'
     import Applicant from '@/components/common/tclass/applicant.vue'
     import Assessment from '@/components/common/tclass/assessment.vue'
+    //import ActivitiesLand from '@/components/common/tclass/treeview.vue'
     import ActivitiesLand from '@/components/common/tclass/activities_land.vue'
     import ActivitiesMarine from '@/components/common/tclass/activities_marine.vue'
     import OtherDetails from '@/components/common/tclass/other_details.vue'
