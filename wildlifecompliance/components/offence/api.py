@@ -235,33 +235,21 @@ class OffenceViewSet(viewsets.ModelViewSet):
 
                 # 4. Create relations between this offence and offender(s)
                 # individual
-                ids_received_individual = [item['id'] if item['data_type'] == 'individual' else '' for item in request_data['offenders']]
-                ids_received_individual = set(filter(None, ids_received_individual))  # Remove all the empty string inserted above
-                ids_stored_individual = set(Offender.objects.filter(offence=saved_offence_instance, person__isnull=False, removed=False).values_list('person_id', flat=True))
-                ids_to_be_deleted_individual = list(ids_stored_individual - ids_received_individual)
-                ids_to_be_added_individual = list(ids_received_individual - ids_stored_individual)
-
-                # organisation
-                ids_received_organisation = [item['id'] if item['data_type'] == 'organisation' else '' for item in request_data['offenders']]
-                ids_received_organisation = set(filter(None, ids_received_organisation))  # Remove all the empty string inserted above
-                ids_stored_organisation = set(Offender.objects.filter(offence=saved_offence_instance, organisation__isnull=False, removed=False).values_list('organisation_id', flat=True))
-                ids_to_be_deleted_organisation = list(ids_stored_organisation - ids_received_organisation)
-                ids_to_be_added_organisation = list(ids_received_organisation - ids_stored_organisation)
-
-                for id in ids_to_be_added_individual:
-                    serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'person_id': id})
-                    serializer_offender.is_valid(raise_exception=True)
-                    serializer_offender.save()
-                for id in ids_to_be_added_organisation:
-                    serializer_offender = SaveOffenderSerializer(data={'offence_id': saved_offence_instance.id, 'organisation_id': id})
-                    serializer_offender.is_valid(raise_exception=True)
-                    serializer_offender.save()
-                for id in ids_to_be_deleted_individual:
-                    offender = Offender.objects.filter(person__id=id, offence__id=saved_offence_instance.id)  # Should be one record
-                    offender.update(removed=True)
-                for id in ids_to_be_deleted_organisation:
-                    offender = Offender.objects.filter(organisation__id=id, offence__id=saved_offence_instance.id)  # Should be one record
-                    offender.update(removed=True)
+                persons_received = [item if item['data_type'] == 'individual' else None for item in request_data['offenders']]
+                organisations_received = [item if item['data_type'] == 'organisation' else None for item in request_data['offenders']]
+                for person in persons_received:
+                    if person:
+                        offender, created = Offender.objects.get_or_create(person_id=person['id'], offence_id=request_data['id'])
+                        offender.removed = person['removed']
+                        offender.reason_for_removal = person['reason_for_removal']
+                        offender.save()
+                for organisation in organisations_received:
+                    if organisation:
+                        offender, created = Offender.objects.get_or_create(organisation_id=organisation['id'], offence_id=request_data['id'])
+                        offender.removed = organisation['removed']
+                        offender.reason_for_removal = organisation['reason_for_removal']
+                        offender.save()
+                # TODO: save removed_by and reason_for_removal
 
                 # 4. Return Json
                 headers = self.get_success_headers(serializer.data)
@@ -272,7 +260,6 @@ class OffenceViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_201_CREATED,
                     headers=headers
                 )
-
 
         except serializers.ValidationError:
             print(traceback.print_exc())
