@@ -4,7 +4,7 @@
         <div class="col-sm-12">
             <div class="well well-sm">
                 <p>
-                    Welcome to the {{system_name}} online system dashboard.<br/><br/> Here you can access your existing licences, view any proposals in progress, lodge new<br/> proposals or submit information required to comply with requirements listed on your licence
+                    Welcome to the {{system_name}} dashboard.<br/><br/> From this page you can view existing applications, create new applications,<br/> view current licences, apply to amend a licence, check through conditions of your licence.
                 </p>
             </div>
         </div>

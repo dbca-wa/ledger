@@ -107,7 +107,7 @@ def create_fee_lines(proposal, invoice_text=None, vouchers=[], internal=False):
             'price_excl_tax':  application_price if proposal.application_type.is_gst_exempt else calculate_excl_gst(application_price),
             'quantity': 1,
         },
-        {   'ledger_description': 'Licence Fee {} - {} - {}'.format(proposal.other_details.get_preferred_licence_period_display(), now, proposal.lodgement_number),
+        {   'ledger_description': 'Licence Charge {} - {} - {}'.format(proposal.other_details.get_preferred_licence_period_display(), now, proposal.lodgement_number),
             'oracle_code': proposal.application_type.oracle_code_licence,
             'price_incl_tax':  licence_price,
             'price_excl_tax':  licence_price if proposal.application_type.is_gst_exempt else calculate_excl_gst(licence_price),

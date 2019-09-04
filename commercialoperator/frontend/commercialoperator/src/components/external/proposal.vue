@@ -62,7 +62,6 @@
                                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
                                         <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>
-                                        <!--<input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()"/>-->
                                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                                       </p>
                                     </div>
@@ -176,6 +175,8 @@ export default {
       let vm = this;
       //vm.form=document.forms.new_proposal;
       vm.save_applicant_data();
+      //await vm.save_applicant_data();
+
       let formData = vm.set_formData()
       //vm.save_applicant_data();
 
@@ -410,7 +411,7 @@ export default {
 
         swal({
             title: vm.submit_text() + " Application",
-            text: "Are you sure you want to " + vm.submit_text()+ " this application?",
+            text: "Are you sure you want to " + vm.submit_text().toLowerCase()+ " this application?",
             type: "question",
             showCancelButton: true,
             confirmButtonText: vm.submit_text()
@@ -442,8 +443,13 @@ export default {
         let vm = this;
         let formData = new FormData(vm.form);
         formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
+        //formData.append('selected_land_access', JSON.stringify(vm.proposal.selected_land_access))
+        //formData.append('selected_land_activities', JSON.stringify(vm.proposal.selected_land_activities))
         formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
         formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
+
+              vm.proposal.selected_access=vm.selected_access;
+              vm.proposal.selected_activities=vm.selected_activities;
 
         var num_missing_fields = vm.validate()
         if (num_missing_fields > 0) {

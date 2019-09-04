@@ -1,15 +1,11 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Compliance {{ compliance.reference }} has been submitted.
+    Your document to complete a requirement {{ compliance.reference }} of your licence has been submitted..
 
-	Submitter: {{ compliance.submitter.get_full_name }}
-	Lodgement date: {{ compliance.lodgement_date }}
-
-    <p>
-    You can access this Compliance using the following link:
-    </p>
-    {{url}}
-
+	You will receive a confirmation email, and it will show up on your account if the document meets the requirement.
+    
+    You will receive a notification email if there is any incomplete information or documents missing.
+    
 
 {%  endblock %}
