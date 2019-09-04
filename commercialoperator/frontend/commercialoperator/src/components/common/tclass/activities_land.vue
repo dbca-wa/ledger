@@ -579,8 +579,14 @@ export default {
                   }
                   else{
                     for(var k=0; k<selected_parks_activities[i].activities.length; k++){
-                      if(vm.required_documents_list[j].activity== selected_parks_activities[i].activities[k]){
-                      vm.required_documents_list[j].can_view=true;
+
+                      // if(vm.required_documents_list[j].activity== selected_parks_activities[i].activities[k]){
+                      // vm.required_documents_list[j].can_view=true;
+                      // }
+                      if(vm.required_documents_list[j].park== selected_parks_activities[i].park){
+                        if(vm.required_documents_list[j].activity== selected_parks_activities[i].activities[k]){
+                            vm.required_documents_list[j].can_view=true;
+                          }
                       }
                     }
                   }
