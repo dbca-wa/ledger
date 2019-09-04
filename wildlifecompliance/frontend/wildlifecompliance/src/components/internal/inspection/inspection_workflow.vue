@@ -186,7 +186,7 @@ export default {
           this.$refs.comms_log_file.commsLogId ? payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
           this.workflow_type ? payload.append('workflow_type', this.workflow_type) : null;
 
-          let inspectionRes = await this.saveInspection({internal: true })
+          let inspectionRes = await this.saveInspection({create: false, internal: true })
           if (inspectionRes.ok) {
               try {
                   let res = await Vue.http.post(post_url, payload);

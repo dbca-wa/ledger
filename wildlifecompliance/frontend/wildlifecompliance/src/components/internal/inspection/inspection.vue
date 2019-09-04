@@ -496,7 +496,7 @@ export default {
     },
     endorseVisibility: function() {
         if (this.inspection.status && !this.readonlyForm) {
-            return this.inspection.status.id === 'with_manager' ? true : false;
+            return this.inspection.status.id === 'await_endorsement' ? true : false;
         } else {
             return false;
         }
@@ -510,7 +510,7 @@ export default {
     },
     requestAmendmentVisibility: function() {
         if (this.inspection.status && !this.readonlyForm) {
-            return this.inspection.status.id === 'with_manager' ? true : false;
+            return this.inspection.status.id === 'await_endorsement' ? true : false;
         } else {
             return false;
         }
@@ -667,9 +667,9 @@ export default {
     },
     save: async function () {
         if (this.inspection.id) {
-            await this.saveInspection();
+            await this.saveInspection({ create: false, internal: false });
         } else {
-            await this.saveInspection({ create: true });
+            await this.saveInspection({ create: true, internal: false });
             this.$nextTick(function () {
                 this.$router.push(
                   { name: 'view-inspection', 
@@ -680,10 +680,11 @@ export default {
     },
     saveExit: async function() {
       if (this.inspection.id) {
-        await this.saveInspection();
+          await this.saveInspection({ create: false, internal: false });
       } else {
-        await this.saveInspection({ create: true });
+          await this.saveInspection({ create: true, internal: false });
       }
+      this.$router.push({ name: 'internal-inspection-dash' });
     },
     addEventListeners: function() {
       let vm = this;
