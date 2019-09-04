@@ -111,6 +111,7 @@ class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
 
 class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
+    type = CustomChoiceField(read_only=True)
     user_action = serializers.SerializerMethodField()
     offender = OffenderSerializer(read_only=True,)
 

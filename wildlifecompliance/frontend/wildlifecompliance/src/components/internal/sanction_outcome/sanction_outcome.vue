@@ -302,7 +302,8 @@ export default {
             let ret = '';
             if (this.sanction_outcome){
                 if (this.sanction_outcome.offence){
-                    this.sanction_outcome.offence.lodgement_number;
+                    console.log('displayOffence');
+                    ret = this.sanction_outcome.offence.lodgement_number;
                 }
             }
             return ret;

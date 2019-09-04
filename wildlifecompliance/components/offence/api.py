@@ -99,9 +99,7 @@ class OffenceFilterBackend(DatatablesFilterBackend):
 
 class OffencePaginatedViewSet(viewsets.ModelViewSet):
     filter_backends = (OffenceFilterBackend,)
-    # filter_backends = (DatatablesFilterBackend,)
     pagination_class = DatatablesPageNumberPagination
-    # renderer_classes = (InspectionRenderer,)
     queryset = Offence.objects.none()
     serializer_class = OffenceDatatableSerializer
     page_size = 10
