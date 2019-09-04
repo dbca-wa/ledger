@@ -385,59 +385,59 @@ export default {
             ],
             dtOptionsOffender: {
                 columns: [
-                {
-                    data: "id",
-                    visible: false
-                },
-                {
-                    data: "data_type",
-                    visible: true
-                },
-                {
-                    data: "",
-                    mRender: function(data, type, row) {
-                    if (row.data_type == "individual") {
-                        let full_name = [row.first_name, row.last_name]
-                        .filter(Boolean)
-                        .join(" ");
-                        let email = row.email ? "E:" + row.email : "";
-                        let p_number = row.phone_number ? "P:" + row.phone_number : "";
-                        let m_number = row.mobile_number
-                        ? "M:" + row.mobile_number
-                        : "";
-                        let dob = row.dob ? "DOB:" + row.dob : "DOB: ---";
-                        let myLabel = [
-                        "<strong>" + full_name + "</strong>",
-                        email,
-                        p_number,
-                        m_number,
-                        dob
-                        ]
-                        .filter(Boolean)
-                        .join("<br />");
+                    {
+                        data: "id",
+                        visible: false
+                    },
+                    {
+                        data: "data_type",
+                        visible: true,
+                        mRender: function(data, type, row) {
+                            if(row.removed){
+                                return '<strike>' + row.data_type + '</strike>';
+                            } else {
+                                return row.data_type;
+                            }
+                        }
+                    },
+                    {
+                        //data: "",
+                        mRender: function(data, type, row) {
+                            console.log('mRender');
+                            if (row.data_type == "individual") {
+                                let full_name = [row.first_name, row.last_name].filter(Boolean).join(" ");
+                                let email = row.email ? "E:" + row.email : "";
+                                let p_number = row.phone_number ? "P:" + row.phone_number : "";
+                                let m_number = row.mobile_number ? "M:" + row.mobile_number : "";
+                                let dob = row.dob ? "DOB:" + row.dob : "DOB: ---";
+                                let myLabel = ["<strong>" + full_name + "</strong>", email, p_number, m_number, dob].filter(Boolean).join("<br />");
+                                if (row.removed){
+                                    myLabel = '<strike>' + myLabel + '</strike>';
+                                }
 
-                        return myLabel;
-                    } else if (row.data_type == "organisation") {
-                        let name = row.name ? row.name : "";
-                        let abn = row.abn ? "ABN:" + row.abn : "";
-                        let myLabel = ["<strong>" + name + "</strong>", abn]
-                        .filter(Boolean)
-                        .join("<br />");
+                                return myLabel;
+                            } else if (row.data_type == "organisation") {
+                                let name = row.name ? row.name : "";
+                                let abn = row.abn ? "ABN:" + row.abn : "";
+                                let myLabel = ["<strong>" + name + "</strong>", abn].filter(Boolean).join("<br />");
+                                if (row.removed){
+                                    myLabel = '<strike>' + myLabel + '</strike>';
+                                }
 
-                        return myLabel;
+                                return myLabel;
+                            }
+                        }
+                    },
+                    {
+                        data: "Action",
+                        mRender: function(data, type, row) {
+                            if (row.removed){
+                                return ('<a href="#" class="restore_button" data-offender-id="' + row.id + '">Restore</a>');
+                            } else {
+                                return ('<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>');
+                            }
+                        }
                     }
-                    }
-                },
-                {
-                    data: "Action",
-                    mRender: function(data, type, row) {
-                    return (
-                        '<a href="#" class="remove_button" data-offender-id="' +
-                        row.id +
-                        '">Remove</a>'
-                    );
-                    }
-                }
                 ]
             },
             dtOptionsAllegedOffence: {
@@ -569,8 +569,6 @@ export default {
                 }
                 payload.status = 'open'
 
-                console.log('aho tables');
-
                   // Collect offenders data from the datatable, and set them to the vuex
                   let offenders = this.$refs.offender_table.vmDataTable.rows().data().toArray();
                   payload.offenders = offenders;
@@ -632,8 +630,6 @@ export default {
               }),
             dataType: "json",
             success: function(data, status, xhr) {
-                console.log('reverseGeo success');
-                console.log(data);
               let address_found = false;
               if (data.features && data.features.length > 0) {
                 for (var i = 0; i < data.features.length; i++) {
@@ -698,7 +694,6 @@ export default {
             this.offence.location.properties.details = "";
         },
         locationUpdated: function(latlng){
-            console.log('locationUpdated');
             // Update coordinate
             this.offence.location.geometry.coordinates[1] = latlng.lat;
             this.offence.location.geometry.coordinates[0] = latlng.lng;
@@ -745,18 +740,31 @@ export default {
           vm.newPersonBeingCreated = false;
         },
         removeOffenderClicked: function(e) {
-            console.log('removeOffenderClicked');
           let vm = this;
 
           let offenderId = parseInt(e.target.getAttribute("data-offender-id"));
           vm.$refs.offender_table.vmDataTable.rows(function(idx, data, node) {
             if (data.id === offenderId) {
-              vm.$refs.offender_table.vmDataTable
-                .row(idx)
-                .remove()
-                .draw();
+                console.log('removeOffenderClicked');
+                console.log('idx:' + idx);
+              vm.$refs.offender_table.vmDataTable.rows(idx).data()[0].removed = true;
+                vm.$refs.offender_table.vmDataTable.rows(idx).invalidate();
             }
           });
+        },
+        restoreOffenderClicked: function(e){
+          let vm = this;
+
+          let offenderId = parseInt(e.target.getAttribute("data-offender-id"));
+          vm.$refs.offender_table.vmDataTable.rows(function(idx, data, node) {
+            if (data.id === offenderId) {
+                console.log('removeOffenderClicked');
+                console.log('idx:' + idx);
+              vm.$refs.offender_table.vmDataTable.rows(idx).data()[0].removed = false;
+                vm.$refs.offender_table.vmDataTable.rows(idx).invalidate();
+            }
+          });
+
         },
         removeClicked: function(e) {
           let vm = this;
@@ -778,7 +786,6 @@ export default {
           });
         },
         addOffenderClicked: function() {
-            console.log('addOffenderClicked');
           let vm = this;
 
           if (
@@ -789,15 +796,10 @@ export default {
             let already_exists = false;
 
             let ids = vm.$refs.offender_table.vmDataTable.columns(0).data()[0];
-            let data_types = vm.$refs.offender_table.vmDataTable
-              .columns(1)
-              .data()[0];
+            let data_types = vm.$refs.offender_table.vmDataTable.columns(1).data()[0];
 
             for (let i = 0; i < ids.length; i++) {
-              if (
-                ids[i] == vm.current_offender.id &&
-                data_types[i] == vm.current_offender.data_type
-              ) {
+              if (ids[i] == vm.current_offender.id && data_types[i] == vm.current_offender.data_type) {
                 already_exists = true;
                 break;
               }
@@ -836,7 +838,6 @@ export default {
             }
         },
         transferOffendersToTable: function(){
-            console.log('transferOffendersToTable');
             // This function is for filling existing offenders data into the table
             if (this.offence.offenders){
                 for(let i=0; i<this.offence.offenders.length; i++){
@@ -856,6 +857,8 @@ export default {
         addPersonToTable: function(person) {
               this.$refs.offender_table.vmDataTable.row
                 .add({
+                  removed: false,
+                  reason_for_removal: '',
                   data_type: 'individual',
                   id: person.id,
                   first_name: person.first_name,
@@ -866,16 +869,46 @@ export default {
                   dob: person.dob
                 }).draw();
         },
+        addPersonExistingToTable: function(offender) {
+              this.$refs.offender_table.vmDataTable.row
+                .add({
+                  removed: offender.removed,
+                  reason_for_removal: offender.reason_for_removal,
+                  data_type: 'individual',
+                  id: offender.person.id,
+                  first_name: offender.person.first_name,
+                  last_name: offender.person.last_name,
+                  email: offender.person.email,
+                  p_number: offender.person.p_number,
+                  m_number: offender.person.m_numberum,
+                  dob: offender.person.dob
+                }).draw();
+        },
         addOrganisationToTable: function(organisation){
             this.$refs.offender_table.vmDataTable.row
               .add({
+                removed: false,
+                reason_for_removal: '',
                 data_type: 'organisation',
                 id: organisation.id,
                 name: organisation.name,
                 abn: organisation.abn
               }).draw();
         },
+        addOrganisationExistingToTable: function(offender){
+            this.$refs.offender_table.vmDataTable.row
+              .add({
+                removed: offender.removed,
+                reason_for_removal: offender.reason_for_removal,
+                data_type: 'organisation',
+                id: offender.organisation.id,
+                name: offender.organisation.name,
+                abn: offender.organisation.abn
+              }).draw();
+        },
         addOffenderToTable: function(offender){
+            console.log('addOffenderToTable');
+            console.log(offender);
             let vm = this;
             if(offender.data_type){
                 // When person/organisation is going to be added via input box (awesomplete)
@@ -887,9 +920,9 @@ export default {
             } else {
                 // When inserting the existing data into the table
                 if (offender.person) {
-                    this.addPersonToTable(offender.person);
+                    this.addPersonExistingToTable(offender);
                 } else if (offender.organisation) {
-                    this.addOrganisationToTable(offender.organisation);
+                    this.addOrganisationExistingToTable(offender);
                 }
             }
         },
@@ -978,7 +1011,6 @@ export default {
             });
         },
         search: function(searchTerm) {
-            console.log('search');
           var vm = this;
           vm.suggest_list = [];
           vm.suggest_list.length = 0;
@@ -1122,14 +1154,10 @@ export default {
             ".remove_button",
             vm.removeClicked
           );
-          $("#offender-table").on(
-            "click",
-            ".remove_button",
-            vm.removeOffenderClicked
-          );
+          $("#offender-table").on("click", ".remove_button", vm.removeOffenderClicked);
+          $("#offender-table").on("click", ".restore_button", vm.restoreOffenderClicked);
         },
         loadOffence: async function (offence_id) {
-            console.log('loadOffence');
             let returnedOffence = await Vue.http.get(helpers.add_endpoint_json(api_endpoints.offence, offence_id));
             if (returnedOffence.body.occurrence_date_to) {
                 returnedOffence.body.occurrence_date_to = moment(returnedOffence.body.occurrence_date_to, 'YYYY-MM-DD').format('DD/MM/YYYY');

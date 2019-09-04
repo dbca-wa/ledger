@@ -43,6 +43,8 @@ class OffenderSerializer(serializers.ModelSerializer):
             'id',
             'person',
             'organisation',
+            'removed',
+            'reason_for_removal',
         )
 
 
@@ -145,8 +147,9 @@ class OffenceSerializer(serializers.ModelSerializer):
         )
 
     def get_offenders(self, obj):
-        offenders = Offender.active_offenders.filter(offence__exact=obj)
-        return [ OffenderSerializer(offender).data for offender in offenders ]
+        offenders = Offender.objects.filter(offence__exact=obj)
+        offenders_list =  [ OffenderSerializer(offender).data for offender in offenders ]
+        return offenders_list
 
     def get_allocated_group(self, obj):
         allocated_group = [{
