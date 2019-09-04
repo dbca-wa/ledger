@@ -140,19 +140,19 @@
 
                                     <div class="form-group"><div class="row">
                                         <div class="col-sm-3">
-                                            <label>Alleged committed offence</label>
+                                            <label>Offender</label>
                                         </div>
-                                        <div class="col-sm-6" v-for="item in sanction_outcome.alleged_offences">
-                                            <input :readonly="readonlyForm" class="form-control" v-model="item.act + ', ' + item.name + ', ' + item.offence_text"/>
+                                        <div class="col-sm-6">
+                                            <input :readonly="readonlyForm" class="form-control" v-model="displayOffender"/>
                                         </div>
                                     </div></div>
 
                                     <div class="form-group"><div class="row">
                                         <div class="col-sm-3">
-                                            <label>Offender</label>
+                                            <label>Alleged committed offence</label>
                                         </div>
-                                        <div class="col-sm-6">
-                                            <input :readonly="readonlyForm" class="form-control" v-model="displayOffender"/>
+                                        <div class="col-sm-6" v-for="item in sanction_outcome.alleged_offences">
+                                            <input :readonly="readonlyForm" class="form-control" v-model="item.act + ', ' + item.name + ', ' + item.offence_text"/>
                                         </div>
                                     </div></div>
 

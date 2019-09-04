@@ -223,35 +223,35 @@
                             <div :id="locationTab" class="tab-pane face in">
                                 <FormSection :formCollapse="false" label="Location" Index="3">
                                     <MapLocation v-if="offence.location" v-bind:key="locationTab" ref="mapLocationComponent" :marker_longitude="offence.location.geometry.coordinates[0]" :marker_latitude="offence.location.geometry.coordinates[1]" @location-updated="locationUpdated"/>
-        <div :id="idLocationFieldsAddress">
-            <div class="col-sm-12 form-group"><div class="row">
-                <label class="col-sm-4">Street</label>
-                <input class="form-control" v-model="offence.location.properties.street" readonly />
-            </div></div>
-            <div class="col-sm-12 form-group"><div class="row">
-                <label class="col-sm-4">Town/Suburb</label>
-                <input class="form-control" v-model="offence.location.properties.town_suburb" readonly />
-            </div></div>
-            <div class="col-sm-12 form-group"><div class="row">
-                <label class="col-sm-4">State</label>
-                <input class="form-control" v-model="offence.location.properties.state" readonly />
-            </div></div>
-            <div class="col-sm-12 form-group"><div class="row">
-                <label class="col-sm-4">Postcode</label>
-                <input class="form-control" v-model="offence.location.properties.postcode" readonly />
-            </div></div>
-            <div class="col-sm-12 form-group"><div class="row">
-                <label class="col-sm-4">Country</label>
-                <input class="form-control" v-model="offence.location.properties.country" readonly />
-            </div></div>
-        </div>
+                                    <div :id="idLocationFieldsAddress" v-if="offence.location">
+                                        <div class="col-sm-12 form-group"><div class="row">
+                                            <label class="col-sm-4">Street</label>
+                                            <input class="form-control" v-model="offence.location.properties.street" readonly />
+                                        </div></div>
+                                        <div class="col-sm-12 form-group"><div class="row">
+                                            <label class="col-sm-4">Town/Suburb</label>
+                                            <input class="form-control" v-model="offence.location.properties.town_suburb" readonly />
+                                        </div></div>
+                                        <div class="col-sm-12 form-group"><div class="row">
+                                            <label class="col-sm-4">State</label>
+                                            <input class="form-control" v-model="offence.location.properties.state" readonly />
+                                        </div></div>
+                                        <div class="col-sm-12 form-group"><div class="row">
+                                            <label class="col-sm-4">Postcode</label>
+                                            <input class="form-control" v-model="offence.location.properties.postcode" readonly />
+                                        </div></div>
+                                        <div class="col-sm-12 form-group"><div class="row">
+                                            <label class="col-sm-4">Country</label>
+                                            <input class="form-control" v-model="offence.location.properties.country" readonly />
+                                        </div></div>
+                                    </div>
 
-        <div :id="idLocationFieldsDetails">
-            <div class="col-sm-12 form-group"><div class="row">
-                <label class="col-sm-4">Details</label>
-                <textarea class="form-control location_address_field" v-model="offence.location.properties.details" />
-            </div></div>
-        </div>
+                                    <div :id="idLocationFieldsDetails" v-if="offence.location">
+                                        <div class="col-sm-12 form-group"><div class="row">
+                                            <label class="col-sm-4">Details</label>
+                                            <textarea class="form-control location_address_field" v-model="offence.location.properties.details" />
+                                        </div></div>
+                                    </div>
                                 </FormSection>
                             </div>
                             <div :id="relatedItemsTab" class="tab-pane face in">
@@ -650,48 +650,54 @@ export default {
           });
         },
         setAddressFields(feature) {
-          let state_abbr_list = {
-            "New South Wales": "NSW",
-            Queensland: "QLD",
-            "South Australia": "SA",
-            Tasmania: "TAS",
-            Victoria: "VIC",
-            "Western Australia": "WA",
-            "Northern Territory": "NT",
-            "Australian Capital Territory": "ACT"
-          };
-          let address_arr = feature.place_name.split(",");
+            if (this.offence.location){
+                  let state_abbr_list = {
+                    "New South Wales": "NSW",
+                    Queensland: "QLD",
+                    "South Australia": "SA",
+                    Tasmania: "TAS",
+                    Victoria: "VIC",
+                    "Western Australia": "WA",
+                    "Northern Territory": "NT",
+                    "Australian Capital Territory": "ACT"
+                  };
+                  let address_arr = feature.place_name.split(",");
 
-          /* street */
-          this.offence.location.properties.street = address_arr[0];
+                  /* street */
+                  this.offence.location.properties.street = address_arr[0];
 
-          /*
-           * Split the string into suburb, state and postcode
-           */
-          let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
-          let result = reg.exec(address_arr[1]);
-          /* suburb */
-          this.offence.location.properties.town_suburb = result[1].trim();
+                  /*
+                   * Split the string into suburb, state and postcode
+                   */
+                  let reg = /^([a-zA-Z0-9\s]*)\s(New South Wales|Queensland|South Australia|Tasmania|Victoria|Western Australia|Northern Territory|Australian Capital Territory){1}\s+(\d{4})$/gi;
+                  let result = reg.exec(address_arr[1]);
+                  /* suburb */
+                  this.offence.location.properties.town_suburb = result[1].trim();
 
-          /* state */
-          let state_abbr = state_abbr_list[result[2].trim()];
-          this.offence.location.properties.state = state_abbr;
+                  /* state */
+                  let state_abbr = state_abbr_list[result[2].trim()];
+                  this.offence.location.properties.state = state_abbr;
 
-          /* postcode */
-          this.offence.location.properties.postcode = result[3].trim();
-          /* country */
+                  /* postcode */
+                  this.offence.location.properties.postcode = result[3].trim();
+                  /* country */
 
-          this.offence.location.properties.country = "Australia";
+                  this.offence.location.properties.country = "Australia";
+            }
         },
         setLocationAddressEmpty() {
-            this.offence.location.properties.town_suburb = "";
-            this.offence.location.properties.street = "";
-            this.offence.location.properties.state = "";
-            this.offence.location.properties.postcode = "";
-            this.offence.location.properties.country = "";
+            if(this.offence.location){
+                this.offence.location.properties.town_suburb = "";
+                this.offence.location.properties.street = "";
+                this.offence.location.properties.state = "";
+                this.offence.location.properties.postcode = "";
+                this.offence.location.properties.country = "";
+            }
         },
         setLocationDetailsFieldEmpty() {
-            this.offence.location.properties.details = "";
+            if(this.offence.location){
+                this.offence.location.properties.details = "";
+            }
         },
         locationUpdated: function(latlng){
             // Update coordinate
