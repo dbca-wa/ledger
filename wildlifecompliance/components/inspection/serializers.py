@@ -279,6 +279,7 @@ class InspectionDatatableSerializer(serializers.ModelSerializer):
     inspection_type = InspectionTypeSerializer()
     planned_for = serializers.SerializerMethodField()
     status = CustomChoiceField(read_only=True)
+    assigned_to = ComplianceUserDetailsOptimisedSerializer(read_only=True)
     inspection_team_lead = EmailUserSerializer()
     
     class Meta:
@@ -291,6 +292,8 @@ class InspectionDatatableSerializer(serializers.ModelSerializer):
                 'planned_for',
                 'inspection_team_lead',
                 'user_action',
+                'assigned_to',
+                'assigned_to_id',
                 )
 
     def get_user_action(self, obj):
