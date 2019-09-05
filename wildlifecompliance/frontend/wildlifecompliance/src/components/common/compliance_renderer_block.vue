@@ -359,7 +359,6 @@ const ComplianceRendererBlock = {
         }
     },
     is_readonly: function() {
-        console.log("is_readonly")
         return this.readonlyForm;
     },
     // is_readonly: function() {

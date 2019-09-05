@@ -9,6 +9,7 @@ from wildlifecompliance.components.inspection.models import (
     InspectionUserAction,
     InspectionCommsLogEntry,
     InspectionType,
+    InspectionFormDataRecord,
     )
 from wildlifecompliance.components.main.related_item import get_related_items
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
@@ -113,6 +114,27 @@ class EmailUserSerializer(serializers.ModelSerializer):
 #             'inspection_team_lead_id'
 #         )
 
+class InspectionFormDataRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InspectionFormDataRecord
+        fields = (
+            'field_name',
+            'schema_name',
+            'component_type',
+            'instance_name',
+            'comment',
+            'deficiency',
+            'value',
+        )
+        read_only_fields = (
+            'field_name',
+            'schema_name',
+            'component_type',
+            'instance_name',
+            'comment',
+            'deficiency',
+            'value',
+        )
 
 class InspectionSerializer(serializers.ModelSerializer):
     allocated_group = serializers.SerializerMethodField()
@@ -126,6 +148,7 @@ class InspectionSerializer(serializers.ModelSerializer):
     #inspection_type = InspectionTypeSerializer()
     related_items = serializers.SerializerMethodField()
     inspection_report = serializers.SerializerMethodField()
+    data = InspectionFormDataRecordSerializer(many=True)
 
     class Meta:
         model = Inspection
@@ -158,6 +181,7 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'schema',
                 'region_id',
                 'district_id',
+                'data',
                 )
         read_only_fields = (
                 'id',
