@@ -145,9 +145,9 @@
                                         <div class="col-sm-6">
 
                                             <div v-if="sanction_outcome && sanction_outcome.offence && sanction_outcome.offence.offenders">
-                                                <select class="form-control" v-on:change="offenderSelected($event)" v-bind:value="sanction_outcome.offender.id">
+                                                <select class="form-control" v-model="sanction_outcome.offender">
                                                     <option value=""></option>
-                                                    <option v-for="offender in sanction_outcome.offence.offenders" v-bind:value="offender.id" v-bind:key="offender.id">
+                                                    <option v-for="offender in sanction_outcome.offence.offenders" v-bind:value="offender" v-bind:key="offender.id">
                                                         <span v-if="offender.person">
                                                             {{ offender.person.first_name + ' ' + offender.person.last_name + ', DOB:' + offender.person.dob }} 
                                                         </span>
@@ -396,17 +396,6 @@ export default {
             loadSanctionOutcome: 'loadSanctionOutcome',
             setSanctionOutcome: 'setSanctionOutcome', 
         }),
-        offenderSelected: function(e) {
-            let offender_id = parseInt(e.target.value);
-            for (let i = 0; i < this.sanction_outcome.offence.offenders.length; i++) {
-                if (this.sanction_outcome.offence.offenders[i].id == offender_id) {
-                    this.sanction_outcome.offender = this.sanction_outcome.offence.offenders[i];
-                    return;
-                }
-            }
-            // User selected the empty line
-            this.sanction_outcome.offender = {};
-        },
         addWorkflow(workflow_type) {
             this.workflow_type = workflow_type;
             this.updateWorkflowBindId();
