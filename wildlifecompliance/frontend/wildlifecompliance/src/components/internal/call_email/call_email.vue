@@ -315,9 +315,10 @@
                                 </div>
                             </div>
                             
-                            <div v-for="(item, index) in current_schema">
+                            <div v-if="rendererVisibility"  v-for="(item, index) in current_schema">
                               <compliance-renderer-block
                                  :component="item"
+                                 :readonlyForm="readonlyForm"
                                  v-bind:key="`compliance_renderer_block_${index}`"
                                 />
                             </div>
@@ -507,7 +508,11 @@ export default {
       }
     },
     readonlyForm: function() {
-        return !this.call_email.can_user_edit_form;
+        if (this.call_email.id) {
+            return !this.call_email.can_user_edit_form;
+        } else {
+            return true;
+        }
     },
     canUserAction: function() {
         return this.call_email.can_user_action;
@@ -548,7 +553,14 @@ export default {
         } else {
             return false;
         }
-    }
+    },
+    rendererVisibility: function() {
+        if (this.call_email.id && this.current_schema && this.current_schema.length > 0) {
+            return true;
+        } else {
+            return false
+        }
+    },
   },
   filters: {
     formatDate: function(data) {
@@ -588,7 +600,6 @@ export default {
       // this.$refs.add_workflow.isModalOpen = true;
     },
     openSanctionOutcome(){
-      console.log('sanction_outcome');
       this.sanctionOutcomeInitialised = true;
       this.$nextTick(() => {
           this.$refs.sanction_outcome.isModalOpen = true;

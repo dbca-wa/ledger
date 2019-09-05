@@ -359,6 +359,7 @@ const ComplianceRendererBlock = {
         }
     },
     is_readonly: function() {
+        console.log("is_readonly")
         return this.readonlyForm;
     },
     // is_readonly: function() {
@@ -425,13 +426,6 @@ const ComplianceRendererBlock = {
         return this.replaceSitePlaceholders(this.component.help_text_url);
     },
   },
-  // watch: {
-  //     is_readonly: {
-  //         handler: function (){
-  //         },
-  //         //deep: true
-  //     },
-  // },
   methods: {
     ...mapActions([
         'toggleVisibleComponent',
@@ -477,7 +471,6 @@ const ComplianceRendererBlock = {
     },
   },
   created: function() {
-      //this.is_readonly = this.readonlyForm;
   }
 }
 

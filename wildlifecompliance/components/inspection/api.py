@@ -739,7 +739,7 @@ class InspectionTypeViewSet(viewsets.ModelViewSet):
    serializer_class = InspectionTypeSerializer
 
    def get_queryset(self):
-       user = self.request.user
+       # user = self.request.user
        if is_internal(self.request):
            return InspectionType.objects.all()
        return InspectionType.objects.none()

@@ -792,11 +792,14 @@ export default {
       // load Inspection report
       //await this.$refs.inspection_report_file.get_documents();
       // load current Inspection renderer schema
-      this.$nextTick(async () => {
-          if (this.inspection.inspection_type_id) {
-              await this.loadSchema();
-          }
-      });
+      // this.$nextTick(async () => {
+      //     if (this.inspection.inspection_type_id) {
+      //         await this.loadSchema();
+      //     }
+      // });
+      if (this.inspection.inspection_type_id) {
+          await this.loadSchema();
+      }
   },
   mounted: function() {
       let vm = this;

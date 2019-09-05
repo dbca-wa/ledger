@@ -30,7 +30,12 @@ from wildlifecompliance.components.users.serializers import (
 class InspectionTypeSerializer(serializers.ModelSerializer):
    class Meta:
        model = InspectionType
-       fields = '__all__'
+       # fields = '__all__'
+       fields = (
+               'id',
+               'inspection_type',
+               'description',
+               )
 
 
 class OrganisationSerializer(serializers.ModelSerializer):
