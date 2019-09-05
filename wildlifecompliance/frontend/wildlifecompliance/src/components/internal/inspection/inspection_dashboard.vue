@@ -187,6 +187,18 @@
                             }
                         },
                         {
+                            data: "assigned_to",
+                            searchable: false,
+                            orderable: false,
+                            mRender: function (data, type, full) {
+                                if (data) {
+                                    return data.full_name;
+                                } else {
+                                    return '';
+                                }
+                            }
+                        },
+                        {
                             data: 'user_action',
                             searchable: false,
                             orderable: false
@@ -200,6 +212,7 @@
                     'Status',
                     'Planned for',
                     'Team Lead',
+                    'Assigned To',
                     'Action',
                 ],
             }

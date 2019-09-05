@@ -68,12 +68,15 @@ def _extract_email_headers(email_message, sender=None):
 
 # Each component will implement a send_mail method to pass to this function.
 # Eg. SanctionOutcome will have send_sanction_outcome_email api method
-def prepare_mail(request, instance, workflow_entry, send_mail):
+def prepare_mail(request, instance, workflow_entry, send_mail, recipient_id=None):
     print("send_mail")
     print(request.data)
     try:
         email_group = []
-        if request.data.get('assigned_to_id'):
+        if recipient_id:
+            user = EmailUser.objects.get(id=recipient_id)
+            email_group.append(user)
+        elif request.data.get('assigned_to_id'):
             user = EmailUser.objects.get(id=request.data.get('assigned_to_id'))
             email_group.append(user)
         elif request.data.get('allocated_group_id'):
