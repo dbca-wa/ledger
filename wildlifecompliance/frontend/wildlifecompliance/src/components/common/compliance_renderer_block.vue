@@ -4,6 +4,7 @@
             <compliance-renderer-block v-for="(subcomponent, index) in component.children"
                 :component="subcomponent"
                 :instance="instance"
+                :readonlyForm="readonlyForm"
                 v-bind:key="`subcomponent_${index}`"
                 />
         </div>
@@ -13,6 +14,7 @@
                 <compliance-renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
                     :instance="instance"
+                    :readonlyForm="readonlyForm"
                     v-bind:key="`section_${index}`"
                     />
         </FormSection>
@@ -27,6 +29,7 @@
                 <compliance-renderer-block v-for="(subcomponent, index) in component.children"
                     :component="subcomponent"
                     :instance="instance"
+                    :readonlyForm="readonlyForm"
                     v-bind:key="`group_${index}`"
                     />
         </Group>
@@ -308,6 +311,7 @@ const ComplianceRendererBlock = {
   },
   data: function() {
       return {
+          //is_readonly: false,
     }
   },
   props:{
@@ -321,6 +325,10 @@ const ComplianceRendererBlock = {
       },
       callingComponent: {
           type: Object,
+      },
+      readonlyForm: {
+          type: Boolean,
+          //required: true,
       },
   },
   computed: {
@@ -351,16 +359,19 @@ const ComplianceRendererBlock = {
         }
     },
     is_readonly: function() {
-        // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
-        if (this.call_email && this.call_email.id) {
-            return this.component.readonly ? this.component.readonly : !this.call_email.can_user_edit_form;
-        } else if (this.inspection && this.inspection.id) {
-            console.log(this.inspection);
-            console.log(this.component.readonly);
-            return this.component.readonly ? this.component.readonly : !this.inspection.can_user_action;
-        }
-        //return this.component.readonly ? this.component.readonly : !this.callingComponent.can_user_action;
+        return this.readonlyForm;
     },
+    // is_readonly: function() {
+    //     // return this.readonlyParent ? this.readonlyParent : this.component.readonly;
+    //     if (this.call_email && this.call_email.id) {
+    //         return this.component.readonly ? this.component.readonly : !this.call_email.can_user_edit_form;
+    //     } else if (this.inspection && this.inspection.id) {
+    //         console.log(this.inspection);
+    //         console.log(this.component.readonly);
+    //         return this.component.readonly ? this.component.readonly : !this.inspection.can_user_action;
+    //     }
+    //     //return this.component.readonly ? this.component.readonly : !this.callingComponent.can_user_action;
+    // },
     comment_data: function() {
         return this.call_email.comment_data;
     },
@@ -458,6 +469,8 @@ const ComplianceRendererBlock = {
         }
     },
   },
+  created: function() {
+  }
 }
 
 export default ComplianceRendererBlock;

@@ -170,6 +170,11 @@ class Inspection(RevisionedMixin):
             self.number = new_number_id
             self.save()
         
+    @property
+    def data(self):
+        """ returns a queryset of form data records attached to Inspection (shortcut to InspectionFormDataRecord related_name). """
+        return self.form_data_records.all()
+
     def log_user_action(self, action, request):
         return InspectionUserAction.log_action(self, action, request.user)
     
@@ -301,4 +306,121 @@ class InspectionDocument(Document):
 
     class Meta:
         app_label = 'wildlifecompliance'
+
+
+@python_2_unicode_compatible
+class InspectionFormDataRecord(models.Model):
+
+    INSTANCE_ID_SEPARATOR = "__instance-"
+
+    ACTION_TYPE_ASSIGN_VALUE = 'value'
+    ACTION_TYPE_ASSIGN_COMMENT = 'comment'
+
+    COMPONENT_TYPE_TEXT = 'text'
+    COMPONENT_TYPE_TAB = 'tab'
+    COMPONENT_TYPE_SECTION = 'section'
+    COMPONENT_TYPE_GROUP = 'group'
+    COMPONENT_TYPE_NUMBER = 'number'
+    COMPONENT_TYPE_EMAIL = 'email'
+    COMPONENT_TYPE_SELECT = 'select'
+    COMPONENT_TYPE_MULTI_SELECT = 'multi-select'
+    COMPONENT_TYPE_TEXT_AREA = 'text_area'
+    COMPONENT_TYPE_TABLE = 'table'
+    COMPONENT_TYPE_EXPANDER_TABLE = 'expander_table'
+    COMPONENT_TYPE_LABEL = 'label'
+    COMPONENT_TYPE_RADIO = 'radiobuttons'
+    COMPONENT_TYPE_CHECKBOX = 'checkbox'
+    COMPONENT_TYPE_DECLARATION = 'declaration'
+    COMPONENT_TYPE_FILE = 'file'
+    COMPONENT_TYPE_DATE = 'date'
+    COMPONENT_TYPE_CHOICES = (
+        (COMPONENT_TYPE_TEXT, 'Text'),
+        (COMPONENT_TYPE_TAB, 'Tab'),
+        (COMPONENT_TYPE_SECTION, 'Section'),
+        (COMPONENT_TYPE_GROUP, 'Group'),
+        (COMPONENT_TYPE_NUMBER, 'Number'),
+        (COMPONENT_TYPE_EMAIL, 'Email'),
+        (COMPONENT_TYPE_SELECT, 'Select'),
+        (COMPONENT_TYPE_MULTI_SELECT, 'Multi-Select'),
+        (COMPONENT_TYPE_TEXT_AREA, 'Text Area'),
+        (COMPONENT_TYPE_TABLE, 'Table'),
+        (COMPONENT_TYPE_EXPANDER_TABLE, 'Expander Table'),
+        (COMPONENT_TYPE_LABEL, 'Label'),
+        (COMPONENT_TYPE_RADIO, 'Radio'),
+        (COMPONENT_TYPE_CHECKBOX, 'Checkbox'),
+        (COMPONENT_TYPE_DECLARATION, 'Declaration'),
+        (COMPONENT_TYPE_FILE, 'File'),
+        (COMPONENT_TYPE_DATE, 'Date'),
+    )
+
+    inspection = models.ForeignKey(Inspection, related_name='form_data_records')
+    field_name = models.CharField(max_length=512, blank=True, null=True)
+    schema_name = models.CharField(max_length=256, blank=True, null=True)
+    instance_name = models.CharField(max_length=256, blank=True, null=True)
+    component_type = models.CharField(
+        max_length=64,
+        choices=COMPONENT_TYPE_CHOICES,
+        default=COMPONENT_TYPE_TEXT)
+    value = JSONField(blank=True, null=True)
+    comment = models.TextField(blank=True, null=True)
+    deficiency = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return "Inspection {id} record {field}: {value}".format(
+            id=self.inspection_id,
+            field=self.field_name,
+            value=self.value[:8]
+        )
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        unique_together = ('inspection', 'field_name',)
+
+    @staticmethod
+    def process_form(request, Inspection, form_data, action=ACTION_TYPE_ASSIGN_VALUE):
+        can_edit_comments = request.user.has_perm(
+            'wildlifecompliance.licensing_officer'
+        ) or request.user.has_perm(
+            'wildlifecompliance.assessor'
+        )
+        can_edit_deficiencies = request.user.has_perm(
+            'wildlifecompliance.licensing_officer'
+        )
+
+        if action == InspectionFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT and\
+                not can_edit_comments and not can_edit_deficiencies:
+            raise Exception(
+                'You are not authorised to perform this action!')
+        
+        for field_name, field_data in form_data.items():
+            schema_name = field_data.get('schema_name', '')
+            component_type = field_data.get('component_type', '')
+            value = field_data.get('value', '')
+            comment = field_data.get('comment_value', '')
+            deficiency = field_data.get('deficiency_value', '')
+            instance_name = ''
+
+            if InspectionFormDataRecord.INSTANCE_ID_SEPARATOR in field_name:
+                [parsed_schema_name, instance_name] = field_name.split(
+                    InspectionFormDataRecord.INSTANCE_ID_SEPARATOR
+                )
+                schema_name = schema_name if schema_name else parsed_schema_name
+
+            form_data_record, created = InspectionFormDataRecord.objects.get_or_create(
+                inspection_id=Inspection.id,
+                field_name=field_name
+            )
+            if created:
+                form_data_record.schema_name = schema_name
+                form_data_record.instance_name = instance_name
+                form_data_record.component_type = component_type
+            if action == InspectionFormDataRecord.ACTION_TYPE_ASSIGN_VALUE:
+                form_data_record.value = value
+            elif action == InspectionFormDataRecord.ACTION_TYPE_ASSIGN_COMMENT:
+                if can_edit_comments:
+                    form_data_record.comment = comment
+                if can_edit_deficiencies:
+                    form_data_record.deficiency = deficiency
+            form_data_record.save()
+
 

@@ -82,6 +82,19 @@ export const inspectionStore = {
                 //await dispatch("setInspection", returnedInspection.body);
                 commit("updateInspection", returnedInspection.body);
 
+                for (let form_data_record of returnedInspection.body.data) {
+                    await dispatch("setFormValue", {
+                        key: form_data_record.field_name,
+                        value: {
+                            "value": form_data_record.value,
+                            "comment_value": form_data_record.comment,
+                            "deficiency_value": form_data_record.deficiency,
+                        }
+                    }, {
+                        root: true
+                    });
+                }
+
             } catch (err) {
                 console.log(err);
             }
@@ -105,17 +118,23 @@ export const inspectionStore = {
             }
         },
         
-        async saveInspection({ dispatch, state }, { create, internal }) {
+        async saveInspection({ dispatch, state, rootGetters }, { create, internal }) {
             let inspectionId = null;
             let savedInspection = null;
             try {
-                let payload = {};
+                let payload = new Object();
                 Object.assign(payload, state.inspection);
                 console.log(payload);
                 if (payload.planned_for_date) {
                     payload.planned_for_date = moment(payload.planned_for_date, 'DD/MM/YYYY').format('YYYY-MM-DD');
                 } else if (payload.planned_for_date === '') {
                     payload.planned_for_date = null;
+                }
+                // Renderer data
+                if (state.inspection.schema) {
+                if (state.inspection.schema.length > 0) {
+                    payload.renderer_data = rootGetters.renderer_form_data;
+                    }
                 }
 
                 let fetchUrl = null;
