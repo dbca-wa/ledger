@@ -183,14 +183,14 @@ class OffenceViewSet(viewsets.ModelViewSet):
         if instance.call_email:
             instance.call_email.log_user_action(
                     CallEmailUserAction.ACTION_OFFENCE.format(
-                    instance.call_email.number), request)
+                    instance.lodgement_number), request)
             #instance.call_email.status = 'open_inspection'
             #instance.call_email.save()
         # If Inspection
         elif instance.inspection:
             instance.inspection.log_user_action(
                     InspectionUserAction.ACTION_OFFENCE.format(
-                    instance.inspection.number), request)
+                    instance.lodgement_number), request)
             #instance.inspection.status = 'open_inspection'
             #instance.inspection.save()
 
