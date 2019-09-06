@@ -82,17 +82,17 @@ class SanctionOutcome(models.Model):
         if self.offender and not self.offence:
             raise ValidationError('An offence must be selected to save offender(s).')
 
-        if self.alleged_offences.all().count() and not self.offence:
+        if self.alleged_committed_offences.all().count() and not self.offence:
             raise ValidationError('An offence must be selected to save alleged offence(s).')
 
         # validate if offender is registered under the offence
-        if self.offender not in self.offence.offence_set:
+        if self.offender not in self.offence.offender_set:
             raise ValidationError('Offender must be registered under the selected offence.')
 
         # validate if alleged_offences are registered under the offence
-        for alleged_offence in self.alleged_offences:
-            if alleged_offence not in self.offence.alleged_offences:
-                raise ValidationError('Alleged offence must be registered under the selected offence.')
+        # for alleged_offence in self.alleged_committed_offences.all():
+        #     if alleged_offence not in self.offence.alleged_offences:
+        #         raise ValidationError('Alleged offence must be registered under the selected offence.')
 
         # make issued_on_papaer true whenever the type is letter_of_advice
         if self.type == self.TYPE_LETTER_OF_ADVICE:

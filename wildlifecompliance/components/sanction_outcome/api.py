@@ -173,6 +173,9 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         res_json = json.dumps(res_obj)
         return HttpResponse(res_json, content_type='application/json')
 
+    def retrieve(self, request, *args, **kwargs):
+        return super(SanctionOutcomeViewSet, self).retrieve(request, *args, **kwargs)
+
     def create(self, request, *args, **kwargs):
         serializer = SaveSanctionOutcomeSerializer(data=request.data, partial=True)
 

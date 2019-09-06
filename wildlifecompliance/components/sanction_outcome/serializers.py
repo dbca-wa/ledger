@@ -11,6 +11,14 @@ from wildlifecompliance.components.sanction_outcome.models import SanctionOutcom
 from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
 
+# class AllegedOffenceSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = AllegedOffence
+#         fields = (
+#             ''
+#         )
+
+
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     type = CustomChoiceField(read_only=True)
@@ -36,6 +44,7 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
             'offence',
             'offender',
             'alleged_offences',
+            'alleged_committed_offences',
             'issued_on_paper',
             'paper_id',
             'description',
