@@ -207,6 +207,7 @@ export default {
                         searchable: false,
                         orderable: true,
                         mRender: function (data, type, row){
+                            console.log(data);
                             if (data){
                                 return data;
                             } else { 

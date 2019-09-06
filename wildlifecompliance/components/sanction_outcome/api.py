@@ -23,6 +23,7 @@ from wildlifecompliance.components.main.api import process_generic_document
 from wildlifecompliance.components.call_email.models import CallEmail, CallEmailUserAction
 from wildlifecompliance.components.inspection.models import Inspection, InspectionUserAction
 from wildlifecompliance.components.main.email import prepare_mail
+from wildlifecompliance.components.offence.models import SectionRegulation
 from wildlifecompliance.components.sanction_outcome.email import send_mail
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction, \
     SanctionOutcomeCommsLogEntry
@@ -228,19 +229,21 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             validation_serializer = SanctionOutcomeSerializer(instance, context={'request': request})
             user_in_group = validation_serializer.data.get('user_in_group')
 
-            if request.data.get('current_user') and user_in_group:
-                serializer = UpdateAssignedToIdSerializer(
-                    instance=instance,
-                    data={
-                        'assigned_to_id': request.user.id,
-                    }
-                )
-            elif user_in_group:
-                serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
+            if user_in_group:
+                # current user is in the group
+                if request.data.get('current_user'):
+                    # current user is going to assign him or herself to the object and
+                    serializer = UpdateAssignedToIdSerializer(
+                        instance=instance,
+                        data={
+                            'assigned_to_id': request.user.id,
+                        }
+                    )
+                else:
+                    # current user is going to assign someone else to the object
+                    serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
 
-            if serializer:
-                serializer.is_valid(raise_exception=True)
-                if serializer.is_valid():
+                if serializer.is_valid(raise_exception=True):
                     serializer.save()
                     return_serializer = SanctionOutcomeSerializer(instance=instance,
                                                              context={'request': request}
@@ -251,6 +254,9 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_201_CREATED,
                         headers=headers
                     )
+                else:
+                    # TODO return
+                    pass
             else:
                 return Response(validation_serializer.data,
                                 status=status.HTTP_201_CREATED
@@ -318,16 +324,16 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 request_data['offence_id'] = request_data.get('current_offence', {}).get('id', None);
                 request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
 
+                # workflow
                 workflow_type = request_data.get('workflow_type', '')
 
+                # allocated group
                 regionDistrictId = request_data['district_id'] if request_data['district_id'] else request_data['region_id']
                 groups = self.get_compliance_permission_groups(regionDistrictId, workflow_type)
-
                 if groups.count() == 1:
                     group = groups.first()
                 elif groups.count() > 1:
                     group = groups.first()
-
                 request_data['allocated_group_id'] = group.id
 
                 # Save sanction outcome (offence, offender, alleged_offences)
@@ -339,6 +345,13 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 instance = serializer.save()
 
+                # Create relations between this sanction outcome and the alleged offence(s)
+                for id in request_data['alleged_offence_ids_included']:
+                    alleged_offence = SectionRegulation.objects.get(id=id)
+                    instance.alleged_offences.add(alleged_offence)
+                instance.save()
+
+                # Handle workflow
                 if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:
                     instance.send_to_manager(request)
                 elif not workflow_type:

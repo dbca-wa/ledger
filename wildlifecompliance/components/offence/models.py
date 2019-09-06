@@ -46,7 +46,7 @@ class Offence(RevisionedMixin):
     status = models.CharField(
         max_length=40,
         choices=STATUS_CHOICES,
-        default='draft',
+        default='open',
     )
     location = models.ForeignKey(
         Location,

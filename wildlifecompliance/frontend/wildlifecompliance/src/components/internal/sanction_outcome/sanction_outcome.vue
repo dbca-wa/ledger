@@ -145,7 +145,7 @@
                                         <div class="col-sm-6">
 
                                             <div v-if="sanction_outcome && sanction_outcome.offence && sanction_outcome.offence.offenders">
-                                                <select class="form-control" v-model="sanction_outcome.offender">
+                                                <select :disabled="readonlyForm" class="form-control" v-model="sanction_outcome.offender">
                                                     <option value=""></option>
                                                     <option v-for="offender in sanction_outcome.offence.offenders" v-bind:value="offender" v-bind:key="offender.id">
                                                         <span v-if="offender.person">
@@ -162,12 +162,20 @@
                                     </div></div>
 
                                     <div class="form-group"><div class="row">
-                                        <div class="col-sm-3">
+                                        <div class="col-sm-5">
                                             <label>Alleged committed offence</label>
                                         </div>
+                                            <!--
                                         <div class="col-sm-6" v-for="item in sanction_outcome.alleged_offences">
                                             <input :readonly="readonlyForm" class="form-control" v-model="item.act + ', ' + item.name + ', ' + item.offence_text"/>
                                         </div>
+                                            -->
+                                        <div class="col-sm-12 form-group"><div class="row">
+                                            <div class="col-sm-12">
+                                                <datatable ref="alleged_offence_table" id="alleged-offence-table" :dtOptions="dtOptionsAllegedOffence" :dtHeaders="dtHeadersAllegedOffence" />
+                                            </div>
+                                        </div></div>
+
                                     </div></div>
 
                                     <div class="form-group"><div class="row">
@@ -272,16 +280,53 @@ export default {
                 api_endpoints.sanction_outcome,
                 this.$route.params.sanction_outcome_id + "/action_log"
             ),
+            dtHeadersAllegedOffence: [
+                "id",
+                "Act",
+                "Section/Regulation",
+                "Alleged Offence",
+                "Action"
+            ],
+            dtOptionsAllegedOffence: {
+                columns: [
+                    {
+                        data: "id",
+                        visible: false
+                    },
+                    {
+                        data: "Act"
+                    },
+                    {
+                        data: "Section/Regulation"
+                    },
+                    {
+                        data: "Alleged Offence"
+                    },
+                    {
+                        data: "Action",
+                        mRender: function(data, type, row) {
+                        return (
+                            '<a href="#" class="remove_button" data-alleged-offence-id="' +
+                            row.id +
+                            '">Remove</a>'
+                        );
+                        }
+                    }
+                ]
+            }
         }
     },
     components: {
         FormSection,
         SanctionOutcomeWorkflow,
         CommsLogs,
+        datatable,
     },
     created: async function() {
+        console.log('created');
         if (this.$route.params.sanction_outcome_id) {
             await this.loadSanctionOutcome({ sanction_outcome_id: this.$route.params.sanction_outcome_id });
+            this.reflectAllegedOffencesToTable();
         }
     },
     mounted: function() {
@@ -292,7 +337,7 @@ export default {
             sanction_outcome: "sanction_outcome",
         }),
         readonlyForm: function() {
-            return false;
+            return !this.sanction_outcome.can_user_action;
         },
         statusDisplay: function() {
             let ret = '';
@@ -395,7 +440,24 @@ export default {
         ...mapActions('sanctionOutcomeStore', {
             loadSanctionOutcome: 'loadSanctionOutcome',
             setSanctionOutcome: 'setSanctionOutcome', 
+            setAssignedToId: 'setAssignedToId',
+            setCanUserAction: 'setCanUserAction',
         }),
+        reflectAllegedOffencesToTable: function(){
+            if (this.sanction_outcome && this.sanction_outcome.alleged_offences){
+                for(let i=0; i<this.sanction_outcome.alleged_offences.length; i++){
+                    this.addAllegedOffenceToTable(this.sanction_outcome.alleged_offences[i]);
+                }
+            }
+        },
+        addAllegedOffenceToTable: function(allegedOffence){
+              this.$refs.alleged_offence_table.vmDataTable.row.add({
+                  id: allegedOffence.id,
+                  Act: allegedOffence.act,
+                  "Section/Regulation": allegedOffence.name,
+                  "Alleged Offence": allegedOffence.offence_text
+              }).draw();
+        },
         addWorkflow(workflow_type) {
             this.workflow_type = workflow_type;
             this.updateWorkflowBindId();
@@ -428,7 +490,11 @@ export default {
                 url,
                 payload
             );
-            await this.setSanctionOutcome(res.body); 
+            console.log('updateAssignedToId');
+            console.log(res.body);
+            //await this.setSanctionOutcome(res.body); 
+            this.setAssignedToId(res.body.assigned_to_id);
+            this.setCanUserAction(res.body.can_user_action);
         },
     }
 }

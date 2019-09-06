@@ -144,16 +144,20 @@ class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
         returned_url = ''
 
         if obj.status == SanctionOutcome.STATUS_CLOSED:
+            # if object is closed, now one can process but view
             returned_url = view_url
         elif user_id == obj.assigned_to_id:
+            # if user is assigned to the object, the user can process it
             returned_url = process_url
-        elif (obj.allocated_group
-              and not obj.assigned_to_id):
-            for member in obj.allocated_group.members:
-                if user_id == member.id:
-                    returned_url = process_url
+        elif (obj.allocated_group and not obj.assigned_to_id):
+            if user_id in [member.id for member in obj.allocated_group.members]:
+                # if user belongs to the same group of the object
+                # and no one is assigned to the object,
+                # the user can process it
+                returned_url = process_url
 
         if not returned_url:
+            # In other case user can view
             returned_url = view_url
 
         return returned_url

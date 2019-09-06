@@ -287,7 +287,8 @@ class OffenceViewSet(viewsets.ModelViewSet):
                     if returned_location:
                         request_data.update({'location_id': returned_location.get('id')})
 
-                # 2. Save Offence
+                # 2. Create Offence
+                request_data['status'] = 'open'
                 serializer = SaveOffenceSerializer(data=request_data)
                 serializer.is_valid(raise_exception=True)
                 saved_offence_instance = serializer.save()  # Here, relations between this offence and location, and this offence and call_email/inspection are created
