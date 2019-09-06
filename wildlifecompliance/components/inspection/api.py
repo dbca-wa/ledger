@@ -399,16 +399,29 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     if workflow:
                         return instance
                     else:
-                        serializer = InspectionSerializer(instance, context={'request': request})
+                        serializer = EmailUserSerializer(
+                            instance.inspection_team.all(),
+                            context={
+                                'inspection_team_lead_id': instance.inspection_team_lead_id
+                            },
+                            many=True)
+                        # serializer = InspectionSerializer(instance, context={'request': request})
                         return Response(
                             serializer.data,
                             status=status.HTTP_201_CREATED,
                         )
+                # List view - no modification
                 else:
-                    serializer = InspectionSerializer(instance, context={'request': request})
+                    serializer = EmailUserSerializer(
+                        instance.inspection_team.all(),
+                        context={
+                            'inspection_team_lead_id': instance.inspection_team_lead_id
+                        },
+                        many=True)
+                    # serializer = InspectionSerializer(instance, context={'request': request})
                     return Response(
                         serializer.data,
-                        status=status.HTTP_201_CREATED,
+                        status=status.HTTP_200_OK,
                     )
 
         except serializers.ValidationError:
@@ -589,10 +602,19 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 document_type='inspection_report'
                 )
             if returned_data:
+                print("returned_data")
+                print(returned_data)
+                filedata = returned_data.get('filedata')
+                # Log action if file uploaded
+                if filedata and request.data.get('action') == 'save':
+                    file_name = filedata[0].get('name')
+                    if file_name:
+                        instance.log_user_action(
+                                InspectionUserAction.ACTION_UPLOAD_INSPECTION_REPORT.format(
+                                file_name), request)
                 return Response(returned_data)
             else:
                 return Response()
-
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

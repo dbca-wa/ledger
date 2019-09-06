@@ -271,6 +271,7 @@ class InspectionUserAction(UserAction):
     ACTION_MAKE_TEAM_LEAD = "Make {} team lead"
     ACTION_ADD_TEAM_MEMBER = "Add {} to team"
     ACTION_REMOVE_TEAM_MEMBER = "Remove {} from team"
+    ACTION_UPLOAD_INSPECTION_REPORT = "Upload Inspection Report '{}'"
 
     class Meta:
         app_label = 'wildlifecompliance'

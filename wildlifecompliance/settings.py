@@ -111,10 +111,10 @@ LOGGING['handlers']['compliancemanagement'] = {
         'wildlifecompliance_compliancemanagement.log'),
     'formatter': 'verbose',
     'maxBytes': 5242880}
-LOGGING['loggers']['compliancemanagement'] = {
-    'handlers': ['compliancemanagement'],
-    'level': 'INFO'
-}
+# LOGGING['loggers']['compliancemanagement'] = {
+#     'handlers': ['compliancemanagement'],
+#     'level': 'INFO'
+# }
 
 STATICFILES_DIRS.append(
     os.path.join(
