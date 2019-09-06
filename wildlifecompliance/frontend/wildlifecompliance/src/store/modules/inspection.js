@@ -86,24 +86,24 @@ export const inspectionStore = {
                 console.log(err);
             }
         },
-        async modifyInspectionTeam({ dispatch, state}, { user_id, action }) {
-            console.log("modifyInspectionTeam");
-            try {
-                const returnedInspection = await Vue.http.post(
-                    helpers.add_endpoint_join(
-                        api_endpoints.inspection,
-                        state.inspection.id + '/modify_inspection_team/',
-                    ),
-                    { user_id, action }
-                    );
+        // async modifyInspectionTeam({ dispatch, state}, { user_id, action }) {
+        //     console.log("modifyInspectionTeam");
+        //     try {
+        //         const returnedInspection = await Vue.http.post(
+        //             helpers.add_endpoint_join(
+        //                 api_endpoints.inspection,
+        //                 state.inspection.id + '/modify_inspection_team/',
+        //             ),
+        //             { user_id, action }
+        //             );
 
-                /* Set Inspection object */
-                await dispatch("setInspection", returnedInspection.body);
+        //         /* Set Inspection object */
+        //         await dispatch("setInspection", returnedInspection.body);
 
-            } catch (err) {
-                console.log(err);
-            }
-        },
+        //     } catch (err) {
+        //         console.log(err);
+        //     }
+        // },
         
         async saveInspection({ dispatch, state }, { create, internal }) {
             let inspectionId = null;

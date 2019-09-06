@@ -205,17 +205,17 @@
                                     <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
                                 </div-->
                                 <div class="col-sm-2">
-                                    <input type="button" class="btn btn-primary" :value="createNewPersonOrganisationTitle" @click.prevent="createNewPersonClicked()" />
+                                    <input :disabled="readonlyForm" type="button" class="btn btn-primary" :value="createNewPersonOrganisationTitle" @click.prevent="createNewPersonClicked()" />
                                 </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
-                                <div class="col-sm-12">
+                                <div class="col-sm-12" v-if="!readonlyForm">
                                   <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
                               <label class="col-sm-4" for="inspection_inform">Inform party being inspected</label>
-                              <input type="checkbox" id="inspection_inform" v-model="inspection.inform_party_being_inspected">
+                              <input :disabled="readonlyForm" type="checkbox" id="inspection_inform" v-model="inspection.inform_party_being_inspected">
                               
                             </div></div>
                           </FormSection>
@@ -230,7 +230,7 @@
                                   </select>
                                 </div>
                                 <div class="col-sm-2">
-                                    <button @click.prevent="addTeamMember" class="btn btn-primary">Add Member</button>
+                                    <button :disabled="readonlyForm" @click.prevent="addTeamMember" class="btn btn-primary">Add Member</button>
                                 </div>
                                 <!--div class="col-sm-2">
                                     <button @click.prevent="makeTeamLead" class="btn btn-primary">Make Team Lead</button>
@@ -346,43 +346,43 @@ export default {
       current_schema: [],
       //createInspectionBindId: '',
       workflowBindId: '',
-      dtHeadersRelatedItems: [
-          'Number',
-          'Type',
-          'Description',
-          'Action',
-      ],
-      dtOptionsRelatedItems: {
-          columns: [
-              {
-                  data: 'identifier',
-              },
-              {
-                  data: 'model_name',
-              },
-              {
-                  data: 'descriptor',
-              },
-              {
-                  data: 'Action',
-                  mRender: function(data, type, row){
-                      // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
-                      return '<a href="#">View (not implemented)</a>';
-                  }
-              },
-          ]
-      },
+      inspectionTeam: null,
+      // dtHeadersRelatedItems: [
+      //     'Number',
+      //     'Type',
+      //     'Description',
+      //     'Action',
+      // ],
+      // dtOptionsRelatedItems: {
+      //     columns: [
+      //         {
+      //             data: 'identifier',
+      //         },
+      //         {
+      //             data: 'model_name',
+      //         },
+      //         {
+      //             data: 'descriptor',
+      //         },
+      //         {
+      //             data: 'Action',
+      //             mRender: function(data, type, row){
+      //                 // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
+      //                 return '<a href="#">View (not implemented)</a>';
+      //             }
+      //         },
+      //     ]
+      // },
       dtHeadersInspectionTeam: [
           'Name',
           'Role',
-          '',
-          '',
+          'Action',
       ],
       dtOptionsInspectionTeam: {
-          ajax: {
-              'url': '/api/inspection/' + this.$route.params.inspection_id + '/get_inspection_team/',
-              'dataSrc': '',
-          },
+          // ajax: {
+          //     'url': '/api/inspection/' + this.$route.params.inspection_id + '/get_inspection_team/',
+          //     'dataSrc': '',
+          // },
 
           columns: [
               {
@@ -391,26 +391,28 @@ export default {
               {
                   data: 'member_role',
               },
+             //  {
+             //      data: 'id',
+             //      mRender: function(data, type, row){
+             //            return (
+             //            '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
+             //                  );
+             //      }
+             //  },
               {
-                  data: 'id',
-                  mRender: function(data, type, row){
-                        return (
-                        '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
-                              );
+                  data: 'Action',
+                  mRender: function(data, type, row) {
+                      let links = '';
+                      if (row.Action.can_user_action) {
+                          if (row.Action.action === 'Member') {
+                              links = '<a href="#" class="make_team_lead" data-member-id="' + row.id + '">Make Team Lead</a>'
+                          } else {
+                              links = '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
+                          }
+                      }
+                      return links
                   }
               },
-              {
-                  data: 'action',
-                  mRender: function(data, type, row){
-                      if (data === 'Member') {
-                        return (
-                        '<a href="#" class="make_team_lead" data-member-id="' + row.id + '">Make Team Lead</a>'
-                              );
-                      } else {
-                          return ('');
-                      }
-                  }
-              }
           ]
       },
       // disabledDates: {
@@ -566,6 +568,14 @@ export default {
       return data ? moment(data).format("DD/MM/YYYY HH:mm:ss") : "";
     }
   },
+  watch: {
+      inspectionTeam: {
+          handler: function (){
+              this.constructInspectionTeamTable();
+          },
+          deep: true
+      },
+  },
   methods: {
     ...mapActions('inspectionStore', {
       loadInspection: 'loadInspection',
@@ -576,6 +586,44 @@ export default {
       setPartyInspected: 'setPartyInspected',
       setRelatedItems: 'setRelatedItems',
     }),
+    constructInspectionTeamTable: function() {
+        console.log('constructInspectionTeamTable');
+        this.$refs.inspection_team_table.vmDataTable.clear().draw();
+
+        if(this.inspectionTeam){
+          for(let i = 0; i< this.inspectionTeam.length; i++){
+            //let already_exists = this.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(this.displayedEntity.related_items[i].id);
+
+            let actionColumn = new Object();
+            Object.assign(actionColumn, this.inspectionTeam[i]);
+            actionColumn.can_user_action = this.inspection.can_user_action;
+
+            //if (!already_exists) {
+            this.$refs.inspection_team_table.vmDataTable.row.add(
+                {
+                    // 'id': this.inspectionTeam[i].id,
+                    'full_name': this.inspectionTeam[i].full_name,
+                    'member_role': this.inspectionTeam[i].member_role,
+                    'Action': actionColumn,
+                }
+            ).draw();
+            //}
+          }
+        }
+    },
+    modifyInspectionTeam: async function(user_id, action) {
+        let inspectionTeamUrl = helpers.add_endpoint_join(
+            api_endpoints.inspection, 
+            this.inspection.id + '/modify_inspection_team/'
+            );
+        let payload = {
+            'user_id': user_id, 
+            'action': action
+        }
+
+        let inspectionTeamResponse = await Vue.http.post(inspectionTeamUrl, payload);
+        this.inspectionTeam = inspectionTeamResponse.body;
+    },
     newPersonCreated: function(obj) {
         console.log(obj);
         if(obj.person){
@@ -632,27 +680,36 @@ export default {
       this.displayCreateNewPerson = !this.displayCreateNewPerson;
     },
     addTeamMember: async function() {
-        await this.modifyInspectionTeam({
+        let res = await this.modifyInspectionTeam({
             user_id: this.teamMemberSelected, 
             action: 'add'
         });
-        this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+        // this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+        console.log("res")
+        console.log(res)
+        this.inspectionTeam = res;
     },
     removeTeamMember: async function(e) {
         let memberId = e.target.getAttribute("data-member-id");
-        await this.modifyInspectionTeam({
+        let res = await this.modifyInspectionTeam({
             user_id: memberId,
             action: 'remove'
         });
-        this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+        // this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+        console.log("res")
+        console.log(res)
+        this.inspectionTeam = res;
     },
     makeTeamLead: async function(e) {
         let memberId = e.target.getAttribute("data-member-id");
-        await this.modifyInspectionTeam({
+        let res = await this.modifyInspectionTeam({
             user_id: memberId, 
             action: 'make_team_lead'
         });
-        this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+        // this.$refs.inspection_team_table.vmDataTable.ajax.reload()
+        console.log("res")
+        console.log(res)
+        this.inspectionTeam = res;
     },
     personSelected: function(para) {
         console.log(para);
@@ -750,6 +807,7 @@ export default {
             payload
         );
         await this.setInspection(res.body); 
+        this.constructInspectionTeamTable()
     },
   },
   created: async function() {
@@ -797,6 +855,14 @@ export default {
               await this.loadSchema();
           }
       });
+      // calling modifyInspectionTeam with no parameters returns the current list
+      this.modifyInspectionTeam();
+      // let inspectionTeamUrl = helpers.add_endpoint_join(
+      //       api_endpoints.inspection, 
+      //       this.inspection.id + '/get_inspection_team/'
+      //       );
+      // let inspectionTeamResponse = await Vue.http.get(inspectionTeamUrl);
+      // this.inspectionTeam = inspectionTeamResponse.body;
   },
   mounted: function() {
       let vm = this;
@@ -817,6 +883,7 @@ export default {
       
       this.$nextTick(async () => {
           this.addEventListeners();
+          this.constructInspectionTeamTable();
           // if (this.inspection.inspection_type_id) {
           //     await this.loadSchema();
           // }
