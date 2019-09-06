@@ -205,7 +205,7 @@
                                     <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
                                 </div-->
                                 <div class="col-sm-2">
-                                    <input :disabled="readonlyForm" type="button" class="btn btn-primary" :value="createNewPersonOrganisationTitle" @click.prevent="createNewPersonClicked()" />
+                                    <input :disabled="readonlyForm" type="button" class="btn btn-primary" value="Create New Person" @click.prevent="createNewPersonClicked()" />
                                 </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
@@ -545,13 +545,6 @@ export default {
             return true;
         } else {
             return false;
-        }
-    },
-    createNewPersonOrganisationTitle: function() {
-        if (this.inspection.party_inspected === 'organisation') {
-            return "Create New Organisation"
-        } else if (this.inspection.party_inspected === 'individual') {
-            return "Create New Person"
         }
     },
     rendererVisibility: function() {

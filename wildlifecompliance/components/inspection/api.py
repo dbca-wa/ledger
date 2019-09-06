@@ -50,6 +50,7 @@ from wildlifecompliance.components.inspection.models import (
     InspectionUserAction,
     InspectionType,
     InspectionCommsLogEntry,
+    InspectionFormDataRecord,
     )
 from wildlifecompliance.components.call_email.models import (
         CallEmailUserAction,
@@ -434,6 +435,27 @@ class InspectionViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def form_data(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            
+            InspectionFormDataRecord.process_form(
+                request,
+                instance,
+                request.data.get('renderer_data'),
+                action=InspectionFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
+            )
+            return redirect(reverse('external'))
+        
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
+
+
     #@detail_route(methods=['PUT', ])
     @renderer_classes((JSONRenderer,))
     #def inspection_save(self, request, workflow=False, *args, **kwargs):
@@ -443,6 +465,10 @@ class InspectionViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 instance = self.get_object()
+                
+                if request.data.get('renderer_data'):
+                    self.form_data(request)
+
                 serializer = SaveInspectionSerializer(instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
@@ -752,7 +778,7 @@ class InspectionTypeViewSet(viewsets.ModelViewSet):
    serializer_class = InspectionTypeSerializer
 
    def get_queryset(self):
-       user = self.request.user
+       # user = self.request.user
        if is_internal(self.request):
            return InspectionType.objects.all()
        return InspectionType.objects.none()
