@@ -75,6 +75,7 @@ class Offence(RevisionedMixin):
     alleged_offences = models.ManyToManyField(
         SectionRegulation,
         blank=True,
+        through='AllegedOffence',
     )
     details = models.TextField(blank=True)
     assigned_to = models.ForeignKey(
