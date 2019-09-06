@@ -50,6 +50,7 @@ from wildlifecompliance.components.inspection.models import (
     InspectionUserAction,
     InspectionType,
     InspectionCommsLogEntry,
+    InspectionFormDataRecord,
     )
 from wildlifecompliance.components.call_email.models import (
         CallEmailUserAction,
@@ -368,26 +369,25 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     if action == 'add':
                         if user not in team_member_list:
                             instance.inspection_team.add(user)
+                            instance.log_user_action(
+                                InspectionUserAction.ACTION_ADD_TEAM_MEMBER.format(
+                                user.get_full_name()), request)
                         if not instance.inspection_team_lead or not team_member_list:
                            instance.inspection_team_lead = user
                            instance.log_user_action(
                                InspectionUserAction.ACTION_MAKE_TEAM_LEAD.format(
                                user.get_full_name()), request)
-                        else: 
-                            instance.log_user_action(
-                                InspectionUserAction.ACTION_ADD_TEAM_MEMBER.format(
-                                user.get_full_name()), request)
                     if action == 'remove':
                         if user in team_member_list:
                             instance.inspection_team.remove(user)
+                            instance.log_user_action(
+                                InspectionUserAction.ACTION_REMOVE_TEAM_MEMBER.format(
+                                user.get_full_name()), request)
                         team_member_list = instance.inspection_team.all()
                         if team_member_list and not instance.inspection_team_lead_id in team_member_list:
                             instance.inspection_team_lead = team_member_list[0]
                         else:
                             instance.inspection_team_lead_id = None
-                        instance.log_user_action(
-                            InspectionUserAction.ACTION_REMOVE_TEAM_MEMBER.format(
-                            user.get_full_name()), request)
                     if action == 'make_team_lead':
                         if user not in team_member_list:
                             instance.inspection_team.add(user)
@@ -422,6 +422,27 @@ class InspectionViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
 
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def form_data(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            
+            InspectionFormDataRecord.process_form(
+                request,
+                instance,
+                request.data.get('renderer_data'),
+                action=InspectionFormDataRecord.ACTION_TYPE_ASSIGN_VALUE
+            )
+            return redirect(reverse('external'))
+        
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
+
+
     #@detail_route(methods=['PUT', ])
     @renderer_classes((JSONRenderer,))
     #def inspection_save(self, request, workflow=False, *args, **kwargs):
@@ -431,6 +452,10 @@ class InspectionViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 instance = self.get_object()
+                
+                if request.data.get('renderer_data'):
+                    self.form_data(request)
+
                 serializer = SaveInspectionSerializer(instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
@@ -632,6 +657,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
     def workflow_action(self, request, instance=None, *args, **kwargs):
         try:
             with transaction.atomic():
+                # email recipient
+                recipient_id = None
+
                 if not instance:
                     instance = self.get_object()
 
@@ -659,6 +687,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     instance.allocated_group_id = None if not request.data.get('allocated_group_id') else request.data.get('allocated_group_id')
                     instance.call_email_id = None if not request.data.get('call_email_id') else request.data.get('call_email_id')
                     instance.details = None if not request.data.get('details') else request.data.get('details')
+                else:
+                    instance.assigned_to_id = None
+                    recipient_id = instance.inspection_team_lead_id
 
                 instance.save()
                 # Log parent actions and update status
@@ -669,7 +700,10 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     instance = self.modify_inspection_team(request, instance, workflow=True, user_id=instance.assigned_to_id)
 
                 # send email
-                email_data = prepare_mail(request, instance, workflow_entry, send_mail)
+                if recipient_id:
+                    email_data = prepare_mail(request, instance, workflow_entry, send_mail, recipient_id)
+                else:
+                    email_data = prepare_mail(request, instance, workflow_entry, send_mail)
 
                 serializer = InspectionCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
                 serializer.is_valid(raise_exception=True)
@@ -731,7 +765,7 @@ class InspectionTypeViewSet(viewsets.ModelViewSet):
    serializer_class = InspectionTypeSerializer
 
    def get_queryset(self):
-       user = self.request.user
+       # user = self.request.user
        if is_internal(self.request):
            return InspectionType.objects.all()
        return InspectionType.objects.none()

@@ -205,7 +205,7 @@
                                     <input type="button" class="btn btn-primary" value="Add" @click.prevent="addOffenderClicked()" />
                                 </div-->
                                 <div class="col-sm-2">
-                                    <input type="button" class="btn btn-primary" :value="createNewPersonOrganisationTitle" @click.prevent="createNewPersonClicked()" />
+                                    <input type="button" class="btn btn-primary" value="Create New Person" @click.prevent="createNewPersonClicked()" />
                                 </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
@@ -252,9 +252,10 @@
                         <div :id="cTab" class="tab-pane fade in">
                             <FormSection :formCollapse="false" label="Checklist">
                                 <div class="col-sm-12 form-group"><div class="row">
-                                    <div v-if="current_schema" v-for="(item, index) in current_schema">
+                                        <div v-if="rendererVisibility" v-for="(item, index) in current_schema">
                                       <compliance-renderer-block
                                          :component="item"
+                                         :readonlyForm="readonlyForm"
                                          v-bind:key="`compliance_renderer_block${index}`"
                                         />
                                     </div>
@@ -279,7 +280,7 @@
                             <FormSection :formCollapse="false" label="Related Items">
                                 <div class="col-sm-12 form-group"><div class="row">
                                     <div class="col-sm-12" v-if="relatedItemsVisibility">
-                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_related_items="setRelatedItems"/>
+                                        <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_related_items="setRelatedItems" :readonlyForm="readonlyForm"/>
                                     </div>
                                 </div></div>
                             </FormSection>
@@ -468,7 +469,13 @@ export default {
         return this.inspection.status ? this.inspection.status.name : '';
     },
     readonlyForm: function() {
-        return !this.inspection.can_user_action;
+        if (this.inspection.status && this.inspection.status.id === 'await_endorsement') {
+            return true;
+        } else if (this.inspection.id) {
+            return !this.inspection.can_user_action;
+        } else {
+            return true;
+        }
     },
     canUserAction: function() {
         return this.inspection.can_user_action;
@@ -486,8 +493,9 @@ export default {
         return false
     },
     sendToManagerVisibility: function() {
-        if (this.inspection.status && !this.readonlyForm && this.inspectionReportExists) {
-            if (this.inspection.status.id.includes('open', 'request_amendment')) {
+        if (this.inspection.status && this.inspection.can_user_action && this.inspectionReportExists) {
+            //if (this.inspection.status.id.includes('open', 'request_amendment')) {
+            if (this.inspection.status.id === 'open') {
                 return true;
             }
         } else {
@@ -495,35 +503,28 @@ export default {
         }
     },
     endorseVisibility: function() {
-        if (this.inspection.status && !this.readonlyForm) {
-            return this.inspection.status.id === 'with_manager' ? true : false;
-        } else {
-            return false;
-        }
-    },
-    testProblem: function() {
-        if (this.canUserAction) {
-            return true;
+        if (this.inspection.status && this.inspection.can_user_action) {
+            return this.inspection.status.id === 'await_endorsement' ? true : false;
         } else {
             return false;
         }
     },
     requestAmendmentVisibility: function() {
-        if (this.inspection.status && !this.readonlyForm) {
-            return this.inspection.status.id === 'with_manager' ? true : false;
+        if (this.inspection.status && this.inspection.can_user_action) {
+            return this.inspection.status.id === 'await_endorsement' ? true : false;
         } else {
             return false;
         }
     },
     offenceVisibility: function() {
-        if (this.inspection.status && !this.readonlyForm) {
+        if (this.inspection.status && this.inspection.can_user_action) {
             return this.inspection.status.id === 'open' ? true : false;
         } else {
             return false;
         }
     },
     sanctionOutcomeVisibility: function() {
-        if (this.inspection.status && this.offenceExists && !this.readonlyForm) {
+        if (this.inspection.status && this.offenceExists && this.inspection.can_user_action) {
             return this.inspection.status.id === 'open' ? true : false;
         } else {
             return false;
@@ -544,11 +545,12 @@ export default {
             return false;
         }
     },
-    createNewPersonOrganisationTitle: function() {
-        if (this.inspection.party_inspected === 'organisation') {
-            return "Create New Organisation"
-        } else if (this.inspection.party_inspected === 'individual') {
-            return "Create New Person"
+    rendererVisibility: function() {
+        console.log("rendererVisibility")
+        if (this.inspection.id && this.current_schema && this.current_schema.length > 0) {
+            return true;
+        } else {
+            return false
         }
     },
   },
@@ -667,9 +669,9 @@ export default {
     },
     save: async function () {
         if (this.inspection.id) {
-            await this.saveInspection();
+            await this.saveInspection({ create: false, internal: false });
         } else {
-            await this.saveInspection({ create: true });
+            await this.saveInspection({ create: true, internal: false });
             this.$nextTick(function () {
                 this.$router.push(
                   { name: 'view-inspection', 
@@ -680,10 +682,11 @@ export default {
     },
     saveExit: async function() {
       if (this.inspection.id) {
-        await this.saveInspection();
+          await this.saveInspection({ create: false, internal: false });
       } else {
-        await this.saveInspection({ create: true });
+          await this.saveInspection({ create: true, internal: false });
       }
+      this.$router.push({ name: 'internal-inspection-dash' });
     },
     addEventListeners: function() {
       let vm = this;
@@ -782,6 +785,11 @@ export default {
       // load Inspection report
       //await this.$refs.inspection_report_file.get_documents();
       // load current Inspection renderer schema
+      // this.$nextTick(async () => {
+      //     if (this.inspection.inspection_type_id) {
+      //         await this.loadSchema();
+      //     }
+      // });
       if (this.inspection.inspection_type_id) {
           await this.loadSchema();
       }
@@ -805,6 +813,9 @@ export default {
       
       this.$nextTick(async () => {
           this.addEventListeners();
+          // if (this.inspection.inspection_type_id) {
+          //     await this.loadSchema();
+          // }
       });
   }
 };

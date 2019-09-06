@@ -390,7 +390,7 @@ export default {
               if (this.$v.region_id.$invalid) {
                   this.errorResponse += 'Region is required\n';
               }
-              if (this.$v.assigned_to_id.$invalid) {
+              if (this.$v.assigned_to_id && this.$v.assigned_to_id.$invalid) {
                   this.errorResponse += 'Officer must be assigned\n';
               }
               return false;
