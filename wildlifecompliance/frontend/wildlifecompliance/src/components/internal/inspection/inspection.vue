@@ -347,43 +347,12 @@ export default {
       //createInspectionBindId: '',
       workflowBindId: '',
       inspectionTeam: null,
-      // dtHeadersRelatedItems: [
-      //     'Number',
-      //     'Type',
-      //     'Description',
-      //     'Action',
-      // ],
-      // dtOptionsRelatedItems: {
-      //     columns: [
-      //         {
-      //             data: 'identifier',
-      //         },
-      //         {
-      //             data: 'model_name',
-      //         },
-      //         {
-      //             data: 'descriptor',
-      //         },
-      //         {
-      //             data: 'Action',
-      //             mRender: function(data, type, row){
-      //                 // return '<a href="#" class="remove_button" data-offender-id="' + row.id + '">Remove</a>';
-      //                 return '<a href="#">View (not implemented)</a>';
-      //             }
-      //         },
-      //     ]
-      // },
       dtHeadersInspectionTeam: [
           'Name',
           'Role',
           'Action',
       ],
       dtOptionsInspectionTeam: {
-          // ajax: {
-          //     'url': '/api/inspection/' + this.$route.params.inspection_id + '/get_inspection_team/',
-          //     'dataSrc': '',
-          // },
-
           columns: [
               {
                   data: 'full_name',
@@ -391,14 +360,6 @@ export default {
               {
                   data: 'member_role',
               },
-             //  {
-             //      data: 'id',
-             //      mRender: function(data, type, row){
-             //            return (
-             //            '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
-             //                  );
-             //      }
-             //  },
               {
                   data: 'Action',
                   mRender: function(data, type, row) {
@@ -415,9 +376,6 @@ export default {
               },
           ]
       },
-      // disabledDates: {
-      //   from: new Date(),
-      // },
       workflow_type: '',
       
       sectionLabel: "Details",
@@ -428,9 +386,6 @@ export default {
       teamMemberSelected: null,
       displayCreateNewPerson: false,
       newPersonBeingCreated: false,
-      //party_inspected: '',
-      
-      //callemailTab: "callemailTab" + this._uid,
       comms_url: helpers.add_endpoint_json(
         api_endpoints.inspection,
         this.$route.params.inspection_id + "/comms_log"
@@ -443,7 +398,6 @@ export default {
         api_endpoints.inspection,
         this.$route.params.inspection_id + "/action_log"
       ),
-      //workflowBindId: '',
       sanctionOutcomeInitialised: false,
       offenceInitialised: false,
     };
@@ -842,6 +796,7 @@ export default {
       }
       // load Inspection report
       //await this.$refs.inspection_report_file.get_documents();
+      
       // load current Inspection renderer schema
       this.$nextTick(async () => {
           if (this.inspection.inspection_type_id) {
@@ -850,21 +805,9 @@ export default {
       });
       // calling modifyInspectionTeam with no parameters returns the current list
       this.modifyInspectionTeam();
-      // let inspectionTeamUrl = helpers.add_endpoint_join(
-      //       api_endpoints.inspection, 
-      //       this.inspection.id + '/get_inspection_team/'
-      //       );
-      // let inspectionTeamResponse = await Vue.http.get(inspectionTeamUrl);
-      // this.inspectionTeam = inspectionTeamResponse.body;
   },
   mounted: function() {
       let vm = this;
-     // $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
-     //     var chev = $( this ).children()[ 0 ];
-     //     window.setTimeout( function () {
-     //         $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
-     //     }, 100 );
-     // });
 
       // Time field controls
       $('#plannedForTimePicker').datetimepicker({
@@ -877,9 +820,6 @@ export default {
       this.$nextTick(async () => {
           this.addEventListeners();
           this.constructInspectionTeamTable();
-          // if (this.inspection.inspection_type_id) {
-          //     await this.loadSchema();
-          // }
       });
   }
 };
