@@ -4,25 +4,11 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, RevisionedMixin
 from wildlifecompliance.components.main import get_next_value
 from wildlifecompliance.components.main.models import Document, UserAction, CommunicationsLogEntry
-from wildlifecompliance.components.offence.models import Offence, Offender, SectionRegulation
+from wildlifecompliance.components.offence.models import Offence, Offender, SectionRegulation, AllegedOffence
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
-
-
-# class AllegedCommittedOffence(RevisionedMixin):
-#     section_regulation = models.ForeignKey(SectionRegulation, null=False)
-#     offence = models.ForeignKey(Offence, null=False)
-#     sanction_outcome = models.ForeignKey('sanction_outcome.SanctionOutcome', null=True, on_delete=models.SET_NULL())
-#     reason_for_removal = models.TextField(blank=True)
-#     removed = models.BooleanField(default=False)
-#     removed_by = models.ForeignKey(EmailUser, null=True, related_name='alleged_offence_removed_by')
-#
-#     class Meta:
-#         app_label = 'wildlifecompliance'
-#         verbose_name = 'CM_AllegedCommittedOffence'
-#         verbose_name_plural = 'CM_AllegedCommittedOffences'
 
 
 class SanctionOutcome(models.Model):
@@ -78,6 +64,7 @@ class SanctionOutcome(models.Model):
     offence = models.ForeignKey(Offence, related_name='sanction_outcome_offence', null=True, on_delete=models.SET_NULL,)
     offender = models.ForeignKey(Offender, related_name='sanction_outcome_offender', null=True, on_delete=models.SET_NULL,)
     alleged_offences = models.ManyToManyField(SectionRegulation, blank=True, related_name='sanction_outcome_alleged_offences')
+    alleged_committed_offences = models.ManyToManyField(AllegedOffence, related_name='sanction_outcome_alleged_committed_offences', through='AllegedCommittedOffence')
     issued_on_paper = models.BooleanField(default=False) # This is always true when type is letter_of_advice
     paper_id = models.CharField(max_length=50, blank=True,)
     description = models.TextField(blank=True)
@@ -252,6 +239,20 @@ class SanctionOutcome(models.Model):
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_SanctionOutcome'
         verbose_name_plural = 'CM_SanctionOutcomes'
+
+
+class AllegedCommittedOffence(RevisionedMixin):
+    alleged_offence = models.ForeignKey(AllegedOffence, null=False,)
+    sanction_outcome = models.ForeignKey(SanctionOutcome, null=False,)
+    included = models.BooleanField(default=True)  # True means sanction_outcome is included in the sanction_outcome
+    reason_for_removal = models.TextField(blank=True)
+    removed = models.BooleanField(default=False)  # Never make this field False once becomes True. Rather you have to create another record making this field False.
+    removed_by = models.ForeignKey(EmailUser, null=True, related_name='alleged_committed_offence_removed_by')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_AllegedCommittedOffence'
+        verbose_name_plural = 'CM_AllegedCommittedOffences'
 
 
 class RemediationAction(models.Model):

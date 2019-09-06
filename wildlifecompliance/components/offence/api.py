@@ -18,7 +18,7 @@ from wildlifecompliance.components.call_email.models import Location, CallEmailU
 from wildlifecompliance.components.inspection.models import InspectionUserAction, Inspection
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
 from wildlifecompliance.components.main.api import save_location
-from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
+from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender, AllegedOffence
 from wildlifecompliance.components.offence.serializers import OffenceSerializer, SectionRegulationSerializer, \
     SaveOffenceSerializer, SaveOffenderSerializer, OrganisationSerializer, OffenceDatatableSerializer
 from wildlifecompliance.helpers import is_internal
@@ -312,9 +312,9 @@ class OffenceViewSet(viewsets.ModelViewSet):
 
                 # 3. Create relations between this offence and the alleged 0ffence(s)
                 for dict in request_data['alleged_offences']:
-                    alleged_offence = SectionRegulation.objects.get(id=dict['id'])
-                    saved_offence_instance.alleged_offences.add(alleged_offence)
-                saved_offence_instance.save()
+                    section_regulation = SectionRegulation.objects.get(id=dict['id'])
+                    # Insert a record into the through table
+                    alleged_offence = AllegedOffence.objects.create(section_regulation=section_regulation, offence=saved_offence_instance)
 
                 # 4. Create relations between this offence and offender(s)
                 for dict in request_data['offenders']:
