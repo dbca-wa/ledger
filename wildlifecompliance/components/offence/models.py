@@ -115,6 +115,17 @@ class Offence(RevisionedMixin):
         return self.identifier
 
 
+class AllegedOffence(RevisionedMixin):
+    offence = models.ForeignKey(Offence, null=False,)
+    section_regulation = models.ForeignKey(SectionRegulation, null=False,)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_AllegedOffence'
+        verbose_name_plural = 'CM_AllegedOffences'
+
+
+
 class ActiveOffenderManager(models.Manager):
     def get_queryset(self):
         return super(ActiveOffenderManager, self).get_queryset().filter(removed=False)

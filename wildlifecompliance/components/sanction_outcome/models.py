@@ -11,6 +11,20 @@ from wildlifecompliance.components.offence.models import Offence, Offender, Sect
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 
+# class AllegedCommittedOffence(RevisionedMixin):
+#     section_regulation = models.ForeignKey(SectionRegulation, null=False)
+#     offence = models.ForeignKey(Offence, null=False)
+#     sanction_outcome = models.ForeignKey('sanction_outcome.SanctionOutcome', null=True, on_delete=models.SET_NULL())
+#     reason_for_removal = models.TextField(blank=True)
+#     removed = models.BooleanField(default=False)
+#     removed_by = models.ForeignKey(EmailUser, null=True, related_name='alleged_offence_removed_by')
+#
+#     class Meta:
+#         app_label = 'wildlifecompliance'
+#         verbose_name = 'CM_AllegedCommittedOffence'
+#         verbose_name_plural = 'CM_AllegedCommittedOffences'
+
+
 class SanctionOutcome(models.Model):
     WORKFLOW_SEND_TO_MANAGER = 'send_to_manager'
     WORKFLOW_ENDORSE = 'endorse'
