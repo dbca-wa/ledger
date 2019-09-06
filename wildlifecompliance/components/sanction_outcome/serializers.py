@@ -4,6 +4,7 @@ from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.main.related_item import get_related_items
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
+from wildlifecompliance.components.offence.models import AllegedOffence
 from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer, OffenderSerializer, \
     OffenceSerializer
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction, \
@@ -11,18 +12,24 @@ from wildlifecompliance.components.sanction_outcome.models import SanctionOutcom
 from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
 
-# class AllegedOffenceSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = AllegedOffence
-#         fields = (
-#             ''
-#         )
+class AllegedOffenceSerializer(serializers.ModelSerializer):
+    offence = OffenceSerializer(read_only=True)
+    section_regulation = SectionRegulationSerializer(read_only=True)
+
+    class Meta:
+        model = AllegedOffence
+        fields = (
+            'id',
+            'offence',
+            'section_regulation',
+        )
 
 
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     type = CustomChoiceField(read_only=True)
     alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
+    alleged_committed_offences = AllegedOffenceSerializer(read_only=True, many=True)
     offender = OffenderSerializer(read_only=True,)
     offence = OffenceSerializer(read_only=True,)
     allocated_group = serializers.SerializerMethodField()

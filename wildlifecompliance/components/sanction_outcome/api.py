@@ -154,9 +154,6 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             return SanctionOutcome.objects.all()
         return SanctionOutcome.objects.none()
 
-    def retrieve(self, request, *args, **kwargs):
-        return super(SanctionOutcomeViewSet, self).retrieve(request, *args, **kwargs)
-
     @list_route(methods=['GET', ])
     def types(self, request, *args, **kwargs):
         res_obj = []
