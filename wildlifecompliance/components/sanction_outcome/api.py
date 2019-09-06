@@ -224,7 +224,6 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
     def update_assigned_to_id(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = None
 
             validation_serializer = SanctionOutcomeSerializer(instance, context={'request': request})
             user_in_group = validation_serializer.data.get('user_in_group')
@@ -232,35 +231,23 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             if user_in_group:
                 # current user is in the group
                 if request.data.get('current_user'):
-                    # current user is going to assign him or herself to the object and
-                    serializer = UpdateAssignedToIdSerializer(
-                        instance=instance,
-                        data={
-                            'assigned_to_id': request.user.id,
-                        }
-                    )
+                    # current user is going to assign him or herself to the object
+                    serializer_partial = UpdateAssignedToIdSerializer(instance=instance, data={'assigned_to_id': request.user.id,})
                 else:
                     # current user is going to assign someone else to the object
-                    serializer = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
+                    serializer_partial = UpdateAssignedToIdSerializer(instance=instance, data=request.data)
 
-                if serializer.is_valid(raise_exception=True):
-                    serializer.save()
-                    return_serializer = SanctionOutcomeSerializer(instance=instance,
-                                                             context={'request': request}
-                                                             )
-                    headers = self.get_success_headers(return_serializer.data)
-                    return Response(
-                        return_serializer.data,
-                        status=status.HTTP_201_CREATED,
-                        headers=headers
-                    )
-                else:
-                    # TODO return
-                    pass
+                if serializer_partial.is_valid(raise_exception=True):
+                    # Update only assigned_to_id data
+                    serializer_partial.save()
+
+                # Construct return value
+                return_serializer = SanctionOutcomeSerializer(instance=instance, context={'request': request})
+                headers = self.get_success_headers(return_serializer.data)
+                return Response(return_serializer.data, status=status.HTTP_200_OK, headers=headers)
             else:
-                return Response(validation_serializer.data,
-                                status=status.HTTP_201_CREATED
-                                )
+                return Response(validation_serializer.data, status=status.HTTP_200_OK)
+
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

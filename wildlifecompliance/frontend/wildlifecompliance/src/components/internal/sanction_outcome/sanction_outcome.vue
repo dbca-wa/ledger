@@ -337,7 +337,16 @@ export default {
             sanction_outcome: "sanction_outcome",
         }),
         readonlyForm: function() {
-            return !this.sanction_outcome.can_user_action;
+            return !this.canUserEditForm;
+        },
+        canUserEditForm: function() {
+            let canUserEdit = false;
+            if (this.sanction_outcome.can_user_action){
+                if (this.sanction_outcome.status === this.STATUS_AWAITING_AMENDMENT || this.sanction_outcome.status === this.STATUS_DRAFT){
+                    canUserEdit = true;
+                }
+            }
+            return canUserEdit;
         },
         statusDisplay: function() {
             let ret = '';
@@ -387,12 +396,9 @@ export default {
             }
             return ret;
         },
-        canUserAction: function() {
-            return this.sanction_outcome.can_user_action;
-        },
         visibilityWithdrawButton: function() {
             let visibility = false;
-            if (this.canUserAction){
+            if (this.sanction_outcome.can_user_action){
                 if (this.sanction_outcome.status.id === this.STATUS_AWAITING_PAYMENT){
                     visibility = true;
                 }
@@ -401,7 +407,7 @@ export default {
         },
         visibilitySendToManagerButton: function() {
             let visibility = false;
-            if (this.canUserAction){
+            if (this.sanction_outcome.can_user_action){
                 if (this.sanction_outcome.status.id === this.STATUS_DRAFT || this.sanction_outcome.status.id === this.STATUS_AWAITING_AMENDMENT){
                     visibility = true;
                 }
@@ -410,7 +416,7 @@ export default {
         },
         visibilityEndorseButton: function() {
             let visibility = false;
-            if (this.canUserAction){
+            if (this.sanction_outcome.can_user_action){
                 if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDORSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
                     visibility = true;
                 }
@@ -419,7 +425,7 @@ export default {
         },
         visibilityDeclineButton: function() {
             let visibility = false;
-            if (this.canUserAction){
+            if (this.sanction_outcome.can_user_action){
                 if (this.sanction_outcome.status.id === this.STATUS_AWAITING_ENDORSEMENT || this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
                     visibility = true;
                 }
@@ -428,7 +434,7 @@ export default {
         },
         visibilityReturnToOfficerButton: function() {
             let visibility = false;
-            if (this.canUserAction){
+            if (this.sanction_outcome.can_user_action){
                 if (this.sanction_outcome.status.id === this.STATUS_AWAITING_REVIEW){
                     visibility = true;
                 }
