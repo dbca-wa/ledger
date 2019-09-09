@@ -20,6 +20,11 @@ class ReferralCompleteNotificationEmail(TemplateEmailBase):
     html_template = 'disturbance/emails/proposals/send_referral_complete_notification.html'
     txt_template = 'disturbance/emails/proposals/send_referral_complete_notification.txt'
 
+class ReferralRecallNotificationEmail(TemplateEmailBase):
+    subject = 'A referral for a proposal has been recalled.'
+    html_template = 'disturbance/emails/proposals/send_referral_recall_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_referral_recall_notification.txt'    
+
 class ProposalDeclineSendNotificationEmail(TemplateEmailBase):
     subject = 'Your Proposal has been declined.'
     html_template = 'disturbance/emails/proposals/send_decline_notification.html'
@@ -75,6 +80,21 @@ def send_referral_email_notification(referral,request,reminder=False):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_referral_email(msg, referral, sender=sender)
     _log_org_email(msg, referral.proposal.applicant, referral.referral, sender=sender)
+
+def send_referral_recall_email_notification(referral,request):
+    email = ReferralRecallNotificationEmail()
+    url = request.build_absolute_uri(reverse('internal-referral-detail',kwargs={'proposal_pk':referral.proposal.id,'referral_pk':referral.id}))
+
+    context = {
+        'proposal': referral.proposal,
+        'url': url,
+    }
+
+    msg = email.send(referral.referral.email, context=context)
+    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_referral_email(msg, referral, sender=sender)
+    _log_org_email(msg, referral.proposal.applicant, referral.referral, sender=sender)
+
 
 def send_referral_complete_email_notification(referral,request):
     email = ReferralCompleteNotificationEmail()
