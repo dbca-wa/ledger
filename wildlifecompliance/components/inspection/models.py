@@ -258,8 +258,8 @@ class InspectionCommsLogEntry(CommunicationsLogEntry):
 class InspectionUserAction(UserAction):
     ACTION_CREATE_INSPECTION = "Create Inspection {}"
     ACTION_SAVE_INSPECTION_ = "Save Inspection {}"
-    # ACTION_OFFENCE = "Create Offence {}"
-    # ACTION_SANCTION_OUTCOME = "Create Sanction Outcome {}"
+    ACTION_OFFENCE = "Create Offence {}"
+    ACTION_SANCTION_OUTCOME = "Create Sanction Outcome {}"
     ACTION_SEND_TO_MANAGER = "Send Inspection {} to Manager"
     ACTION_CLOSED = "Close Inspection {}"
     ACTION_REQUEST_AMENDMENT = "Request amendment for {}"
