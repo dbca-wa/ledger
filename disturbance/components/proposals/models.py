@@ -857,6 +857,40 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
+    def preview_approval(self,request,details):
+        from disturbance.components.approvals.models import PreviewTempApproval
+        with transaction.atomic():
+            try:
+                if self.processing_status != 'with_approver':
+                    raise ValidationError('Licence preview only available when processing status is with_approver. Current status {}'.format(self.processing_status))
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if not self.applicant.organisation.postal_address:
+                #if not self.applicant_address:
+                    raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
+
+                preview_approval = PreviewTempApproval.objects.create(
+                    current_proposal = self,
+                    issue_date = timezone.now(),
+                    expiry_date = datetime.datetime.strptime(details.get('due_date'), '%d/%m/%Y').date(),
+                    start_date = datetime.datetime.strptime(details.get('start_date'), '%d/%m/%Y').date(),
+                    #submitter = self.submitter,
+                    #org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
+                    #proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                    applicant = self.applicant,
+                    #proxy_applicant = self.proxy_applicant,
+                )
+
+                # Generate the preview document - get the value of the BytesIO buffer
+                licence_buffer = preview_approval.generate_doc(request.user, preview=True)
+
+                # clean temp preview licence object
+                transaction.set_rollback(True)
+
+                return licence_buffer
+            except:
+                raise
+
     def proposed_approval(self,request,details):
         with transaction.atomic():
             try:

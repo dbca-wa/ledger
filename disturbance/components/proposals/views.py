@@ -77,3 +77,15 @@ class HelpPageHistoryCompareView(HistoryCompareDetailView):
     template_name = 'disturbance/reversion_history.html'
 
 
+class PreviewLicencePDFView(View):
+    def post(self, request, *args, **kwargs):
+        response = HttpResponse(content_type='application/pdf')
+
+        proposal = self.get_object()
+        details = json.loads(request.POST.get('formData'))
+
+        response.write(proposal.preview_approval(request, details))
+        return response
+
+    def get_object(self):
+        return get_object_or_404(Proposal, id=self.kwargs['proposal_pk'])
