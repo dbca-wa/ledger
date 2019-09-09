@@ -122,7 +122,7 @@ class Inspection(RevisionedMixin):
         )
     inspection_team = models.ManyToManyField(
         EmailUser,
-        related_name='inspection_team',
+        # related_name='inspection_team',
         blank=True
         )
     inspection_team_lead = models.ForeignKey(

@@ -366,12 +366,13 @@ export default {
                       let links = '';
                       if (row.Action.can_user_action) {
                           if (row.Action.action === 'Member') {
-                              links = '<a href="#" class="make_team_lead" data-member-id="' + row.id + '">Make Team Lead</a>'
-                          } else {
-                              links = '<a href="#" class="remove_button" data-member-id="' + row.id + '">Remove</a>'
-                          }
+                              links = '<a href="#" class="make_team_lead" data-member-id="' + row.Action.id + '">Make Team Lead</a>'
+                          } 
+                          links += '<a href="#" class="remove_button" data-member-id="' + row.Action.id + '">Remove</a>'
+                          return links
+                      } else {
+                          return ''
                       }
-                      return links
                   }
               },
           ]
@@ -558,7 +559,7 @@ export default {
           }
         }
     },
-    modifyInspectionTeam: async function(user_id, action) {
+    modifyInspectionTeam: async function({user_id, action}) {
         let inspectionTeamUrl = helpers.add_endpoint_join(
             api_endpoints.inspection, 
             this.inspection.id + '/modify_inspection_team/'
@@ -627,36 +628,24 @@ export default {
       this.displayCreateNewPerson = !this.displayCreateNewPerson;
     },
     addTeamMember: async function() {
-        let res = await this.modifyInspectionTeam({
+        await this.modifyInspectionTeam({
             user_id: this.teamMemberSelected, 
             action: 'add'
         });
-        // this.$refs.inspection_team_table.vmDataTable.ajax.reload()
-        console.log("res")
-        console.log(res)
-        this.inspectionTeam = res;
     },
     removeTeamMember: async function(e) {
         let memberId = e.target.getAttribute("data-member-id");
-        let res = await this.modifyInspectionTeam({
+        await this.modifyInspectionTeam({
             user_id: memberId,
             action: 'remove'
         });
-        // this.$refs.inspection_team_table.vmDataTable.ajax.reload()
-        console.log("res")
-        console.log(res)
-        this.inspectionTeam = res;
     },
     makeTeamLead: async function(e) {
         let memberId = e.target.getAttribute("data-member-id");
-        let res = await this.modifyInspectionTeam({
+        await this.modifyInspectionTeam({
             user_id: memberId, 
             action: 'make_team_lead'
         });
-        // this.$refs.inspection_team_table.vmDataTable.ajax.reload()
-        console.log("res")
-        console.log(res)
-        this.inspectionTeam = res;
     },
     personSelected: function(para) {
         console.log(para);
@@ -776,10 +765,6 @@ export default {
             description: "",
           });
     
-    //if (this.$route.params.inspection_id) {
-      //await this.loadInspection({ inspection_id: this.$route.params.inspection_id });
-    //}
-
       // Set Individual or Organisation in search field
       if (this.inspection.individual_inspected) {
           let value = [
@@ -803,8 +788,8 @@ export default {
               await this.loadSchema();
           }
       });
-      // calling modifyInspectionTeam with no parameters returns the current list
-      this.modifyInspectionTeam();
+      // calling modifyInspectionTeam with null parameters returns the current list
+      this.modifyInspectionTeam({user_id: null, action: null});
   },
   mounted: function() {
       let vm = this;

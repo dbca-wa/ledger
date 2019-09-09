@@ -358,6 +358,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 else:
                     action = request.data.get('action') # 'add', 'remove or 'clear'
                     user_id = request.data.get('user_id')
+                # ensure user_id is int
+                if user_id:
+                    user_id = int(user_id)
 
                 #if action and user_list:
                 if action and user_id:
