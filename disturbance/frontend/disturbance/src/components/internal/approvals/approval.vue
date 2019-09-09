@@ -14,7 +14,7 @@
                             
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Issued on</strong><br/>
-                                {{ approval.issued_date | formatDate}}
+                                {{ approval.issue_date | formatDate}}
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <table class="table small-table">
