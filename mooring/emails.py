@@ -16,6 +16,9 @@ from django.template.loader import render_to_string, get_template
 from confy import env
 from django.template import Context
 from ledger.accounts.models import Document
+from django.contrib.auth.models import Group
+from ledger.accounts.models import EmailUser
+
 import datetime
 import hashlib
 
