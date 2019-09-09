@@ -172,7 +172,7 @@
                                             -->
                                         <div class="col-sm-12 form-group"><div class="row">
                                             <div class="col-sm-12">
-                                                <datatable ref="alleged_offence_table" id="alleged-offence-table" :dtOptions="dtOptionsAllegedOffence" :dtHeaders="dtHeadersAllegedOffence" />
+                                                <datatable ref="alleged_committed_offence_table" id="alleged-committed-offence-table" :dtOptions="dtOptionsAllegedOffence" :dtHeaders="dtHeadersAllegedOffence" />
                                             </div>
                                         </div></div>
 
@@ -350,7 +350,9 @@ export default {
         }
     },
     mounted: function() {
-        console.log('mounted');
+        this.$nextTick(() => {
+            this.addEventListeners();
+        });
     },
     computed: {
         ...mapGetters('sanctionOutcomeStore', {
@@ -469,6 +471,26 @@ export default {
             setAssignedToId: 'setAssignedToId',
             setCanUserAction: 'setCanUserAction',
         }),
+        addEventListeners: function() {
+            $("#alleged-committed-offence-table").on("click", ".remove_button", this.removeAllegedOffenceClicked);
+            $("#alleged-committed-offence-table").on("click", ".restore_button", this.restoreAllegedOffenceClicked);
+        },
+        removeAllegedOffenceClicked: function(e) {
+            this.toggleAllegedCommittedOffence(e, true);
+        },
+        restoreAllegedOffenceClicked: function(e){
+            this.toggleAllegedCommittedOffence(e, false);
+        },
+        toggleAllegedCommittedOffence: function(e, removed){
+            let vm = this;
+            let acoId = parseInt(e.target.getAttribute("data-alleged-committed-offence-id"));
+            vm.$refs.alleged_committed_offence_table.vmDataTable.rows(function(idx, data, node) {
+                if (data.id === acoId) {
+                    vm.$refs.alleged_committed_offence_table.vmDataTable.rows(idx).data()[0].Action.removed = removed;
+                        vm.$refs.alleged_committed_offence_table.vmDataTable.rows(idx).invalidate();
+                }
+            });
+        },
         reflectAllegedOffencesToTable: function(){
             if (this.sanction_outcome && this.sanction_outcome.alleged_committed_offences){
                 for(let i=0; i<this.sanction_outcome.alleged_committed_offences.length; i++){
@@ -477,7 +499,7 @@ export default {
             }
         },
         addAllegedOffenceToTable: function(allegedCommittedOffence){
-              this.$refs.alleged_offence_table.vmDataTable.row.add({
+              this.$refs.alleged_committed_offence_table.vmDataTable.row.add({
                   id: allegedCommittedOffence.id,
                   Act: allegedCommittedOffence.alleged_offence.section_regulation.act,
                   "Section/Regulation": allegedCommittedOffence.alleged_offence.section_regulation.name,

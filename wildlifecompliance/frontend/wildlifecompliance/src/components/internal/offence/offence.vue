@@ -1155,11 +1155,7 @@ export default {
             }
           });
 
-          $("#alleged-offence-table").on(
-            "click",
-            ".remove_button",
-            vm.removeClicked
-          );
+          $("#alleged-offence-table").on("click", ".remove_button", vm.removeClicked);
           $("#offender-table").on("click", ".remove_button", vm.removeOffenderClicked);
           $("#offender-table").on("click", ".restore_button", vm.restoreOffenderClicked);
         },
