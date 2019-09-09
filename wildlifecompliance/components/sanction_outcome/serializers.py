@@ -1,6 +1,4 @@
 from rest_framework import serializers
-from rest_framework_datatables.pagination import DatatablesPageNumberPagination
-
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.main.related_item import get_related_items
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
@@ -15,7 +13,7 @@ from wildlifecompliance.components.users.serializers import CompliancePermission
 class AllegedOffenceSerializer(serializers.ModelSerializer):
     offence = OffenceSerializer(read_only=True)
     section_regulation = SectionRegulationSerializer(read_only=True)
-    details = serializers.SerializerMethodField()
+    # details = serializers.SerializerMethodField()
 
     class Meta:
         model = AllegedOffence
@@ -23,15 +21,17 @@ class AllegedOffenceSerializer(serializers.ModelSerializer):
             'id',
             'offence',
             'section_regulation',
-            'details',
+            # 'details',
         )
 
-    def get_details(self, obj):
-        qs_details = AllegedCommittedOffence.objects.filter(alleged_offence=obj)
-        return [AllegedCommittedOffenceSerializer(item).data for item in qs_details]
+    # def get_details(self, obj):
+    #     qs_details = AllegedCommittedOffence.objects.filter(alleged_offence=obj)
+    #     return [AllegedCommittedOffenceSerializer(item).data for item in qs_details]
 
 
 class AllegedCommittedOffenceSerializer(serializers.ModelSerializer):
+    alleged_offence = AllegedOffenceSerializer(read_only=True,)
+
     class Meta:
         model = AllegedCommittedOffence
         fields = (
@@ -40,15 +40,16 @@ class AllegedCommittedOffenceSerializer(serializers.ModelSerializer):
             'removed',
             'reason_for_removal',
             'removed_by',
+            'alleged_offence',
         )
 
 
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     type = CustomChoiceField(read_only=True)
-    alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
-    alleged_committed_offences = AllegedOffenceSerializer(read_only=True, many=True)
-    # alleged_committed_offences_details = serializers.SerializerMethodField()
+    # alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
+    # alleged_committed_offences = AllegedOffenceSerializer(read_only=True, many=True)
+    alleged_committed_offences = serializers.SerializerMethodField()
     offender = OffenderSerializer(read_only=True,)
     offence = OffenceSerializer(read_only=True,)
     allocated_group = serializers.SerializerMethodField()
@@ -69,9 +70,8 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
             'identifier',
             'offence',
             'offender',
-            'alleged_offences',
+            # 'alleged_offences',
             'alleged_committed_offences',
-            # 'alleged_committed_offences_details',
             'issued_on_paper',
             'paper_id',
             'description',
@@ -86,10 +86,6 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
             'related_items',
         )
         read_only_fields = ()
-
-    # def get_alleged_committed_offences_details(self, obj):
-    #     qs_details = AllegedCommittedOffence.objects.filter(sanction_outcome=obj)
-    #     return [AllegedCommittedOffenceSerializer(item).data for item in qs_details]
 
     def get_allocated_group(self, obj):
         allocated_group = [{
@@ -137,6 +133,10 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
 
     def get_related_items(self, obj):
         return get_related_items(obj)
+
+    def get_alleged_committed_offences(self, obj):
+        qs_details = AllegedCommittedOffence.objects.filter(sanction_outcome=obj)
+        return [AllegedCommittedOffenceSerializer(item, context={'request': self.context.get('request', {})}).data for item in qs_details]
 
 
 class UpdateAssignedToIdSerializer(serializers.ModelSerializer):

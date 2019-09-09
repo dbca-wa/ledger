@@ -294,22 +294,42 @@ export default {
                         visible: false
                     },
                     {
-                        data: "Act"
+                        data: "Act",
+                        mRender: function(data, type, row) {
+                            if (row.Action.removed){
+                                data = '<strike>' + data + '</strike>';
+                            }
+                            return data;
+                        }
                     },
                     {
-                        data: "Section/Regulation"
+                        data: "Section/Regulation",
+                        mRender: function(data, type, row) {
+                            if (row.Action.removed){
+                                data = '<strike>' + data + '</strike>';
+                            }
+                            return data;
+                        }
                     },
                     {
-                        data: "Alleged Offence"
+                        data: "Alleged Offence",
+                        mRender: function(data, type, row) {
+                            if (row.Action.removed){
+                                data = '<strike>' + data + '</strike>';
+                            }
+                            return data;
+                        }
                     },
                     {
                         data: "Action",
-                        mRender: function(data, type, row) {
-                        return (
-                            '<a href="#" class="remove_button" data-alleged-offence-id="' +
-                            row.id +
-                            '">Remove</a>'
-                        );
+                        mRender: function(alleged_committed_offence, type, row) {
+                            let ret = '';
+                            if (alleged_committed_offence.removed){
+                                ret = '<a href="#" class="restore_button" data-alleged-committed-offence-id="' + alleged_committed_offence.id + '">Restore</a>';
+                            } else {
+                                ret = '<a href="#" class="remove_button" data-alleged-committed-offence-id="' + alleged_committed_offence.id + '">Remove</a>';
+                            }
+                            return ret;
                         }
                     }
                 ]
@@ -450,18 +470,19 @@ export default {
             setCanUserAction: 'setCanUserAction',
         }),
         reflectAllegedOffencesToTable: function(){
-            if (this.sanction_outcome && this.sanction_outcome.alleged_offences){
-                for(let i=0; i<this.sanction_outcome.alleged_offences.length; i++){
-                    this.addAllegedOffenceToTable(this.sanction_outcome.alleged_offences[i]);
+            if (this.sanction_outcome && this.sanction_outcome.alleged_committed_offences){
+                for(let i=0; i<this.sanction_outcome.alleged_committed_offences.length; i++){
+                    this.addAllegedOffenceToTable(this.sanction_outcome.alleged_committed_offences[i]);
                 }
             }
         },
-        addAllegedOffenceToTable: function(allegedOffence){
+        addAllegedOffenceToTable: function(allegedCommittedOffence){
               this.$refs.alleged_offence_table.vmDataTable.row.add({
-                  id: allegedOffence.id,
-                  Act: allegedOffence.act,
-                  "Section/Regulation": allegedOffence.name,
-                  "Alleged Offence": allegedOffence.offence_text
+                  id: allegedCommittedOffence.id,
+                  Act: allegedCommittedOffence.alleged_offence.section_regulation.act,
+                  "Section/Regulation": allegedCommittedOffence.alleged_offence.section_regulation.name,
+                  "Alleged Offence": allegedCommittedOffence.alleged_offence.section_regulation.offence_text,
+                  Action: allegedCommittedOffence,
               }).draw();
         },
         addWorkflow(workflow_type) {
