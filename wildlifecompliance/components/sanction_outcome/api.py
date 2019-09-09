@@ -23,10 +23,10 @@ from wildlifecompliance.components.main.api import process_generic_document
 from wildlifecompliance.components.call_email.models import CallEmail, CallEmailUserAction
 from wildlifecompliance.components.inspection.models import Inspection, InspectionUserAction
 from wildlifecompliance.components.main.email import prepare_mail
-from wildlifecompliance.components.offence.models import SectionRegulation
+from wildlifecompliance.components.offence.models import SectionRegulation, AllegedOffence
 from wildlifecompliance.components.sanction_outcome.email import send_mail
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction, \
-    SanctionOutcomeCommsLogEntry
+    SanctionOutcomeCommsLogEntry, AllegedCommittedOffence
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
     SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer, SanctionOutcomeDatatableSerializer, \
     UpdateAssignedToIdSerializer, SanctionOutcomeCommsLogEntrySerializer, SanctionOutcomeUserActionSerializer
@@ -334,9 +334,18 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
 
                 # Create relations between this sanction outcome and the alleged offence(s)
                 for id in request_data['alleged_offence_ids_included']:
-                    alleged_offence = SectionRegulation.objects.get(id=id)
-                    instance.alleged_offences.add(alleged_offence)
-                instance.save()
+                    try:
+                        alleged_offence = AllegedOffence.objects.get(id=id)
+                        alleged_commited_offence = AllegedCommittedOffence.objects.create(sanction_outcome=instance, alleged_offence=alleged_offence, included=True)
+                    except:
+                        pass  # Should not reach here
+
+                for id in request_data['alleged_offence_ids_excluded']:
+                    try:
+                        alleged_offence = AllegedOffence.objects.get(id=id)
+                        alleged_commited_offence = AllegedCommittedOffence.objects.create(sanction_outcome=instance, alleged_offence=alleged_offence, included=False)
+                    except:
+                        pass  # Should not reach here
 
                 # Handle workflow
                 if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:

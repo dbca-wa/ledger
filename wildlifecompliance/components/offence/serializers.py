@@ -4,7 +4,7 @@ from ledger.accounts.models import Organisation
 from wildlifecompliance.components.call_email.serializers import LocationSerializer, EmailUserSerializer
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.main.related_item import get_related_items
-from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
+from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender, AllegedOffence
 from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
 
 
@@ -105,7 +105,8 @@ class OffenceDatatableSerializer(serializers.ModelSerializer):
 class OffenceSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     location = LocationSerializer(read_only=True)
-    alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
+    # alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
+    alleged_offences = serializers.SerializerMethodField(read_only=True)
     offenders = serializers.SerializerMethodField(read_only=True)
     allocated_group = serializers.SerializerMethodField()
     user_in_group = serializers.SerializerMethodField()
@@ -145,6 +146,16 @@ class OffenceSerializer(serializers.ModelSerializer):
         read_only_fields = (
 
         )
+
+    def get_alleged_offences(self, obj):
+        alleged_offence_objects = AllegedOffence.objects.filter(offence=obj)
+        ret_list = []
+        for alleged_offence_object in alleged_offence_objects:
+            ret_obj = { 'id': alleged_offence_object.id }
+            section_regulation_serializer = SectionRegulationSerializer(alleged_offence_object.section_regulation)
+            ret_obj['section_regulation'] = section_regulation_serializer.data
+            ret_list.append(ret_obj)
+        return ret_list
 
     def get_offenders(self, obj):
         offenders = Offender.objects.filter(offence__exact=obj)
