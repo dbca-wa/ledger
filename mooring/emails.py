@@ -392,6 +392,10 @@ def send_refund_failure_email_admissions(booking, context_processor):
        to = settings.NON_PROD_EMAIL
        sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
     else:
+       pa = Group.objects.get(name='Payments Officers')
+       ma = Group.objects.get(name="Mooring Admin")
+       user_list = EmailUser.objects.filter(groups__in=[pa,ma]).distinct()
+
        for u in user_list:
           to = u.email
           sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -434,6 +438,11 @@ def send_refund_failure_email(booking, context_processor):
        to = settings.NON_PROD_EMAIL
        sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
     else:
+
+       pa = Group.objects.get(name='Payments Officers')
+       ma = Group.objects.get(name="Mooring Admin")
+       user_list = EmailUser.objects.filter(groups__in=[pa,ma]).distinct()
+
        for u in user_list:
           to = u.email
           sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
