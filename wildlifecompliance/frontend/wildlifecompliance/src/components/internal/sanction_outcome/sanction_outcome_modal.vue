@@ -761,18 +761,12 @@ export default {
       }
 
       try {
-        let fetchUrl = helpers.add_endpoint_json(
-          api_endpoints.sanction_outcome,
-          "sanction_outcome_save"
-        );
+        let postUrl = api_endpoints.sanction_outcome;
 
         let payload = new Object();
         Object.assign(payload, vm.sanction_outcome);
         if (payload.date_of_issue) {
-          payload.date_of_issue = moment(
-            payload.date_of_issue,
-            "DD/MM/YYYY"
-          ).format("YYYY-MM-DD");
+          payload.date_of_issue = moment(payload.date_of_issue, "DD/MM/YYYY").format("YYYY-MM-DD");
         }
         payload.alleged_offence_ids_included = alleged_offence_ids_included;
         payload.alleged_offence_ids_excluded = alleged_offence_ids_excluded;
@@ -795,7 +789,7 @@ export default {
         payload.workflow_type = 'send_to_manager'  // Because this modal is used only when creating new sanction outcome to send to manager
 
         console.log(payload);
-        const savedObj = await Vue.http.post(fetchUrl, payload);
+        const savedObj = await Vue.http.post(postUrl, payload);
         await swal("Saved", "The record has been saved", "success");
       } catch (err) {
         if (err.body.non_field_errors) {

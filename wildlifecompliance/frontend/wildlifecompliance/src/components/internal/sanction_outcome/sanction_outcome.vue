@@ -51,6 +51,17 @@
                             Action 
                         </div>
                         <div class="panel-body panel-collapse">
+                            <div v-if="visibilitySaveButton" class="row action-button">
+                                <div class="col-sm-12">
+                                    <a @click="save" class="btn btn-primary btn-block">
+                                        Save
+                                    </a>
+                                </div>
+                            </div>
+                            <div v-else>
+                                Save
+                            </div>
+
                             <div v-if="visibilityWithdrawButton" class="row action-button">
                                 <div class="col-sm-12">
                                     <a @click="addWorkflow('withdraw')" class="btn btn-primary btn-block">
@@ -65,7 +76,7 @@
                             <div v-if="visibilitySendToManagerButton" class="row action-button">
                                 <div class="col-sm-12">
                                     <a @click="addWorkflow('send_to_manager')" class="btn btn-primary btn-block">
-                                        Send To Manager
+                                        Send to Manager
                                     </a>
                                 </div>
                             </div>
@@ -208,8 +219,18 @@
                                         <div class="col-sm-3">
                                             <label>Date of Issue</label>
                                         </div>
+                                        <!--
                                         <div class="col-sm-6">
                                             <input :readonly="readonlyForm" class="form-control" v-model="sanction_outcome.date_of_issue"/>
+                                        </div>
+                                        -->
+                                        <div class="col-sm-3">
+                                            <div class="input-group date" ref="dateOfIssuePicker">
+                                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="sanction_outcome.date_of_issue" :disabled="!sanction_outcome.issued_on_paper"/>
+                                                <span class="input-group-addon">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div></div>
 
@@ -217,8 +238,19 @@
                                         <div class="col-sm-3">
                                             <label>Time of Issue</label>
                                         </div>
+<!--
                                         <div class="col-sm-6">
                                             <input :readonly="readonlyForm" class="form-control" v-model="sanction_outcome.time_of_issue"/>
+                                        </div>
+-->
+
+                                        <div class="col-sm-3">
+                                            <div class="input-group date" ref="timeOfIssuePicker">
+                                                <input type="text" class="form-control" placeholder="HH:MM" v-model="sanction_outcome.time_of_issue" :disabled="!sanction_outcome.issued_on_paper" />
+                                                <span class="input-group-addon">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div></div>
                                 </FormSection>
@@ -296,38 +328,45 @@ export default {
                     {
                         data: "Act",
                         mRender: function(data, type, row) {
-                            if (row.Action.removed){
-                                data = '<strike>' + data + '</strike>';
+                            let ret = data.alleged_offence.section_regulation.act;
+                            if (data.removed){
+                                ret = '<strike>' + ret + '</strike>';
                             }
-                            return data;
+                            return ret;
                         }
                     },
                     {
                         data: "Section/Regulation",
                         mRender: function(data, type, row) {
-                            if (row.Action.removed){
-                                data = '<strike>' + data + '</strike>';
+                            let ret = data.alleged_offence.section_regulation.name;
+                            if (data.removed){
+                                ret = '<strike>' + ret + '</strike>';
                             }
-                            return data;
+                            return ret;
                         }
                     },
                     {
                         data: "Alleged Offence",
                         mRender: function(data, type, row) {
-                            if (row.Action.removed){
-                                data = '<strike>' + data + '</strike>';
+                            let ret = data.alleged_offence.section_regulation.offence_text;
+                            if (data.removed){
+                                ret = '<strike>' + ret + '</strike>';
                             }
-                            return data;
+                            return ret;
                         }
                     },
                     {
                         data: "Action",
-                        mRender: function(alleged_committed_offence, type, row) {
+                        mRender: function(data, type, row) {
                             let ret = '';
-                            if (alleged_committed_offence.removed){
-                                ret = '<a href="#" class="restore_button" data-alleged-committed-offence-id="' + alleged_committed_offence.id + '">Restore</a>';
+                            if (data.already_included){
+                                // This alleged committed offence is already stored in the database as included
+                                if (data.removed){
+                                    ret = '<a href="#" class="restore_alleged_committed_offence" data-alleged-committed-offence-id="' + data.id + '">Restore</a>';
+                                } else {
+                                    ret = '<a href="#" class="remove_alleged_committed_offence" data-alleged-committed-offence-id="' + data.id + '">Remove</a>'; }
                             } else {
-                                ret = '<a href="#" class="remove_button" data-alleged-committed-offence-id="' + alleged_committed_offence.id + '">Remove</a>';
+                                ret = '<input type="checkbox" class="include_alleged_committed_offence" value="' + data.id + '">Include</input>';
                             }
                             return ret;
                         }
@@ -346,7 +385,8 @@ export default {
         console.log('created');
         if (this.$route.params.sanction_outcome_id) {
             await this.loadSanctionOutcome({ sanction_outcome_id: this.$route.params.sanction_outcome_id });
-            this.reflectAllegedOffencesToTable();
+            this.createStorageAllegedCommittedOffences();
+            this.constructAllegedOffencesToTable();
         }
     },
     mounted: function() {
@@ -362,9 +402,10 @@ export default {
             return !this.canUserEditForm;
         },
         canUserEditForm: function() {
+            console.log('canUserEdit');
             let canUserEdit = false;
             if (this.sanction_outcome.can_user_action){
-                if (this.sanction_outcome.status === this.STATUS_AWAITING_AMENDMENT || this.sanction_outcome.status === this.STATUS_DRAFT){
+                if (this.sanction_outcome.status.id === this.STATUS_AWAITING_AMENDMENT || this.sanction_outcome.status.id === this.STATUS_DRAFT){
                     canUserEdit = true;
                 }
             }
@@ -417,6 +458,15 @@ export default {
                 ret = this.sanction_outcome.lodgement_number;
             }
             return ret;
+        },
+        visibilitySaveButton: function() {
+            let visibility = false;
+            if (this.sanction_outcome.can_user_action){
+                if (this.sanction_outcome.status.id === this.STATUS_DRAFT){
+                    visibility = true;
+                }
+            }
+            return visibility;
         },
         visibilityWithdrawButton: function() {
             let visibility = false;
@@ -471,41 +521,103 @@ export default {
             setAssignedToId: 'setAssignedToId',
             setCanUserAction: 'setCanUserAction',
         }),
-        addEventListeners: function() {
-            $("#alleged-committed-offence-table").on("click", ".remove_button", this.removeAllegedOffenceClicked);
-            $("#alleged-committed-offence-table").on("click", ".restore_button", this.restoreAllegedOffenceClicked);
-        },
-        removeAllegedOffenceClicked: function(e) {
-            this.toggleAllegedCommittedOffence(e, true);
-        },
-        restoreAllegedOffenceClicked: function(e){
-            this.toggleAllegedCommittedOffence(e, false);
-        },
-        toggleAllegedCommittedOffence: function(e, removed){
-            let vm = this;
-            let acoId = parseInt(e.target.getAttribute("data-alleged-committed-offence-id"));
-            vm.$refs.alleged_committed_offence_table.vmDataTable.rows(function(idx, data, node) {
-                if (data.id === acoId) {
-                    vm.$refs.alleged_committed_offence_table.vmDataTable.rows(idx).data()[0].Action.removed = removed;
-                        vm.$refs.alleged_committed_offence_table.vmDataTable.rows(idx).invalidate();
-                }
-            });
-        },
-        reflectAllegedOffencesToTable: function(){
-            if (this.sanction_outcome && this.sanction_outcome.alleged_committed_offences){
-                for(let i=0; i<this.sanction_outcome.alleged_committed_offences.length; i++){
-                    this.addAllegedOffenceToTable(this.sanction_outcome.alleged_committed_offences[i]);
+        createStorageAllegedCommittedOffences: function() {
+            if (this.sanction_outcome){
+                for (let i=0; i<this.sanction_outcome.alleged_committed_offences.length; i++){
+                    // We need if this alleged commited offence is already included in the sanction outcome 
+                    // to manage Action column
+                    this.sanction_outcome.alleged_committed_offences[i].already_included = this.sanction_outcome.alleged_committed_offences[i].included;
                 }
             }
         },
+        save: async function() {
+            let vm = this;
+            try {
+                let putUrl = helpers.add_endpoint_join(api_endpoints.sanction_outcome, vm.sanction_outcome.id + '/');
+                let payload = new Object();
+                Object.assign(payload, vm.sanction_outcome);
+
+                const savedObj = await Vue.http.put(putUrl, payload);
+                await swal("Saved", "The record has been saved", "success");
+            } catch (err) {
+                if (err.body.non_field_errors) {
+                    await swal("Error", err.body.non_field_errors[0], "error");
+                } else {
+                    await swal("Error", "There was an error saving the record", "error");
+                }
+            }
+        },
+        setUpDateTimePicker: function() {
+            let vm = this;
+            let el_issue_date = $(vm.$refs.dateOfIssuePicker);
+            let el_issue_time = $(vm.$refs.timeOfIssuePicker);
+
+            // Issue "Date" field
+            el_issue_date.datetimepicker({ format: "DD/MM/YYYY", maxDate: "now", showClear: true });
+            el_issue_date.on("dp.change", function(e) {
+              if (el_issue_date.data("DateTimePicker").date()) {
+                vm.sanction_outcome.date_of_issue = e.date.format("DD/MM/YYYY");
+              } else if (el_issue_date.data("date") === "") {
+                vm.sanction_outcome.date_of_issue = "";
+              }
+            });
+
+            // Issue "Time" field
+            el_issue_time.datetimepicker({ format: "LT", showClear: true });
+            el_issue_time.on("dp.change", function(e) {
+              if (el_issue_time.data("DateTimePicker").date()) {
+                vm.sanction_outcome.time_of_issue = e.date.format("LT");
+              } else if (el_issue_time.data("date") === "") {
+                vm.sanction_outcome.time_of_issue = "";
+              }
+            });
+        },
+        addEventListeners: function() {
+            this.setUpDateTimePicker();
+            $("#alleged-committed-offence-table").on("click", ".remove_alleged_committed_offence", this.removeAllegedOffenceClicked);
+            $("#alleged-committed-offence-table").on("click", ".restore_alleged_committed_offence", this.restoreAllegedOffenceClicked);
+            $("#alleged-committed-offence-table").on("click", ".include_alleged_committed_offence", this.includeAllegedOffenceClicked);
+        },
+        removeAllegedOffenceClicked: function(e) {
+            let acoId = parseInt(e.target.getAttribute("data-alleged-committed-offence-id"));
+            for (let i=0; i<this.sanction_outcome.alleged_committed_offences.length; i++){
+                if(acoId == this.sanction_outcome.alleged_committed_offences[i].id){
+                    this.sanction_outcome.alleged_committed_offences[i].removed = true;
+                }
+            }
+            this.constructAllegedOffencesToTable();
+        },
+        includeAllegedOffenceClicked: function(e){
+            let acoId = parseInt(e.target.value);
+            for (let i=0; i<this.sanction_outcome.alleged_committed_offences.length; i++){
+                if(acoId == this.sanction_outcome.alleged_committed_offences[i].id){
+                    this.sanction_outcome.alleged_committed_offences[i].included = e.target.checked;
+                }
+            }
+        },
+        restoreAllegedOffenceClicked: function(e){
+            let acoId = parseInt(e.target.getAttribute("data-alleged-committed-offence-id"));
+            for (let i=0; i<this.sanction_outcome.alleged_committed_offences.length; i++){
+                if(acoId == this.sanction_outcome.alleged_committed_offences[i].id){
+                    this.sanction_outcome.alleged_committed_offences[i].removed = false;
+                }
+            }
+            this.constructAllegedOffencesToTable();
+        },
+        constructAllegedOffencesToTable: function(){
+            this.$refs.alleged_committed_offence_table.vmDataTable.clear().draw();
+            for(let i=0; i<this.sanction_outcome.alleged_committed_offences.length; i++){
+                this.addAllegedOffenceToTable(this.sanction_outcome.alleged_committed_offences[i]);
+            }
+        },
         addAllegedOffenceToTable: function(allegedCommittedOffence){
-              this.$refs.alleged_committed_offence_table.vmDataTable.row.add({
-                  id: allegedCommittedOffence.id,
-                  Act: allegedCommittedOffence.alleged_offence.section_regulation.act,
-                  "Section/Regulation": allegedCommittedOffence.alleged_offence.section_regulation.name,
-                  "Alleged Offence": allegedCommittedOffence.alleged_offence.section_regulation.offence_text,
-                  Action: allegedCommittedOffence,
-              }).draw();
+            this.$refs.alleged_committed_offence_table.vmDataTable.row.add({
+                id: allegedCommittedOffence,
+                Act: allegedCommittedOffence,
+                "Section/Regulation": allegedCommittedOffence,
+                "Alleged Offence": allegedCommittedOffence,
+                Action: allegedCommittedOffence,
+            }).draw();
         },
         addWorkflow(workflow_type) {
             this.workflow_type = workflow_type;

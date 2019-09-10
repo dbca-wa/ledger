@@ -171,16 +171,10 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
         return HttpResponse(res_json, content_type='application/json')
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        Get existing sanction outcome
+        """
         return super(SanctionOutcomeViewSet, self).retrieve(request, *args, **kwargs)
-
-    def create(self, request, *args, **kwargs):
-        serializer = SaveSanctionOutcomeSerializer(data=request.data, partial=True)
-
-        serializer.is_valid(raise_exception=True)
-        if serializer.is_valid():
-            serializer.save()
-
-            return Response(serializer.data)
 
     def get_compliance_permission_groups(self, region_district_id, workflow_type):
         """
@@ -292,14 +286,49 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
-    @list_route(methods=['POST',])
-    def sanction_outcome_save(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
+        """
+        Update existing sanction outcome
+        """
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request_data = request.data
+
+                # Offence should not be changed
+                # Offender
+                request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
+
+                # No workflow
+                # No allocated group changes
+
+                serializer = SaveSanctionOutcomeSerializer(instance, data=request_data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                instance = serializer.save()
+
+                # Handle relations between this sanction outcome and the alleged offence(s)
+
+                # Save remediation action, and link to the sanction outcome
+
+                # Log
+
+                # Action
+
+                # Return
+
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    def create(self, request, *args, **kwargs):
         """
         Create new sanction outcome from the modal
-        :param request:
-        :param args:
-        :param kwargs:
-        :return:
         """
         try:
             with transaction.atomic():
