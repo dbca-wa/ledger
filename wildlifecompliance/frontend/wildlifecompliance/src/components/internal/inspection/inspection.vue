@@ -212,6 +212,9 @@
                                 <div class="col-sm-12" v-if="!readonlyForm">
                                   <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
+                                <div class="col-sm-12" v-if="!readonlyForm">
+                                  <CreateNewOrganisation/>
+                                </div>
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
                               <label class="col-sm-4" for="inspection_inform">Inform party being inspected</label>
@@ -320,6 +323,7 @@ import Vue from "vue";
 import FormSection from "@/components/forms/section_toggle.vue";
 import SearchPerson from "@/components/common/search_person.vue";
 import CreateNewPerson from "@common-components/create_new_person.vue";
+import CreateNewOrganisation from "@common-components/create_new_organisation.vue";
 import CommsLogs from "@common-components/comms_logs.vue";
 import datatable from '@vue-utils/datatable.vue'
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
@@ -409,6 +413,7 @@ export default {
     datatable,
     SearchPerson,
     CreateNewPerson,
+    CreateNewOrganisation,
     Offence,
     SanctionOutcome,
     filefield,

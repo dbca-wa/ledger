@@ -466,8 +466,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     #def inspection_save(self, request, workflow=False, *args, **kwargs):
     def update(self, request, workflow=False, *args, **kwargs):
-        print("update")
-        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
@@ -485,7 +483,6 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     instance.log_user_action(
                             InspectionUserAction.ACTION_SAVE_INSPECTION_.format(
                             instance.number), request)
-                    print(instance.party_inspected)
                     # Log individual_inspected update if applicable
                     if instance.party_inspected == 'individual' and individual_inspected_id and individual_inspected_id != instance.individual_inspected_id:
                         prev_individual_inspected = EmailUser.objects.get(id=individual_inspected_id)
