@@ -5,9 +5,9 @@ from django.contrib.gis.db import models
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models import Max
 from django.utils.encoding import python_2_unicode_compatible
-from ledger.accounts.models import EmailUser, RevisionedMixin, Organisation
+from ledger.accounts.models import EmailUser, RevisionedMixin
 from ledger.licence.models import LicenceType
-#from wildlifecompliance.components.organisations.models import Organisation
+from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.call_email.models import CallEmail
 from wildlifecompliance.components.main.models import (
         CommunicationsLogEntry,
@@ -272,6 +272,8 @@ class InspectionUserAction(UserAction):
     ACTION_ADD_TEAM_MEMBER = "Add {} to team"
     ACTION_REMOVE_TEAM_MEMBER = "Remove {} from team"
     ACTION_UPLOAD_INSPECTION_REPORT = "Upload Inspection Report '{}'"
+    ACTION_CHANGE_INDIVIDUAL_INSPECTED = "Change individual inspected from {} to {}"
+    ACTION_CHANGE_ORGANISATION_INSPECTED = "Change organisation inspected from {} to {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

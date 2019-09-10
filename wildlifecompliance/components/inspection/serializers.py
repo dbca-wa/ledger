@@ -3,7 +3,7 @@ import traceback
 from rest_framework.fields import CharField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometryField
 
-from ledger.accounts.models import EmailUser, Address, Organisation
+from ledger.accounts.models import EmailUser, Address
 from wildlifecompliance.components.inspection.models import (
     Inspection,
     InspectionUserAction,
@@ -26,6 +26,7 @@ from wildlifecompliance.components.users.serializers import (
     CompliancePermissionGroupMembersSerializer,
     UserAddressSerializer,
 )
+from wildlifecompliance.components.offence.serializers import OrganisationSerializer
 
 
 class InspectionTypeSerializer(serializers.ModelSerializer):
@@ -37,18 +38,6 @@ class InspectionTypeSerializer(serializers.ModelSerializer):
                'inspection_type',
                'description',
                )
-
-
-class OrganisationSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Organisation
-        fields = (
-            'id',
-            'abn',
-            'name',
-        )
-        # read_only_fields = ()
 
 
 class IndividualSerializer(serializers.ModelSerializer):

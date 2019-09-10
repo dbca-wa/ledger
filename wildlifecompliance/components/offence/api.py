@@ -13,14 +13,23 @@ from rest_framework.response import Response
 from rest_framework_datatables.filters import DatatablesFilterBackend
 from rest_framework_datatables.pagination import DatatablesPageNumberPagination
 
-from ledger.accounts.models import EmailUser, Organisation
+# from ledger.accounts.models import EmailUser, Organisation
+from ledger.accounts.models import EmailUser
+from wildlifecompliance.components.organisations.models import Organisation
+# from wildlifecompliance.components.organisations.serializers import OrganisationSearchSerializer
 from wildlifecompliance.components.call_email.models import Location, CallEmailUserAction, CallEmail
 from wildlifecompliance.components.inspection.models import InspectionUserAction, Inspection
 from wildlifecompliance.components.call_email.serializers import LocationSerializer
 from wildlifecompliance.components.main.api import save_location
 from wildlifecompliance.components.offence.models import Offence, SectionRegulation, Offender
-from wildlifecompliance.components.offence.serializers import OffenceSerializer, SectionRegulationSerializer, \
-    SaveOffenceSerializer, SaveOffenderSerializer, OrganisationSerializer, OffenceDatatableSerializer
+from wildlifecompliance.components.offence.serializers import (
+        OffenceSerializer, 
+        SectionRegulationSerializer,
+        SaveOffenceSerializer, 
+        SaveOffenderSerializer, 
+        OffenceDatatableSerializer,
+        OrganisationSerializer,
+        )
 from wildlifecompliance.helpers import is_internal
 
 
@@ -375,4 +384,5 @@ class SearchOrganisation(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
     serializer_class = OrganisationSerializer
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('abn', 'name',)
+    search_fields = ('organisation__abn', 'organisation__name',)
+

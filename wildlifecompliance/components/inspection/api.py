@@ -70,6 +70,9 @@ from wildlifecompliance.components.inspection.serializers import (
 from wildlifecompliance.components.users.models import (
     CompliancePermissionGroup,    
 )
+from wildlifecompliance.components.organisations.models import (
+    Organisation,    
+)
 from django.contrib.auth.models import Permission, ContentType
 from utils import SchemaParser
 
@@ -468,19 +471,39 @@ class InspectionViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 instance = self.get_object()
-                
+                # record individual inspected before update
+                individual_inspected_id = instance.individual_inspected_id
+                # record organisation inspected before update
+                organisation_inspected_id = instance.organisation_inspected_id
                 if request.data.get('renderer_data'):
                     self.form_data(request)
 
                 serializer = SaveInspectionSerializer(instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
-                    saved_instance = serializer.save()
+                    serializer.save()
                     instance.log_user_action(
                             InspectionUserAction.ACTION_SAVE_INSPECTION_.format(
                             instance.number), request)
+                    print(instance.party_inspected)
+                    # Log individual_inspected update if applicable
+                    if instance.party_inspected == 'individual' and individual_inspected_id and individual_inspected_id != instance.individual_inspected_id:
+                        prev_individual_inspected = EmailUser.objects.get(id=individual_inspected_id)
+                        instance.log_user_action(
+                                InspectionUserAction.ACTION_CHANGE_INDIVIDUAL_INSPECTED.format(
+                                prev_individual_inspected.get_full_name(),
+                                instance.individual_inspected.get_full_name()), request)
+                    # Log organisation_inspected update if applicable
+                    if instance.party_inspected == 'organisation' and organisation_inspected_id and organisation_inspected_id != instance.organisation_inspected_id:
+                        #prev_organisation_inspected = Organisation.objects.get(organisation_id=organisation_inspected_id)
+                        prev_organisation_inspected = Organisation.objects.get(id=organisation_inspected_id)
+                        instance.log_user_action(
+                                InspectionUserAction.ACTION_CHANGE_ORGANISATION_INSPECTED.format(
+                                prev_organisation_inspected.name,
+                                instance.organisation_inspected.name), request)
+
                     headers = self.get_success_headers(serializer.data)
-                    return_serializer = InspectionSerializer(saved_instance, context={'request': request})
+                    return_serializer = InspectionSerializer(instance, context={'request': request})
                     return Response(
                             return_serializer.data,
                             status=status.HTTP_201_CREATED,
