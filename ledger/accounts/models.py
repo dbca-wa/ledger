@@ -490,6 +490,15 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         else:
             pass
 
+    @property
+    def get_related_items_identifier(self):
+        return self.email
+
+    @property
+    def get_related_items_descriptor(self):
+        #return '{0}, {1}'.format(self.status, self.caller)
+        return self.get_full_name()
+
 
 def query_emailuser_by_args(**kwargs):
     ORDER_COLUMN_CHOICES = [

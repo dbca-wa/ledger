@@ -473,6 +473,8 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 individual_inspected_id = instance.individual_inspected_id
                 # record organisation inspected before update
                 organisation_inspected_id = instance.organisation_inspected_id
+                # record party_inspected before update
+                party_inspected = instance.party_inspected
                 if request.data.get('renderer_data'):
                     self.form_data(request)
 
@@ -484,15 +486,18 @@ class InspectionViewSet(viewsets.ModelViewSet):
                             InspectionUserAction.ACTION_SAVE_INSPECTION_.format(
                             instance.number), request)
                     # Log individual_inspected update if applicable
-                    if instance.party_inspected == 'individual' and individual_inspected_id and individual_inspected_id != instance.individual_inspected_id:
+                    if instance.party_inspected == 'individual' and individual_inspected_id and \
+                            (individual_inspected_id != instance.individual_inspected_id or \
+                            party_inspected != instance.party_inspected):
                         prev_individual_inspected = EmailUser.objects.get(id=individual_inspected_id)
                         instance.log_user_action(
                                 InspectionUserAction.ACTION_CHANGE_INDIVIDUAL_INSPECTED.format(
                                 prev_individual_inspected.get_full_name(),
                                 instance.individual_inspected.get_full_name()), request)
                     # Log organisation_inspected update if applicable
-                    if instance.party_inspected == 'organisation' and organisation_inspected_id and organisation_inspected_id != instance.organisation_inspected_id:
-                        #prev_organisation_inspected = Organisation.objects.get(organisation_id=organisation_inspected_id)
+                    if instance.party_inspected == 'organisation' and organisation_inspected_id and \
+                            (organisation_inspected_id != instance.organisation_inspected_id or \
+                            party_inspected != instance.party_inspected):
                         prev_organisation_inspected = Organisation.objects.get(id=organisation_inspected_id)
                         instance.log_user_action(
                                 InspectionUserAction.ACTION_CHANGE_ORGANISATION_INSPECTED.format(
