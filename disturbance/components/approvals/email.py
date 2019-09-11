@@ -60,12 +60,13 @@ def send_approval_expire_email_notification(approval):
     _log_approval_email(msg, approval, sender=sender_user)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
 
-def send_approval_cancel_email_notification(approval):
+def send_approval_cancel_email_notification(approval, future_cancel=False):
     email = ApprovalCancelNotificationEmail()
     proposal = approval.current_proposal
 
     context = {
         'approval': approval,
+        'future_cancel': future_cancel
         
     }
     sender = settings.DEFAULT_FROM_EMAIL
@@ -80,7 +81,7 @@ def send_approval_cancel_email_notification(approval):
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
 
 
-def send_approval_suspend_email_notification(approval):
+def send_approval_suspend_email_notification(approval, future_suspend=False):
     email = ApprovalSuspendNotificationEmail()
     proposal = approval.current_proposal
 
@@ -88,7 +89,8 @@ def send_approval_suspend_email_notification(approval):
         'approval': approval,
         'details': approval.suspension_details['details'],
         'from_date': approval.suspension_details['from_date'],
-        'to_date': approval.suspension_details['to_date']        
+        'to_date': approval.suspension_details['to_date'],
+        'future_suspend': future_suspend       
     }
     sender = settings.DEFAULT_FROM_EMAIL
     try:
@@ -102,14 +104,15 @@ def send_approval_suspend_email_notification(approval):
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
 
 
-def send_approval_surrender_email_notification(approval):
+def send_approval_surrender_email_notification(approval, future_surrender=False):
     email = ApprovalSurrenderNotificationEmail()
     proposal = approval.current_proposal
 
     context = {
         'approval': approval,
         'details': approval.surrender_details['details'],
-        'surrender_date': approval.surrender_details['surrender_date'],             
+        'surrender_date': approval.surrender_details['surrender_date'], 
+        'future_surrender': future_surrender           
     }
     sender = settings.DEFAULT_FROM_EMAIL
     try:

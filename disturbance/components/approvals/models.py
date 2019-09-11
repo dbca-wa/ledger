@@ -262,6 +262,7 @@ class Approval(RevisionedMixin):
                         send_approval_cancel_email_notification(self)
                 else:
                     self.set_to_cancel = True
+                    send_approval_cancel_email_notification(self, future_cancel=True)
                 #import ipdb; ipdb.set_trace()
                 self.save()
                 # Log proposal action
@@ -298,6 +299,7 @@ class Approval(RevisionedMixin):
                         send_approval_suspend_email_notification(self)
                 else:
                     self.set_to_suspend = True
+                    send_approval_suspend_email_notification(self, future_suspend=True)
                 self.save()
                 # Log approval action
                 self.log_user_action(ApprovalUserAction.ACTION_SUSPEND_APPROVAL.format(self.id),request)
@@ -360,6 +362,7 @@ class Approval(RevisionedMixin):
                         send_approval_surrender_email_notification(self)
                 else:
                     self.set_to_surrender = True
+                    send_approval_surrender_email_notification(self, future_surrender=True)
                 self.save()
                 # Log approval action
                 self.log_user_action(ApprovalUserAction.ACTION_SURRENDER_APPROVAL.format(self.id),request)

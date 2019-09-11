@@ -1,8 +1,11 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Approval has been suspended:
-
+	{% if future_suspend %}
+		Your Approval has been set to suspend in future:
+	{% else %}
+    	Your Approval has been suspended:
+    {% endif %}
     Approval : {{ approval.lodgement_number}}
 
     Suspension Details : {{details}}    
