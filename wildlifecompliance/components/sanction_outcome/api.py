@@ -26,7 +26,7 @@ from wildlifecompliance.components.main.email import prepare_mail
 from wildlifecompliance.components.offence.models import SectionRegulation, AllegedOffence
 from wildlifecompliance.components.sanction_outcome.email import send_mail
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction, \
-    SanctionOutcomeCommsLogEntry, AllegedCommittedOffence
+    SanctionOutcomeCommsLogEntry, AllegedCommittedOffence, SanctionOutcomeUserAction
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
     SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer, SanctionOutcomeDatatableSerializer, \
     UpdateAssignedToIdSerializer, SanctionOutcomeCommsLogEntrySerializer, SanctionOutcomeUserActionSerializer, \
@@ -109,8 +109,10 @@ class SanctionOutcomeFilterBackend(DatatablesFilterBackend):
                     ordering[num] = 'status'
                 elif item == '-status__name':
                     ordering[num] = '-status'
-                elif item == 'user_action':
-                    pass
+                elif item == 'lodgement_number':
+                    ordering[num] = 'id'  # Prefixes, RN, IF, CN and LA should be ignored
+                elif item == '-lodgement_number':
+                    ordering[num] = '-id'  # Prefixes, RN, IF, CN and LA should be ignored
 
             queryset = queryset.order_by(*ordering).distinct()
 
@@ -300,9 +302,6 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 # Offender
                 request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None)
 
-                # Type
-                # request_data['type'] = request_data.get('type', {}).get('id', None)
-
                 # No workflow
                 # No allocated group changes
 
@@ -316,13 +315,16 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 for existing_aco in AllegedCommittedOffence.objects.filter(sanction_outcome=instance):
                     for new_aco in request_data.get('alleged_committed_offences', {}):
                         if existing_aco.id == new_aco.get('id'):
+                            # existing alleged committed offence (existing_aco) is being modified
+                            # to the new alleged committed offence (new_aco)
                             if existing_aco.included:
                                 if not existing_aco.removed and new_aco.get('removed'):
                                     # when existing alleged committed offence is going to be removed
                                     serializer = AllegedCommittedOffenceSerializer(existing_aco, data={'removed': True, 'removed_by_id': request.user.id})
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
-                                    # TODO: action log
+                                    instance.log_user_action(SanctionOutcomeUserAction.ACTION_REMOVE_ALLEGED_COMMITTED_OFFENCE.format(existing_aco.alleged_offence), request)
+
                                 elif existing_aco.removed and not new_aco.get('removed'):
                                     # When restore removed alleged committed offence again
                                     existing = AllegedCommittedOffence.objects.filter(sanction_outcome=instance,
@@ -330,26 +332,22 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                                                                                       included=True,
                                                                                       removed=False)
                                     if not existing:
+                                        # There are no active same alleged offences
                                         serializer = AllegedCommittedOffenceCreateSerializer(data={'sanction_outcome_id': instance.id, 'alleged_offence_id': existing_aco.alleged_offence.id,})
                                         serializer.is_valid(raise_exception=True)
                                         serializer.save()
-                                        # TODO: action log
+                                        instance.log_user_action(SanctionOutcomeUserAction.ACTION_RESTORE_ALLEGED_COMMITTED_OFFENCE.format(existing_aco.alleged_offence), request)
+
                             elif not existing_aco.included and new_aco.get('included'):
                                 # when new alleged committed offence is going to be included
                                 serializer = AllegedCommittedOffenceSerializer(existing_aco, data={'included': True})
                                 serializer.is_valid(raise_exception=True)
                                 serializer.save()
-                                # TODO: action logging
-
+                                instance.log_user_action(SanctionOutcomeUserAction.ACTION_INCLUDE_ALLEGED_COMMITTED_OFFENCE.format(existing_aco.alleged_offence), request)
 
                 # Save remediation action, and link to the sanction outcome
 
-                # Log
-
-                # Action
-
                 # Return
-                # return HttpResponse(res_json, content_type='application/json')
                 return self.retrieve(request)
 
         except serializers.ValidationError:
@@ -443,10 +441,12 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                     workflow_entry = self.add_comms_log(request, instance, workflow=True)
 
                 # Update the entry above with email_data
+                # Send email
                 email_data = prepare_mail(request, instance, workflow_entry, send_mail)
+                # Log communication
                 serializer = SanctionOutcomeCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
-                if serializer.is_valid(raise_exception=True):
-                    serializer.save()
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
 
                 # Return
                 return HttpResponse(res_json, content_type='application/json')

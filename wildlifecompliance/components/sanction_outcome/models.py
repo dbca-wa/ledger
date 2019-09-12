@@ -69,10 +69,11 @@ class SanctionOutcome(models.Model):
     paper_id = models.CharField(max_length=50, blank=True,)
     description = models.TextField(blank=True)
 
-    # We may not need this field
     assigned_to = models.ForeignKey(EmailUser, related_name='sanction_outcome_assigned_to', null=True)
-
     allocated_group = models.ForeignKey(CompliancePermissionGroup, related_name='sanction_outcome_allocated_group', null=True)
+    # This field is used as recipient when manager returns a sanction outcome for amendment
+    # Updated whenever the sanction outcome is sent to the manager
+    responsible_officer = models.ForeignKey(EmailUser, related_name='sanction_outcome_responsible_officer', null=True)
 
     # Only editable when issued on paper. Otherwise pre-filled with date/time when issuing electronically.
     date_of_issue = models.DateField(null=True, blank=True)
@@ -201,6 +202,7 @@ class SanctionOutcome(models.Model):
             self.status = self.STATUS_AWAITING_REVIEW
         new_group = SanctionOutcome.get_compliance_permission_group(self.regionDistrictId, SanctionOutcome.WORKFLOW_SEND_TO_MANAGER)
         self.allocated_group = new_group
+        self.assigned_to = None
         self.log_user_action(SanctionOutcomeUserAction.ACTION_SEND_TO_MANAGER.format(self.lodgement_number), request)
         self.save()
 
@@ -239,6 +241,7 @@ class SanctionOutcome(models.Model):
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_SanctionOutcome'
         verbose_name_plural = 'CM_SanctionOutcomes'
+        ordering = ['-id']
 
 
 class AllegedCommittedOffence(RevisionedMixin):
@@ -324,6 +327,9 @@ class SanctionOutcomeUserAction(UserAction):
     ACTION_CLOSE = "Close Sanction Outcome {}"
     ACTION_ADD_WEAK_LINK = "Create manual link between Sanction Outcome: {} and {}: {}"
     ACTION_REMOVE_WEAK_LINK = "Remove manual link between Sanction Outcome: {} and {}: {}"
+    ACTION_REMOVE_ALLEGED_COMMITTED_OFFENCE = "Remove alleged committed offence: {}"
+    ACTION_RESTORE_ALLEGED_COMMITTED_OFFENCE = "Restore alleged committed offence: {}"
+    ACTION_INCLUDE_ALLEGED_COMMITTED_OFFENCE = "Include alleged committed offence: {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

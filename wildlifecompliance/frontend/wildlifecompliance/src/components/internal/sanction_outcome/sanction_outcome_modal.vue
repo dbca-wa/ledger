@@ -655,7 +655,6 @@ export default {
       // Due "Date" field
       el_due_date.datetimepicker({
         format: "DD/MM/YYYY",
-        maxDate: "now",
         showClear: true
       });
       el_due_date.on("dp.change", function(e) {

@@ -205,7 +205,7 @@ export default {
                     {
                         data: 'user_action',
                         searchable: false,
-                        orderable: true,
+                        orderable: false,
                         mRender: function (data, type, row){
                             console.log(data);
                             if (data){

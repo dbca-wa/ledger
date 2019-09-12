@@ -120,11 +120,13 @@ class AllegedOffence(RevisionedMixin):
     offence = models.ForeignKey(Offence, null=False,)
     section_regulation = models.ForeignKey(SectionRegulation, null=False,)
 
+    def __str__(self):
+        return self.section_regulation.__str__()
+
     class Meta:
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_AllegedOffence'
         verbose_name_plural = 'CM_AllegedOffences'
-
 
 
 class ActiveOffenderManager(models.Manager):
