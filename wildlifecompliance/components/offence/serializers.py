@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from ledger.accounts.models import Organisation
+from ledger.accounts.models import Organisation as LedgerOrganisation
+from wildlifecompliance.components.organisations.models import Organisation
+#from wildlifecompliance.components.organisations.serializers import OrganisationSearchSerializer
 from wildlifecompliance.components.call_email.serializers import LocationSerializer, EmailUserSerializer
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.main.related_item import get_related_items
@@ -14,6 +16,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
         model = Organisation
         fields = (
             'id',
+            'organisation_id',
             'abn',
             'name',
         )

@@ -565,6 +565,14 @@ class Organisation(models.Model):
             and org_contact.user_status == OrganisationContact.ORG_CONTACT_STATUS_ACTIVE \
             and org_contact.user_role == OrganisationContact.ORG_CONTACT_ROLE_ADMIN
 
+    @property
+    def get_related_items_identifier(self):
+        return self.abn
+
+    @property
+    def get_related_items_descriptor(self):
+        return self.name
+
 
 @python_2_unicode_compatible
 class OrganisationContact(models.Model):

@@ -196,3 +196,11 @@ class WeakLinks(models.Model):
         else:
             super(WeakLinks, self).save(*args,**kwargs)
 
+
+# temp document obj for generic file upload component
+class TemporaryDocument(Document):
+    _file = models.FileField(max_length=255)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+

@@ -29,8 +29,14 @@
                             </div>
                           </div>
                           <div class="row">
-                            <div class="col-sm-12">
-                              
+                            <div v-if="statusId === 'open'" class="col-sm-12">
+                              <select :disabled="!inspection.user_in_group" class="form-control" v-model="inspection.assigned_to_id" @change="updateAssignedToId()">
+                                <option  v-for="option in inspectionTeam" :value="option.id" v-bind:key="option.id">
+                                  {{ option.full_name }} 
+                                </option>
+                              </select>
+                            </div>
+                            <div v-else class="col-sm-12">
                               <select :disabled="!inspection.user_in_group" class="form-control" v-model="inspection.assigned_to_id" @change="updateAssignedToId()">
                                 <option  v-for="option in inspection.allocated_group" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
@@ -212,6 +218,9 @@
                                 <div class="col-sm-12" v-if="!readonlyForm">
                                   <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
+                                <!--div class="col-sm-12" v-if="!readonlyForm">
+                                  <CreateNewOrganisation/>
+                                </div-->
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
                               <label class="col-sm-4" for="inspection_inform">Inform party being inspected</label>
@@ -223,8 +232,8 @@
                             <div class="form-group">
                               <div class="row">
                                 <div class="col-sm-6">
-                                  <select :disabled="readonlyForm" class="form-control" v-model="teamMemberSelected" >
-                                    <option  v-for="option in inspection.allocated_group" :value="option.id" v-bind:key="option.id">
+                                  <select :disabled="readonlyForm" class="form-control" ref="inspectionteam" >
+                                    <option  v-for="option in inspection.all_officers" :value="option.id" v-bind:key="option.id">
                                       {{ option.full_name }}
                                     </option>
                                   </select>
@@ -320,6 +329,7 @@ import Vue from "vue";
 import FormSection from "@/components/forms/section_toggle.vue";
 import SearchPerson from "@/components/common/search_person.vue";
 import CreateNewPerson from "@common-components/create_new_person.vue";
+import CreateNewOrganisation from "@common-components/create_new_organisation.vue";
 import CommsLogs from "@common-components/comms_logs.vue";
 import datatable from '@vue-utils/datatable.vue'
 import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
@@ -333,6 +343,8 @@ import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
 import InspectionWorkflow from './inspection_workflow.vue';
 import RelatedItems from "@common-components/related_items.vue";
+require("select2/dist/css/select2.min.css");
+require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 
 
 export default {
@@ -366,7 +378,7 @@ export default {
                       let links = '';
                       if (row.Action.can_user_action) {
                           if (row.Action.action === 'Member') {
-                              links = '<a href="#" class="make_team_lead" data-member-id="' + row.Action.id + '">Make Team Lead</a>'
+                              links = '<a href="#" class="make_team_lead" data-member-id="' + row.Action.id + '">Make Team Lead</a><br>'
                           } 
                           links += '<a href="#" class="remove_button" data-member-id="' + row.Action.id + '">Remove</a>'
                           return links
@@ -409,6 +421,7 @@ export default {
     datatable,
     SearchPerson,
     CreateNewPerson,
+    CreateNewOrganisation,
     Offence,
     SanctionOutcome,
     filefield,
@@ -424,6 +437,9 @@ export default {
     },
     statusDisplay: function() {
         return this.inspection.status ? this.inspection.status.name : '';
+    },
+    statusId: function() {
+        return this.inspection.status ? this.inspection.status.id : '';
     },
     readonlyForm: function() {
         if (this.inspection.status && this.inspection.status.id === 'await_endorsement') {
@@ -530,7 +546,7 @@ export default {
       saveInspection: 'saveInspection',
       setInspection: 'setInspection', 
       setPlannedForTime: 'setPlannedForTime',
-      modifyInspectionTeam: 'modifyInspectionTeam',
+      // modifyInspectionTeam: 'modifyInspectionTeam',
       setPartyInspected: 'setPartyInspected',
       setRelatedItems: 'setRelatedItems',
     }),
@@ -547,6 +563,7 @@ export default {
             actionColumn.can_user_action = this.inspection.can_user_action;
 
             //if (!already_exists) {
+            if (this.inspectionTeam[i].id) {
             this.$refs.inspection_team_table.vmDataTable.row.add(
                 {
                     // 'id': this.inspectionTeam[i].id,
@@ -555,7 +572,7 @@ export default {
                     'Action': actionColumn,
                 }
             ).draw();
-            //}
+            }
           }
         }
     },
@@ -571,6 +588,13 @@ export default {
 
         let inspectionTeamResponse = await Vue.http.post(inspectionTeamUrl, payload);
         this.inspectionTeam = inspectionTeamResponse.body;
+        this.inspectionTeam.splice(0, 0,
+          {
+            action: "",
+            member_role: "",
+            full_name: "",
+            id: null,
+          });
     },
     newPersonCreated: function(obj) {
         console.log(obj);
@@ -801,6 +825,21 @@ export default {
       $('#plannedForTimePicker').on('dp.change', function(e) {
           vm.setPlannedForTime(e.date.format('LT'));
       });
+
+      // Initialise select2 for officer list
+      $(vm.$refs.inspectionteam).select2({
+          "theme": "bootstrap",
+          allowClear: true,
+          placeholder:"Select Team Member"
+                  }).
+      on("select2:select",function (e) {
+                          let selected = $(e.currentTarget);
+                          vm.teamMemberSelected = selected.val();
+                      }).
+      on("select2:unselect",function (e) {
+                          let selected = $(e.currentTarget);
+                          vm.teamMemberSelected = selected.val();
+                      });
       
       this.$nextTick(async () => {
           this.addEventListeners();
