@@ -238,7 +238,17 @@ class InspectionSerializer(serializers.ModelSerializer):
         sorted_unique_officers = sorted(unique_officers, key=lambda officer: officer.last_name)
 
         serialized_officers = IndividualSerializer(sorted_unique_officers, many=True)
-        return serialized_officers.data
+        returned_data = serialized_officers.data
+        blank_field = [{
+            'dob': '',
+            'email': '',
+            'full_name': '',
+            'id': None,
+            }]
+
+        returned_data.insert(0, blank_field)
+        print(returned_data)
+        return returned_data
 
     def get_inspection_report(self, obj):
         return [[r.name, r._file.url] for r in obj.report.all()]

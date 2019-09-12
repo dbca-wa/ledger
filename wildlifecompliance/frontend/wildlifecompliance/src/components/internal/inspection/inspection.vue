@@ -232,7 +232,7 @@
                             <div class="form-group">
                               <div class="row">
                                 <div class="col-sm-6">
-                                  <select :disabled="readonlyForm" class="form-control" v-model="teamMemberSelected" >
+                                  <select :disabled="readonlyForm" class="form-control" ref="inspectionteam" >
                                     <option  v-for="option in inspection.all_officers" :value="option.id" v-bind:key="option.id">
                                       {{ option.full_name }}
                                     </option>
@@ -343,6 +343,8 @@ import SanctionOutcome from '../sanction_outcome/sanction_outcome_modal';
 import filefield from '@/components/common/compliance_file.vue';
 import InspectionWorkflow from './inspection_workflow.vue';
 import RelatedItems from "@common-components/related_items.vue";
+require("select2/dist/css/select2.min.css");
+require("select2-bootstrap-theme/dist/select2-bootstrap.min.css");
 
 
 export default {
@@ -823,6 +825,21 @@ export default {
       $('#plannedForTimePicker').on('dp.change', function(e) {
           vm.setPlannedForTime(e.date.format('LT'));
       });
+
+      // Initialise select2 for officer list
+      $(vm.$refs.inspectionteam).select2({
+          "theme": "bootstrap",
+          allowClear: true,
+          placeholder:"Select Team Member"
+                  }).
+      on("select2:select",function (e) {
+                          let selected = $(e.currentTarget);
+                          vm.teamMemberSelected = selected.val();
+                      }).
+      on("select2:unselect",function (e) {
+                          let selected = $(e.currentTarget);
+                          vm.teamMemberSelected = selected.val();
+                      });
       
       this.$nextTick(async () => {
           this.addEventListeners();
