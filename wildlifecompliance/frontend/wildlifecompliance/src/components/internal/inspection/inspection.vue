@@ -29,8 +29,14 @@
                             </div>
                           </div>
                           <div class="row">
-                            <div class="col-sm-12">
-                              
+                            <div v-if="statusId === 'open'" class="col-sm-12">
+                              <select :disabled="!inspection.user_in_group" class="form-control" v-model="inspection.assigned_to_id" @change="updateAssignedToId()">
+                                <option  v-for="option in inspectionTeam" :value="option.id" v-bind:key="option.id">
+                                  {{ option.full_name }} 
+                                </option>
+                              </select>
+                            </div>
+                            <div v-else class="col-sm-12">
                               <select :disabled="!inspection.user_in_group" class="form-control" v-model="inspection.assigned_to_id" @change="updateAssignedToId()">
                                 <option  v-for="option in inspection.allocated_group" :value="option.id" v-bind:key="option.id">
                                   {{ option.full_name }} 
@@ -212,9 +218,9 @@
                                 <div class="col-sm-12" v-if="!readonlyForm">
                                   <CreateNewPerson :displayComponent="displayCreateNewPerson" @new-person-created="newPersonCreated"/>
                                 </div>
-                                <div class="col-sm-12" v-if="!readonlyForm">
+                                <!--div class="col-sm-12" v-if="!readonlyForm">
                                   <CreateNewOrganisation/>
-                                </div>
+                                </div-->
                             </div></div>
                             <div class="col-sm-12 form-group"><div class="row">
                               <label class="col-sm-4" for="inspection_inform">Inform party being inspected</label>
@@ -227,7 +233,7 @@
                               <div class="row">
                                 <div class="col-sm-6">
                                   <select :disabled="readonlyForm" class="form-control" v-model="teamMemberSelected" >
-                                    <option  v-for="option in inspection.allocated_group" :value="option.id" v-bind:key="option.id">
+                                    <option  v-for="option in inspection.all_officers" :value="option.id" v-bind:key="option.id">
                                       {{ option.full_name }}
                                     </option>
                                   </select>
@@ -370,7 +376,7 @@ export default {
                       let links = '';
                       if (row.Action.can_user_action) {
                           if (row.Action.action === 'Member') {
-                              links = '<a href="#" class="make_team_lead" data-member-id="' + row.Action.id + '">Make Team Lead</a>'
+                              links = '<a href="#" class="make_team_lead" data-member-id="' + row.Action.id + '">Make Team Lead</a><br>'
                           } 
                           links += '<a href="#" class="remove_button" data-member-id="' + row.Action.id + '">Remove</a>'
                           return links
@@ -429,6 +435,9 @@ export default {
     },
     statusDisplay: function() {
         return this.inspection.status ? this.inspection.status.name : '';
+    },
+    statusId: function() {
+        return this.inspection.status ? this.inspection.status.id : '';
     },
     readonlyForm: function() {
         if (this.inspection.status && this.inspection.status.id === 'await_endorsement') {
@@ -535,7 +544,7 @@ export default {
       saveInspection: 'saveInspection',
       setInspection: 'setInspection', 
       setPlannedForTime: 'setPlannedForTime',
-      modifyInspectionTeam: 'modifyInspectionTeam',
+      // modifyInspectionTeam: 'modifyInspectionTeam',
       setPartyInspected: 'setPartyInspected',
       setRelatedItems: 'setRelatedItems',
     }),
@@ -552,6 +561,7 @@ export default {
             actionColumn.can_user_action = this.inspection.can_user_action;
 
             //if (!already_exists) {
+            if (this.inspectionTeam[i].id) {
             this.$refs.inspection_team_table.vmDataTable.row.add(
                 {
                     // 'id': this.inspectionTeam[i].id,
@@ -560,7 +570,7 @@ export default {
                     'Action': actionColumn,
                 }
             ).draw();
-            //}
+            }
           }
         }
     },
@@ -576,6 +586,13 @@ export default {
 
         let inspectionTeamResponse = await Vue.http.post(inspectionTeamUrl, payload);
         this.inspectionTeam = inspectionTeamResponse.body;
+        this.inspectionTeam.splice(0, 0,
+          {
+            action: "",
+            member_role: "",
+            full_name: "",
+            id: null,
+          });
     },
     newPersonCreated: function(obj) {
         console.log(obj);
