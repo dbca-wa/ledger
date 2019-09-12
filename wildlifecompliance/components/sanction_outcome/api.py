@@ -29,7 +29,8 @@ from wildlifecompliance.components.sanction_outcome.models import SanctionOutcom
     SanctionOutcomeCommsLogEntry, AllegedCommittedOffence
 from wildlifecompliance.components.sanction_outcome.serializers import SanctionOutcomeSerializer, \
     SaveSanctionOutcomeSerializer, SaveRemediationActionSerializer, SanctionOutcomeDatatableSerializer, \
-    UpdateAssignedToIdSerializer, SanctionOutcomeCommsLogEntrySerializer, SanctionOutcomeUserActionSerializer
+    UpdateAssignedToIdSerializer, SanctionOutcomeCommsLogEntrySerializer, SanctionOutcomeUserActionSerializer, \
+    AllegedCommittedOffenceSerializer, AllegedCommittedOffenceCreateSerializer
 from wildlifecompliance.components.users.models import CompliancePermissionGroup, RegionDistrict
 from wildlifecompliance.helpers import is_internal
 
@@ -297,7 +298,10 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
 
                 # Offence should not be changed
                 # Offender
-                request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None);
+                request_data['offender_id'] = request_data.get('current_offender', {}).get('id', None)
+
+                # Type
+                # request_data['type'] = request_data.get('type', {}).get('id', None)
 
                 # No workflow
                 # No allocated group changes
@@ -306,7 +310,37 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 instance = serializer.save()
 
-                # Handle relations between this sanction outcome and the alleged offence(s)
+                # Handle alleged committed offences
+                # Once included=True, never set included=False
+                # Once removed=True, never set removed=False
+                for existing_aco in AllegedCommittedOffence.objects.filter(sanction_outcome=instance):
+                    for new_aco in request_data.get('alleged_committed_offences', {}):
+                        if existing_aco.id == new_aco.get('id'):
+                            if existing_aco.included:
+                                if not existing_aco.removed and new_aco.get('removed'):
+                                    # when existing alleged committed offence is going to be removed
+                                    serializer = AllegedCommittedOffenceSerializer(existing_aco, data={'removed': True, 'removed_by_id': request.user.id})
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+                                    # TODO: action log
+                                elif existing_aco.removed and not new_aco.get('removed'):
+                                    # When restore removed alleged committed offence again
+                                    existing = AllegedCommittedOffence.objects.filter(sanction_outcome=instance,
+                                                                                      alleged_offence=existing_aco.alleged_offence,
+                                                                                      included=True,
+                                                                                      removed=False)
+                                    if not existing:
+                                        serializer = AllegedCommittedOffenceCreateSerializer(data={'sanction_outcome_id': instance.id, 'alleged_offence_id': existing_aco.alleged_offence.id,})
+                                        serializer.is_valid(raise_exception=True)
+                                        serializer.save()
+                                        # TODO: action log
+                            elif not existing_aco.included and new_aco.get('included'):
+                                # when new alleged committed offence is going to be included
+                                serializer = AllegedCommittedOffenceSerializer(existing_aco, data={'included': True})
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+                                # TODO: action logging
+
 
                 # Save remediation action, and link to the sanction outcome
 
@@ -315,6 +349,8 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 # Action
 
                 # Return
+                # return HttpResponse(res_json, content_type='application/json')
+                return self.retrieve(request)
 
         except serializers.ValidationError:
             print(traceback.print_exc())

@@ -254,6 +254,11 @@ class AllegedCommittedOffence(RevisionedMixin):
         verbose_name = 'CM_AllegedCommittedOffence'
         verbose_name_plural = 'CM_AllegedCommittedOffences'
 
+    # def clean(self):
+    #     raise ValidationError('Error test')
+    #     if not self.included and not self.removed:
+    #         raise ValidationError('Alleged offence: %s is not included, but is going to be removed' % self.alleged_offence)
+
 
 class RemediationAction(models.Model):
     action = models.TextField(blank=True)

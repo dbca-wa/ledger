@@ -28,9 +28,31 @@ class AllegedOffenceSerializer(serializers.ModelSerializer):
     #     qs_details = AllegedCommittedOffence.objects.filter(alleged_offence=obj)
     #     return [AllegedCommittedOffenceSerializer(item).data for item in qs_details]
 
+class AllegedCommittedOffenceCreateSerializer(serializers.ModelSerializer):
+    alleged_offence_id = serializers.IntegerField(write_only=True,)
+    sanction_outcome_id = serializers.IntegerField(write_only=True,)
+
+    class Meta:
+        model = AllegedCommittedOffence
+        fields = (
+            'alleged_offence_id',
+            'sanction_outcome_id',
+        )
+
+    def validate(self, data):
+        existing = AllegedCommittedOffence.objects.filter(alleged_offence__id=data['alleged_offence_id'],
+                                                          sanction_outcome__id=data['sanction_outcome_id'],
+                                                          removed=False)
+        if existing:
+            ao = existing.first().alleged_offence
+            raise serializers.ValidationError('Alleged offence: %s is duplicated' % ao)
+        return data
+
 
 class AllegedCommittedOffenceSerializer(serializers.ModelSerializer):
     alleged_offence = AllegedOffenceSerializer(read_only=True,)
+    removed_by_id = serializers.IntegerField(write_only=True, required=False)
+    can_user_restore = serializers.SerializerMethodField()
 
     class Meta:
         model = AllegedCommittedOffence
@@ -40,15 +62,28 @@ class AllegedCommittedOffenceSerializer(serializers.ModelSerializer):
             'removed',
             'reason_for_removal',
             'removed_by',
+            'removed_by_id',
             'alleged_offence',
+            'can_user_restore',
         )
+
+    def get_can_user_restore(self, obj):
+        can_user_restore = True
+
+        if obj.removed == True:
+            existing = AllegedCommittedOffence.objects.filter(sanction_outcome=obj.sanction_outcome, alleged_offence=obj.alleged_offence, included=True, removed=False)
+            if existing:
+                # If there is already alleged committed offence, there should not be restore button
+                can_user_restore = False
+
+            existing = AllegedCommittedOffence.objects.filter(sanction_outcome=obj.sanction_outcome, alleged_offence=obj.alleged_offence, included=True, removed=False)
+
+        return can_user_restore
 
 
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     type = CustomChoiceField(read_only=True)
-    # alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
-    # alleged_committed_offences = AllegedOffenceSerializer(read_only=True, many=True)
     alleged_committed_offences = serializers.SerializerMethodField()
     offender = OffenderSerializer(read_only=True,)
     offence = OffenceSerializer(read_only=True,)

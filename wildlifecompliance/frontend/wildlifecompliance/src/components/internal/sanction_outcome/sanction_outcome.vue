@@ -362,7 +362,11 @@ export default {
                             if (data.already_included){
                                 // This alleged committed offence is already stored in the database as included
                                 if (data.removed){
-                                    ret = '<a href="#" class="restore_alleged_committed_offence" data-alleged-committed-offence-id="' + data.id + '">Restore</a>';
+                                    if (data.can_user_restore){
+                                        ret = '<a href="#" class="restore_alleged_committed_offence" data-alleged-committed-offence-id="' + data.id + '">Restore</a>';
+                                    } else {
+                                        ret = '';
+                                    }
                                 } else {
                                     ret = '<a href="#" class="remove_alleged_committed_offence" data-alleged-committed-offence-id="' + data.id + '">Remove</a>'; }
                             } else {
@@ -536,6 +540,9 @@ export default {
                 let putUrl = helpers.add_endpoint_join(api_endpoints.sanction_outcome, vm.sanction_outcome.id + '/');
                 let payload = new Object();
                 Object.assign(payload, vm.sanction_outcome);
+
+                // format 'type'
+                payload.type = payload.type.id;
 
                 const savedObj = await Vue.http.put(putUrl, payload);
                 await swal("Saved", "The record has been saved", "success");
