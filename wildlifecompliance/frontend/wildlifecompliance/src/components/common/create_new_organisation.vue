@@ -1,236 +1,115 @@
 <template>
     <div class="container-fluid" id="internalOrgInfo">
-    <div class="row">
-    <div class="col-md-10 col-md-offset-1">
-        <div class="row">
-            <h3>{{ org.name }} - {{org.abn}}</h3>
-            <!--div class="col-md-3">
-                <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
-            </div-->
-            <!--div class="col-md-1">
-            </div-->
-            <div class="col-md-8">
-                <!--ul class="nav nav-tabs">
-                    <li class="active"><a data-toggle="tab" :href="'#'+dTab">Details</a></li>
-                    <li><a data-toggle="tab" :href="'#'+oTab">Licensing</a></li>
-                </ul-->
-                <div class="tab-content">
-                    <div :id="dTab" class="tab-pane fade in active">
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                  <div class="panel-heading">
-                                    <h3 class="panel-title">Organisation Details
-                                        <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
-                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                        </a>
-                                    </h3>
-                                  </div>
-                                  <div class="panel-body collapse in" :id="pdBody">
-                                      <form class="form-horizontal" name="personal_form" method="post">
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">Name</label>
-                                            <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="org.name">
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >ABN</label>
-                                            <div class="col-sm-6">
-                                                <input type="text" disabled class="form-control" name="last_name" placeholder="" v-model="org.abn">
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <div class="col-sm-12">
-                                                <button v-if="!updatingDetails" class="pull-right btn btn-primary" @click.prevent="updateDetails()">Update</button>
-                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
-                                            </div>
-                                          </div>
-                                       </form>
-                                  </div>
-                                </div>
+       <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Organisation Details
+                        <a class="panelClicker" :href="'#'+pdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pdBody">
+                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse in" :id="pdBody">
+                      <form class="form-horizontal" name="personal_form" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-3 control-label">Name</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="first_name" placeholder="" v-model="organisation.name">
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                  <div class="panel-heading">
-                                    <h3 class="panel-title">Identification<small> Upload organisation ID</small>
-                                        <a class="panelClicker" :href="'#'+idBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="idBody">
-                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                        </a>
-                                    </h3>
-                                  </div>
-                                  <div class="panel-body collapse" :id="idBody">
-                                      <form class="form-horizontal" name="id_form" method="post">
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">Identification</label>
-                                            <div class="col-sm-6">
-                                                <!--img v-if="org.organisation.identification" width="100%" name="identification" v-bind:src="org.organisation.identification" /-->
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <div class="col-sm-12">
-                                                <!-- output order in reverse due to pull-right at runtime -->
-                                                <button v-if="!uploadingID" class="pull-right btn btn-primary" @click.prevent="uploadID()">Upload</button>
-                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Uploading</button>
-                                                <span class="pull-right" style="margin-left:10px;margin-top:10px;margin-right:10px">{{uploadedIDFileName}}</span>
-                                                <span class="btn btn-primary btn-file pull-right">
-                                                    Select ID to Upload<input type="file" ref="uploadedID" @change="readFileID()"/>
-                                                </span>
-                                            </div>
-                                          </div>
-                                       </form>
-                                  </div>
-                                </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-3 control-label" >ABN</label>
+                            <div class="col-sm-6">
+                                <input type="text" disabled class="form-control" name="last_name" placeholder="" v-model="organisation.abn">
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                  <div class="panel-heading">
-                                    <h3 class="panel-title">Address Details
-                                        <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
-                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                        </a>
-                                    </h3>
-                                  </div>
-                                  <div v-if="loading.length == 0" class="panel-body collapse" :id="adBody">
-                                      <form class="form-horizontal" action="index.html" method="post">
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">Street</label>
-                                            <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="street" placeholder="" v-model="org.address.line1">
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
-                                            <div class="col-sm-6">
-                                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="org.address.locality">
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">State</label>
-                                            <div class="col-sm-2">
-                                                <input type="text" class="form-control" name="country" placeholder="" v-model="org.address.state">
-                                            </div>
-                                            <label for="" class="col-sm-2 control-label">Postcode</label>
-                                            <div class="col-sm-2">
-                                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="org.address.postcode">
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >Country</label>
-                                            <div class="col-sm-4">
-                                                <select class="form-control" name="country" v-model="org.address.country">
-                                                    <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
-                                                </select>
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <div class="col-sm-12">
-                                                <button v-if="!updatingAddress" class="pull-right btn btn-primary" @click.prevent="updateAddress()">Update</button>
-                                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
-                                            </div>
-                                          </div>
-                                       </form>
-                                  </div>
-                                </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+       </div>
+       <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Address Details
+                        <a class="panelClicker" :href="'#'+adBody" data-toggle="collapse" expanded="false"  data-parent="#userInfo" :aria-controls="adBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div v-if="loading.length == 0" class="panel-body collapse" :id="adBody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-3 control-label">Street</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="street" placeholder="" v-model="organisation.address.line1">
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                  <div class="panel-heading">
-                                    <h3 class="panel-title">Contact Details
-                                        <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
-                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                        </a>
-                                    </h3>
-                                  </div>
-                                  <div class="panel-body collapse" :id="cdBody">
-                                        <form class="form-horizontal" action="index.html" method="post">
-                                            <div class="col-sm-12">
-                                                <button @click.prevent="addContact()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Contact</button>
-                                            </div>
-                                            <!--datatable ref="contacts_datatable" id="organisation_contacts_datatable" :dtOptions="contacts_options" :dtHeaders="contacts_headers"/-->
-                                        </form>
-                                  </div>
-                                </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" name="surburb" placeholder="" v-model="organisation.address.locality">
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="panel panel-default">
-                                  <div class="panel-heading">
-                                    <h3 class="panel-title">Linked Persons<small> - Manage the user accounts linked to the organisation</small>
-                                        <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
-                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                        </a>
-                                    </h3>
-                                  </div>
-                                  <div class="panel-body collapse" :id="oBody">
-                                    <div class ="row">
-                                        <form class="form-horizontal" action="index.html" method="post">
-                                            <div class="col-sm-6">
-                                                <div class="form-group">
-                                                    <label for="" class="col-sm-6 control-label"> Organisation User Pin Code 1:</label>
-                                                    <div class="col-sm-6">
-                                                        <!--label class="control-label">{{org.pins.three}}</label-->
-                                                    </div>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="" class="col-sm-6 control-label" >Organisation User Pin Code 2:</label>
-                                                    <div class="col-sm-6">
-                                                        <!--label class="control-label">{{org.pins.four}}</label-->
-                                                    </div>
-                                                </div>
-                                             </div>
-                                             <!--div class="col-sm-6">
-                                                <div class="form-group" :disabled ='!myorgperms.is_admin'>
-                                                    <label for="" class="col-sm-6 control-label"> Organisation Administrator Pin Code 1:</label>
-                                                    <div class="col-sm-6">
-                                                        <label class="control-label">{{org.pins.one}}</label>
-                                                    </div>
-                                                </div>
-                                                <div class="form-group" :disabled ='!myorgperms.is_admin'>
-                                                    <label for="" class="col-sm-6 control-label" >Organisation Administrator Pin Code 2:</label>
-                                                    <div class="col-sm-6">
-                                                        <label class="control-label">{{org.pins.two}}</label>
-                                                    </div>
-                                                </div>
-                                            </div-->
-                                        </form>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-sm-8">
-                                            <div class="row">
-                                                <div class="col-sm-12 top-buffer-s">
-                                                    <strong>Persons linked to the organisation are controlled by the organisation. The Department cannot manage this list of people.</strong>
-                                                </div>
-                                            </div> 
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <!--datatable ref="contacts_datatable_user" id="organisation_contacts_datatable_ref" :dtOptions="contacts_options_ref" :dtHeaders="contacts_headers_ref" v-model="filterOrgContactStatus"/-->
-                                    </div>
-                                  </div>
-                                </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-3 control-label">State</label>
+                            <div class="col-sm-2">
+                                <input type="text" class="form-control" name="country" placeholder="" v-model="organisation.address.state">
                             </div>
-                        </div>
-                    </div> 
-                    <!--div :id="oTab" class="tab-pane fade">
-                        <ApplicationDashTable ref="applications_table" level='internal' :url='applications_url'/>
-                        <LicenceDashTable ref="licences_table" level='internal' :url='licences_url'/>
-                        <ReturnDashTable ref="returns_table" level='internal' :url='returns_url'/>
-                    </div-->
+                            <label for="" class="col-sm-2 control-label">Postcode</label>
+                            <div class="col-sm-2">
+                                <input type="text" class="form-control" name="postcode" placeholder="" v-model="organisation.address.postcode">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="" class="col-sm-3 control-label" >Country</label>
+                            <div class="col-sm-4">
+                                <select class="form-control" name="country" v-model="organisation.address.country">
+                                    <option v-for="c in countries" :value="c.alpha2Code">{{ c.name }}</option>
+                                </select>
+                            </div>
+                          </div>
+                       </form>
+                  </div>
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">Contact Details
+                        <a class="panelClicker" :href="'#'+cdBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="cdBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" :id="cdBody">
+                      <div v-if="organisation.id">
+                        <form class="form-horizontal" action="index.html" method="post">
+                            <div class="col-sm-12">
+                                <button @click.prevent="addContact()" style="margin-bottom:10px;" class="btn btn-primary pull-right">Add Contact</button>
+                            </div>
+                            <datatable ref="contacts_datatable" id="organisation_contacts_datatable" :dtOptions="contacts_options" :dtHeaders="contacts_headers"/>
+                        </form>
+                      </div>
+                      <div v-else>
+                          You must create an Organisation before adding contacts
+                      </div>
+                  </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+        <div class="col-sm-12">
+            <button v-if="!updatingDetails" class="pull-right btn btn-primary" @click.prevent="save()">Save</button>
+            <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Saving Organisation</button>
         </div>
         </div>
-        <!--AddContact ref="add_contact" :org_id="org.id" /-->
-    </div>
+
+   </div> 
 </template>
 
 <script>
@@ -260,7 +139,7 @@ export default {
             dTab: 'dTab'+vm._uid,
             oTab: 'oTab'+vm._uid,
             idBody: 'idBody'+vm._uid,
-            org: {
+            organisation: {
                 address: {}
             },
             myorgperms: null,
@@ -421,25 +300,45 @@ export default {
                 vm.$refs.returns_table.$refs.application_datatable.vmDataTable.columns.adjust().responsive.recalc();
             });
         },
-        updateDetails: function() {
-            let vm = this;
-            vm.updatingDetails = true;
-            vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,(vm.org.id+'/update_details')),JSON.stringify(vm.org),{
-                emulateJSON:true
-            }).then((response) => {
-                vm.updatingDetails = false;
-                vm.org = response.body;
-                if (vm.org.address == null){ vm.org.address = {}; }
-                swal(
-                    'Saved',
-                    'Organisation details have been saved',
-                    'success'
-                )
-            }, (error) => {
-                console.log(error);
-                vm.updatingDetails = false;
-            });
+        save: async function() {
+            let post_url = '';
+            if (!this.organisation.id) {
+                post_url = '/api/organisations_compliancemanagement/';
+            } else {
+                post_url = '/api/organisations/' + this.inspection.id + '/workflow_action/';
+            }
+            //let vm = this;
+            //vm.updatingDetails = true;
+            let returnedOrganisation = await Vue.http.post(post_url, this.organisation);
+            console.log(returnedOrganisation)
+            
+            // Vue.http.post(api_endpoints.organisations_compliancemanagement, (this.organisation.id+'/update_details')),JSON.stringify(vm.org),{
+            //     emulateJSON:true
+            // }).then((response) => {
+            //     vm.updatingDetails = false;
+            //     vm.org = response.body;
+            //     if (vm.org.address == null){ vm.org.address = {}; }
+            //     swal(
+            //         'Saved',
+            //         'Organisation details have been saved',
+            //         'success'
+            //     )
+            // }, (error) => {
+            //     console.log(error);
+            //     vm.updatingDetails = false;
+            // });
         },
+        //sendData: async function() {
+        //    let post_url = '';
+        //    if (!this.organisation.id) {
+        //        post_url = '/api/organisations_compliancemanagement/';
+        //    } else {
+        //        post_url = '/api/organisations/' + this.inspection.id + '/workflow_action/';
+        //    }
+        //    
+        //    let payload = new FormData();
+        //    payload.append('details', this.inspectionDetails);
+        //    this.$refs.comms_log_file.commsLogId ? payload.append('inspection_comms_log_id', this.$refs.comms_log_file.commsLogId) : null;
         addedContact: function() {
             let vm = this;
             swal(
@@ -547,7 +446,9 @@ export default {
     mounted: function(){
         let vm = this;
         this.personal_form = document.forms.personal_form;
-        this.eventListeners();
+        if (this.organisation.id) {
+            this.eventListeners();
+        }
     },
 }
 </script>
