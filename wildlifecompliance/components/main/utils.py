@@ -430,6 +430,7 @@ approved_related_item_models = [
         'Case',
         'EmailUser',
         'Organisation',
+        'Offender',
         ]
 
 approved_email_user_related_items = [
