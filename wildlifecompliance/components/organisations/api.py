@@ -995,3 +995,74 @@ class MyOrganisationsViewSet(viewsets.ModelViewSet):
         elif is_customer(self.request):
             return user.wildlifecompliance_organisations.all()
         return Organisation.objects.none()
+
+
+class OrganisationComplianceManagementViewSet(viewsets.ModelViewSet):
+    queryset = Organisation.objects.all()
+    serializer_class = OrganisationSerializer
+    
+    def create(self, request, *args, **kwargs):
+            try:
+                serializer = self.get_serializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                #serializer.validated_data['requester'] = request.user
+                with transaction.atomic():
+                    # Check if consultant can be relinked to org.
+                    data = Organisation.existance(request.data['abn'])
+                    print("data type")
+                    print(type(data))
+                    print(data)
+                    data.update([('user', request.user.id)])
+                    data.update([('abn', request.data['abn'])])
+                    existing_org = OrganisationCheckExistSerializer(data=data)
+                    existing_org.is_valid(raise_exception=True)
+                    if existing_org.is_valid:
+                        print("existing org")
+                        print(existing_org.data)
+                        
+                        serializer.save()
+                return Response(serializer.data)
+            except serializers.ValidationError:
+                print(traceback.print_exc())
+                raise
+            except ValidationError as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(repr(e.error_dict))
+            except Exception as e:
+                print(traceback.print_exc())
+                raise serializers.ValidationError(str(e))
+
+    def save_address(address_request_data, instance, *args, **kwargs):
+        ledger_instance = instance.organisation
+        serializer = OrganisationAddressSerializer(data=address_request_data)
+        serializer.is_valid(raise_exception=True)
+        address, created = OrganisationAddress.objects.get_or_create(
+            line1=serializer.validated_data['line1'],
+            locality=serializer.validated_data['locality'],
+            state=serializer.validated_data['state'],
+            country=serializer.validated_data['country'],
+            postcode=serializer.validated_data['postcode'],
+            organisation=ledger_instance
+        )
+        instance.postal_address = address
+        instance.save()
+
+        #    address_instance = OrganisationAddress.objects.get(id=address_request_data.get('id'))
+        #    address_serializer = OrganisationAddressSerializer(
+        #        instance=address_instance,
+        #        data=address_request_data,
+        #        partial=True
+        #    )
+        #    address_serializer.is_valid(raise_exception=True)
+        #    if address_serializer.is_valid():
+        #        address_serializer.save()
+        #else:
+        #    address_serializer = OrganisationAddressSerializer(
+        #        data=address_request_data,
+        #        partial=True
+        #    )
+        #    address_serializer.is_valid(raise_exception=True)
+        #    if address_serializer.is_valid():
+        #        address_instance = address_serializer.save()
+        #return address_serializer.data
+

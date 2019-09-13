@@ -63,6 +63,7 @@ router.register(r'returns_paginated', return_api.ReturnPaginatedViewSet)
 router.register(r'returns_amendment', return_api.ReturnAmendmentRequestViewSet)
 router.register(r'return_types', return_api.ReturnTypeViewSet)
 router.register(r'organisations', org_api.OrganisationViewSet)
+router.register(r'organisations_compliancemanagement', org_api.OrganisationComplianceManagementViewSet)
 router.register(r'organisations_paginated',
                 org_api.OrganisationPaginatedViewSet)
 router.register(r'organisation_requests', org_api.OrganisationRequestsViewSet)

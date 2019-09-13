@@ -82,7 +82,7 @@ def get_related_items(entity, **kwargs):
                         field_objects = f.related_model.objects.filter(inspection_id=entity.id)
                     elif entity._meta.model_name == 'sanctionoutcome':
                         field_objects = f.related_model.objects.filter(sanction_outcome_id=entity.id)
-                    elif entity._meta.model_name in ('offence', 'sanctionoutcome') and f.name == 'offender':
+                    elif entity._meta.model_name == 'offence' and f.name == 'offender':
                         field_objects = get_related_offenders(entity)
                     elif entity._meta.model_name == 'offence':
                         field_objects = f.related_model.objects.filter(offence_id=entity.id)
@@ -114,9 +114,19 @@ def get_related_items(entity, **kwargs):
                         return_list.append(related_item)
                 # remaining entity foreign keys
                 elif f.is_relation:
-                    field_value = f.value_from_object(entity)
-                    if field_value:
-                        field_object = f.related_model.objects.get(id=field_value)
+                    field_object = None
+                    # Sanction Outcome FK to Offender
+                    if f.name == 'offender':
+                        field_object_list = get_related_offenders(entity)
+                        # Will only ever be one at most
+                        if field_object_list:
+                            field_object = field_object_list[0]
+                    # All other FKs
+                    else:
+                        field_value = f.value_from_object(entity)
+                        if field_value:
+                            field_object = f.related_model.objects.get(id=field_value)
+                    if field_object:
                         related_item = RelatedItem(
                                 model_name = format_model_name(f.related_model.__name__),
                                 identifier = field_object.get_related_items_identifier,
