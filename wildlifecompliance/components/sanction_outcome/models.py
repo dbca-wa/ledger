@@ -4,10 +4,10 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, RevisionedMixin
 from wildlifecompliance.components.main import get_next_value
 from wildlifecompliance.components.main.models import Document, UserAction, CommunicationsLogEntry
-from wildlifecompliance.components.offence.models import Offence, Offender, SectionRegulation
+from wildlifecompliance.components.offence.models import Offence, Offender, SectionRegulation, AllegedOffence
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
 
 
@@ -64,14 +64,16 @@ class SanctionOutcome(models.Model):
     offence = models.ForeignKey(Offence, related_name='sanction_outcome_offence', null=True, on_delete=models.SET_NULL,)
     offender = models.ForeignKey(Offender, related_name='sanction_outcome_offender', null=True, on_delete=models.SET_NULL,)
     alleged_offences = models.ManyToManyField(SectionRegulation, blank=True, related_name='sanction_outcome_alleged_offences')
+    alleged_committed_offences = models.ManyToManyField(AllegedOffence, related_name='sanction_outcome_alleged_committed_offences', through='AllegedCommittedOffence')
     issued_on_paper = models.BooleanField(default=False) # This is always true when type is letter_of_advice
     paper_id = models.CharField(max_length=50, blank=True,)
     description = models.TextField(blank=True)
 
-    # We may not need this field
     assigned_to = models.ForeignKey(EmailUser, related_name='sanction_outcome_assigned_to', null=True)
-
     allocated_group = models.ForeignKey(CompliancePermissionGroup, related_name='sanction_outcome_allocated_group', null=True)
+    # This field is used as recipient when manager returns a sanction outcome for amendment
+    # Updated whenever the sanction outcome is sent to the manager
+    responsible_officer = models.ForeignKey(EmailUser, related_name='sanction_outcome_responsible_officer', null=True)
 
     # Only editable when issued on paper. Otherwise pre-filled with date/time when issuing electronically.
     date_of_issue = models.DateField(null=True, blank=True)
@@ -81,17 +83,17 @@ class SanctionOutcome(models.Model):
         if self.offender and not self.offence:
             raise ValidationError('An offence must be selected to save offender(s).')
 
-        if self.alleged_offences.all().count() and not self.offence:
+        if self.alleged_committed_offences.all().count() and not self.offence:
             raise ValidationError('An offence must be selected to save alleged offence(s).')
 
         # validate if offender is registered under the offence
-        if self.offender not in self.offence.offence_set:
+        if self.offender not in self.offence.offender_set:
             raise ValidationError('Offender must be registered under the selected offence.')
 
         # validate if alleged_offences are registered under the offence
-        for alleged_offence in self.alleged_offences:
-            if alleged_offence not in self.offence.alleged_offences:
-                raise ValidationError('Alleged offence must be registered under the selected offence.')
+        # for alleged_offence in self.alleged_committed_offences.all():
+        #     if alleged_offence not in self.offence.alleged_offences:
+        #         raise ValidationError('Alleged offence must be registered under the selected offence.')
 
         # make issued_on_papaer true whenever the type is letter_of_advice
         if self.type == self.TYPE_LETTER_OF_ADVICE:
@@ -200,6 +202,8 @@ class SanctionOutcome(models.Model):
             self.status = self.STATUS_AWAITING_REVIEW
         new_group = SanctionOutcome.get_compliance_permission_group(self.regionDistrictId, SanctionOutcome.WORKFLOW_SEND_TO_MANAGER)
         self.allocated_group = new_group
+        self.assigned_to = None
+        self.responsible_officer = request.user
         self.log_user_action(SanctionOutcomeUserAction.ACTION_SEND_TO_MANAGER.format(self.lodgement_number), request)
         self.save()
 
@@ -238,6 +242,26 @@ class SanctionOutcome(models.Model):
         app_label = 'wildlifecompliance'
         verbose_name = 'CM_SanctionOutcome'
         verbose_name_plural = 'CM_SanctionOutcomes'
+        ordering = ['-id']
+
+
+class AllegedCommittedOffence(RevisionedMixin):
+    alleged_offence = models.ForeignKey(AllegedOffence, null=False,)
+    sanction_outcome = models.ForeignKey(SanctionOutcome, null=False,)
+    included = models.BooleanField(default=True)  # True means sanction_outcome is included in the sanction_outcome
+    reason_for_removal = models.TextField(blank=True)
+    removed = models.BooleanField(default=False)  # Never make this field False once becomes True. Rather you have to create another record making this field False.
+    removed_by = models.ForeignKey(EmailUser, null=True, related_name='alleged_committed_offence_removed_by')
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_AllegedCommittedOffence'
+        verbose_name_plural = 'CM_AllegedCommittedOffences'
+
+    # def clean(self):
+    #     raise ValidationError('Error test')
+    #     if not self.included and not self.removed:
+    #         raise ValidationError('Alleged offence: %s is not included, but is going to be removed' % self.alleged_offence)
 
 
 class RemediationAction(models.Model):
@@ -304,6 +328,9 @@ class SanctionOutcomeUserAction(UserAction):
     ACTION_CLOSE = "Close Sanction Outcome {}"
     ACTION_ADD_WEAK_LINK = "Create manual link between Sanction Outcome: {} and {}: {}"
     ACTION_REMOVE_WEAK_LINK = "Remove manual link between Sanction Outcome: {} and {}: {}"
+    ACTION_REMOVE_ALLEGED_COMMITTED_OFFENCE = "Remove alleged committed offence: {}"
+    ACTION_RESTORE_ALLEGED_COMMITTED_OFFENCE = "Restore alleged committed offence: {}"
+    ACTION_INCLUDE_ALLEGED_COMMITTED_OFFENCE = "Include alleged committed offence: {}"
 
     class Meta:
         app_label = 'wildlifecompliance'

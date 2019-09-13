@@ -740,6 +740,7 @@ export default {
            * By parsing it, we can get the order-number of the item in the list
            */
           let origin = $(ev.originalEvent.origin);
+            console.log('alleged offence selected');
           let originTagName = origin[0].tagName;
           if (originTagName != "DIV") {
             // Assuming origin is a child element of <li>
