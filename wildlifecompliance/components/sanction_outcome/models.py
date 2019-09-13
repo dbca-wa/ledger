@@ -203,6 +203,7 @@ class SanctionOutcome(models.Model):
         new_group = SanctionOutcome.get_compliance_permission_group(self.regionDistrictId, SanctionOutcome.WORKFLOW_SEND_TO_MANAGER)
         self.allocated_group = new_group
         self.assigned_to = None
+        self.responsible_officer = request.user
         self.log_user_action(SanctionOutcomeUserAction.ACTION_SEND_TO_MANAGER.format(self.lodgement_number), request)
         self.save()
 

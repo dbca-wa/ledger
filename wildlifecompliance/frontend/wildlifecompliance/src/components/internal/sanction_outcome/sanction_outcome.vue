@@ -359,18 +359,20 @@ export default {
                         data: "Action",
                         mRender: function(data, type, row) {
                             let ret = '';
-                            if (data.already_included){
-                                // This alleged committed offence is already stored in the database as included
-                                if (data.removed){
-                                    if (data.can_user_restore){
-                                        ret = '<a href="#" class="restore_alleged_committed_offence" data-alleged-committed-offence-id="' + data.id + '">Restore</a>';
+                            if (data.in_editable_status){
+                                if (data.already_included){
+                                    // This alleged committed offence is already stored in the database as included
+                                    if (data.removed){
+                                        if (data.can_user_restore){
+                                            ret = '<a href="#" class="restore_alleged_committed_offence" data-alleged-committed-offence-id="' + data.id + '">Restore</a>';
+                                        } else {
+                                            ret = '';
+                                        }
                                     } else {
-                                        ret = '';
-                                    }
+                                        ret = '<a href="#" class="remove_alleged_committed_offence" data-alleged-committed-offence-id="' + data.id + '">Remove</a>'; }
                                 } else {
-                                    ret = '<a href="#" class="remove_alleged_committed_offence" data-alleged-committed-offence-id="' + data.id + '">Remove</a>'; }
-                            } else {
-                                ret = '<input type="checkbox" class="include_alleged_committed_offence" value="' + data.id + '">Include</input>';
+                                    ret = '<input type="checkbox" class="include_alleged_committed_offence" value="' + data.id + '">Include</input>';
+                                }
                             }
                             return ret;
                         }
@@ -526,7 +528,7 @@ export default {
             setCanUserAction: 'setCanUserAction',
         }),
         createStorageAllegedCommittedOffences: function() {
-            if (this.sanction_outcome){
+            if (this.sanction_outcome && this.sanction_outcome.alleged_committed_offences){
                 for (let i=0; i<this.sanction_outcome.alleged_committed_offences.length; i++){
                     // We need if this alleged commited offence is already included in the sanction outcome 
                     // to manage Action column

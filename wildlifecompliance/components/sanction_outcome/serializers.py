@@ -28,6 +28,7 @@ class AllegedOffenceSerializer(serializers.ModelSerializer):
     #     qs_details = AllegedCommittedOffence.objects.filter(alleged_offence=obj)
     #     return [AllegedCommittedOffenceSerializer(item).data for item in qs_details]
 
+
 class AllegedCommittedOffenceCreateSerializer(serializers.ModelSerializer):
     alleged_offence_id = serializers.IntegerField(write_only=True,)
     sanction_outcome_id = serializers.IntegerField(write_only=True,)
@@ -52,6 +53,7 @@ class AllegedCommittedOffenceCreateSerializer(serializers.ModelSerializer):
 class AllegedCommittedOffenceSerializer(serializers.ModelSerializer):
     alleged_offence = AllegedOffenceSerializer(read_only=True,)
     removed_by_id = serializers.IntegerField(write_only=True, required=False)
+    in_editable_status = serializers.SerializerMethodField()
     can_user_restore = serializers.SerializerMethodField()
 
     class Meta:
@@ -64,19 +66,23 @@ class AllegedCommittedOffenceSerializer(serializers.ModelSerializer):
             'removed_by',
             'removed_by_id',
             'alleged_offence',
+            'in_editable_status',
             'can_user_restore',
         )
 
+    def get_in_editable_status(self, obj):
+        # Check if the sanction outcome is in the status of STATUS_AWAITING_AMENDMENT or SanctionOutcome,
+        # Which means the sanction outcome is under some officer at the moment, therefore it should be editable
+        return obj.sanction_outcome.status in (SanctionOutcome.STATUS_AWAITING_AMENDMENT, SanctionOutcome.STATUS_DRAFT)
+
     def get_can_user_restore(self, obj):
-        can_user_restore = True
+        can_user_restore = False
 
-        if obj.removed == True:
+        if self.get_in_editable_status(obj) and obj.removed:
             existing = AllegedCommittedOffence.objects.filter(sanction_outcome=obj.sanction_outcome, alleged_offence=obj.alleged_offence, included=True, removed=False)
-            if existing:
-                # If there is already alleged committed offence, there should not be restore button
-                can_user_restore = False
-
-            existing = AllegedCommittedOffence.objects.filter(sanction_outcome=obj.sanction_outcome, alleged_offence=obj.alleged_offence, included=True, removed=False)
+            if not existing:
+                # If there is not alleged committed offence, there should be restore button
+                can_user_restore = True
 
         return can_user_restore
 

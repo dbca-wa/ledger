@@ -560,31 +560,41 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
 
                 # Set status
                 workflow_type = request.data.get('workflow_type')
+                email_data = None
+
                 if workflow_type == SanctionOutcome.WORKFLOW_SEND_TO_MANAGER:
                     instance.send_to_manager(request)
+                    # Email to manager
+                    email_data = prepare_mail(request, instance, workflow_entry, send_mail)
                 elif workflow_type == SanctionOutcome.WORKFLOW_DECLINE:
                     instance.decline(request)
+                    if instance.issued_on_paper:
+                        #  Email to officer in the case issued_on_paper=True so that the responsible officer can manually withdraw paper-issued sanction outcome
+                        email_data = prepare_mail(request, instance, workflow_entry, send_mail, instance.responsible_officer.id)
+                    else:
+                        # No need to email
+                        pass
                 elif workflow_type == SanctionOutcome.WORKFLOW_ENDORSE:
                     instance.endorse(request)
+                    # Email to infringement-notice-coordinator
+                    email_data = prepare_mail(request, instance, workflow_entry, send_mail, )
                 elif workflow_type == SanctionOutcome.WORKFLOW_RETURN_TO_OFFICER:
                     instance.return_to_officer(request)
+                    # Email to the responsible officer
+                    email_data = prepare_mail(request, instance, workflow_entry, send_mail, instance.responsible_officer.id)
                 elif workflow_type == SanctionOutcome.WORKFLOW_WITHDRAW:
+                    # Only infringement notice coordinator can withdraw
                     instance.withdraw(request)
+                    # No need to email
                 else:
                     # Should not reach here
                     # instance.save()
                     pass
 
-                # Log parent actions and update status
-                # self.update_parent(request, instance)
-
-                # if instance.assigned_to_id:
-                #     instance = self.modify_inspection_team(request, instance, workflow=True, user_id=instance.assigned_to_id)
-
-                # Send email and Log it
-                email_data = prepare_mail(request, instance, workflow_entry, send_mail)
-                serializer = SanctionOutcomeCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
-                if serializer.is_valid(raise_exception=True):
+                # Log the above email as a communication log entry
+                if email_data:
+                    serializer = SanctionOutcomeCommsLogEntrySerializer(instance=workflow_entry, data=email_data, partial=True)
+                    serializer.is_valid(raise_exception=True)
                     serializer.save()
 
                 return_serializer = SanctionOutcomeSerializer(instance=instance, context={'request': request})
