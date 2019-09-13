@@ -70,6 +70,9 @@ from wildlifecompliance.components.inspection.serializers import (
 from wildlifecompliance.components.users.models import (
     CompliancePermissionGroup,    
 )
+from wildlifecompliance.components.organisations.models import (
+    Organisation,    
+)
 from django.contrib.auth.models import Permission, ContentType
 from utils import SchemaParser
 
@@ -358,6 +361,9 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 else:
                     action = request.data.get('action') # 'add', 'remove or 'clear'
                     user_id = request.data.get('user_id')
+                # ensure user_id is int
+                if user_id:
+                    user_id = int(user_id)
 
                 #if action and user_list:
                 if action and user_id:
@@ -399,16 +405,29 @@ class InspectionViewSet(viewsets.ModelViewSet):
                     if workflow:
                         return instance
                     else:
-                        serializer = InspectionSerializer(instance, context={'request': request})
+                        serializer = EmailUserSerializer(
+                            instance.inspection_team.all(),
+                            context={
+                                'inspection_team_lead_id': instance.inspection_team_lead_id
+                            },
+                            many=True)
+                        # serializer = InspectionSerializer(instance, context={'request': request})
                         return Response(
                             serializer.data,
                             status=status.HTTP_201_CREATED,
                         )
+                # List view - no modification
                 else:
-                    serializer = InspectionSerializer(instance, context={'request': request})
+                    serializer = EmailUserSerializer(
+                        instance.inspection_team.all(),
+                        context={
+                            'inspection_team_lead_id': instance.inspection_team_lead_id
+                        },
+                        many=True)
+                    # serializer = InspectionSerializer(instance, context={'request': request})
                     return Response(
                         serializer.data,
-                        status=status.HTTP_201_CREATED,
+                        status=status.HTTP_200_OK,
                     )
 
         except serializers.ValidationError:
@@ -447,24 +466,46 @@ class InspectionViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     #def inspection_save(self, request, workflow=False, *args, **kwargs):
     def update(self, request, workflow=False, *args, **kwargs):
-        print("update")
-        print(request.data)
         try:
             with transaction.atomic():
                 instance = self.get_object()
-                
+                # record individual inspected before update
+                individual_inspected_id = instance.individual_inspected_id
+                # record organisation inspected before update
+                organisation_inspected_id = instance.organisation_inspected_id
+                # record party_inspected before update
+                party_inspected = instance.party_inspected
                 if request.data.get('renderer_data'):
                     self.form_data(request)
 
                 serializer = SaveInspectionSerializer(instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 if serializer.is_valid():
-                    saved_instance = serializer.save()
+                    serializer.save()
                     instance.log_user_action(
                             InspectionUserAction.ACTION_SAVE_INSPECTION_.format(
                             instance.number), request)
+                    # Log individual_inspected update if applicable
+                    if instance.party_inspected == 'individual' and individual_inspected_id and \
+                            (individual_inspected_id != instance.individual_inspected_id or \
+                            party_inspected != instance.party_inspected):
+                        prev_individual_inspected = EmailUser.objects.get(id=individual_inspected_id)
+                        instance.log_user_action(
+                                InspectionUserAction.ACTION_CHANGE_INDIVIDUAL_INSPECTED.format(
+                                prev_individual_inspected.get_full_name(),
+                                instance.individual_inspected.get_full_name()), request)
+                    # Log organisation_inspected update if applicable
+                    if instance.party_inspected == 'organisation' and organisation_inspected_id and \
+                            (organisation_inspected_id != instance.organisation_inspected_id or \
+                            party_inspected != instance.party_inspected):
+                        prev_organisation_inspected = Organisation.objects.get(id=organisation_inspected_id)
+                        instance.log_user_action(
+                                InspectionUserAction.ACTION_CHANGE_ORGANISATION_INSPECTED.format(
+                                prev_organisation_inspected.name,
+                                instance.organisation_inspected.name), request)
+
                     headers = self.get_success_headers(serializer.data)
-                    return_serializer = InspectionSerializer(saved_instance, context={'request': request})
+                    return_serializer = InspectionSerializer(instance, context={'request': request})
                     return Response(
                             return_serializer.data,
                             status=status.HTTP_201_CREATED,
@@ -589,10 +630,19 @@ class InspectionViewSet(viewsets.ModelViewSet):
                 document_type='inspection_report'
                 )
             if returned_data:
+                print("returned_data")
+                print(returned_data)
+                filedata = returned_data.get('filedata')
+                # Log action if file uploaded
+                if filedata and request.data.get('action') == 'save':
+                    file_name = filedata[0].get('name')
+                    if file_name:
+                        instance.log_user_action(
+                                InspectionUserAction.ACTION_UPLOAD_INSPECTION_REPORT.format(
+                                file_name), request)
                 return Response(returned_data)
             else:
                 return Response()
-
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise

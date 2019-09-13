@@ -3,7 +3,7 @@ import traceback
 from rest_framework.fields import CharField
 from rest_framework_gis.serializers import GeoFeatureModelSerializer, GeometryField
 
-from ledger.accounts.models import EmailUser, Address, Organisation
+from ledger.accounts.models import EmailUser, Address
 from wildlifecompliance.components.inspection.models import (
     Inspection,
     InspectionUserAction,
@@ -26,6 +26,8 @@ from wildlifecompliance.components.users.serializers import (
     CompliancePermissionGroupMembersSerializer,
     UserAddressSerializer,
 )
+from wildlifecompliance.components.offence.serializers import OrganisationSerializer
+from django.contrib.auth.models import Permission, ContentType
 
 
 class InspectionTypeSerializer(serializers.ModelSerializer):
@@ -37,18 +39,6 @@ class InspectionTypeSerializer(serializers.ModelSerializer):
                'inspection_type',
                'description',
                )
-
-
-class OrganisationSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Organisation
-        fields = (
-            'id',
-            'abn',
-            'name',
-        )
-        # read_only_fields = ()
 
 
 class IndividualSerializer(serializers.ModelSerializer):
@@ -138,11 +128,12 @@ class InspectionFormDataRecordSerializer(serializers.ModelSerializer):
 
 class InspectionSerializer(serializers.ModelSerializer):
     allocated_group = serializers.SerializerMethodField()
+    all_officers = serializers.SerializerMethodField()
     user_in_group = serializers.SerializerMethodField()
     can_user_action = serializers.SerializerMethodField()
     user_is_assignee = serializers.SerializerMethodField()
     status = CustomChoiceField(read_only=True)
-    inspection_team = EmailUserSerializer(many=True, read_only=True)
+    #inspection_team = EmailUserSerializer(many=True, read_only=True)
     individual_inspected = IndividualSerializer()
     organisation_inspected = OrganisationSerializer(read_only=True)
     #inspection_type = InspectionTypeSerializer()
@@ -168,7 +159,7 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'can_user_action',
                 'user_is_assignee',
                 'inspection_type_id',
-                'inspection_team',
+                #inspection_team',
                 'inspection_team_lead_id',
                 'individual_inspected',
                 'organisation_inspected',
@@ -182,6 +173,7 @@ class InspectionSerializer(serializers.ModelSerializer):
                 'region_id',
                 'district_id',
                 'data',
+                'all_officers',
                 )
         read_only_fields = (
                 'id',
@@ -233,6 +225,30 @@ class InspectionSerializer(serializers.ModelSerializer):
             allocated_group.append(member)
 
         return allocated_group
+
+    def get_all_officers(self, obj):
+        all_officer_objs = []
+        compliance_content_type = ContentType.objects.get(model="compliancepermissiongroup")
+        permission = Permission.objects.filter(codename='officer').filter(content_type_id=compliance_content_type.id).first()
+        for group in permission.group_set.all():
+            for user in group.user_set.all():
+                all_officer_objs.append(user)
+
+        unique_officers = list(set(all_officer_objs))
+        sorted_unique_officers = sorted(unique_officers, key=lambda officer: officer.last_name)
+
+        serialized_officers = IndividualSerializer(sorted_unique_officers, many=True)
+        returned_data = serialized_officers.data
+        blank_field = [{
+            'dob': '',
+            'email': '',
+            'full_name': '',
+            'id': None,
+            }]
+
+        returned_data.insert(0, blank_field)
+        print(returned_data)
+        return returned_data
 
     def get_inspection_report(self, obj):
         return [[r.name, r._file.url] for r in obj.report.all()]

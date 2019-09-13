@@ -1,10 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from ledger.accounts.models import RevisionedMixin, EmailUser, Organisation
+from ledger.accounts.models import RevisionedMixin, EmailUser
 from wildlifecompliance.components.call_email.models import Location, CallEmail
 from wildlifecompliance.components.inspection.models import Inspection
 from wildlifecompliance.components.main.models import Document
 from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
+from wildlifecompliance.components.organisations.models import Organisation
 
 
 class SectionRegulation(RevisionedMixin):

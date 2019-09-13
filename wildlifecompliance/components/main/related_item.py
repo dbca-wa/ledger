@@ -5,7 +5,13 @@ from serializers import RelatedItemsSerializer
 from rest_framework import serializers
 from rest_framework.renderers import JSONRenderer
 from django.core.exceptions import ValidationError
-from utils import approved_related_item_models
+from utils import (
+        approved_related_item_models, 
+        approved_email_user_related_items
+        )
+from wildlifecompliance.components.offence.models import Offender
+from wildlifecompliance.components.organisations.models import Organisation
+from ledger.accounts.models import EmailUser
 
 
 class RelatedItem:
@@ -30,6 +36,8 @@ def format_model_name(model_name):
                 'offence': 'Offence',
                 'sanctionoutcome': 'Sanction Outcome',
                 'case': 'Case',
+                'emailuser': 'Person',
+                'organisation': 'Organisation',
                 }
         return switcher.get(lower_model_name, '')
 
@@ -43,8 +51,22 @@ def format_url(model_name, obj_id):
                 'offence': '<a href=/internal/offence/' + obj_id_str + ' target="_blank">View</a>',
                 'sanctionoutcome': '<a href=/internal/sanction_outcome/' + obj_id_str + ' target="_blank">View</a>',
                 'case': '<a href=/internal/case/' + obj_id_str + ' target="_blank">View</a>',
+                'emailuser': '<a href=/internal/users/' + obj_id_str + ' target="_blank">View</a>',
+                'organisation': '<a href=/internal/organisations/' + obj_id_str + ' target="_blank">View</a>',
                 }
         return switcher.get(lower_model_name, '')
+
+def get_related_offenders(offence, **kwargs):
+    offender_list = []
+    offenders = Offender.objects.filter(offence_id=offence.id)
+    for offender in offenders:
+        if offender.person and not offender.removed:
+            user = EmailUser.objects.get(id=offender.person.id)
+            offender_list.append(user)
+        if offender.organisation and not offender.removed:
+            organisation = Organisation.objects.get(id=offender.organisation.id)
+            offender_list.append(organisation)
+    return offender_list
 
 def get_related_items(entity, **kwargs):
     try:
@@ -52,7 +74,7 @@ def get_related_items(entity, **kwargs):
         # Strong links
         for f in entity._meta.get_fields():
             if f.is_relation and f.related_model.__name__ in approved_related_item_models:
-
+                # foreign keys from other objects to entity
                 if f.is_relation and f.one_to_many:
                     if entity._meta.model_name == 'callemail':
                         field_objects = f.related_model.objects.filter(call_email_id=entity.id)
@@ -60,6 +82,8 @@ def get_related_items(entity, **kwargs):
                         field_objects = f.related_model.objects.filter(inspection_id=entity.id)
                     elif entity._meta.model_name == 'sanctionoutcome':
                         field_objects = f.related_model.objects.filter(sanction_outcome_id=entity.id)
+                    elif entity._meta.model_name == 'offence' and f.name == 'offender':
+                        field_objects = get_related_offenders(entity)
                     elif entity._meta.model_name == 'offence':
                         field_objects = f.related_model.objects.filter(offence_id=entity.id)
                     for field_object in field_objects:
@@ -73,7 +97,22 @@ def get_related_items(entity, **kwargs):
                                         )
                                 )
                         return_list.append(related_item)
-                
+                # foreign keys from entity to EmailUser
+                elif f.is_relation and f.related_model._meta.model_name == 'emailuser':
+                    field_value = f.value_from_object(entity)
+                    if field_value and f.name in approved_email_user_related_items:
+                        field_object = f.related_model.objects.get(id=field_value)
+                        related_item = RelatedItem(
+                                model_name = format_model_name(f.related_model.__name__),
+                                identifier = field_object.get_related_items_identifier,
+                                descriptor = field_object.get_related_items_descriptor,
+                                action_url = format_url(
+                                        model_name=f.related_model.__name__,
+                                        obj_id=field_object.id
+                                        )
+                                )
+                        return_list.append(related_item)
+                # remaining entity foreign keys
                 elif f.is_relation:
                     field_value = f.value_from_object(entity)
                     if field_value:
