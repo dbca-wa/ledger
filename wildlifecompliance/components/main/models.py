@@ -171,6 +171,7 @@ class WeakLinks(models.Model):
             on_delete=models.CASCADE)
     second_object_id = models.PositiveIntegerField()
     second_content_object = GenericForeignKey('second_content_type', 'second_object_id')
+    comment = models.CharField(max_length=255, blank=True)
 
     class Meta:
         app_label = 'wildlifecompliance'
