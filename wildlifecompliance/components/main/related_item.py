@@ -58,7 +58,11 @@ def format_url(model_name, obj_id):
 
 def get_related_offenders(entity, **kwargs):
     offender_list = []
-    offenders = Offender.objects.filter(offence_id=entity.id)
+    offenders = []
+    if entity._meta.model_name == 'sanctionoutcome':
+        offenders.append(entity.offender)
+    if entity._meta.model_name == 'offence':
+        offenders = Offender.objects.filter(offence_id=entity.id)
     for offender in offenders:
         if offender.person and not offender.removed:
             user = EmailUser.objects.get(id=offender.person.id)
@@ -118,7 +122,7 @@ def get_related_items(entity, **kwargs):
                     # Sanction Outcome FK to Offender
                     if f.name == 'offender':
                         field_object_list = get_related_offenders(entity)
-                        # Will only ever be one at most
+                        # There will only ever be one at most
                         if field_object_list:
                             field_object = field_object_list[0]
                     # All other FKs
@@ -128,11 +132,11 @@ def get_related_items(entity, **kwargs):
                             field_object = f.related_model.objects.get(id=field_value)
                     if field_object:
                         related_item = RelatedItem(
-                                model_name = format_model_name(f.related_model.__name__),
+                                model_name = format_model_name(field_object._meta.model_name),
                                 identifier = field_object.get_related_items_identifier,
                                 descriptor = field_object.get_related_items_descriptor,
                                 action_url = format_url(
-                                        model_name=f.related_model.__name__,
+                                        model_name=field_object._meta.model_name,
                                         obj_id=field_object.id
                                         )
                                 )

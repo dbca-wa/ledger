@@ -256,7 +256,8 @@
                                 </FormSection>
                             </div>
 
-                            <div :id="reTab" class="tab-pane fade in active">
+                            <div :id="reTab" class="tab-pane fade in">
+                                <RelatedItems v-bind:key="relatedItemsBindId" :parent_update_related_items="setRelatedItems"/>
                                 
                             </div>
                         </div>
@@ -282,6 +283,7 @@ import CommsLogs from "@common-components/comms_logs.vue";
 import filefield from '@/components/common/compliance_file.vue';
 import SanctionOutcomeWorkflow from './sanction_outcome_workflow';
 import 'bootstrap/dist/css/bootstrap.css';
+import RelatedItems from "@common-components/related_items.vue";
 
 export default {
     name: 'ViewSanctionOutcome',
@@ -386,6 +388,7 @@ export default {
         SanctionOutcomeWorkflow,
         CommsLogs,
         datatable,
+        RelatedItems,
     },
     created: async function() {
         console.log('created');
@@ -518,7 +521,15 @@ export default {
                 }
             }
             return visibility;
-        }
+        },
+        relatedItemsBindId: function() {
+            let timeNow = Date.now()
+            if (this.sanction_outcome && this.sanction_outcome.id) {
+                return 'sanction_outcome_' + this.sanction_outcome.id + '_' + this._uid;
+            } else {
+                return timeNow.toString();
+            }
+        },
     },
     methods: {
         ...mapActions('sanctionOutcomeStore', {
@@ -526,6 +537,7 @@ export default {
             setSanctionOutcome: 'setSanctionOutcome', 
             setAssignedToId: 'setAssignedToId',
             setCanUserAction: 'setCanUserAction',
+            setRelatedItems: 'setRelatedItems',
         }),
         createStorageAllegedCommittedOffences: function() {
             if (this.sanction_outcome && this.sanction_outcome.alleged_committed_offences){
