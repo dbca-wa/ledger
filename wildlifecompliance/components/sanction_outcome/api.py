@@ -354,12 +354,18 @@ class SanctionOutcomeViewSet(viewsets.ModelViewSet):
                 # Log CallEmail action
                 if request_data.get('call_email_id'):
                     call_email = CallEmail.objects.get(id=request_data.get('call_email_id'))
-                    call_email.log_user_action(CallEmailUserAction.ACTION_SANCTION_OUTCOME.format(call_email.number), request)
+                    call_email.log_user_action(
+                            CallEmailUserAction.ACTION_SANCTION_OUTCOME.format(
+                                instance.lodgement_number), 
+                            request)
 
                 # Log Inspection action
                 if request_data.get('inspection_id'):
                     inspection = Inspection.objects.get(id=request_data.get('inspection_id'))
-                    inspection.log_user_action(InspectionUserAction.ACTION_SANCTION_OUTCOME.format(inspection.number), request)
+                    inspection.log_user_action(
+                            InspectionUserAction.ACTION_SANCTION_OUTCOME.format(
+                                instance.lodgement_number), 
+                            request)
 
                 # Create/Retrieve comms log entry
                 comms_log_id = request.data.get('comms_log_id')

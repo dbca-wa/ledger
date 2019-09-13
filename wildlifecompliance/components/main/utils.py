@@ -428,4 +428,13 @@ approved_related_item_models = [
         'Inspection',
         'SanctionOutcome',
         'Case',
+        'EmailUser',
+        'Organisation',
+        'Offender',
         ]
+
+approved_email_user_related_items = [
+        'volunteer',
+        'individual_inspected',
+        ]
+
