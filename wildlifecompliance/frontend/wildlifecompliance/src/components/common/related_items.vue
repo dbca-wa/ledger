@@ -5,10 +5,12 @@
                 <datatable ref="related_items_table" id="related-items-table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
             </div>
         </div></div>
-        <div>
+        <div class="col-sm-12 form-group"><div class="row">
+            <div class="col-sm-12">
             <!--WeakLinks @weak-link-selected="createWeakLink"/-->
-            <WeakLinks ref="weak_links_lookup" :readonlyForm="readonlyForm"/>
-        </div>
+                <WeakLinks ref="weak_links_lookup" :readonlyForm="readonlyForm"/>
+            </div>
+        </div></div>
     </div>
 </template>
 <script>
@@ -43,7 +45,8 @@ export default {
           'Number',
           'Type',
           'Description',
-          'Action',
+          'Comment',
+          'AllFields',
       ],
       dtOptionsRelatedItems: {
           columns: [
@@ -57,13 +60,23 @@ export default {
                   data: 'descriptor',
               },
               {
-                  data: 'Action',
+                  data: 'AllFields',
+                  mRender: function(data, type, row){
+                      let comment = ''
+                      if (row.AllFields.weak_link) {
+                          comment = row.AllFields.comment;
+                      }
+                      return comment;
+                  }
+              },
+              {
+                  data: 'AllFields',
                   mRender: function(data, type, row){
                       let links = '';
-                      if (row.Action.weak_link && row.Action.can_user_action) {
-                          links += '<a href="#" class="remove_button" second-content-type="' + row.Action.second_content_type + '" second-object-id="' + row.Action.second_object_id + '">Remove</a>';
+                      if (row.AllFields.weak_link && row.AllFields.can_user_action) {
+                          links += '<a href="#" class="remove_button" second-content-type="' + row.AllFields.second_content_type + '" second-object-id="' + row.AllFields.second_object_id + '">Remove</a><br>';
                       }
-                      links += row.Action.action_url;
+                      links += row.AllFields.action_url;
                       return links
                   }
               },
@@ -125,6 +138,7 @@ export default {
             'first_object_id': this.displayedEntity.id,
             'second_content_type': this.$refs.weak_links_lookup.second_content_type,
             'second_object_id': this.$refs.weak_links_lookup.second_object_id,
+            'comment': this.$refs.weak_links_lookup.comment,
         }
         // post payload to url, then
         let relatedItems = await Vue.http.post(url, payload);
@@ -161,9 +175,9 @@ export default {
           for(let i = 0; i< this.displayedEntity.related_items.length; i++){
             //let already_exists = this.$refs.related_items_table.vmDataTable.columns(0).data()[0].includes(this.displayedEntity.related_items[i].id);
 
-            let actionColumn = new Object();
-            Object.assign(actionColumn, this.displayedEntity.related_items[i]);
-            actionColumn.can_user_action = this.displayedEntity.can_user_action;
+            let allfieldsColumn = new Object();
+            Object.assign(allfieldsColumn, this.displayedEntity.related_items[i]);
+            allfieldsColumn.can_user_action = this.displayedEntity.can_user_action;
 
             //if (!already_exists) {
             this.$refs.related_items_table.vmDataTable.row.add(
@@ -171,7 +185,7 @@ export default {
                     'identifier': this.displayedEntity.related_items[i].identifier,
                     'descriptor': this.displayedEntity.related_items[i].descriptor,
                     'model_name': this.displayedEntity.related_items[i].model_name,
-                    'Action': actionColumn,
+                    'AllFields': allfieldsColumn,
                 }
             ).draw();
             //}

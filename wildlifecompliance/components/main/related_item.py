@@ -17,7 +17,7 @@ from ledger.accounts.models import EmailUser
 class RelatedItem:
 
     def __init__(self, model_name, identifier, descriptor, 
-            action_url, weak_link=False, second_object_id=None, second_content_type=None):
+            action_url, weak_link=False, second_object_id=None, second_content_type=None, comment=None):
         self.model_name = model_name
         self.identifier = identifier
         self.descriptor = descriptor
@@ -25,6 +25,7 @@ class RelatedItem:
         self.weak_link = weak_link
         self.second_object_id = second_object_id
         self.second_content_type = second_content_type
+        self.comment = comment
 
 
 def format_model_name(model_name):
@@ -165,7 +166,8 @@ def get_related_items(entity, **kwargs):
                         action_url = format_url(
                                 model_name=link_content_type.model,
                                 obj_id=link.second_content_object.id
-                                )
+                                ),
+                        comment = link.comment
                         )
                 return_list.append(related_item)
 
@@ -190,7 +192,8 @@ def get_related_items(entity, **kwargs):
                         action_url = format_url(
                                 model_name=link_content_type.model,
                                 obj_id=link.first_content_object.id
-                                )
+                                ),
+                        comment = link.comment
                         )
                 return_list.append(related_item)
         
