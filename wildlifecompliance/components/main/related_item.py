@@ -9,6 +9,9 @@ from utils import (
         approved_related_item_models, 
         approved_email_user_related_items
         )
+from wildlifecompliance.components.offence.models import Offender
+from wildlifecompliance.components.organisations.models import Organisation
+from ledger.accounts.models import EmailUser
 
 
 class RelatedItem:
@@ -53,15 +56,25 @@ def format_url(model_name, obj_id):
                 }
         return switcher.get(lower_model_name, '')
 
+def get_related_offenders(offence, **kwargs):
+    offender_list = []
+    offenders = Offender.objects.filter(offence_id=offence.id)
+    for offender in offenders:
+        if offender.person and not offender.removed:
+            user = EmailUser.objects.get(id=offender.person.id)
+            offender_list.append(user)
+        if offender.organisation and not offender.removed:
+            organisation = Organisation.objects.get(id=offender.organisation.id)
+            offender_list.append(organisation)
+    return offender_list
+
 def get_related_items(entity, **kwargs):
     try:
         return_list = []
         # Strong links
         for f in entity._meta.get_fields():
-
             if f.is_relation and f.related_model.__name__ in approved_related_item_models:
                 # foreign keys from other objects to entity
-
                 if f.is_relation and f.one_to_many:
                     if entity._meta.model_name == 'callemail':
                         field_objects = f.related_model.objects.filter(call_email_id=entity.id)
@@ -69,6 +82,8 @@ def get_related_items(entity, **kwargs):
                         field_objects = f.related_model.objects.filter(inspection_id=entity.id)
                     elif entity._meta.model_name == 'sanctionoutcome':
                         field_objects = f.related_model.objects.filter(sanction_outcome_id=entity.id)
+                    elif entity._meta.model_name == 'offence' and f.name == 'offender':
+                        field_objects = get_related_offenders(entity)
                     elif entity._meta.model_name == 'offence':
                         field_objects = f.related_model.objects.filter(offence_id=entity.id)
                     for field_object in field_objects:
