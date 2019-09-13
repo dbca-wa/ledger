@@ -56,9 +56,9 @@ def format_url(model_name, obj_id):
                 }
         return switcher.get(lower_model_name, '')
 
-def get_related_offenders(offence, **kwargs):
+def get_related_offenders(entity, **kwargs):
     offender_list = []
-    offenders = Offender.objects.filter(offence_id=offence.id)
+    offenders = Offender.objects.filter(offence_id=entity.id)
     for offender in offenders:
         if offender.person and not offender.removed:
             user = EmailUser.objects.get(id=offender.person.id)
@@ -82,7 +82,7 @@ def get_related_items(entity, **kwargs):
                         field_objects = f.related_model.objects.filter(inspection_id=entity.id)
                     elif entity._meta.model_name == 'sanctionoutcome':
                         field_objects = f.related_model.objects.filter(sanction_outcome_id=entity.id)
-                    elif entity._meta.model_name == 'offence' and f.name == 'offender':
+                    elif entity._meta.model_name in ('offence', 'sanctionoutcome') and f.name == 'offender':
                         field_objects = get_related_offenders(entity)
                     elif entity._meta.model_name == 'offence':
                         field_objects = f.related_model.objects.filter(offence_id=entity.id)

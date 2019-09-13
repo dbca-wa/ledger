@@ -436,5 +436,6 @@ approved_related_item_models = [
 approved_email_user_related_items = [
         'volunteer',
         'individual_inspected',
+        'email_user',
         ]
 
