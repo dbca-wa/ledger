@@ -1,20 +1,96 @@
 from rest_framework import serializers
-from rest_framework_datatables.pagination import DatatablesPageNumberPagination
-
 from wildlifecompliance.components.main.fields import CustomChoiceField
 from wildlifecompliance.components.main.related_item import get_related_items
 from wildlifecompliance.components.main.serializers import CommunicationLogEntrySerializer
+from wildlifecompliance.components.offence.models import AllegedOffence
 from wildlifecompliance.components.offence.serializers import SectionRegulationSerializer, OffenderSerializer, \
     OffenceSerializer
 from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome, RemediationAction, \
-    SanctionOutcomeCommsLogEntry, SanctionOutcomeUserAction
+    SanctionOutcomeCommsLogEntry, SanctionOutcomeUserAction, AllegedCommittedOffence
 from wildlifecompliance.components.users.serializers import CompliancePermissionGroupMembersSerializer
+
+
+class AllegedOffenceSerializer(serializers.ModelSerializer):
+    offence = OffenceSerializer(read_only=True)
+    section_regulation = SectionRegulationSerializer(read_only=True)
+    # details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AllegedOffence
+        fields = (
+            'id',
+            'offence',
+            'section_regulation',
+            # 'details',
+        )
+
+    # def get_details(self, obj):
+    #     qs_details = AllegedCommittedOffence.objects.filter(alleged_offence=obj)
+    #     return [AllegedCommittedOffenceSerializer(item).data for item in qs_details]
+
+
+class AllegedCommittedOffenceCreateSerializer(serializers.ModelSerializer):
+    alleged_offence_id = serializers.IntegerField(write_only=True,)
+    sanction_outcome_id = serializers.IntegerField(write_only=True,)
+
+    class Meta:
+        model = AllegedCommittedOffence
+        fields = (
+            'alleged_offence_id',
+            'sanction_outcome_id',
+        )
+
+    def validate(self, data):
+        existing = AllegedCommittedOffence.objects.filter(alleged_offence__id=data['alleged_offence_id'],
+                                                          sanction_outcome__id=data['sanction_outcome_id'],
+                                                          removed=False)
+        if existing:
+            ao = existing.first().alleged_offence
+            raise serializers.ValidationError('Alleged offence: %s is duplicated' % ao)
+        return data
+
+
+class AllegedCommittedOffenceSerializer(serializers.ModelSerializer):
+    alleged_offence = AllegedOffenceSerializer(read_only=True,)
+    removed_by_id = serializers.IntegerField(write_only=True, required=False)
+    in_editable_status = serializers.SerializerMethodField()
+    can_user_restore = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AllegedCommittedOffence
+        fields = (
+            'id',
+            'included',
+            'removed',
+            'reason_for_removal',
+            'removed_by',
+            'removed_by_id',
+            'alleged_offence',
+            'in_editable_status',
+            'can_user_restore',
+        )
+
+    def get_in_editable_status(self, obj):
+        # Check if the sanction outcome is in the status of STATUS_AWAITING_AMENDMENT or SanctionOutcome,
+        # Which means the sanction outcome is under some officer at the moment, therefore it should be editable
+        return obj.sanction_outcome.status in (SanctionOutcome.STATUS_AWAITING_AMENDMENT, SanctionOutcome.STATUS_DRAFT)
+
+    def get_can_user_restore(self, obj):
+        can_user_restore = False
+
+        if self.get_in_editable_status(obj) and obj.removed:
+            existing = AllegedCommittedOffence.objects.filter(sanction_outcome=obj.sanction_outcome, alleged_offence=obj.alleged_offence, included=True, removed=False)
+            if not existing:
+                # If there is not alleged committed offence, there should be restore button
+                can_user_restore = True
+
+        return can_user_restore
 
 
 class SanctionOutcomeSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
     type = CustomChoiceField(read_only=True)
-    alleged_offences = SectionRegulationSerializer(read_only=True, many=True)
+    alleged_committed_offences = serializers.SerializerMethodField()
     offender = OffenderSerializer(read_only=True,)
     offence = OffenceSerializer(read_only=True,)
     allocated_group = serializers.SerializerMethodField()
@@ -35,7 +111,8 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
             'identifier',
             'offence',
             'offender',
-            'alleged_offences',
+            # 'alleged_offences',
+            'alleged_committed_offences',
             'issued_on_paper',
             'paper_id',
             'description',
@@ -98,6 +175,10 @@ class SanctionOutcomeSerializer(serializers.ModelSerializer):
     def get_related_items(self, obj):
         return get_related_items(obj)
 
+    def get_alleged_committed_offences(self, obj):
+        qs_details = AllegedCommittedOffence.objects.filter(sanction_outcome=obj)
+        return [AllegedCommittedOffenceSerializer(item, context={'request': self.context.get('request', {})}).data for item in qs_details]
+
 
 class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
     assigned_to_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
@@ -111,6 +192,7 @@ class UpdateAssignedToIdSerializer(serializers.ModelSerializer):
 
 class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
     status = CustomChoiceField(read_only=True)
+    type = CustomChoiceField(read_only=True)
     user_action = serializers.SerializerMethodField()
     offender = OffenderSerializer(read_only=True,)
 
@@ -143,16 +225,20 @@ class SanctionOutcomeDatatableSerializer(serializers.ModelSerializer):
         returned_url = ''
 
         if obj.status == SanctionOutcome.STATUS_CLOSED:
+            # if object is closed, now one can process but view
             returned_url = view_url
         elif user_id == obj.assigned_to_id:
+            # if user is assigned to the object, the user can process it
             returned_url = process_url
-        elif (obj.allocated_group
-              and not obj.assigned_to_id):
-            for member in obj.allocated_group.members:
-                if user_id == member.id:
-                    returned_url = process_url
+        elif (obj.allocated_group and not obj.assigned_to_id):
+            if user_id in [member.id for member in obj.allocated_group.members]:
+                # if user belongs to the same group of the object
+                # and no one is assigned to the object,
+                # the user can process it
+                returned_url = process_url
 
         if not returned_url:
+            # In other case user can view
             returned_url = view_url
 
         return returned_url

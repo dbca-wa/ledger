@@ -655,7 +655,6 @@ export default {
       // Due "Date" field
       el_due_date.datetimepicker({
         format: "DD/MM/YYYY",
-        maxDate: "now",
         showClear: true
       });
       el_due_date.on("dp.change", function(e) {
@@ -749,29 +748,27 @@ export default {
     },
     sendData: async function() {
       let vm = this;
-      let alleged_offence_ids = [];
+      let alleged_offence_ids_included = [];
+      let alleged_offence_ids_excluded = [];
       let checkboxes = $(".alleged_offence_include");
       for (let i = 0; i < checkboxes.length; i++) {
         if (checkboxes[i].checked) {
-          alleged_offence_ids.push(checkboxes[i].value);
+          alleged_offence_ids_included.push(checkboxes[i].value);
+        } else {
+          alleged_offence_ids_excluded.push(checkboxes[i].value);
         }
       }
 
       try {
-        let fetchUrl = helpers.add_endpoint_json(
-          api_endpoints.sanction_outcome,
-          "sanction_outcome_save"
-        );
+        let postUrl = api_endpoints.sanction_outcome;
 
         let payload = new Object();
         Object.assign(payload, vm.sanction_outcome);
         if (payload.date_of_issue) {
-          payload.date_of_issue = moment(
-            payload.date_of_issue,
-            "DD/MM/YYYY"
-          ).format("YYYY-MM-DD");
+          payload.date_of_issue = moment(payload.date_of_issue, "DD/MM/YYYY").format("YYYY-MM-DD");
         }
-        payload.alleged_offence_ids_included = alleged_offence_ids;
+        payload.alleged_offence_ids_included = alleged_offence_ids_included;
+        payload.alleged_offence_ids_excluded = alleged_offence_ids_excluded;
 
         // Retrieve remediation actions and set them to the payload
         let remediation_actions = vm.$refs.tbl_remediation_actions.vmDataTable
@@ -791,7 +788,7 @@ export default {
         payload.workflow_type = 'send_to_manager'  // Because this modal is used only when creating new sanction outcome to send to manager
 
         console.log(payload);
-        const savedObj = await Vue.http.post(fetchUrl, payload);
+        const savedObj = await Vue.http.post(postUrl, payload);
         await swal("Saved", "The record has been saved", "success");
       } catch (err) {
         if (err.body.non_field_errors) {
@@ -822,13 +819,14 @@ export default {
       vm.clearTableAllegedOffence();
       if (vm.sanction_outcome.current_offence && vm.sanction_outcome.current_offence.alleged_offences) {
         for (let j = 0; j < vm.sanction_outcome.current_offence.alleged_offences.length; j++) {
+          let alleged_offence = vm.sanction_outcome.current_offence.alleged_offences[j];
           vm.$refs.tbl_alleged_offence.vmDataTable.row
             .add({
-              id: vm.sanction_outcome.current_offence.alleged_offences[j].id,
-              Act: vm.sanction_outcome.current_offence.alleged_offences[j].act,
-              "Section/Regulation": vm.sanction_outcome.current_offence.alleged_offences[j].name,
-              "Alleged Offence": vm.sanction_outcome.current_offence.alleged_offences[j].offence_text,
-              Include: vm.sanction_outcome.current_offence.alleged_offences[j].id
+              id: alleged_offence.id,
+              Act: alleged_offence.section_regulation.act,
+              "Section/Regulation": alleged_offence.section_regulation.name,
+              "Alleged Offence": alleged_offence.section_regulation.offence_text,
+              Include: alleged_offence.id
             })
             .draw();
         }
