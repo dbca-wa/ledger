@@ -35,6 +35,9 @@ export const sanctionOutcomeStore = {
         updateCanUserAction(state, can_user_action) {
             Vue.set(state.sanction_outcome, 'can_user_action', can_user_action);
         },
+        updateRelatedItems(state, related_items) {
+            Vue.set(state.sanction_outcome, 'related_items', related_items);
+        },
     },
     actions: {
         async loadSanctionOutcome({ dispatch, }, { sanction_outcome_id }) {
@@ -113,6 +116,9 @@ export const sanctionOutcomeStore = {
         },
         setCanUserAction({ commit, }, can_user_action) {
             commit("updateCanUserAction", can_user_action);
+        },
+        setRelatedItems({ commit }, related_items ) {
+            commit("updateRelatedItems", related_items);
         },
     },
 }

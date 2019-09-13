@@ -141,7 +141,10 @@ export const offenceStore = {
         },
         updateLocationDetailsFieldEmpty(state) {
             state.offence.location.properties.details = "";
-        }
+        },
+        updateRelatedItems(state, related_items) {
+            Vue.set(state.offence, 'related_items', related_items);
+        },
     },
     actions: {
         async loadOffence({ dispatch, }, { offence_id }) {
@@ -222,6 +225,9 @@ export const offenceStore = {
         },
         setInspectionId({ commit, }, id){
             commit("updateInspectionId", id);
+        },
+        setRelatedItems({ commit }, related_items ) {
+            commit("updateRelatedItems", related_items);
         },
     },
 };
