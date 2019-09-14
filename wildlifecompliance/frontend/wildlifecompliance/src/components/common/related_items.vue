@@ -2,7 +2,7 @@
     <div>
         <div class="col-sm-12 form-group"><div class="row">
             <div class="col-sm-12">
-                <datatable ref="related_items_table" id="related-items-table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
+                <datatable parentStyle=" " ref="related_items_table" id="related-items-table" :dtOptions="dtOptionsRelatedItems" :dtHeaders="dtHeadersRelatedItems" />
             </div>
         </div></div>
         <div class="col-sm-12 form-group"><div class="row">
@@ -46,7 +46,7 @@ export default {
           'Type',
           'Description',
           'Comment',
-          'AllFields',
+          'Action',
       ],
       dtOptionsRelatedItems: {
           columns: [
