@@ -1,19 +1,27 @@
 <template lang="html">
     <div>
-        <div class="col-sm-4">
-            <label for="entity-selector">Select entity</label>
-            <select :disabled="readonlyForm" class="form-control" v-model="selectedEntity" id="entity-selector">
-                <option value="call_email">Call / Email</option>
-                <option value="inspection">Inspection</option>
-                <option value="offence">Offence</option>
-                <option value="sanction_outcome">Sanction Outcome</option>
-            </select>
+        <div class="row form-group">
+            <div class="col-sm-4">
+                <label for="entity-selector">Select entity</label>
+                <select :disabled="readonlyForm" class="form-control" v-model="selectedEntity" id="entity-selector">
+                    <option value="call_email">Call / Email</option>
+                    <option value="inspection">Inspection</option>
+                    <option value="offence">Offence</option>
+                    <option value="sanction_outcome">Sanction Outcome</option>
+                </select>
+            </div>
+            <div class="col-sm-4">
+                <input :id="elemId" class="form-control no-label" :readonly="readonlyForm" placeholder="Begin typing to search"/>
+            </div>
+            <div class="col-sm-3 no-label" v-if="!readonlyForm">
+                <a ref="add_weak_link" @click="callCreateWeakLink" class="btn btn-primary btn-block">Add</a>
+            </div>
         </div>
-        <div class="col-sm-4">
-            <input :id="elemId" class="form-control no-label" :readonly="readonlyForm" placeholder="Begin typing to search"/>
-        </div>
-        <div class="col-sm-3 no-label" v-if="!readonlyForm">
-            <a ref="add_weak_link" @click="callCreateWeakLink" class="btn btn-primary btn-block">Add</a>
+        <div class="row form-group">
+            <div class="col-sm-8">
+                <label for="comment">Add comment</label>
+                <input id="comment" :readonly="readonlyForm" class="form-control" v-model="comment"/>
+            </div>
         </div>
     </div>
 </template>
@@ -34,6 +42,7 @@ export default {
             selectedEntity: null,
             second_object_id: null,
             second_content_type: null,
+            comment: '',
         }
     },
     props: {
