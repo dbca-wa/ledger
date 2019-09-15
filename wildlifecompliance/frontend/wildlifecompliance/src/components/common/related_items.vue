@@ -142,9 +142,9 @@ export default {
         }
         // post payload to url, then
         let relatedItems = await Vue.http.post(url, payload);
-        console.log(relatedItems)
         if (relatedItems.ok) {
             await this.parent_update_related_items(relatedItems.body);
+            return relatedItems
         }
 
     },
