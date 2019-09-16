@@ -7,9 +7,6 @@ from ledger.accounts.models import EmailUser
 import os
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.postgres.fields.jsonb import JSONField
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
-from utils import approved_related_item_models
 
 logger = logging.getLogger(__name__)
 
@@ -153,49 +150,6 @@ queryset_methods = {
 
 for method_name, method in queryset_methods.items():
     setattr(QuerySet, method_name, method)
-
-
-
-class WeakLinks(models.Model):
-
-    first_content_type = models.ForeignKey(
-            ContentType, 
-            related_name='first_content_type',
-            on_delete=models.CASCADE)
-    first_object_id = models.PositiveIntegerField()
-    first_content_object = GenericForeignKey('first_content_type', 'first_object_id')
-
-    second_content_type = models.ForeignKey(
-            ContentType, 
-            related_name='second_content_type',
-            on_delete=models.CASCADE)
-    second_object_id = models.PositiveIntegerField()
-    second_content_object = GenericForeignKey('second_content_type', 'second_object_id')
-    comment = models.CharField(max_length=255, blank=True)
-
-    class Meta:
-        app_label = 'wildlifecompliance'
-
-    def save(self, *args, **kwargs):
-        # test for existing object with first and second fields reversed.  If exists, don't create duplicate.
-        duplicate = WeakLinks.objects.filter(
-                first_content_type = self.second_content_type,
-                second_content_type = self.first_content_type,
-                first_object_id = self.second_object_id,
-                second_object_id = self.first_object_id
-                )
-        if self.second_content_type and self.second_content_type.model not in [i.lower() for i in approved_related_item_models]:
-            log_message =  'Incorrect model type - no record created for {} with pk {}'.format(
-                        self.first_content_type.model,
-                        self.first_object_id)
-            logger.debug(log_message)
-        elif duplicate:
-            log_message =  'Duplicate - no record created for {} with pk {}'.format(
-                        self.first_content_type.model,
-                        self.first_object_id)
-            logger.debug(log_message)
-        else:
-            super(WeakLinks, self).save(*args,**kwargs)
 
 
 # temp document obj for generic file upload component

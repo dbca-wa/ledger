@@ -12,9 +12,9 @@ from wildlifecompliance.components.main.utils import (
 from wildlifecompliance.components.main.serializers import (
     SearchKeywordSerializer,
     SearchReferenceSerializer,
-    RelatedItemsSerializer,
 )
-from wildlifecompliance.components.main.models import WeakLinks
+from wildlifecompliance.components.main.related_item import RelatedItemsSerializer
+from wildlifecompliance.components.main.related_item import WeakLinks
 from wildlifecompliance.components.main.related_item import (
        get_related_items, 
        format_model_name
@@ -103,7 +103,10 @@ class CreateWeakLinkView(views.APIView):
 
                     # get related items of calling_instance
                     related_items = get_related_items(calling_instance)
-                    return Response(related_items)
+                    return Response(
+                            related_items,
+                            status=status.HTTP_200_OK,
+                            )
                 else:
                     content = {'message': 'User does not have permission to perform this action'}
                     return Response(content, status=status.HTTP_403_FORBIDDEN)

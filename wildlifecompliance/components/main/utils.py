@@ -419,21 +419,3 @@ def search_weak_links(request_data):
             })
     return return_qs
 
-# list of approved related item models
-approved_related_item_models = [
-        'Offence',
-        'CallEmail',
-        'Inspection',
-        'SanctionOutcome',
-        'Case',
-        'EmailUser',
-        'Organisation',
-        'Offender',
-        ]
-
-approved_email_user_related_items = [
-        'volunteer',
-        'individual_inspected',
-        'email_user',
-        ]
-

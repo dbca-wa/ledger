@@ -11,7 +11,7 @@
                 </select>
             </div>
             <div class="col-sm-4">
-                <input :id="elemId" class="form-control no-label" :readonly="readonlyForm" placeholder="Begin typing to search"/>
+                <input ref="elemId" :id="elemId" class="form-control no-label" :readonly="readonlyForm" placeholder="Begin typing to search"/>
             </div>
             <div class="col-sm-3 no-label" v-if="!readonlyForm">
                 <a ref="add_weak_link" @click="callCreateWeakLink" class="btn btn-primary btn-block">Add</a>
@@ -20,7 +20,7 @@
         <div class="row form-group">
             <div class="col-sm-8">
                 <label for="comment">Add comment</label>
-                <input id="comment" :readonly="readonlyForm" class="form-control" v-model="comment"/>
+                <input ref="comment" id="comment" :readonly="readonlyForm" class="form-control" v-model="comment"/>
             </div>
         </div>
     </div>
@@ -81,7 +81,12 @@ export default {
         },
         callCreateWeakLink: function() {
             this.$nextTick(async () => {
-                await this.$parent.createWeakLink();
+                let res = await this.$parent.createWeakLink();
+                if (res.ok) {
+                    this.selectedEntity = null;
+                    this.comment = '';
+                    this.$refs.elemId.value = '';
+                }
             });
         },
         initAwesomplete: function() {
