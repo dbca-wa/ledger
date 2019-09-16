@@ -1272,11 +1272,11 @@ class MakeBookingsView(TemplateView):
         to_dt = local_dt.replace(microsecond=booking.departure.microsecond)
         to_date_converted = to_dt.date()
         # generate invoice
-        reservation = u"Reservation for {} from {} to {} at {}".format(
+        reservation = u"Reservation for {} from {} to {} ".format(
                u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
                 from_date_converted,
                 to_date_converted,
-                booking.mooringarea.name
+                #booking.mooringarea.name
         )
         
         logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id))
