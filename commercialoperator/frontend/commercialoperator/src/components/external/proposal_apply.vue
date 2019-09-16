@@ -6,7 +6,7 @@
 
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">Apply on behalf of
+                            <h3 class="panel-title">Applicant <small>The applicant will be the licensee. Please ensure the applicant is the same as the insured party on your public liability insurance certificate.<small>
                                 <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                                     <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                                 </a>

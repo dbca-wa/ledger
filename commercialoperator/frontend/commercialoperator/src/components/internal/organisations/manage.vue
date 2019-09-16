@@ -155,7 +155,10 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-sm-12 top-buffer-s">
-                                                    <strong>Persons linked to the organisation are controlled by the organisation. The Department cannot manage this list of people.</strong>
+                                                    It is the responsibility of the organisation administrator to manage the distribution of pin codes. If you are not sure which pin code to give to your staff
+                                                    member please call the Tourism and Concessions Branch on (08) 9219 9978. </br></br>
+                                                    Please ensure the pin codes are not provided to people that are not authorised to apply/cancel/surrender/pay fees on behalf of this organisation.</br></br>
+                                                    The list of accounts linked to the organisation is controlled by the organisation. The Department cannot manage this list of accounts.
                                                 </div>
                                             </div> 
                                         </div><!-- 
