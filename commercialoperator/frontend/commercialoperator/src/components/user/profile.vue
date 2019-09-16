@@ -8,7 +8,7 @@
                         <div class="col-sm-12">
                             <p>
                                 We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
-                                (personal details, address details, contact details, and weather you are managing licences for an organisation).
+                                (personal details, address details, contact details, and whether you are managing licences for an organisation).
                                 Once completed, click Continue to start using the system.
                             </p>
                             <a :disabled="!completedProfile" href="/" class="btn btn-primary pull-right">Continue</a>
