@@ -10,43 +10,32 @@
                     </h3>
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
-                    <div class="" >                        
-                        <div class="form-horizontal col-sm-12 borderDecoration">
-                            <label class="control-label">Select required activities</label>
-                            <div  class="" v-for="category in marine_activities" >
-                                <div class="form-check">
-                                    <input @click="clickCategory($event, category)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
-                                    {{ category.name }}
-                                </div>
-                                <div class="col-sm-12" v-for="activity in category.activities">
-                                    <div class="form-check ">
-                                        <input :onclick="isClickable"  :value="activity.id" class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_activities" data-parsley-required :disabled="!canEditActivities"/>
-                                        {{ activity.name }}
+                    <div class="" >
+
+                        <div class="borderDecoration col-sm-12">
+                            <form>
+                                <div class="col-sm-12" >
+                                    <div>
+                                        <!--<pre>{{ selected_activities }}</pre>-->
+                                        <label class="control-label">Select the required activities</label>
+                                        <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="marine_activity_options" :default_expand_level="1" :disabled="!canEditActivities"></TreeSelect>
                                     </div>
                                 </div>
-                            </div>
+                            </form>
                         </div>
-                        <div class="form-horizontal col-sm-12 borderDecoration">
-                            <label class="control-label"> Select the parks for which the activities are required</label>
-                            <!-- <div class="" v-for="p in marine_parks">
-                                <div class="form-check col-sm-12">
-                                  <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities"/>
-                                {{ p.name }}
-                                  <span><a @click="edit_activities(p)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
+
+                        <div class="borderDecoration col-sm-12">
+                            <form>
+                                <div class="col-sm-12" >
+                                    <div>
+                                        <!--<pre>{{ selected_activities }}</pre>-->
+                                        <label class="control-label">Select the parks for which the activities are required</label>
+                                        <TreeSelect :proposal="proposal" :value.sync="selected_zone_ids" :options="marine_park_options" :default_expand_level="1" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
+                                    </div>
                                 </div>
-                            </div> -->
-                            <div class="list-group list-group-root well">
-                                <div class="" v-for="p in marine_parks">
-                                  <div class="form-check col-sm-12 list-group-item">
-                                    <input :onclick="isClickable"  name="selected_parks" v-model="selected_parks" :value="{'park': p.id,'zones': p.zone_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities"/>
-                                  {{ p.name }}
-                                    <span><a @click="edit_activities(p)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
-                                  </div>
-                                </div>
-                            </div>
-                            <!-- <div>{{selected_parks}}</div>
-                            <div>{{marine_parks_activities}}</div> -->
+                            </form>
                         </div>
+
                         <div class="row"></div>
                         <div class="row"></div>
                         <div class="row"></div>
@@ -63,15 +52,23 @@
                             <VesselTable :url="vessels_url" :proposal="proposal" ref="vessel_table"></VesselTable>
                         </div>
                         <div class="form-horizontal col-sm-12">
-                        
+
                         </div>
                     </div>
                 </div>
                 <div>
-                  <editMarineParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editMarineParkActivities>
+                  <editMarineParkActivities ref="edit_activities" :proposal="proposal" :canEditActivities="canEditActivities" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editMarineParkActivities>
                 </div>
             </div>
         </div>
+
+        <!--
+        <div>Selected_Activities: {{selected_activities}}</div><br>
+        <div>selected_zone_ids: {{selected_zone_ids}}</div><br>
+        <div>selected_zones: {{selected_zones}}</div><br>
+        <div>Marine_Park_Activities: {{marine_parks_activities}}</div><br>
+        -->
+
     </div>
 </template>
 
@@ -80,6 +77,7 @@ import Vue from 'vue'
 import VesselTable from '@/components/common/vessel_table.vue' 
 import editMarineParkActivities from './edit_marine_park_activities.vue'
 import FileField from './required_docs.vue'
+import TreeSelect from '@/components/forms/treeview.vue'
 import {
   api_endpoints,
   helpers
@@ -100,6 +98,11 @@ from '@/utils/hooks'
         data:function () {
             let vm = this;
             return{
+                selected_zone_ids: [],
+                selected_zone_ids_before: [],
+                park_map: {},
+                zone_map: {},
+                park_activities: [],
                 pBody: 'pBody'+vm._uid,
                 values:null,
                 vessels_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/vessels'),
@@ -107,8 +110,8 @@ from '@/utils/hooks'
                 marine_activities: [],
                 selected_activities:[],
                 selected_activities_before:[],
-                selected_parks:[],
-                selected_parks_before:[],
+                selected_zones:[],
+                selected_zones_before:[],
                 marine_parks_activities:[],
                 required_documents_list: null,
             }
@@ -117,79 +120,98 @@ from '@/utils/hooks'
           VesselTable,
           editMarineParkActivities,
           FileField,
+          TreeSelect,
         },
         watch: {
-        selected_parks: function() {
+          selected_zone_ids: function() {
             let vm = this;
-            if (vm.proposal) {
-                vm.proposal.parks = vm.selected_parks
+
+            vm.selected_zones = []
+            for (var i = 0; i < vm.selected_zone_ids.length; i++) {
+                //var data = vm.get_selected_park_data(vm.get_park_ids[i] )
+                var zone_id = vm.selected_zone_ids[i]
+                var data = vm.get_selected_zone_data( zone_id )
+                if (data !== null) {
+                    vm.selected_zones.push( data )
+                }
             }
-            var removed_park=$(vm.selected_parks_before).not(vm.selected_parks).get();
-            var added_park=$(vm.selected_parks).not(vm.selected_parks_before).get();
-            vm.selected_parks_before=vm.selected_parks;
+
+            if (vm.proposal) {
+                vm.proposal.parks = vm.selected_zones
+            }
+
+            try {
+                var removed_zone_ids=$(vm.selected_zone_ids_before).not(vm.selected_zone_ids).get();
+            } catch (error) {
+                console.log('removed_zone: ' + error)
+            }
+
+            try {
+                var added_zone_ids=$(vm.selected_zone_ids).not(vm.selected_zone_ids_before).get();
+            } catch (error) {
+                console.log('added_zone: ' + error)
+            }
+            vm.selected_zone_ids_before=vm.selected_zone_ids;
 
             var current_activities=vm.selected_activities
             var zone_activities=[];
             //var current_access=vm.selected_access
 
             if(vm.marine_parks_activities.length==0){
-              for (var i = 0; i < vm.selected_parks.length; i++) {
-                 var data=null;
-                 // data={
-                 //  'park': vm.selected_parks[i],
-                 //  'activities': current_activities,
-                 //  //'access': current_access
-                 // }
-                 for (var j=0; j<vm.selected_parks[i].zones.length; j++){
+              for (var i = 0; i < vm.selected_zones.length; i++) {
+                var park_id = vm.get_park_id(vm.selected_zones[i].zone)
+                var data=null;
+
+                if (park_id !== null) {
                   var zone_data={
-                    'zone': vm.selected_parks[i].zones[j],
+                    'zone': vm.selected_zones[i].zone,
                     'activities': current_activities
                   }
                   zone_activities.push(zone_data)
-                 }
-                 data={
-                  'park': vm.selected_parks[i].park,
-                  'activities': zone_activities 
-                 }
-                 vm.marine_parks_activities.push(data);
-               }
-            }
-            else{
-              if(added_park.length!=0){
-                for(var i=0; i<added_park.length; i++)
-                { 
-                  var found=false
-                  for (var j=0; j<vm.marine_parks_activities.length; j++){
-                    if(vm.marine_parks_activities[j].park==added_park[i].park){ 
-                      found = true;}
-                  }
-                  if(found==false)
-                  {
-                    var zone_activities=[];
-                    for(var k=0; k<added_park[i].zones.length; k++){
-                      var zone_data={
-                      'zone': added_park[i].zones[k],
-                      'activities': current_activities
-                      }
-                      zone_activities.push(zone_data)
-                    }
-                    data={
-                    'park': added_park[i].park,
-                    'activities': zone_activities,
-                    //'access': current_access
-                   }
-                   vm.marine_parks_activities.push(data);
 
+                  data={
+                    'park': parseInt(park_id),
+                    'activities': zone_activities 
+                  }
+                  vm.marine_parks_activities.push(data);
+                }
+              }
+            } else{
+              if(added_zone_ids.length!=0){
+                for(var i=0; i<added_zone_ids.length; i++) {
+                  var park_id = vm.get_park_id(added_zone_ids[i])
+                  var park_idx = vm.contains_park(park_id)
+
+                  if (park_id !== null) {
+                    var zone_data={
+                      'zone': added_zone_ids[i],
+                      'activities': current_activities
+                      //'access': current_access
+                    }
+
+                    if( park_idx > -1) { // check if vm.marine_parks_activities dict already contains park entry
+                      vm.marine_parks_activities[park_idx].activities.push( zone_data )
+                    } else {
+                      var zone_activities=[];
+                      zone_activities.push(zone_data)
+
+                      data={
+                        'park': parseInt(park_id),
+                        'activities': zone_activities,
+                      }
+                      vm.marine_parks_activities.push(data);
+                    }
                   }
                 }
               }
-              if(removed_park.length!=0){
-                for(var i=0; i<removed_park.length; i++)
-                { 
-                  for (var j=0; j<vm.marine_parks_activities.length; j++){
-                    if(vm.marine_parks_activities[j].park==removed_park[i].park){ 
-                      vm.marine_parks_activities.splice(j,1)}
-                  }
+              if(removed_zone_ids.length!=0){
+                for(var i=0; i<removed_zone_ids.length; i++) {
+                  var park_id = vm.get_park_id(removed_zone_ids[i]);
+                  var park_idx = vm.contains_park(park_id);
+                  var park_activities = vm.marine_parks_activities[park_idx].activities;
+                  var zone_idx = vm.contains_zone(park_activities, removed_zone_ids[i]);
+
+                  vm.marine_parks_activities[park_idx].activities.splice(zone_idx,1)
                 }
               }
             }
@@ -200,10 +222,10 @@ from '@/utils/hooks'
           var added=$(vm.selected_activities).not(vm.selected_activities_before).get();
           vm.selected_activities_before=vm.selected_activities;
           if(vm.marine_parks_activities.length==0){
-            for (var i = 0; i < vm.selected_parks.length; i++) {
+            for (var i = 0; i < vm.selected_zones.length; i++) {
                  var data=null;
                  data={
-                  'park': vm.selected_parks[i],
+                  'park': vm.selected_zones[i],
                   'activities': vm.selected_activities,
                   //'access': vm.selected_access
                  }
@@ -211,15 +233,12 @@ from '@/utils/hooks'
                }
           }
           else{
-            
+
             for (var i=0; i<vm.marine_parks_activities.length; i++)
-            { 
+            {
               if(added.length!=0){
                 for(var j=0; j<added.length; j++)
                 {
-                  // if(vm.marine_parks_activities[i].activities.indexOf(added[j])<0){
-                  //   vm.marine_parks_activities[i].activities.push(added[j]);
-                  // }
                   for(var k=0; k<vm.marine_parks_activities[i].activities.length; k++){
                     if(vm.marine_parks_activities[i].activities[k].activities.indexOf(added[j])<0){
                     vm.marine_parks_activities[i].activities[k].activities.push(added[j]);
@@ -230,10 +249,6 @@ from '@/utils/hooks'
               if(removed.length!=0){
                 for(var j=0; j<removed.length; j++)
                 {
-                  // var index=vm.marine_parks_activities[i].activities.indexOf(removed[j]);
-                  // if(index!=-1){
-                  //   vm.marine_parks_activities[i].activities.splice(index,1)
-                  // }
                   for(var k=0; k<vm.marine_parks_activities[i].activities.length; k++){
                     var index=vm.marine_parks_activities[i].activities[k].activities.indexOf(removed[j]);
                     if(index!=-1){
@@ -254,16 +269,143 @@ from '@/utils/hooks'
             }
         },
         },
+
         methods:{
-            fetchParks: function(){
+          get_selected_zone_data:function(zone_id){
+            let vm = this;
+            for (var i=0; i<vm.marine_parks.length; i++) {
+              var park = vm.marine_parks[i];
+              for (var j=0; j<park.children.length; j++) {
+                var zone = park.children[j];
+                if (zone.id == zone_id) {
+                  return {'zone': zone_id, 'park': park.id, 'activities': vm.selected_activities} // { "park": 4, "zones": [ 5, 4, 1  ]  }
+                }
+              }
+            }
+            return null;
+          },
+
+          get_park_id:function(zone_id){
+            /* given zone id returns the associated proposal_park id */
             let vm = this;
 
-            vm.$http.get('/api/parks/marine_parks.json').then((response) => { 
-            vm.marine_parks = response.body;
+            var ids = []
+            var park_ids = Object.keys(vm.park_map);
+            for (var i=0; i<park_ids.length; i++){ 
+              var park_id = park_ids[i]
+              var zone_ids = vm.park_map[park_id]
+              if (zone_ids.indexOf(zone_id) > -1) {
+                return park_id;
+              }
+            }
+            return null;
+          },
+
+          get_park_map:function(){
+            /* dictionary key:park id,  value:list zone ids
+               eg. {park_id: zone_list} ==> { "4":[5,4,1], "170":[10,7,6,8,9], "171":[11] } */
+            let vm = this;
+
+            var park_map = {};
+            for (var i=0; i<vm.marine_parks.length; i++){ 
+              var park = vm.marine_parks[i]
+
+              var ids = [];
+              for (var j=0; j<park.children.length; j++) {
+                var zone_id = park.children[j].id
+                ids.push( zone_id )
+              }
+              park_map[park.id] = ids;
+            }
+            return park_map;
+          },
+
+          get_park_activities:function(){
+            /* dictionary key:park id,  value:list zone ids
+               eg. {park_id: zone_list} ==> { "4":[5,4,1], "170":[10,7,6,8,9], "171":[11] } */
+            let vm = this;
+
+            var park_map = {};
+            var park_activities = [];
+            var activities_by_zone = [];
+            for (var i=0; i<vm.selected_zone_ids.length; i++){ 
+              var zone_id = vm.selected_zone_ids[i]
+              var park_id = vm.get_park_id(zone_id)
+              if (park_id !== null) {
+                activities_by_zone.push( {'park': park_id, 'activities': vm.selected_activities, 'access_point': '' } )
+                park_activities.push({'zone': zone_id, 'activities': activities_by_zone})
+              } else {
+                console.log('ERROR: Park ID not found for zone_id ' + zone_id)
+              }
+            }
+            return park_activities;
+          },
+
+          contains_park:function(park_id){
+            /* return the index position of the park if exists, else -1 */
+            let vm = this;
+
+            for (var i=0; i<vm.marine_parks_activities.length; i++) {
+              if(vm.marine_parks_activities[i].park==park_id) {
+                return i;
+              }
+            }
+            return -1;
+          },
+          contains_zone:function(activities, zone_id){
+            /* return the index position of the zone if exists, else -1 */
+            let vm = this;
+
+            for (var i=0; i<activities.length; i++) {
+              if(activities[i].zone==zone_id) {
+                return i;
+              }
+            }
+            return -1;
+          },
+
+          fetchMarineTreeview: function(){
+            let vm = this;
+
+            //console.log('treeview_url: ' + api_endpoints.tclass_container_marine)
+            vm.$http.get(api_endpoints.tclass_container_marine)
+            .then((response) => {
+
+                vm.marine_activity_options = [
+                    {
+                        'id': 'All',
+                        'name':'Select all marine activities',
+                        'children': response.body['marine_activities']
+                    }
+                ]
+                vm.marine_activities = response.body['marine_activities']
+
+                vm.marine_park_options = [
+                    {
+                        'id': 'All',
+                        'name':'Select all marine parks',
+                        'children': response.body['marine_parks']
+                    }
+                ]
+                vm.marine_parks = response.body['marine_parks']
+                vm.park_map = vm.get_park_map();
+                vm.park_activities = vm.get_park_activities();
+
+                vm.required_documents_list = response.body['required_documents']
+                vm.fetchRequiredDocumentList();
+
             },(error) => {
-            console.log(error);
+                console.log(error);
             })
           },
+          fetchRequiredDocumentList: function(){
+            let vm = this;
+            for(var l=0; l<vm.required_documents_list.length; l++){
+              vm.required_documents_list[l].can_view=false;
+              vm.checkRequiredDocuements(vm.marine_parks_activities)
+            }
+          },
+
           checkRequiredDocuements: function(marine_parks_activities){
             let vm=this;
             //Check if the combination of selected park and activities require a document to be attahced
@@ -286,7 +428,7 @@ from '@/utils/hooks'
                         if(vm.required_documents_list[j].activity== marine_parks_activities[i].activities[k].activities[l]){
                         vm.required_documents_list[j].can_view=true;
                         }
-                      }                     
+                      }
                     }
                   }
                 }
@@ -303,48 +445,28 @@ from '@/utils/hooks'
             }
           }
           },
-          fetchRequiredDocumentList: function(){
-            let vm = this;
-            vm.$http.get('/api/required_documents.json').then((response) => {
-            vm.required_documents_list = response.body;
-            for(var l=0; l<vm.required_documents_list.length; l++){
-              vm.required_documents_list[l].can_view=false;
-              vm.checkRequiredDocuements(vm.marine_parks_activities)
-              //console.log('park',vm.selected_parks_activities)
-            }
-            },(error) => {
-            console.log(error);
-            })
-
-          },
-          clickCategory: function(e, c){
+          edit_activities: function(node){
             let vm=this;
-            var checked=e.target.checked;
-            if(checked){
-              for(var i=0; i<c.activities.length; i++){
-                var index=this.selected_activities.indexOf(c.activities[i].id);
-                if(index==-1)
-                {
-                  var r = helpers.copyObject(this.selected_activities);
-                  r.push(c.activities[i].id);
-                  this.selected_activities=r
-                  
-                }
-              }
-            }
-            else{
-              for(var i=0; i<c.activities.length; i++){
-                var index=this.selected_activities.indexOf(c.activities[i].id);
-                if(index!=-1){
-                  var r = helpers.copyObject(this.selected_activities);
-                  r.splice(index,1);
-                  this.selected_activities=r
-                  //this.selected_parks.splice(index,1)
-                }
-              }
-            }
+            var park_id = node.raw.park_id
+            var zone_id = node.raw.id
+            var allowed_activities = node.raw.allowed_zone_activities 
+            var label  = node.label
+
+            var park_idx = vm.contains_park(park_id);
+            var zone_idx = vm.contains_zone(vm.marine_parks_activities[park_idx].activities, zone_id)
+            var activities = vm.marine_parks_activities[park_idx].activities[zone_idx].activities
+            var access_point = vm.marine_parks_activities[park_idx].activities[zone_idx].access_point
+
+            this.$refs.edit_activities.park_id = park_id;
+            this.$refs.edit_activities.zone_id = zone_id;
+            this.$refs.edit_activities.new_activities = activities.length > 0 ? activities : vm.selected_activities;
+            this.$refs.edit_activities.access_point = access_point
+            this.$refs.edit_activities.allowed_activities = allowed_activities;
+            this.$refs.edit_activities.zone_label = label;
+            this.$refs.edit_activities.isModalOpen = true;
           },
-          edit_activities: function(park){
+          /*
+          _edit_activities: function(park){
             let vm=this;
             //inserting a temporary variables checked and new_activities to store and display selected activities for each zone.
             for(var l=0; l<park.zones.length; l++){
@@ -357,7 +479,6 @@ from '@/utils/hooks'
                 for(var j=0; j<vm.marine_parks_activities[i].activities.length; j++){
                   for(var k=0; k<park.zones.length; k++){
                     if (park.zones[k].id==vm.marine_parks_activities[i].activities[j].zone){
-                      //park.zones[k].checked=true;
                       park.zones[k].new_activities=vm.marine_parks_activities[i].activities[j].activities;
                       park.zones[k].access_point=vm.marine_parks_activities[i].activities[j].access_point
                     }
@@ -365,18 +486,21 @@ from '@/utils/hooks'
                 } 
               }
             }
-            //console.log(park);
             this.$refs.edit_activities.park=park;
             this. $refs.edit_activities.isModalOpen = true;
           },
-          refreshSelectionFromResponse: function(park_id, new_activities){
+          */
+
+
+          refreshSelectionFromResponse: function(park_id, zone_id, new_activities){
               let vm=this;
-              for (var j=0; j<vm.marine_parks_activities.length; j++){
-              if(vm.marine_parks_activities[j].park==park_id){ 
-                vm.marine_parks_activities[j].activities= new_activities;
-              }
-            }
-            vm.checkRequiredDocuements(vm.marine_parks_activities)
+
+              var park_idx = vm.contains_park(park_id);
+              var zone_idx = vm.contains_zone(vm.marine_parks_activities[park_idx].activities, zone_id)
+              vm.marine_parks_activities[park_idx].activities.splice(zone_idx,1)
+              vm.marine_parks_activities[park_idx].activities.push( new_activities );
+
+              vm.checkRequiredDocuements(vm.marine_parks_activities)
           },
           find_recurring: function(array){
             var common=new Map();
@@ -397,12 +521,12 @@ from '@/utils/hooks'
         store_parks: function(parks){
           let vm=this;
           var all_activities=[] //to store all activities for all zones so can find recurring onees to display selected_activities
-          var park_list=[]
+          var zone_ids=[]
           for (var i = 0; i < parks.length; i++) {
               var current_park=parks[i].park.id
               var current_activities=[]
               var current_zones=[]
-              
+
               for (var j = 0; j < parks[i].zones.length; j++) {
                 var park_activities=[];
                 for (var k = 0; k < parks[i].zones[j].park_activities.length; k++) {
@@ -416,41 +540,28 @@ from '@/utils/hooks'
                 }
                 current_activities.push(data_zone)
                 all_activities.push({'key': park_activities})
-                //current_zones.push(parks[i].zones[j].zone)
+                zone_ids.push(parks[i].zones[j].zone)
               }
-               
+
                var data={
                 'park': current_park,
                 'activities': current_activities 
                }
                vm.marine_parks_activities.push(data)
-               
             }
-            
-          for (var i=0; i<parks.length; i++)
-            { 
-              
-              park_list.push({'park':parks[i].park.id, 'zones':parks[i].park.zone_ids})
-            }
-          vm.selected_parks=park_list
-          //console.log(park_list)
+
+          vm.selected_zone_ids=zone_ids
           vm.selected_activities = vm.find_recurring(all_activities)
         },
+
         eventListeners: function(){
-            
         },
         },
         mounted: function(){
             let vm = this;
             vm.proposal.marine_parks_activities=[];
-            Vue.http.get('/api/marine_activities.json').then((res) => {
-                      vm.marine_activities=res.body;                 
-            },
-            err => { 
-                   console.log(err);
-            });
-            vm.fetchParks();
-            vm.fetchRequiredDocumentList();
+            vm.fetchMarineTreeview();
+
             vm.store_parks(vm.proposal.marine_parks);
             //vm.eventListeners();
         }

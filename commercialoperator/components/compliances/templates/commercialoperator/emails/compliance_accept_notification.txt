@@ -1,12 +1,6 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Compliance with requirements has been approved:
-
-    Compliance : {{ compliance.reference}}
-
-    Application : {{ compliance.proposal.lodgement_number}}
-
-    
+    The licence requirement to submit {{ compliance.reference}} has been completed.    
 
 {%  endblock %}

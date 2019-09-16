@@ -1,7 +1,7 @@
 {%  extends 'commercialoperator/emails/base_email.html' %}
 
 {%  block content %}
-    {% if linked_by.email != user.email %}
+    <!-- {% if linked_by.email != user.email %}
         <p>Your have been linked to:</p>
         <p><strong>Organisation : {{ organisation.name }}</strong></p>
         <p><strong>ABN : {{ organisation.abn}}</strong></p>
@@ -11,5 +11,9 @@
         <p><strong>Organisation : {{ organisation.name }}</strong></p>
         <p><strong>ABN : {{ organisation.abn}}</strong></p>
     {% endif %}
-    <p>You can now make applications on behalf of this organisation.</p>
+    <p>You can now make applications on behalf of this organisation.</p> -->
+    <p>Your request to link your account to a company has been approved. Details are as follows: </p>
+    <p><strong>Company : {{ organisation.name }}</strong></p>
+    <p><strong>ABN/ ACN: {{ organisation.abn}}</strong></p>
+    <p>Now that your account has been linked you can proceed with an application for a Commercial Operations licence.</p>
 {%  endblock %}

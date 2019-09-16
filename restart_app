@@ -1,0 +1,13 @@
+#!/bin/bash                                                                                                                                                                                             
+
+PORT=$1
+
+CMD="kill $(ps aux | grep $PORT | grep -v ' cd ' | awk '{print $2}')"
+echo $CMD
+eval $CMD
+ret_code=$?
+
+if [ $ret_code != 0 ]; then
+  printf "Error : [%d] when executing command: '$CMD'" $ret_code
+  exit $ret_code
+fi

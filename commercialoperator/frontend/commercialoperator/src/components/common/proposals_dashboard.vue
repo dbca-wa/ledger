@@ -126,6 +126,7 @@ export default {
             datatable_id: 'proposal-datatable-'+vm._uid,
             //Profile to check if user has access to process Proposal
             profile: {},
+            is_payment_admin: false,
             // Filters for Proposals
             filterProposalStatus: 'All',
             filterProposalLodgedFrom: '',
@@ -161,7 +162,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Action"
+                "Number","Licence Type","Submitter","Applicant","Status","Lodged on","Action"
             ],
 
             proposal_ex_options:{
@@ -291,7 +292,7 @@ export default {
                 */
             },
             proposal_headers:[
-                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action",
+                "Number","Licence Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action",
             ],
             proposal_options:{
                 autoWidth: false,
@@ -384,7 +385,9 @@ export default {
                                 }
                             }
                             if (full.fee_paid){
+                                if(vm.is_payment_admin){
                                 links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                            }
                                 links +=  `<a href='/cols/payments/invoice-pdf/${full.fee_invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${full.fee_invoice_reference}</a><br/>`;
                             }
                             return links;
@@ -591,7 +594,8 @@ export default {
         fetchProfile: function(){
             let vm = this;
             Vue.http.get(api_endpoints.profile).then((response) => {
-                vm.profile = response.body
+                vm.profile = response.body;
+                vm.is_payment_admin=response.body.is_payment_admin;
                               
             },(error) => {
                 console.log(error);

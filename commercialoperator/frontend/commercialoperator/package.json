@@ -14,6 +14,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
+    "@riophae/vue-treeselect": "^0.1.0",
     "babel-polyfill": "^6.26.0",
     "bootstrap": "^3.3.7",
     "datatables.net": "^1.10.15",

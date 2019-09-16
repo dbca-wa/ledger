@@ -24,9 +24,12 @@ module.exports = {
     proposal_requirements:"/api/proposal_requirements.json",
     amendment_request:"/api/amendment_request.json",
     regions:"/api/regions.json",
+    park_treeview:"/api/park_treeview",
+    marine_treeview:"/api/marine_treeview",
+    tclass_container_land:"/api/tclass_container_land",
+    tclass_container_marine:"/api/tclass_container_marine",
     activity_matrix:"/api/activity_matrix.json",
     application_types:"/api/application_types.json",
-    vehicles:"/api/vehicles.json",
     access_types:"/api/access_types.json",
     parks:"/api/parks.json",
     vehicles:"/api/vehicles.json",
@@ -68,5 +71,7 @@ module.exports = {
     //dep_name_short: 'DBCA',
     system_name: 'Commercial Operator Licensing System',
     //system_name_short: 'DAS',
+    payment_help_url: 'https://parks.dpaw.wa.gov.au/for-business/training-accreditation-insurance-fees',
+    proposal_type_help_url: ' https://parks.dbca.wa.gov.au/for-business/commercial-operations-licensing',
 
 }

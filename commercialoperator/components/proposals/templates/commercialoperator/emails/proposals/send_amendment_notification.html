@@ -1,7 +1,7 @@
 {%  extends 'commercialoperator/emails/base_email.html' %}
 
 {%  block content %}
-	Your Application {{ proposal.lodgement_number }} has been reviewed and requires an amendment before further assessment.
+	Your Application {{ proposal.lodgement_number }} for a commercial operations licence has been returned to you for further information.
 
     {% if reason %}
         <p>
@@ -13,9 +13,10 @@
         <p><span> Amendment details: <br> {{ amendment_request_text }}</span></p>
     {% endif %}
     <p>
-    You can access this Application using the following link:
+    Please <a href="{{url}}"> login</a> to your account to complete the application.
     </p>
-    <a href="{{url}}">Access Application</a>
+    <p>You will receive a notification email if there is any incomplete information or documents missing from the application.</p>
+    
 
 
 {%  endblock %}

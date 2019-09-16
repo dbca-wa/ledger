@@ -6,7 +6,7 @@ from commercialoperator.components.organisations.models import (
 from commercialoperator.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
 from ledger.accounts.utils import in_dbca_domain
-
+from ledger.payments.helpers import is_payment_admin
 
 class DocumentSerializer(serializers.ModelSerializer):
 
@@ -83,6 +83,7 @@ class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     identification = DocumentSerializer()
     is_department_user = serializers.SerializerMethodField()
+    is_payment_admin = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -101,6 +102,7 @@ class UserSerializer(serializers.ModelSerializer):
             'contact_details',
             'full_name',
             'is_department_user',
+            'is_payment_admin'
         )
     
     def get_personal_details(self,obj):
@@ -125,6 +127,10 @@ class UserSerializer(serializers.ModelSerializer):
             return in_dbca_domain(obj)
         else:
             return False
+
+    def get_is_payment_admin(self, obj):
+        #import ipdb; ipdb.set_trace()
+        return is_payment_admin(obj)
 
     def get_commercialoperator_organisations(self, obj):
         commercialoperator_organisations = obj.commercialoperator_organisations
@@ -154,8 +160,16 @@ class ContactSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, obj):
-        if not obj.get('phone_number') and not obj.get('mobile_number'):
-            raise serializers.ValidationError('You must provide a mobile/phone number')
+        #import ipdb; ipdb.set_trace()
+        #Mobile and phone number for dbca user are updated from active directory so need to skip these users from validation.
+        domain=None
+        if obj['email']:
+            domain = obj['email'].split('@')[1]
+        if domain in settings.DEPT_DOMAINS:
+            return obj
+        else:
+            if not obj.get('phone_number') and not obj.get('mobile_number'):
+                raise serializers.ValidationError('You must provide a mobile/phone number')
         return obj
 
 class EmailUserActionSerializer(serializers.ModelSerializer):
