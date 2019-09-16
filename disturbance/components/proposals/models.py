@@ -544,6 +544,19 @@ class Proposal(RevisionedMixin):
             return True
         return False
     
+    @property
+    def referral_email_list(self):
+        qs=self.referrals.all()
+        email_list=[]
+        if self.assigned_officer:
+            email_list.append(self.assigned_officer.email)
+        if qs:
+            for r in qs:
+                email_list.append(r.referral.email)
+        separator=', '
+        email_list_string=separator.join(email_list)
+        return email_list_string
+    
 
 
     def can_assess(self,user):

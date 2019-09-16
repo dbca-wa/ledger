@@ -541,6 +541,13 @@ export default {
         },
         proposedApproval: function(){
             this.$refs.proposed_approval.approval = this.proposal.proposed_issuance_approval != null ? helpers.copyObject(this.proposal.proposed_issuance_approval) : {};
+            if(this.proposal.proposed_issuance_approval == null){
+                var test_approval={
+                'cc_email': this.proposal.referral_email_list
+            };
+            this.$refs.proposed_approval.approval=helpers.copyObject(test_approval);
+                // this.$refs.proposed_approval.$refs.bcc_email=this.proposal.referral_email_list;
+            }
             this.$refs.proposed_approval.isModalOpen = true;
         },
         issueProposal:function(){

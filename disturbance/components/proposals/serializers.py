@@ -389,7 +389,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'lodgement_sequence',
                 'can_officer_process',
                 'proposal_type',
-                'hasAmendmentRequest'
+                'hasAmendmentRequest',
+                'referral_email_list'
                 )
         read_only_fields=('documents','requirements')
 

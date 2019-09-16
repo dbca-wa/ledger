@@ -62,11 +62,11 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-3">
-                                        <label v-if="processing_status == 'With Approver'" class="control-label pull-left"  for="Name">CC email</label>
-                                        <label v-else class="control-label pull-left"  for="Name">Proposed CC email</label>
+                                        <label v-if="processing_status == 'With Approver'" class="control-label pull-left"  for="Name">BCC email</label>
+                                        <label v-else class="control-label pull-left"  for="Name">Proposed BCC email</label>
                                     </div>
                                     <div class="col-sm-9">
-                                            <input type="text" class="form-control" name="approval_cc" style="width:70%;" v-model="approval.cc_email">
+                                            <input type="text" class="form-control" name="approval_cc" style="width:70%;" ref="bcc_email" v-model="approval.cc_email">
                                     </div>
                                 </div>
                             </div>
