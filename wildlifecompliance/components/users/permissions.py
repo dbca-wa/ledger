@@ -5,7 +5,7 @@ PERMISSION_GROUPS = [
         'permissions': ['organisation_access_request']
     },
     {
-        'name': 'System Administrators',
+        'name': 'Licensing Business Admin',
         'per_activity': False,
         'permissions': ['system_administrator']
     },
