@@ -240,13 +240,17 @@ class ProposalSerializer(BaseProposalSerializer):
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
-    #comment_data= serializers.SerializerMethodField(read_only=True)
+    comment_data= serializers.SerializerMethodField(read_only=True)
+       
+    class Meta:
+        model=Proposal
+        fields = BaseProposalSerializer.Meta.fields + ('comment_data',)
            
     def get_readonly(self,obj):
         return obj.can_user_view
 
-    # def get_comment_data(self,obj):
-    #     return obj.comment_data
+    def get_comment_data(self,obj):
+         return obj.comment_data
 
 class SaveProposalSerializer(BaseProposalSerializer):
     assessor_data = serializers.JSONField(required=False)

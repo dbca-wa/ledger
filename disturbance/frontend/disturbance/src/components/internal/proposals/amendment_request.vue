@@ -20,7 +20,7 @@
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <label class="control-label pull-left"  for="Name">Details</label>
-                                        <textarea class="form-control" name="name" v-model="amendment.text"></textarea>
+                                        <textarea class="form-control" name="name" v-model="amendment.text" readonly="true"></textarea>
                                     </div>
                                 </div>
                             </div>

@@ -608,10 +608,10 @@ export default {
                     var name=$(d)[0].name
                     var tmp=name.replace("-comment-field","")
                     deficient_fields.push(tmp);
-                    console.log('data', $("#"+"id_" + tmp))
+                    //console.log('data', $("#"+"id_" + tmp))
                 }
             }); 
-            console.log('deficient fields', deficient_fields);
+            //console.log('deficient fields', deficient_fields);
             vm.highlight_deficient_fields(deficient_fields);
         },
         save: function(e) {

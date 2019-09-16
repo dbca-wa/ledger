@@ -316,10 +316,10 @@ export default {
           var name=$(d)[0].name
           var tmp=name.replace("-comment-field","")
           deficient_fields.push(tmp);
-          console.log('data', $("#"+"id_" + tmp))
+          //console.log('data', $("#"+"id_" + tmp))
         }
       }); 
-      console.log('deficient fields', deficient_fields);
+      //console.log('deficient fields', deficient_fields);
       vm.highlight_deficient_fields(deficient_fields);
     },
 
@@ -445,9 +445,7 @@ export default {
   updated: function(){
     let vm=this;
       this.$nextTick(() => {
-      console.log("I am here1");
             if(vm.hasAmendmentRequest){
-              console.log("I am here2");
                 vm.deficientFields();
             }
         });
