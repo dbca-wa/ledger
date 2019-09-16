@@ -12,9 +12,9 @@ from wildlifecompliance.components.main.utils import (
 from wildlifecompliance.components.main.serializers import (
     SearchKeywordSerializer,
     SearchReferenceSerializer,
-    RelatedItemsSerializer,
 )
-from wildlifecompliance.components.main.models import WeakLinks
+from wildlifecompliance.components.main.related_item import RelatedItemsSerializer
+from wildlifecompliance.components.main.related_item import WeakLinks
 from wildlifecompliance.components.main.related_item import (
        get_related_items, 
        format_model_name

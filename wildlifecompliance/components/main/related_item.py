@@ -1,17 +1,89 @@
 import traceback
 from django.contrib.contenttypes.models import ContentType
-from wildlifecompliance.components.main.models import WeakLinks
-from serializers import RelatedItemsSerializer
 from rest_framework import serializers
 from rest_framework.renderers import JSONRenderer
 from django.core.exceptions import ValidationError
-from utils import (
-        approved_related_item_models, 
-        approved_email_user_related_items
-        )
 from wildlifecompliance.components.offence.models import Offender
 from wildlifecompliance.components.organisations.models import Organisation
 from ledger.accounts.models import EmailUser
+from django.db import models
+from rest_framework import serializers
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class WeakLinks(models.Model):
+
+    first_content_type = models.ForeignKey(
+            ContentType, 
+            related_name='first_content_type',
+            on_delete=models.CASCADE)
+    first_object_id = models.PositiveIntegerField()
+    first_content_object = GenericForeignKey('first_content_type', 'first_object_id')
+
+    second_content_type = models.ForeignKey(
+            ContentType, 
+            related_name='second_content_type',
+            on_delete=models.CASCADE)
+    second_object_id = models.PositiveIntegerField()
+    second_content_object = GenericForeignKey('second_content_type', 'second_object_id')
+    comment = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+
+    def save(self, *args, **kwargs):
+        # test for existing object with first and second fields reversed.  If exists, don't create duplicate.
+        duplicate = WeakLinks.objects.filter(
+                first_content_type = self.second_content_type,
+                second_content_type = self.first_content_type,
+                first_object_id = self.second_object_id,
+                second_object_id = self.first_object_id
+                )
+        related_items = get_related_items(self.first_content_object)
+        second_object_identifier = self.second_content_object.get_related_items_identifier
+        second_object_formatted_model_name = format_model_name(self.second_content_object._meta.model_name)
+        duplicate_related_item_exists = False
+        if related_items:
+            for item in related_items:
+                if (self.second_content_object.get_related_items_identifier == item.get('identifier') and 
+                        format_model_name(self.second_content_object._meta.model_name) == item.get('model_name')):
+                    duplicate_related_item_exists = True
+                    log_message =  'Duplicate RelatedItem/WeakLink - no record created for {} with pk {}'.format(
+                                self.first_content_type.model,
+                                self.first_object_id)
+                    logger.debug(log_message)
+        if duplicate_related_item_exists:
+            log_message =  'Duplicate RelatedItem/WeakLink - no record created for {} with pk {}'.format(
+                        self.first_content_type.model,
+                        self.first_object_id)
+            logger.debug(log_message)
+        elif self.second_content_type and self.second_content_type.model not in [i.lower() for i in approved_related_item_models]:
+            log_message =  'Incorrect model type - no record created for {} with pk {}'.format(
+                        self.first_content_type.model,
+                        self.first_object_id)
+            logger.debug(log_message)
+        elif duplicate:
+            log_message =  'Duplicate WeakLink - no record created for {} with pk {}'.format(
+                        self.first_content_type.model,
+                        self.first_object_id)
+            logger.debug(log_message)
+        else:
+            super(WeakLinks, self).save(*args,**kwargs)
+
+
+class RelatedItemsSerializer(serializers.Serializer):
+    descriptor = serializers.CharField()
+    identifier = serializers.CharField()
+    model_name = serializers.CharField()
+    second_object_id = serializers.IntegerField(allow_null=True)
+    second_content_type = serializers.CharField(allow_blank=True)
+    weak_link = serializers.BooleanField()
+    action_url = serializers.CharField(allow_blank=True)
+    comment = serializers.CharField()
 
 
 class RelatedItem:
@@ -27,6 +99,84 @@ class RelatedItem:
         self.second_content_type = second_content_type
         self.comment = comment
 
+
+def search_weak_links(request_data):
+    from wildlifecompliance.components.call_email.models import CallEmail
+    from wildlifecompliance.components.inspection.models import Inspection
+    from wildlifecompliance.components.offence.models import Offence
+    from wildlifecompliance.components.sanction_outcome.models import SanctionOutcome
+    qs = []
+
+    components_selected = request_data.get('selectedEntity')
+    search_text = request_data.get('searchText')
+    if 'call_email' in components_selected:
+        qs = CallEmail.objects.filter(
+                Q(number__icontains=search_text) |
+                Q(caller__icontains=search_text) |
+                Q(caller_phone_number__icontains=search_text) |
+                Q(location__street__icontains=search_text) |
+                Q(location__town_suburb__icontains=search_text) 
+                )
+    elif 'inspection' in components_selected:
+        qs = Inspection.objects.filter(
+                Q(number__icontains=search_text) |
+                Q(title__icontains=search_text) |
+                Q(details__icontains=search_text) |
+                Q(inspection_type__inspection_type__icontains=search_text) |
+                Q(individual_inspected__first_name__icontains=search_text) |
+                Q(individual_inspected__last_name__icontains=search_text) |
+                Q(call_email__number__icontains=search_text)
+                )
+    elif 'offence' in components_selected:
+        qs = Offence.objects.filter(
+                Q(lodgement_number__icontains=search_text) |
+                Q(identifier__icontains=search_text) |
+                Q(details__icontains=search_text) |
+                Q(alleged_offences__act__icontains=search_text) |
+                Q(alleged_offences__name__icontains=search_text) |
+                Q(offender__person__first_name__icontains=search_text) |
+                Q(offender__person__last_name__icontains=search_text)
+                )
+    elif 'sanction_outcome' in components_selected:
+        qs = SanctionOutcome.objects.filter(
+                Q(lodgement_number__icontains=search_text) |
+                Q(identifier__icontains=search_text) |
+                Q(description__icontains=search_text) |
+                Q(offence__alleged_offences__act__icontains=search_text) |
+                Q(offence__alleged_offences__name__icontains=search_text) |
+                Q(offender__person__first_name__icontains=search_text) |
+                Q(offender__person__last_name__icontains=search_text)
+                )
+    return_qs = []
+
+    # First 10 records only
+    for item in qs[:10]:
+
+        return_qs.append({
+            'id': item.id,
+            'model_name': item._meta.model_name,
+            'item_identifier': item.get_related_items_identifier,
+            'item_description': item.get_related_items_descriptor,
+            })
+    return return_qs
+
+# list of approved related item models
+approved_related_item_models = [
+        'Offence',
+        'CallEmail',
+        'Inspection',
+        'SanctionOutcome',
+        'Case',
+        'EmailUser',
+        'Organisation',
+        'Offender',
+        ]
+
+approved_email_user_related_items = [
+        'volunteer',
+        'individual_inspected',
+        'email_user',
+        ]
 
 def format_model_name(model_name):
     if model_name:
