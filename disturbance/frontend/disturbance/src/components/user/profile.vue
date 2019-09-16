@@ -192,7 +192,7 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-3"> 
-                                    <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="" style="width: 100%">
                                 </div>
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
@@ -206,7 +206,7 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-3"> 
-                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="" style="width: 100%">
                                 </div>
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
@@ -240,11 +240,11 @@
                                   </label>
                                   <label for="" class="col-sm-2 control-label" >Pin 1</label>
                                   <div class="col-sm-2">
-                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin1" placeholder="">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin1" placeholder="" style="width: 100%">
                                   </div>
                                   <label for="" class="col-sm-2 control-label" >Pin 2</label>
                                   <div class="col-sm-2">
-                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin2" placeholder="">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin2" placeholder="" style="width: 100%">
                                   </div>
                                   <div class="col-sm-2">
                                     <button v-if="!validatingPins" @click.prevent="validatePins()" class="btn btn-primary pull-left">Validate</button>
