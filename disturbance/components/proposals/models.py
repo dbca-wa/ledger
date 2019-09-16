@@ -536,6 +536,15 @@ class Proposal(RevisionedMixin):
         #    recipients.append(self.submitter.email)
         return recipients
 
+    @property
+    def hasAmendmentRequest(self):
+        qs = self.amendment_requests
+        qs = qs.filter(status = 'requested')
+        if qs:
+            return True
+        return False
+    
+
 
     def can_assess(self,user):
         if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':

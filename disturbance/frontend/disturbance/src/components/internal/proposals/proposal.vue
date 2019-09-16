@@ -408,6 +408,7 @@ export default {
             initialisedSelects: false,
             showingProposal:false,
             showingRequirements:false,
+            hasAmendmentRequest: false,
             state_options: ['requirements','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             contacts_options:{
@@ -588,9 +589,30 @@ export default {
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
             }); 
+            //this.deficientFields();
             this.$refs.amendment_request.amendment.text = values;
             
             this.$refs.amendment_request.isModalOpen = true;
+        },
+        highlight_deficient_fields: function(deficient_fields){
+            let vm = this;
+            for (var deficient_field of deficient_fields) {
+                $("#" + "id_"+deficient_field).css("color", 'red');
+            }
+        },
+        deficientFields(){
+            let vm=this;
+            let deficient_fields=[]
+            $('.deficiency').each((i,d) => {
+                if($(d).val() != ''){
+                    var name=$(d)[0].name
+                    var tmp=name.replace("-comment-field","")
+                    deficient_fields.push(tmp);
+                    console.log('data', $("#"+"id_" + tmp))
+                }
+            }); 
+            console.log('deficient fields', deficient_fields);
+            vm.highlight_deficient_fields(deficient_fields);
         },
         save: function(e) {
           let vm = this;
@@ -1020,6 +1042,9 @@ export default {
             vm.initialiseOrgContactTable();
             vm.initialiseSelects();
             vm.form = document.forms.new_proposal;
+            if(vm.hasAmendmentRequest){
+                vm.deficientFields();
+            }
         });
     },
     beforeRouteEnter: function(to, from, next) {
@@ -1028,6 +1053,7 @@ export default {
                 vm.proposal = res.body;
                 vm.original_proposal = helpers.copyObject(res.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.hasAmendmentRequest=vm.proposal.hasAmendmentRequest;
               });
             },
             err => {

@@ -301,6 +301,28 @@ export default {
         }
         */
     },
+    highlight_deficient_fields: function(deficient_fields){
+      let vm = this;
+      for (var deficient_field of deficient_fields) {
+        $("#" + "id_"+deficient_field).css("color", 'red');
+      }
+    },
+    deficientFields(){
+      let vm=this;
+      console.log("I am here");
+      let deficient_fields=[]
+      $('.deficiency').each((i,d) => {
+        if($(d).val() != ''){
+          var name=$(d)[0].name
+          var tmp=name.replace("-comment-field","")
+          deficient_fields.push(tmp);
+          console.log('data', $("#"+"id_" + tmp))
+        }
+      }); 
+      console.log('deficient fields', deficient_fields);
+      vm.highlight_deficient_fields(deficient_fields);
+    },
+
 
 
     submit: function(){
@@ -406,13 +428,30 @@ export default {
 
   },
 
+  
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_proposal;
     window.addEventListener('beforeunload', vm.leaving);
     window.addEventListener('onblur', vm.leaving);
+    // this.$nextTick(() => {
+    //   console.log("I am here1");
+    //         if(vm.hasAmendmentRequest){
+    //           console.log("I am here2");
+    //             vm.deficientFields();
+    //         }
+    //     });
   },
-  
+  updated: function(){
+    let vm=this;
+      this.$nextTick(() => {
+      console.log("I am here1");
+            if(vm.hasAmendmentRequest){
+              console.log("I am here2");
+                vm.deficientFields();
+            }
+        });
+  },
 
   beforeRouteEnter: function(to, from, next) {
     if (to.params.proposal_id) {

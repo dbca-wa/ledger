@@ -240,9 +240,13 @@ class ProposalSerializer(BaseProposalSerializer):
     region = serializers.CharField(source='region.name', read_only=True)
     district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
-
+    #comment_data= serializers.SerializerMethodField(read_only=True)
+           
     def get_readonly(self,obj):
         return obj.can_user_view
+
+    # def get_comment_data(self,obj):
+    #     return obj.comment_data
 
 class SaveProposalSerializer(BaseProposalSerializer):
     assessor_data = serializers.JSONField(required=False)
@@ -380,7 +384,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 'lodgement_sequence',
                 'can_officer_process',
-                'proposal_type'
+                'proposal_type',
+                'hasAmendmentRequest'
                 )
         read_only_fields=('documents','requirements')
 
