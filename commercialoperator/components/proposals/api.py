@@ -28,7 +28,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from commercialoperator.components.proposals.utils import save_proponent_data,save_assessor_data, proposal_submit
 from commercialoperator.components.proposals.models import searchKeyWords, search_reference, ProposalUserAction
-from commercialoperator.utils import missing_required_fields, search_tenure
+from commercialoperator.utils import missing_required_fields
 
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -468,7 +468,6 @@ class ProposalSubmitViewSet(viewsets.ModelViewSet):
             #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             #instance.submit(request,self)
-            #instance.tenure = search_tenure(instance)
             #instance.save()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
@@ -1010,7 +1009,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             #instance.submit(request,self)
             proposal_submit(instance, request)
-            instance.tenure = search_tenure(instance)
             instance.save()
             serializer = self.get_serializer(instance)
             return Response(serializer.data)

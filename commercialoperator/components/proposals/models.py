@@ -588,6 +588,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         return Invoice.objects.get(reference=self.fee_invoice_reference).amount if self.fee_paid else None
 
     @property
+    def licence_fee_amount(self):
+        period = self.other_details.preferred_licence_period
+        if period.split('_')[1].endswith('months'):
+            return self.application_type.licence_fee_2mth
+        else:
+            return int(period.split('_')[0]) * self.application_type.licence_fee_1yr
+
+    @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
 
@@ -610,6 +618,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             return "{} {}".format(
                 self.submitter.first_name,
                 self.submitter.last_name)
+
+
 
     @property
     def applicant_details(self):
@@ -802,6 +812,20 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         qs =AmendmentRequest.objects.filter(proposal = self)
         return qs
 
+    #Check if there is an pending amendment request exist for the proposal
+    @property
+    def pending_amendment_request(self):
+        qs =AmendmentRequest.objects.filter(proposal = self, status = "requested")
+        if qs:
+            return True
+        return False
+
+    @property
+    def is_amendment_proposal(self):
+        if self.proposal_type=='amendment':
+            return True
+        return False
+
     @property
     def search_data(self):
         search_data={}
@@ -948,6 +972,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         #if self.submitter.email not in recipients:
         #    recipients.append(self.submitter.email)
         return recipients
+
+    #Check if the user is member of assessor group for the Proposal
+    def is_assessor(self,user):
+            return self.__assessor_group() in user.proposalassessorgroup_set.all()
+
+    #Check if the user is member of assessor group for the Proposal
+    def is_approver(self,user):
+            return self.__approver_group() in user.proposalapprovergroup_set.all()
 
 
     def can_assess(self,user):
@@ -1531,6 +1563,40 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             except:
                 raise
 
+    def preview_approval(self,request,details):
+        from commercialoperator.components.approvals.models import PreviewTempApproval
+        with transaction.atomic():
+            try:
+                if self.processing_status != 'with_approver':
+                    raise ValidationError('Licence preview only available when processing status is with_approver. Current status {}'.format(self.processing_status))
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                #if not self.applicant.organisation.postal_address:
+                if not self.applicant_address:
+                    raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
+
+                preview_approval = PreviewTempApproval.objects.create(
+                    current_proposal = self,
+                    issue_date = timezone.now(),
+                    expiry_date = datetime.datetime.strptime(details.get('due_date'), '%d/%m/%Y').date(),
+                    start_date = datetime.datetime.strptime(details.get('start_date'), '%d/%m/%Y').date(),
+                    submitter = self.submitter,
+                    #org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
+                    #proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                    org_applicant = self.org_applicant,
+                    proxy_applicant = self.proxy_applicant,
+                )
+
+                # Generate the preview document - get the value of the BytesIO buffer
+                licence_buffer = preview_approval.generate_doc(request.user, preview=True)
+
+                # clean temp preview licence object
+                transaction.set_rollback(True)
+
+                return licence_buffer
+            except:
+                raise
+
 
     def final_approval(self,request,details):
         from commercialoperator.components.approvals.models import Approval
@@ -1561,7 +1627,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
                 if self.processing_status == 'approved':
                     # TODO if it is an ammendment proposal then check appropriately
-                    #import ipdb; ipdb.set_trace()
                     checking_proposal = self
                     if self.proposal_type == 'renewal':
                         if self.previous_application:
@@ -1569,19 +1634,15 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    #'activity' : self.activity,
-                                    #'region' : self.region,
-                                    #'tenure' : self.tenure,
-                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    #'applicant' : self.applicant,
                                     'submitter': self.submitter,
-                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    'org_applicant' : self.org_applicant,
+                                    'proxy_applicant' : self.proxy_applicant,
                                     'lodgement_number': previous_approval.lodgement_number
-                                    #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
                             )
                             if created:
@@ -1594,44 +1655,36 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    #'activity' : self.activity,
-                                    #'region' : self.region,
-                                    #'tenure' : self.tenure,
-                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    #'applicant' : self.applicant,
                                     'submitter': self.submitter,
-                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    'org_applicant' : self.org_applicant,
+                                    'proxy_applicant' : self.proxy_applicant,
                                     'lodgement_number': previous_approval.lodgement_number
-                                    #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
                             )
                             if created:
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
                     else:
-                        #import ipdb; ipdb.set_trace()
                         approval,created = Approval.objects.update_or_create(
                             current_proposal = checking_proposal,
                             defaults = {
-                                #'activity' : self.activity,
-                                #'region' : self.region.name,
-                                #'tenure' : self.tenure.name,
-                                #'title' : self.title,
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
                                 'submitter': self.submitter,
-                                'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                'org_applicant' : self.org_applicant,
+                                'proxy_applicant' : self.proxy_applicant,
                                 #'extracted_fields' = JSONField(blank=True, null=True)
                             }
                         )
                     # Generate compliances
-                    #self.generate_compliances(approval, request)
                     from commercialoperator.components.compliances.models import Compliance, ComplianceUserAction
                     if created:
                         if self.proposal_type == 'amendment':
@@ -1668,40 +1721,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
             except:
                 raise
-
-
-
-    '''def generate_compliances(self,approval):
-        from commercialoperator.components.compliances.models import Compliance
-        today = timezone.now().date()
-        timedelta = datetime.timedelta
-
-        for req in self.requirements.all():
-            if req.recurrence and req.due_date > today:
-                current_date = req.due_date
-                while current_date < approval.expiry_date:
-                    for x in range(req.recurrence_schedule):
-                    #Weekly
-                        if req.recurrence_pattern == 1:
-                            current_date += timedelta(weeks=1)
-                    #Monthly
-                        elif req.recurrence_pattern == 2:
-                            current_date += timedelta(weeks=4)
-                            pass
-                    #Yearly
-                        elif req.recurrence_pattern == 3:
-                            current_date += timedelta(days=365)
-                    # Create the compliance
-                    if current_date <= approval.expiry_date:
-                        Compliance.objects.create(
-                            proposal=self,
-                            due_date=current_date,
-                            processing_status='future',
-                            approval=approval,
-                            requirement=req.requirement,
-                        )
-                        #TODO add logging for compliance'''
-
 
     def generate_compliances(self,approval, request):
         today = timezone.now().date()
@@ -2079,12 +2098,6 @@ class ProposalTrail(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('trail', 'proposal')
 
-    # @property
-    # def sections(self):
-    #     qs=self.activities.all()
-    #     categories=ActivityCategory.objects.filter(activity_type='land')
-    #     activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
-    #     return activities
 
 class ProposalTrailSection(models.Model):
     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='sections')
@@ -2097,15 +2110,6 @@ class ProposalTrailSection(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('section', 'proposal_trail')
 
-#TODO: Need to remove this model
-# class ProposalTrailActivity(models.Model):
-#     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='trail_activities')
-#     activity = models.ForeignKey(Activity, blank=True, null=True)
-#     section=models.ForeignKey(Section, blank=True, null= True)
-
-#     class Meta:
-#         app_label = 'commercialoperator'
-#         unique_together = ('proposal_trail', 'activity')
 
 class ProposalTrailSectionActivity(models.Model):
     trail_section = models.ForeignKey(ProposalTrailSection, blank=True, null=True, related_name='trail_activities')
@@ -2465,7 +2469,6 @@ class QAOfficerGroup(models.Model):
         assessable_states = ['with_qa_officer']
         return Proposal.objects.filter(processing_status__in=assessable_states)
 
-
 #
 #class ReferralRequestUserAction(UserAction):
 #    ACTION_LODGE_REQUEST = "Lodge request {}"
@@ -2823,9 +2826,15 @@ class ChecklistQuestion(RevisionedMixin):
         ('assessor_list','Assessor Checklist'),
         ('referral_list','Referral Checklist')
     )
+    ANSWER_TYPE_CHOICES = (
+        ('yes_no','Yes/No type'),
+        ('free_text','Free text type')
+    )
     text = models.TextField()
     list_type = models.CharField('Checklist type', max_length=30, choices=TYPE_CHOICES,
                                          default=TYPE_CHOICES[0][0])
+    answer_type = models.CharField('Answer type', max_length=30, choices=ANSWER_TYPE_CHOICES,
+                                         default=ANSWER_TYPE_CHOICES[0][0])
     #correct_answer= models.BooleanField(default=False)
     obsolete = models.BooleanField(default=False)
 
@@ -2866,6 +2875,7 @@ class ProposalAssessmentAnswer(RevisionedMixin):
     question=models.ForeignKey(ChecklistQuestion, related_name='answers')
     answer = models.NullBooleanField()
     assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
+    text_answer= models.CharField(max_length=256, blank=True, null=True)
 
     def __str__(self):
         return self.question.text

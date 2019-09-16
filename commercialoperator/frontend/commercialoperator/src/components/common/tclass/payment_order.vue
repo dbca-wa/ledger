@@ -4,7 +4,7 @@
 
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Admission Booking
+                    <h3 class="panel-title">Park Entry Fees
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody"></a>
                     </h3>
                 </div>

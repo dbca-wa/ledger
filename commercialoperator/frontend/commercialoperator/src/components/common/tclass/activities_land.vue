@@ -2,6 +2,7 @@
   <div class="row">
     <div class="col-sm-12">
       <div class="panel panel-default">
+
         <div class="panel-heading">
           <h3 class="panel-title">Activities and Location <small> (Parks)</small>
             <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
@@ -10,117 +11,63 @@
           </h3>
         </div>
         <div class="panel-body collapse in" :id="pBody">
-          <div class="borderDecoration col-sm-12">
-          <form class="form-horizontal col-sm-12" name="personal_form" method="post">
-            <label class="control-label"> Select the required access and activities</label>
-          </form>
-          <form>
-            <div class="form-horizontal col-sm-6">
-              <label class="control-label">Access</label>
-              <div class="" v-for="a in accessTypes">
-                <div class="form-check">
-                  <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="selected_access" :value="a.id" data-parsley-required  :disabled="!canEditActivities" />
-                  {{ a.name }}
-                </div>
-              </div>
-            </div>
-          </form>
-          <form>
-            <div class="form-horizontal col-sm-6">
-              <label class="control-label">Activities</label>
-              <div class="" v-for="a in activities">
-                <div class="form-check">
-                  <input  class="form-check-input" v-model="selected_activities" :value="a.id" ref="Checkbox" type="checkbox" :disabled="!canEditActivities"data-parsley-required  />
-                  {{ a.name }}
-                </div>
-              </div>
-            </div>
-          </form>
-          <!-- <form> -->
-
-            <!-- testing start <div class="form-horizontal col-sm-12">
-              <label class="control-label">Select Parks</label>
-              <div class="form-check">
-                  <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" data-parsley-required  />
-                  Select all parks from all regions
-              </div>
-              <div class="" v-for="r in api_regions">
-                <div class="form-check">
-                  <input @click="clickRegion($event, r)" :inderminante="true" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" data-parsley-required />
-                  {{ r.name }} -->
-                  <!-- <a data-toggle="collapse" :href="'#'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
-                <!-- </div>
-                <div class="col-sm-12" v-for="d in r.districts" :id="r.id">
-                  <div class="form-check ">
-                    <input @click="clickDistrict($event, d)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" data-parsley-required />
-                    {{ d.name }} -->
-                   <!--  <a data-toggle="collapse" :href="'#'+d.id+r.id" role="button" aria-expanded="true" aria controls="d.id+r.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> -->
-                  <!-- </div>
-                  <div class="" v-for="p in d.land_parks">
-                    <div class="form-check col-sm-12">
-                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" ref="Checkbox" type="checkbox" :id="'park'+p.id" data-parsley-required />
-                    {{ p.name }}
-                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right">Edit access and activities</a></span>
+            <div class="borderDecoration col-sm-12">
+                <form>
+                    <div class="col-sm-12" >
+                        <div>
+                            <!--<pre>{{ selected_access }}</pre>-->
+                            <label class="control-label">Select the required access</label>
+                                <!--
+                                The below 3 are equivalent - require an event emitted fro child component -'this.$emit("update:value", vm.value)', (or 'this.$emit("value", vm.value)' )
+                                <TreeSelect ref="selected_access" :proposal="proposal" @value="selected_access" :value="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+                                <TreeSelect ref="selected_access" :proposal="proposal" @value="selected_access=$event" :value="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+                                <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1"></TreeSelect>
+                                -->
+                                <TreeSelect ref="selected_access" :proposal="proposal" :value.sync="selected_access" :options="land_access_options" :default_expand_level="1" :disabled="!canEditActivities"></TreeSelect>
+                        </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div> testing end--> 
+                </form>
+            </div>
 
-            <div class="form-horizontal col-sm-12" >
-              <label class="control-label">Select Parks</label>
-              <div class="form-check">
-                  <input  class="form-check-input" @click="clickSelectAll" ref="Checkbox" type="checkbox" :disabled="!canEditActivities" data-parsley-required  />
-                  Select all parks from all regions
-              </div>
-              <div class="list-group list-group-root well">
-              <div class="" v-for="r in api_regions">
-                <div class="form-check col-sm-12 list-group-item" style="">
-                  <input @click="clickRegion($event, r)" class="form-check-input" ref="Checkbox" type="checkbox" :value="r.id" v-model="selected_regions" :id="'region'+r.id" :disabled="!canEditActivities" data-parsley-required />
-                  {{ r.name }}
-                  <a data-toggle="collapse" :href="'#'+'r'+r.id" role="button" aria-expanded="true" aria controls="r.id" ><span class="glyphicon glyphicon-chevron-up pull-right "></span></a>
-                </div>
-                <div class="col-sm-12 list-group collapse" :id="'r'+r.id">
-                  <div v-for="d in r.districts">
-                  <div  style="padding-left: 30px;" class="form-check list-group-item col-sm-12">
-                    <input @click="clickDistrict($event, d, r)" :value="d.id" class="form-check-input" ref="Checkbox" :id="'district'+d.id" v-model="selected_districts" type="checkbox" :disabled="!canEditActivities" data-parsley-required />
-                    {{ d.name }}
-                   <a data-toggle="collapse" :href="'#'+'d'+d.id" role="button" aria-expanded="true" aria controls="d.id"><span class="glyphicon glyphicon-chevron-up pull-right "></span></a> 
-                  </div>
-                  <div class="list-group collapse"  :id="'d'+d.id">
-                    <div class="form-check col-sm-12 list-group-item" style="padding-left: 45px;" v-for="p in d.land_parks">
-                      <input name="selected_parks" v-model="selected_parks" :value="p.id" class="form-check-input" :ref="'park'+p.id" type="checkbox" :id="'park'+p.id" :disabled="!canEditActivities" data-parsley-required @click="clickPark($event, p, d)"/>
-                    {{ p.name }}
-                      <span><a @click="edit_activities(p.id, p.name)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit access and activities</a></span>
+            <div class="borderDecoration col-sm-12">
+                <form>
+                    <div class="col-sm-12" >
+                        <div>
+                            <!--<pre>{{ selected_activities }}</pre>-->
+                            <label class="control-label">Select the required activities</label>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_activities" :options="land_activity_options" :default_expand_level="1" :disabled="!canEditActivities"></TreeSelect>
+                        </div>
                     </div>
-                  </div>
-                <!--</div>  -->
-                </div>
-                </div>
-              </div>
-            </div>
+                </form>
             </div>
 
-            <!-- <div>{{selected_parks}}</div>
-            <div>{{selected_parks_activities}}</div>   -->           
-<!--           </form>
+            <div class="borderDecoration col-sm-12">
+                <form>
+                    <div class="col-sm-12" >
+                        <div>
+                            <!--<pre>{{ selected_parks }}</pre>-->
+                            <label class="control-label">Select Parks</label>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_parks" :options="park_options" :default_expand_level="1" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
+                        </div>
+                    </div>
+                </form>
+            </div> 
 
- -->      </div> 
-          <div class="borderDecoration col-sm-12">
-              <div  v-for="rd in required_documents_list">
-                <div v-if="rd.can_view">
-                  <label>{{rd.question}}</label>
-                  <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id" :readonly="proposal.readonly"></FileField>
+            <div class="borderDecoration col-sm-12">
+                <div  v-for="rd in required_documents_list">
+                    <div v-if="rd.can_view">
+                        <label>{{rd.question}}</label>
+                        <FileField :proposal_id="proposal.id" isRepeatable="true" :name="'req_doc'+rd.id" :required_doc_id="rd.id" label="Add Document" :id="'proposal'+proposal.id+'req_doc'+rd.id" :readonly="proposal.readonly"></FileField>
+                    </div>
                 </div>
-              </div>
-          </div>
-          <div class="borderDecoration col-sm-12">
-            <label class="control-label">Provide details of every vehicle you plan to use when accessing the parks</label>
-              <VehicleTable :url="vehicles_url" :proposal="proposal" ref="vehicles_table"></VehicleTable>
-          </div>
+            </div>
+            <div class="borderDecoration col-sm-12">
+                <label class="control-label">Provide details of every vehicle you plan to use when accessing the parks</label>
+                  <VehicleTable :url="vehicles_url" :proposal="proposal" :access_types="land_access_types" ref="vehicles_table"></VehicleTable>
+            </div>
         </div>
       </div>
-      
+
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Activities and Location <small> (Trails)</small>
@@ -132,47 +79,55 @@
 
         <div class="panel-body collapse in" :id="tBody">
           <div>
+
             <div class="borderDecoration col-sm-12">
-            <form class="form-horizontal col-sm-12" name="trails_form" method="post">
-              <label class="control-label"> Select the required activities for trails</label>
-            </form>
-            <form>
-              <div class="form-horizontal col-sm-6">
-                <label class="control-label">Activities</label>
-                <div class="" v-for="a in activities">
-                  <div class="form-check">
-                    <input  class="form-check-input" ref="Checkbox" type="checkbox" v-model="trail_activities" :value="a.id" data-parsley-required :disabled="!canEditActivities"/>
-                      {{ a.name }}
-                  </div>
-                </div>
-              </div>
-            </form> 
-            <div>
-              <form>
-                <div class="form-horizontal col-sm-12">
-                  <label class="control-label">Select the long distance trails</label>
-                  <div class="list-group list-group-root well">
-                    <div class="" v-for="t in trails">
-                      <div class="form-check col-sm-12 list-group-item">
-                        <input   name="selected_trails" v-model="selected_trails" :value="{'trail': t.id,'sections': t.section_ids}" class="form-check-input" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
-                        {{ t.name }} <span><a @click="edit_sections(t)" target="_blank" class="control-label pull-right" v-if="canEditActivities">Edit section and activities</a></span>
-                      </div>
+                <form>
+                    <div class="col-sm-12" >
+                        <div>
+                            <!--<pre>{{ trail_activities }}</pre>-->
+                            <!--<pre>{{ selected_trails_activities }}</pre>-->
+                            <label class="control-label">Select the required activities for trails</label>
+                            <TreeSelect :proposal="proposal" :value.sync="trail_activities" :options="trail_activity_options" :default_expand_level="1" :disabled="!canEditActivities"></TreeSelect>
+                        </div>
                     </div>
-                  </div>
-                </div>
-              </form>
+                </form>
             </div>
-          </div>
+
+            <div class="borderDecoration col-sm-12">
+                <form>
+                    <div class="col-sm-12" >
+                        <div>
+                            <!--<pre>{{ selected_trail_ids }}</pre>-->
+                            <label class="control-label">Select the required activities</label>
+                            <TreeSelect :proposal="proposal" :value.sync="selected_trail_ids" :options="trail_options" :default_expand_level="1" open_direction="top" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!--
+            <div>Selected_Parks: {{selected_parks}}</div><br>
+            <div>Selected_Parks_Activities: {{selected_parks_activities}}</div>
+            <div>Trail: {{selected_trails}}</div>
+            <div>Activities: {{selected_trails_activities}}</div>
+            -->
+            <!--
+            <div>Trail_actvities: {{trail_activities}}</div><br>
+            <div>Selected_Trail: {{selected_trails}}</div><br>
+            <div>Selected_Trailss_Activities: {{selected_trails_activities}}</div>
+            -->
+
+
           </div>
         </div>
       </div>
-      <!-- <div>{{selected_trails}}</div>
-      <div>{{selected_trails_activities}}</div> -->
+
+
       <div>
-              <editParkActivities ref="edit_activities" :proposal="proposal" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
+              <editParkActivities ref="edit_activities" :proposal="proposal" :canEditActivities="canEditActivities" @refreshSelectionFromResponse="refreshSelectionFromResponse"></editParkActivities>
       </div>
       <div>
-              <editTrailActivities ref="edit_sections" :proposal="proposal" @refreshTrailFromResponse="refreshTrailFromResponse"></editTrailActivities>
+              <editTrailActivities ref="edit_sections" :proposal="proposal" :canEditActivities="canEditActivities" @refreshTrailFromResponse="refreshTrailFromResponse"></editTrailActivities>
       </div>
 
 
@@ -187,6 +142,8 @@ import VehicleTable from '@/components/common/vehicle_table.vue'
 import editParkActivities from './edit_park_activities.vue'
 import editTrailActivities from './edit_trail_activities.vue'
 import FileField from './required_docs.vue'
+import TreeSelect from '@/components/forms/treeview.vue'
+//import 'custom-event-polyfill'
 import {
   api_endpoints,
   helpers
@@ -206,6 +163,15 @@ export default {
         data:function () {
           let vm = this;
             return{
+                park_options: [],
+                land_access_options: [],
+                land_activity_options: [],
+                trail_options: [],
+                trail_activity_options: [],
+                land_access_types: [],
+                added_trail_id: [],
+                removed_trail_id: [],
+                
                 pBody: 'pBody'+vm._uid,
                 tBody: 'lBody'+vm._uid,
                 values:null,
@@ -220,6 +186,8 @@ export default {
                 selected_activities:[],
                 selected_activities_before:[],
                 selected_trails:[],
+                selected_trail_ids:[],
+                selected_trail_ids_before:[],
                 trail_activities:[],
                 trail_activities_before:[],
                 activities:[],
@@ -239,17 +207,107 @@ export default {
           editParkActivities,
           editTrailActivities,
           FileField,
+          TreeSelect,
         },
         computed:{
 
         },
         watch:{
-          selected_regions: function(val){
-            //WIP
+          selected_trail_ids: function(){
             let vm=this;
-            var added_region=$(vm.selected_regions).not(vm.selected_regions_before).get();
-            //console.log(added_region)
+            //if (vm.proposal){
+            //  vm.proposal.trails=vm.selected_trails;
+            //}
+
+            vm.selected_trails = []
+            for (var i = 0; i < vm.selected_trail_ids.length; i++) {
+                var data = vm.get_selected_trail_data(vm.selected_trail_ids[i] )
+                if (data !== null) {
+                    vm.selected_trails.push( data )
+                }
+            }
+
+            try {
+                var removed_trail_id=$(vm.selected_trail_ids_before).not(vm.selected_trail_ids).get();
+            } catch (error) {
+                console.log('removed_trail: ' + error)
+            }
+
+            try {
+                var added_trail_id=$(vm.selected_trail_ids).not(vm.selected_trail_ids_before).get();
+            } catch (error) {
+                console.log('added_trail: ' + error)
+            }
+            vm.selected_trail_ids_before=vm.selected_trail_ids;
+
+            var current_activities=vm.trail_activities
+
+            if(vm.selected_trails_activities.length==0){
+              for (var i = 0; i < vm.selected_trails.length; i++) {
+                 var data=null;
+                 var section_activities=[];
+
+                 for (var j=0; j<vm.selected_trails[i].sections.length; j++){
+                  var section_data={
+                    'section': vm.selected_trails[i].sections[j],
+                    'activities': current_activities
+                  }
+                  section_activities.push(section_data)
+                 }
+                 data={
+                  'trail': vm.selected_trails[i].trail,
+                  'activities': section_activities 
+                 }
+                 vm.selected_trails_activities.push(data);
+              }
+            }
+            else{
+              if(added_trail_id.length!=0){
+                for(var i=0; i<added_trail_id.length; i++) {
+                  var found=false
+                  for (var j=0; j<vm.selected_trails_activities.length; j++){
+                        //console.log(added_trail[i])
+                        if(vm.selected_trails_activities[j].trail==added_trail_id[i]){
+                          found = true;
+                        }
+                  }
+                  if(found==false) {
+                    //original data object
+                    var section_activities=[];
+                    var trail_data = vm.get_selected_trail_data(added_trail_id[i] )
+                    if (trail_data !== null) {
+                        for(var k=0; k<trail_data.sections.length; k++){
+                          var section_data={
+                          'section': trail_data.sections[k],
+                          'activities': current_activities
+                          }
+                          section_activities.push(section_data)
+                        }
+                        data={
+                          'trail': added_trail_id[i],
+                          'activities': section_activities
+                        }
+                    }
+                    vm.selected_trails_activities.push(data);
+                  }
+                }
+              }
+              if(removed_trail_id.length!=0){
+                for(var i=0; i<removed_trail_id.length; i++)
+                { 
+                  for (var j=0; j<vm.selected_trails_activities.length; j++){
+                    if(vm.selected_trails_activities[j].trail==removed_trail_id[i]){
+                      vm.selected_trails_activities.splice(j,1)}
+                  }
+                }
+              }
+            }
+            if (vm.proposal){
+              vm.proposal.trails=vm.selected_trails;
+              vm.proposal.selected_trails_activities=vm.selected_trails_activities;
+            }
           },
+
           selected_parks: function(){
             let vm = this;
             var removed_park=$(vm.selected_parks_before).not(vm.selected_parks).get();
@@ -318,7 +376,7 @@ export default {
                }
           }
           else{
-            
+
             for (var i=0; i<vm.selected_parks_activities.length; i++)
             { 
               if(added.length!=0){
@@ -360,9 +418,9 @@ export default {
           }
           else{
             for (var i=0; i<vm.selected_parks_activities.length; i++)
-            { 
+            {
               if(added.length!=0){
-               
+
                 for(var j=0; j<added.length; j++)
                 {
                   if(vm.selected_parks_activities[i].access.indexOf(added[j])<0){
@@ -387,104 +445,27 @@ export default {
             vm.checkRequiredDocuements(vm.selected_parks_activities)
             if (vm.proposal){
               vm.proposal.selected_parks_activities=vm.selected_parks_activities;
+              vm.proposal.selected_land_access=vm.selected_access;
+              vm.proposal.selected_land_activities=vm.selected_activities;
             }
         },
         selected_trails_activities: function(){
             let vm=this;
+
             if (vm.proposal){
               vm.proposal.selected_trails_activities=vm.selected_trails_activities;
             }
         },
-        selected_trails: function(){
-            let vm=this;
-            if (vm.proposal){
-              vm.proposal.trails=vm.selected_trails;
-            }
-
-            var removed_trail=$(vm.selected_trails_before).not(vm.selected_trails).get();
-            var added_trail=$(vm.selected_trails).not(vm.selected_trails_before).get();
-            vm.selected_trails_before=vm.selected_trails;
-
-            var current_activities=vm.trail_activities
-
-            if(vm.selected_trails_activities.length==0){
-              for (var i = 0; i < vm.selected_trails.length; i++) {
-                 var data=null;
-                 // data={
-                 //  'trail': vm.selected_trails[i],
-                 //  'activities': current_activities
-                 // }
-                 var section_activities=[];
-
-                 for (var j=0; j<vm.selected_trails[i].sections.length; j++){
-                  var section_data={
-                    'section': vm.selected_trails[i].sections[j],
-                    'activities': current_activities
-                  }
-                  section_activities.push(section_data)
-                 }
-                 data={
-                  'trail': vm.selected_trails[i].trail,
-                  'activities': section_activities 
-                 }
-                 vm.selected_trails_activities.push(data);
-               }
-            }
-            else{
-              if(added_trail.length!=0){
-                for(var i=0; i<added_trail.length; i++)
-                { 
-                  var found=false
-                  for (var j=0; j<vm.selected_trails_activities.length; j++){
-                    //console.log(added_trail[i])
-                    if(vm.selected_trails_activities[j].trail==added_trail[i].trail){ 
-                      found = true;}
-                  }
-                  if(found==false)
-                  {//original data object
-                    var section_activities=[];
-                    for(var k=0; k<added_trail[i].sections.length; k++){
-                      var section_data={
-                      'section': added_trail[i].sections[k],
-                      'activities': current_activities
-                      }
-                      section_activities.push(section_data)
-                    }
-                    data={
-                    'trail': added_trail[i].trail,
-                    'activities': section_activities,                   }
-                    // data={
-                    // 'trail': added_trail[i].trail,
-                    // 'activities':{
-                    //   'zone': added_trail[i].zones,
-                    //   'activities': current_activities,
-                    // }
-                    //}
-                   vm.selected_trails_activities.push(data);
-                  }
-                }
-              }
-              if(removed_trail.length!=0){
-                for(var i=0; i<removed_trail.length; i++)
-                { 
-                  for (var j=0; j<vm.selected_trails_activities.length; j++){
-                    if(vm.selected_trails_activities[j].trail==removed_trail[i].trail){
-                      vm.selected_trails_activities.splice(j,1)}
-                  }
-                }
-              }
-            }
-          },
         trail_activities: function(){
           let vm=this;
           var removed=$(vm.trail_activities_before).not(vm.trail_activities).get();
           var added=$(vm.trail_activities).not(vm.trail_activities_before).get();
           vm.trail_activities_before=vm.trail_activities;
           if(vm.selected_trails_activities.length==0){
-            for (var i = 0; i < vm.selected_trails.length; i++) {
+            for (var i = 0; i < vm.selected_trail_ids.length; i++) {
                  var data=null;
                  data={
-                  'trail': vm.selected_trails[i],
+                  'trail': vm.selected_trail_ids[i],
                   'activities': vm.trail_activities
                  }
                  vm.selected_trails_activities.push(data);
@@ -492,9 +473,8 @@ export default {
           }
           else{
             for (var i=0; i<vm.selected_trails_activities.length; i++)
-            { 
+            {
               if(added.length!=0){
-               
                 for(var j=0; j<added.length; j++)
                 {
                   // if(vm.selected_trails_activities[i].activities.indexOf(added[j])<0){
@@ -510,10 +490,6 @@ export default {
               if(removed.length!=0){
                 for(var j=0; j<removed.length; j++)
                 {
-                  // var index=vm.selected_trails_activities[i].activities.indexOf(removed[j]);
-                  // if(index!=-1){
-                  //   vm.selected_trails_activities[i].activities.splice(index,1)
-                  // }
                   for(var k=0; k<vm.selected_trails_activities[i].activities.length; k++){
                     var index=vm.selected_trails_activities[i].activities[k].activities.indexOf(removed[j]);
                     if(index!=-1){
@@ -528,37 +504,82 @@ export default {
         },
         },
         methods:{
-          fetchRegions: function(){
+          get_selected_trail_data:function(trail_id){
+            let vm = this;
+            for (var i=0; i<vm.trails.length; i++) {
+              if (vm.trails[i].id == trail_id) {
+                //console.log(vm.trails[i].section_ids)
+                return {'trail': trail_id, 'sections': vm.trails[i].section_ids}
+              }
+            }
+            return null;
+          },
+          get_selected_trail_ids:function(node){
             let vm = this;
 
-            vm.$http.get(api_endpoints.regions).then((response) => { 
-            vm.api_regions = response.body;
-            },(error) => {
-            console.log(error);
-            })
+            var ids = []
+            for (var i=0; i<vm.selected_trails.length; i++) {
+                ids.push( vm.selected_trails[i].trail )
+            }
+            return ids.filter(function(item, pos) { return ids.indexOf(item) == pos;  }) // returns unique array ids
           },
-          fetchTrails: function(){
+
+          fetchParkTreeview: function(){
             let vm = this;
-            vm.$http.get('/api/trails.json').then((response) => {
-            vm.trails = response.body;
-            
+
+            //console.log('treeview_url: ' + api_endpoints.tclass_container_land)
+            vm.$http.get(api_endpoints.tclass_container_land)
+            .then((response) => {
+                vm.park_options = [
+                    {
+                        'id': 'All',
+                        'name':'Select all parks from all regions',
+                        'children': response.body['land_parks'] // land_parks --> regions/districts/parks nested json
+                    }
+                ]
+                vm.api_regions = response.body['land_parks']
+
+                vm.land_access_options = [
+                    {
+                        'id': 'All',
+                        'name':'Select all',
+                        'children': response.body['access_types']
+                    }
+                ]
+                vm.land_access_types = response.body['access_types'] // needed to pass to Vehicle component
+                vm.access = response.body['access_types'] // needed to pass to Vehicle component
+
+                vm.land_activity_options = [
+                    {
+                        'id': 'All',
+                        'name':'Select all',
+                        'children': response.body['land_activity_types']
+                    }
+                ]
+                vm.trail_activity_options = vm.land_activity_options
+                vm.activities = response.body['land_activity_types'] // needed to pass to Vehicle component
+
+                vm.trail_options = [
+                    {
+                        'id': 'All',
+                        'name':'Select all',
+                        'children': response.body['trails']
+                    }
+                ]
+                vm.trails = response.body['trails']
+                vm.required_documents_list = response.body['land_required_documents']
+                vm.fetchRequiredDocumentList();
+
             },(error) => {
-            console.log(error);
+                console.log(error);
             })
           },
           fetchRequiredDocumentList: function(){
             let vm = this;
-            vm.$http.get('/api/required_documents.json').then((response) => {
-            vm.required_documents_list = response.body;
             for(var l=0; l<vm.required_documents_list.length; l++){
               vm.required_documents_list[l].can_view=false;
               vm.checkRequiredDocuements(vm.selected_parks_activities)
-              //console.log('park',vm.selected_parks_activities)
             }
-            },(error) => {
-            console.log(error);
-            })
-
           },
           checkRequiredDocuements: function(selected_parks_activities){
             let vm=this;
@@ -595,22 +616,32 @@ export default {
             }
           }
           },
-          edit_activities: function(p_id, p_name){
+          edit_activities_child_test:function(node){
+              alert("IN PARENT:  park_id: " + node.raw.id + ", park_name: " + node.raw.label );
+          },
+          edit_activities: function(node){
             let vm=this;
+            var p_id = node.raw.id;
+            var p_name = node.raw.name;
+
             for (var j=0; j<vm.selected_parks_activities.length; j++){
-              if(vm.selected_parks_activities[j].park==p_id){ 
-                this.$refs.edit_activities.park_activities= vm.selected_parks_activities[j].activities;
-                this.$refs.edit_activities.park_access= vm.selected_parks_activities[j].access
+              if(vm.selected_parks_activities[j].park==p_id){
+                this.$refs.edit_activities.park_activities = vm.selected_parks_activities[j].activities;
+                this.$refs.edit_activities.park_access = vm.selected_parks_activities[j].access
               }
             }
             this.$refs.edit_activities.park_id=p_id;
             this.$refs.edit_activities.park_name=p_name;
             this.$refs.edit_activities.fetchAllowedActivities(p_id)
             this.$refs.edit_activities.fetchAllowedAccessTypes(p_id)
-            this. $refs.edit_activities.isModalOpen = true;
+            this.$refs.edit_activities.isModalOpen = true;
           },
-          edit_sections: function(trail){
+          edit_sections: function(node){
             let vm=this;
+            var trail = node.raw;
+            //trail['id']=node.id
+
+            console.log('Trail 0: ' + JSON.stringify(trail))
             //inserting a temporary variables checked and new_activities to store and display selected activities for each section.
             for(var l=0; l<trail.sections.length; l++){
               trail.sections[l].checked=false;
@@ -629,7 +660,7 @@ export default {
                 } 
               }
             }
-            //console.log(trail);
+            console.log('Trail: ' + JSON.stringify(trail))
             this.$refs.edit_sections.trail=trail;
             this. $refs.edit_sections.isModalOpen = true;
           },
@@ -651,251 +682,6 @@ export default {
               }
             }
           },
-          clickSelectAll: function(e){
-            let vm=this;
-            var checked=e.target.checked;
-            var new_regions=[];
-            var new_district=[];
-            var new_parks = [];
-            if(checked){
-              for(var i=0; i<vm.api_regions.length; i++){
-                new_regions.push(vm.api_regions[i].id);
-                //change the inderminate and checked states of region checkboxes
-                var region = $("#region"+vm.api_regions[i].id)[0]
-                region.checked=true;
-                region.indeterminate=false;
-
-                for (var j=0; j<vm.api_regions[i].districts.length; j++){
-                  new_district.push(vm.api_regions[i].districts[j].id);
-                  //change the inderminate and checked states of district checkboxes
-                  var district = $("#district"+vm.api_regions[i].districts[j].id)[0]
-                    district.checked=true;
-                    district.indeterminate=false;
-                  for (var k=0; k<vm.api_regions[i].districts[j].land_parks.length; k++){
-                    new_parks.push(vm.api_regions[i].districts[j].land_parks[k].id);
-                  }
-                }
-              }
-              vm.selected_regions=new_regions;
-              vm.selected_districts=new_district;
-              vm.selected_parks=new_parks;
-            }
-          if(!checked){
-            for(var i=0; i<vm.api_regions.length; i++){
-              var region = $("#region"+vm.api_regions[i].id)[0]
-                region.checked=false;
-                region.indeterminate=false;
-                for (var j=0; j<vm.api_regions[i].districts.length; j++){
-                    var district = $("#district"+vm.api_regions[i].districts[j].id)[0]
-                    district.checked=false;
-                    district.indeterminate=false;
-                }
-            }
-            vm.selected_regions=[];
-            vm.selected_districts=[];
-            vm.selected_parks=[];
-          }
-          },
-          clickRegion: function(e, r){
-            var checked=e.target.checked;
-            if(checked){
-              for(var i=0; i<r.districts.length; i++){
-                var index=this.selected_districts.indexOf(r.districts[i].id);
-                if(index==-1)
-                {
-                  this.selected_districts.push(r.districts[i].id)
-                  var district = $("#district"+r.districts[i].id)[0]
-                  district.checked=true;
-                  district.indeterminate=false;
-                  for(var j=0; j<r.districts[i].land_parks.length; j++){
-                    var index_park=this.selected_parks.indexOf(r.districts[i].land_parks[j].id);
-                    if(index_park==-1)
-                    {
-                      var s = helpers.copyObject(this.selected_parks);
-                      s.push(r.districts[i].land_parks[j].id);
-                      this.selected_parks=s
-                    }
-                  }   
-                }
-              }
-            }
-            else{
-              for(var i=0; i<r.districts.length; i++){
-                var index=this.selected_districts.indexOf(r.districts[i].id);
-                if(index!=-1){
-                  this.selected_districts.splice(index,1)
-                  var district = $("#district"+r.districts[i].id)[0]
-                  district.checked=false;
-                  district.indeterminate=false;
-                  for(var j=0; j<r.districts[i].land_parks.length; j++){
-                    var index_park=this.selected_parks.indexOf(r.districts[i].land_parks[j].id);
-                    if(index_park!=-1)
-                    {
-                      var s = helpers.copyObject(this.selected_parks);
-                      s.splice(index_park,1);
-                      this.selected_parks=s
-                    }
-                  }
-
-                }
-              }
-            }
-          },
-          clickDistrict: function(e, d, r){
-            let vm=this;
-            var original_region=r;
-            var checked=e.target.checked;
-            if(checked){
-              for(var i=0; i<d.land_parks.length; i++){
-                var index=this.selected_parks.indexOf(d.land_parks[i].id);
-                if(index==-1)
-                {
-                  var r = helpers.copyObject(this.selected_parks);
-                  r.push(d.land_parks[i].id);
-                  this.selected_parks=r
-                  
-                }
-              }
-            }
-            else{
-              if(e.target.indeterminate==false){
-              for(var i=0; i<d.land_parks.length; i++){
-                var index=this.selected_parks.indexOf(d.land_parks[i].id);
-                if(index!=-1){
-                  var r = helpers.copyObject(this.selected_parks);
-                  r.splice(index,1);
-                  this.selected_parks=r
-                  //this.selected_parks.splice(index,1)
-                }
-              }
-            }
-            }
-            this.handleDistrictChange(e,d,original_region);
-          },
-
-          handleDistrictChange: function(e,d, r){
-            //console.log('here')
-            var inder_state=false;
-            var checked_state=false;
-            var checked_all=true;
-            var unchecked_all=true;
-            var elem=$("#region"+r.id)[0]
-            inder_state=elem.indeterminate
-            checked_state=elem.checked
-            if(e.target.checked){
-              if(!checked_state){
-                for(var i=0; i<r.districts.length; i++){
-                  var district = $("#district"+r.districts[i].id)[0]
-                  if(district.checked==false){
-                    checked_all=false;
-                  }
-                }
-                if(checked_all){
-                  elem.indeterminate=false;
-                  elem.checked=true;
-                  var index=this.selected_regions.indexOf(r.id);
-                  if(index==-1){
-                    this.selected_regions.push(r.id)
-                  }
-                }
-                else{
-                  elem.indeterminate=true;
-                  elem.checked=false;
-                }
-              }              
-            }
-            else{//if unselected
-              if(e.target.indeterminate==false){
-              for(var i=0; i<r.districts.length; i++){
-                  var district = $("#district"+r.districts[i].id)[0]
-                  if(district.checked==true){
-                    unchecked_all=false;
-                  }
-                }
-                if(unchecked_all){
-                  elem.indeterminate=false;
-                  elem.checked=false;
-                  var index=this.selected_regions.indexOf(r.id);
-                  if(index>-1){
-                    this.selected_regions.splice(index,1)
-                  }
-                }
-                else{
-                  var index=this.selected_regions.indexOf(r.id);
-                  if(index>-1){
-                    this.selected_regions.splice(index,1)
-                  }
-                  elem.indeterminate=true;
-                  elem.checked=false;
-                }
-              }
-              else{
-                elem.indeterminate=true;
-                  elem.checked=false;
-              }
-            }
-          },
-          
-
-          clickPark: function(e,p,d){
-            var inder_state=false;
-            var checked_state=false;
-            var checked_all=true;
-            var unchecked_all=true;
-            var elem=$("#district"+d.id)[0]
-            inder_state=elem.indeterminate
-            checked_state=elem.checked
-            if(e.target.checked){
-              if(!checked_state){
-                for(var i=0; i<d.land_parks.length; i++){
-                  var park = $("#park"+d.land_parks[i].id)[0]
-                  if(park.checked==false){
-                    checked_all=false;
-                  }
-                }
-                if(checked_all){
-                  elem.indeterminate=false;
-                  elem.checked=true;
-                  var index=this.selected_districts.indexOf(d.id);
-                  if(index==-1){
-                    this.selected_districts.push(d.id)
-                  }
-                }
-                else{
-                  elem.indeterminate=true;
-                  elem.checked=false;
-                }
-              }              
-            }
-            else{//if unselected
-              for(var i=0; i<d.land_parks.length; i++){
-                  var park = $("#park"+d.land_parks[i].id)[0]
-                  if(park.checked==true){
-                    unchecked_all=false;
-                  }
-                }
-                if(unchecked_all){
-                  elem.indeterminate=false;
-                  elem.checked=false;
-                  var index=this.selected_districts.indexOf(d.id);
-                  if(index>-1){
-                    this.selected_districts.splice(index,1)
-                  }
-                }
-                else{
-                  var index=this.selected_districts.indexOf(d.id);
-                  if(index>-1){
-                    this.selected_districts.splice(index,1)
-                  }
-                  elem.indeterminate=true;
-                  elem.checked=false;
-                }
-            }
-            var event = document.createEvent('HTMLEvents');
-            event.initEvent('click', true, true);
-            elem.dispatchEvent(event);
-          },
-          
           find_recurring: function(array){
             var common=new Map();
             array.forEach(function(obj){
@@ -915,13 +701,13 @@ export default {
 
         store_trails: function(trails){
           let vm=this;
-          var all_activities=[] //to store all activities for all sections so can find recurring onees to display selected_activities
+          var all_activities=[] //to store all activities for all sections so can find recurring ones to display selected_activities
           var trail_list=[]
           for (var i = 0; i < trails.length; i++) {
               var current_trail=trails[i].trail.id
               var current_activities=[]
               var current_sections=[]
-              
+
               for (var j = 0; j < trails[i].sections.length; j++) {
                 var trail_activities=[];
                 for (var k = 0; k < trails[i].sections[j].trail_activities.length; k++) {
@@ -935,59 +721,35 @@ export default {
                 all_activities.push({'key': trail_activities})
                 //current_sections.push(trails[i].sections[j].section)
               }
-               
+
                var data={
                 'trail': current_trail,
                 'activities': current_activities 
                }
                vm.selected_trails_activities.push(data)
-               
             }
-            
+
           for (var i=0; i<trails.length; i++)
-            { 
-              
+            {
               trail_list.push({'trail':trails[i].trail.id, 'sections':trails[i].trail.section_ids})
             }
           vm.selected_trails=trail_list
           //console.log(trail_list)
           vm.trail_activities = vm.find_recurring(all_activities)
         },
-        createParkEvent: function(selected_parks){
-          let vm= this;
-          for(var i=0;i<selected_parks.length; i++){
-            var elem=$("#park"+selected_parks[i])[0];
-            var event = document.createEvent('HTMLEvents');
-            event.initEvent('click', true, true);
-            elem.dispatchEvent(event);
-          }
-        },
         eventListeners: function(){
-            
         },
     },
 
         mounted: function() {
 
             let vm = this;
+            vm.fetchParkTreeview()
+
+
             vm.proposal.selected_trails_activities=[];
             vm.proposal.selected_parks_activities=[];
             //vm.proposal.marine_parks_activities=[];
-            vm.fetchRequiredDocumentList();
-            Vue.http.get('/api/access_types.json').then((res) => {
-                      vm.accessTypes=res.body;                 
-                },
-              err => { 
-                        console.log(err);
-                  }); 
-            Vue.http.get('/api/land_activities.json').then((res) => {
-                      vm.activities=res.body;                 
-                },
-              err => { 
-                        console.log(err);
-                  }); 
-            //vm.fetchRegions(); 
-            //vm.fetchTrails();
             //vm.fetchRequiredDocumentList();
 
             for (var i = 0; i < vm.proposal.land_parks.length; i++) {
@@ -1018,25 +780,24 @@ export default {
               access_list.push({'key' : vm.selected_parks_activities[i].access});
             }
 
+            //vm.selected_activities = vm.proposal.land_activities
+            //vm.selected_access=vm.proposal.land_access
             vm.selected_activities = vm.find_recurring(activity_list)
             vm.selected_access=vm.find_recurring(access_list)
             vm.selected_parks=park_list
-            
+
             this.$nextTick(() => {
               let vm=this;
               //vm.eventListeners();
             });
-            //vm.eventListeners();
 
             vm.store_trails(vm.proposal.trails);
+            //vm.trail_activities = vm.proposal.trail_activities
+            //vm.selected_trail_ids = vm.proposal.trail_section_activities
+            //vm.clear_selected_trails_activities()
+            vm.selected_trail_ids = vm.get_selected_trail_ids()
+            vm.selected_trail_ids_before = vm.selected_trail_ids
 
-
-            // for (var i = 0; i < vm.proposal.trails.length; i++) {
-            //   this.selected_trails.push(vm.proposal.trails[i].trail.id);
-            // } 
-
-            
-            
             $( 'a[data-toggle="collapse"]' ).on( 'click', function () {
               //console.log(this);
             var chev = $( this ).children()[ 0 ];
@@ -1044,33 +805,13 @@ export default {
                 $( chev ).toggleClass( "glyphicon-chevron-down glyphicon-chevron-up" );
             }, 100 );
             }); 
-
-            //check why this is not working for list items
-            // var list_item=$('.list-group-item')
-            // var a_item=list_item.children[ 1 ]
-            // $(a_item).on( 'click', function () {
-            //   console.log(this);
-            //   var chev2 = $( this ).children()[ 0 ];
-            //   window.setTimeout( function () {
-            //       $( chev2 ).toggleClass( "glyphicon-chevron-up glyphicon-chevron-down" );
-            // }, 100 );
-            // }); 
-            // $('.list-group-item').on('click', function(){
-            //   console.log(this);
-            //   $('.glyphicon', this).toggleClass('glyphicon-chevron-up').toggleClass('glyphicon-chevron-down');
-            // })
         },
         updated: function(){
-          let vm=this;
-          if(vm.api_regions){ //check if Regions, Parks and districts are loaded in DOM
-                vm.createParkEvent(vm.selected_parks);           
-          }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
         },
         created: function(){
-          let vm=this;
-          vm.fetchRegions(); 
-          vm.fetchTrails();
+          //let vm=this;
+          //vm.fetchRegions(); 
+          //vm.fetchTrails();
         },
 
     }
@@ -1120,5 +861,20 @@ export default {
 .list-group-item .glyphicon {
     margin-right: 5px;
 }
+
+/*
+.myselect {
+    position: relative;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+.dropdown-pane {
+  position: relative;
+    margin-bottom: 0;
+    padding: 0;
+}
+*/
+
 </style>
 
