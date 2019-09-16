@@ -41,6 +41,6 @@ class SearchKeywordSerializer(serializers.Serializer):
         required=False
     )
 
-
 class SearchReferenceSerializer(serializers.Serializer):
     url_string = serializers.CharField()
+

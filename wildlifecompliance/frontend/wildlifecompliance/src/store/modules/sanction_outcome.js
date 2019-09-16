@@ -17,14 +17,26 @@ export const sanctionOutcomeStore = {
     },
     mutations: {
         updateSanctionOutcome(state, sanction_outcome) {
-            console.log('updateSanctionOutcome');
-            console.log(sanction_outcome);
             Vue.set(state, 'sanction_outcome', {
                 ...sanction_outcome
             });
             if (state.sanction_outcome.date_of_issue) {
                 state.sanction_outcome.date_of_issue = moment(state.sanction_outcome.date_of_issue, 'YYYY-MM-DD').format('DD/MM/YYYY');
             }
+            let commsLogsDocumentUrl = helpers.add_endpoint_join(
+                api_endpoints.sanction_outcome,
+                state.sanction_outcome.id + "/process_comms_log_document/"
+                )
+            Vue.set(state.sanction_outcome, 'commsLogsDocumentUrl', commsLogsDocumentUrl); 
+        },
+        updateAssignedToId(state, assigned_to_id) {
+            Vue.set(state.sanction_outcome, 'assigned_to_id', assigned_to_id);
+        },
+        updateCanUserAction(state, can_user_action) {
+            Vue.set(state.sanction_outcome, 'can_user_action', can_user_action);
+        },
+        updateRelatedItems(state, related_items) {
+            Vue.set(state.sanction_outcome, 'related_items', related_items);
         },
     },
     actions: {
@@ -98,6 +110,15 @@ export const sanctionOutcomeStore = {
         },
         setSanctionOutcome({ commit, }, sanction_outcome) {
             commit("updateSanctionOutcome", sanction_outcome);
+        },
+        setAssignedToId({ commit, }, assigned_to_id) {
+            commit("updateAssignedToId", assigned_to_id);
+        },
+        setCanUserAction({ commit, }, can_user_action) {
+            commit("updateCanUserAction", can_user_action);
+        },
+        setRelatedItems({ commit }, related_items ) {
+            commit("updateRelatedItems", related_items);
         },
     },
 }

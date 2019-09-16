@@ -101,6 +101,20 @@ LOGGING['loggers']['application_checkout'] = {
     'handlers': ['application_checkout'],
     'level': 'INFO'
 }
+# # Additional logging for compliancemanagement
+# LOGGING['handlers']['compliancemanagement'] = {
+#     'level': 'INFO',
+#     'class': 'logging.handlers.RotatingFileHandler',
+#     'filename': os.path.join(
+#         BASE_DIR,
+#         'logs',
+#         'wildlifecompliance_compliancemanagement.log'),
+#     'formatter': 'verbose',
+#     'maxBytes': 5242880}
+# LOGGING['loggers']['compliancemanagement'] = {
+#     'handlers': ['compliancemanagement'],
+#     'level': 'INFO'
+# }
 
 STATICFILES_DIRS.append(
     os.path.join(

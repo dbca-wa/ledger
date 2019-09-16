@@ -267,6 +267,9 @@ export const callemailStore = {
         updateDateOfCall(state, date) {
             Vue.set(state.call_email, 'date_of_call', date);
         },
+        updateRelatedItems(state, related_items) {
+            Vue.set(state.call_email, 'related_items', related_items);
+        },
     },
     actions: {
         async loadCallEmail({ dispatch, commit }, { call_email_id }) {
@@ -321,15 +324,6 @@ export const callemailStore = {
             let callId = null;
             let savedCallEmail = null;
             try {
-                let fetchUrl = null;
-                if (crud === 'create' || crud === 'duplicate') {
-                    fetchUrl = api_endpoints.call_email;
-                } else {
-                    fetchUrl = helpers.add_endpoint_join(
-                        api_endpoints.call_email, 
-                        state.call_email.id + "/call_email_save/"
-                        )
-                }
 
                 let payload = new Object();
                 Object.assign(payload, state.call_email);
@@ -361,7 +355,20 @@ export const callemailStore = {
                     payload.renderer_data = rootGetters.renderer_form_data;
                     }
                 }
-                savedCallEmail = await Vue.http.post(fetchUrl, payload)
+
+                let fetchUrl = null;
+                if (crud === 'create' || crud === 'duplicate') {
+                    fetchUrl = api_endpoints.call_email;
+                    savedCallEmail = await Vue.http.post(fetchUrl, payload)
+                } else {
+                    fetchUrl = helpers.add_endpoint_join(
+                        api_endpoints.call_email, 
+                        //state.call_email.id + "/call_email_save/"
+                        state.call_email.id + "/"
+                        )
+                    savedCallEmail = await Vue.http.put(fetchUrl, payload)
+                }
+
                 await dispatch("setCallEmail", savedCallEmail.body);
                 callId = savedCallEmail.body.id;
 
@@ -462,6 +469,9 @@ export const callemailStore = {
         },
         setDateOfCall({ commit }, date ) {
             commit("updateDateOfCall", date);
+        },
+        setRelatedItems({ commit }, related_items ) {
+            commit("updateRelatedItems", related_items);
         },
     },
 };

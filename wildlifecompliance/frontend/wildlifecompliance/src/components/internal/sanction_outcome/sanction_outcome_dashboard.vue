@@ -1,5 +1,5 @@
 <template>
-    <div class="container" id="internalInspectionDash">
+    <div class="container" id="internalSanctionOutcomeDash">
         <FormSection :label="`Sanction Outcome`" :Index="`0`">
 
         <div class="row">
@@ -146,7 +146,10 @@ export default {
                     {
                         data: 'type',
                         searchable: false,
-                        orderable: true
+                        orderable: true,
+                        mRender: function (data, type, full) {
+                            return data.name;
+                        }
                     },
                     {
                         data: 'identifier',
@@ -156,7 +159,10 @@ export default {
                     {
                         data: 'date_of_issue',
                         searchable: true,
-                        orderable: true
+                        orderable: true,
+                        mRender: function (data, type, full) {
+                            return data != '' && data != null ? moment(data).format('DD/MM/YYYY') : '';
+                        }
                     },
                     {
                         data: 'offender',
@@ -186,21 +192,22 @@ export default {
                         searchable: true,
                         orderable: false,
                         mRender: function (data, type, row){
-                            return 'Not implemented';
+                            return '---';
                         }
                     },
                     {
                         searchable: true,
                         orderable: false,
                         mRender: function (data, type, row){
-                            return 'Not implemented';
+                            return '---';
                         }
                     },
                     {
                         data: 'user_action',
                         searchable: false,
-                        orderable: true,
+                        orderable: false,
                         mRender: function (data, type, row){
+                            console.log(data);
                             if (data){
                                 return data;
                             } else { 

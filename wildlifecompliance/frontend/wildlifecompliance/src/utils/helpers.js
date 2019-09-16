@@ -99,7 +99,6 @@ module.exports = {
   },
   add_endpoint_json: function ( api_string, addition ) {
     // assumes api_string has trailing forward slash "/" character required for POST
-    console.log('aho');
     var res = api_string.split( ".json" )
     return res[ 0 ] + addition + '.json';
   },

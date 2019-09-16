@@ -3,27 +3,31 @@
         <FormSection :label="`Call/Emails`" :Index="`0`">
                   
               
-        <form class="form-horizontal" name="createForm" method="get">
-            <div class="row">
-                <div class="col-md-3">
-                        <label for="">Call/Email Status</label>
-                        <select class="form-control" v-model="filterStatus">
-                            <option v-for="option in status_choices" :value="option.display" v-bind:key="option.id">
-                                {{ option.display }}
-                            </option>
-                        </select>
-                </div>
-                <div class="col-md-3">
-                        <label for="">Call/Email Classification</label>
-                        <select class="form-control" v-model="filterClassification">
-                            <option v-for="option in classification_types" :value="option.name" v-bind:key="option.id">
-                                {{ option.name }} 
-                            </option>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="">Call/Email Status</label>
+                    <select class="form-control" v-model="filterStatus">
+                        <option v-for="option in status_choices" :value="option.display" v-bind:key="option.id">
+                            {{ option.display }}
+                        </option>
                     </select>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-3">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="">Call/Email Classification</label>
+                    <select class="form-control" v-model="filterClassification">
+                        <option v-for="option in classification_types" :value="option.name" v-bind:key="option.id">
+                            {{ option.name }} 
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
                     <label for="">Lodged From</label>
                     <div class="input-group date" ref="lodgementDateFromPicker">
                         <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedFrom">
@@ -32,7 +36,9 @@
                         </span>
                     </div>
                 </div>
-                <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
                     <label for="">Lodged To</label>
                     <div class="input-group date" ref="lodgementDateToPicker">
                         <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterLodgedTo">
@@ -41,13 +47,12 @@
                         </span>
                     </div>
                 </div>
-                <div v-if="current_user && current_user.is_volunteer" class="col-md-3 pull-right">
-                    <button @click.prevent="createCallEmailUrl"
-                        class="btn btn-primary pull-right">New Call/Email</button>
-                </div>    
             </div>
-            
-        </form>
+            <div v-if="current_user && current_user.is_volunteer" class="col-md-3 pull-right">
+                <button @click.prevent="createCallEmailUrl"
+                    class="btn btn-primary pull-right">New Call/Email</button>
+            </div>    
+        </div>    
 
         <div class="row">
             <div class="col-lg-12">
@@ -68,7 +73,7 @@
     import Vue from 'vue'
     import { api_endpoints, helpers, cache_helper } from "@/utils/hooks";
     import { mapState, mapGetters, mapActions, mapMutations } from "vuex";
-    import FormSection from "@/components/compliance_forms/section.vue";
+    import FormSection from "@/components/forms/section_toggle.vue";
     export default {
         name: 'CallEmailDashTable',
         data() {
@@ -124,7 +129,6 @@
                         }
                     },
                     dom: 'lBfrtip',
-                    //dom: 'B',
                     buttons: [
                         'excel',
                         'csv',

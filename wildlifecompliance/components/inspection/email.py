@@ -21,6 +21,7 @@ class InspectionForwardNotificationEmail(TemplateEmailBase):
     html_template = 'wildlifecompliance/emails/send_inspection_forward_notification.html'
     txt_template = 'wildlifecompliance/emails/send_inspection_forward_notification.txt'
 
+
 def send_mail(select_group, inspection, workflow_entry, request=None):
     email = InspectionForwardNotificationEmail()
     if request.data.get('email_subject'):

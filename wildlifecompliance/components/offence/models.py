@@ -1,10 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from ledger.accounts.models import RevisionedMixin, EmailUser, Organisation
+from ledger.accounts.models import RevisionedMixin, EmailUser
 from wildlifecompliance.components.call_email.models import Location, CallEmail
 from wildlifecompliance.components.inspection.models import Inspection
 from wildlifecompliance.components.main.models import Document
-from wildlifecompliance.components.users.models import RegionDistrict
+from wildlifecompliance.components.users.models import RegionDistrict, CompliancePermissionGroup
+from wildlifecompliance.components.organisations.models import Organisation
 
 
 class SectionRegulation(RevisionedMixin):
@@ -25,12 +26,18 @@ class SectionRegulation(RevisionedMixin):
 
 
 class Offence(RevisionedMixin):
+    STATUS_DRAFT = 'draft'
+    STATUS_OPEN = 'open'
+    STATUS_CLOSED = 'closed'
+    STATUS_CLOSING = 'closing'
+    STATUS_DISCARDED = 'discarded'
+
     STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('open', 'Open'),
-        ('closing', 'Closing'),
-        ('closed', 'Closed'),
-        ('discarded', 'Discarded'),
+        (STATUS_DRAFT, 'Draft'),
+        (STATUS_OPEN, 'Open'),
+        (STATUS_CLOSING, 'Closing'),
+        (STATUS_CLOSED, 'Closed'),
+        (STATUS_DISCARDED, 'Discarded'),
     )
 
     identifier = models.CharField(
@@ -40,7 +47,7 @@ class Offence(RevisionedMixin):
     status = models.CharField(
         max_length=40,
         choices=STATUS_CHOICES,
-        default='draft',
+        default='open',
     )
     location = models.ForeignKey(
         Location,
@@ -69,8 +76,21 @@ class Offence(RevisionedMixin):
     alleged_offences = models.ManyToManyField(
         SectionRegulation,
         blank=True,
+        through='AllegedOffence',
     )
     details = models.TextField(blank=True)
+    assigned_to = models.ForeignKey(
+        EmailUser,
+        related_name='offence_assigned_to',
+        null=True
+    )
+    allocated_group = models.ForeignKey(
+        CompliancePermissionGroup,
+        related_name='offence_allocated_group',
+        null=True
+    )
+    region = models.ForeignKey(RegionDistrict, related_name='offence_region', null=True,)
+    district = models.ForeignKey(RegionDistrict, related_name='offence_district', null=True,)
 
     class Meta:
         app_label = 'wildlifecompliance'
@@ -93,7 +113,21 @@ class Offence(RevisionedMixin):
     
     @property
     def get_related_items_descriptor(self):
-        return '{}, {}'.format(self.identifier, self.details)
+        #return '{}, {}'.format(self.identifier, self.details)
+        return self.identifier
+
+
+class AllegedOffence(RevisionedMixin):
+    offence = models.ForeignKey(Offence, null=False,)
+    section_regulation = models.ForeignKey(SectionRegulation, null=False,)
+
+    def __str__(self):
+        return self.section_regulation.__str__()
+
+    class Meta:
+        app_label = 'wildlifecompliance'
+        verbose_name = 'CM_AllegedOffence'
+        verbose_name_plural = 'CM_AllegedOffences'
 
 
 class ActiveOffenderManager(models.Manager):

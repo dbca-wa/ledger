@@ -12,7 +12,13 @@ from wildlifecompliance.components.applications.views import (
 )
 from wildlifecompliance.admin import wildlifecompliance_admin_site
 
-from wildlifecompliance.components.main.views import SearchKeywordsView, SearchReferenceView
+from wildlifecompliance.components.main.views import (
+        SearchKeywordsView, 
+        SearchReferenceView,
+        SearchWeakLinksView,
+        CreateWeakLinkView,
+        RemoveWeakLinkView,
+        )
 from wildlifecompliance.components.applications import views as application_views
 from wildlifecompliance.components.offence.api import OffenceViewSet
 from wildlifecompliance.components.users import api as users_api
@@ -57,6 +63,7 @@ router.register(r'returns_paginated', return_api.ReturnPaginatedViewSet)
 router.register(r'returns_amendment', return_api.ReturnAmendmentRequestViewSet)
 router.register(r'return_types', return_api.ReturnTypeViewSet)
 router.register(r'organisations', org_api.OrganisationViewSet)
+router.register(r'organisations_compliancemanagement', org_api.OrganisationComplianceManagementViewSet)
 router.register(r'organisations_paginated',
                 org_api.OrganisationPaginatedViewSet)
 router.register(r'organisation_requests', org_api.OrganisationRequestsViewSet)
@@ -83,12 +90,14 @@ router.register(r'compliancepermissiongroup', users_api.CompliancePermissionGrou
 router.register(r'region_district', users_api.RegionDistrictViewSet)
 router.register(r'case_priorities', call_email_api.CasePriorityViewSet)
 router.register(r'inspection_types', inspection_api.InspectionTypeViewSet)
-router.register(r'offence', offence_api.OffenceViewSet)
+# router.register(r'offence', offence_api.OffenceViewSet)
 router.register(r'call_email_paginated', call_email_api.CallEmailPaginatedViewSet)
 router.register(r'inspection', inspection_api.InspectionViewSet)
 router.register(r'inspection_paginated', inspection_api.InspectionPaginatedViewSet)
 router.register(r'sanction_outcome', sanction_outcome_api.SanctionOutcomeViewSet)
 router.register(r'sanction_outcome_paginated', sanction_outcome_api.SanctionOutcomePaginatedViewSet)
+router.register(r'offence', offence_api.OffenceViewSet)
+router.register(r'offence_paginated', offence_api.OffencePaginatedViewSet)
 
 api_patterns = [url(r'^api/my_user_details/$',
                     users_api.GetMyUserDetails.as_view(),
@@ -120,6 +129,15 @@ api_patterns = [url(r'^api/my_user_details/$',
                 url(r'^api/search_reference',
                     SearchReferenceView.as_view(),
                     name='search_reference'),
+                url(r'^api/search_weak_links',
+                    SearchWeakLinksView.as_view(),
+                    name='search_weak_links'),
+                url(r'^api/create_weak_link',
+                    CreateWeakLinkView.as_view(),
+                    name='create_weak_link'),
+                url(r'^api/remove_weak_link',
+                    RemoveWeakLinkView.as_view(),
+                    name='remove_weak_link'),
                 url(r'^api/',
                     include(router.urls))]
 
@@ -176,7 +194,15 @@ urlpatterns = [
     # inspection emails to users
     url(r'^internal/inspection/(?P<inspection_id>\d+)/$', views.ApplicationView.as_view(),
         name='internal-inspection-detail'),
-    
+
+    # following url is defined so that to include url path when sending
+    # inspection emails to users
+    url(r'^internal/sanction_outcome/(?P<sanction_outcome_id>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-sanction-outcome-detail'),
+
+    url(r'^internal/offence/(?P<offence_id>\d+)/$', views.ApplicationView.as_view(),
+        name='internal-offence-detail'),
+
     # url(r'^export/xls/$', application_views.export_applications, name='export_applications'),
     url(r'^export/pdf/$', application_views.pdflatex, name='pdf_latex'),
     url(r'^mgt-commands/$',
