@@ -12,7 +12,7 @@
             <div class="panel-body collapse in" :id="pBody">
                 <div class="" >                        
                     <div class="form-horizontal col-sm-12 borderDecoration">
-                        <label class="control-label">Select which level of tourism accreditation you have achieved</label>
+                        <label class="control-label">Select which level of tourism accreditation you have achieved. <a href="https://parks.dpaw.wa.gov.au/for-business/training-accreditation-insurance-fees" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
                         <ul class="list-inline"  >
                             <li v-for="c in accreditation_choices" class="form-check list-inline-item">
                                 <input  class="form-check-input" ref="Checkbox" type="checkbox" @click="selectAccreditation($event, c)" v-model="selected_accreditations" :value="c.key" data-parsley-required :disabled="proposal.readonly" />
@@ -92,6 +92,12 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row">&nbsp;</div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    Application and licence fee information <a href="https://parks.dpaw.wa.gov.au/for-business/training-accreditation-insurance-fees" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a>
+                                </div>
+                            </div>
                         </div> 
                     </div>
                 </div>
@@ -113,12 +119,12 @@
                         <div class="form-group">
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <label>Provide the mooring number for any mooring within a marine reseve your operation will use</label>
+                                    <label>Provide the mooring number or GPS coordinates for any mooring within a marine reserve your operation will use.</label>
                                 </div>   
                             </div>
                             <div class="row" v-for="(m, index) in proposal.other_details.mooring">
                                 <div class="col-sm-3">
-                                    <label class="control-label pull-left"  for="Name">Mooring number</label>
+                                    <label class="control-label pull-left"  for="Name">Mooring number or GPS coordinates</label>
                                 </div>
                                 <div class="col-sm-9" style="margin-bottom: 5px">
                                     <input type="text" class="form-control" name="Mooring number" placeholder="" :disabled="proposal.readonly" v-model="proposal.other_details.mooring[index]">
@@ -201,6 +207,7 @@
                            <div class="row">
                                 <div class="col-sm-12">
                                     <label>Provide information to support your application. This may include brochures, itineraries or other advertising material.</label>
+                                    <label>If you would like to apply for a park or activity that is not listed in the previous sections, please include details.</label>
                                 </div>   
                             </div>
                             <div class="row">
@@ -289,6 +296,11 @@
                             <div class="col-sm-6">
                                 <input type="text" class="form-control" name="docket_books_number" placeholder="" :disabled="proposal.readonly" v-model="proposal.other_details.docket_books_number">
                             </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                    <label>Did you know you can use this system to pay park entry fees? Click on the Park Entry Fees page above.</label>
                             </div>
                         </div>
                     </div>
