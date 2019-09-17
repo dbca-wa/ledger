@@ -2886,8 +2886,13 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
 #                    inv = AdmissionsBookingInvoice.objects.filter(admissions_booking=ad)
 #                    inv = [adi.invoice_reference,]
 
-
-                r.update({'invoice_ref': inv, 'in_future': ad.in_future, 'part_booking': ad.part_booking})
+                future_or_admin = False
+                if request.user.groups.filter(name__in=['Mooring Admin']).exists():
+                    future_or_admin = True
+                else:
+                    future_or_admin = ad.in_future
+                
+                r.update({'invoice_ref': inv, 'in_future': future_or_admin, 'part_booking': ad.part_booking})
                 if(r['customer']):
                     name = ad.customer.first_name + " " + ad.customer.last_name
                     email = ad.customer.email
