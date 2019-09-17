@@ -1,61 +1,42 @@
 import os
-from io import BytesIO
-from datetime import date
-
+from django.conf import settings
 from reportlab.lib import enums
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table, TableStyle, ListFlowable, KeepTogether, PageBreak, Image, ImageAndFlowables
+from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
-from reportlab.lib.colors import HexColor
+from parkstay.models import Booking
 
-from django.core.files import File
-from django.conf import settings
-
-from parkstay.models import Booking, BookingVehicleRego
-
-
-DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'parkstay', 'static', 'ps', 'img', 'parkstay_header.png')
 
 LICENCE_HEADER_IMAGE_WIDTH = 840
 LICENCE_HEADER_IMAGE_HEIGHT = 166
-
+DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'parkstay', 'static', 'ps', 'img', 'parkstay_header.png')
 DPAW_BUSINESS = 'Parks and Visitor Services'
 DPAW_EMAIL = 'campgrounds@dpaw.wa.gov.au'
 DPAW_URL = 'https://parks.dpaw.wa.gov.au'
 DPAW_PHONE = '(08) 9219 9000'
 DPAW_FAX = '(08) 9423 8242'
 DPAW_PO_BOX = 'Locked Bag 104, Bentley Delivery Centre, Western Australia 6983'
-
-
 PAGE_WIDTH, PAGE_HEIGHT = A4
-
 DEFAULT_FONTNAME = 'Helvetica'
 BOLD_FONTNAME = 'Helvetica-Bold'
 ITALIC_FONTNAME = 'Helvetica-Oblique'
 BOLD_ITALIC_FONTNAME = 'Helvetica-BoldOblique'
-
 VERY_LARGE_FONTSIZE = 14
 LARGE_FONTSIZE = 12
 MEDIUM_FONTSIZE = 10
 SMALL_FONTSIZE = 8
-
 PARAGRAPH_BOTTOM_MARGIN = 5
-
 SECTION_BUFFER_HEIGHT = 10
-
 DATE_FORMAT = '%d/%m/%Y'
-
 HEADER_MARGIN = 10
 HEADER_SMALL_BUFFER = 3
-
 PAGE_MARGIN = 20
 PAGE_TOP_MARGIN = 200
-
 LETTER_HEADER_MARGIN = 30
 LETTER_PAGE_MARGIN = 60
-LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH/3.0
-LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT/3.0
+LETTER_IMAGE_WIDTH = LICENCE_HEADER_IMAGE_WIDTH / 3.0
+LETTER_IMAGE_HEIGHT = LICENCE_HEADER_IMAGE_HEIGHT / 3.0
 LETTER_HEADER_RIGHT_LABEL_OFFSET = 400
 LETTER_HEADER_RIGHT_INFO_OFFSET = 450
 LETTER_HEADER_SMALL_BUFFER = 5
@@ -104,34 +85,24 @@ def create_confirmation(confirmation_buffer, booking):
 
     elements.append(Paragraph('BOOKING CONFIRMATION', styles['InfoTitleVeryLargeCenter']))
 
-    #im = Image(os.path.join(settings.BASE_DIR, 'parkstay', 'static', 'ps', 'img', 'placeholder.jpg'))
-    #text1 = Paragraph('But they had not gone twenty yards when they stopped short. An uproar of voices was coming from the farmhouse. They rushed back and looked through the window again. Yes, a violent quarrel was in progress. There were shoutings, bangings on the table, sharp suspicious glances, furious denials. The source of the trouble appeared to be that Napoleon and Mr. Pilkington had each played an ace of spades simultaneously.', styles['Left'])
-    #text2 = Paragraph('Twelve voices were shouting in anger, and they were all alike. No question, now, what had happened to the faces of the pigs. The creatures outside looked from pig to man, and from man to pig, and from pig to man again; but already it was impossible to say which was which.', styles['Left'])
-
-    #elements.append(ImageAndFlowables(im, [text1, text2], imageSide='left'))
-   
-    
-
     table_data = []
     table_data.append([Paragraph('Campground', styles['BoldLeft']), Paragraph('{}, {}'.format(booking.campground.name, booking.campground.park.name), styles['BoldLeft'])])
-    
+
     if booking.first_campsite_list:
         campsites = []
         if booking.campground.site_type == 0:
             for item in booking.first_campsite_list:
-                campsites.append(item.name if item else "" )
+                campsites.append(item.name if item else "")
         elif booking.campground.site_type == 1 or 2:
             for item in booking.first_campsite_list:
-                campsites.append(item.type.split(':',1)[0] if item else "")
+                campsites.append(item.type.split(':', 1)[0] if item else "")
         campsite = ', '.join(campsites)
-        result = {x:campsites.count(x) for x in campsites}
+        result = {x: campsites.count(x) for x in campsites}
         for key, value in result.items():
             campsite = ', '.join(['%sx %s' % (value, key) for (key, value) in result.items()])
 
-                 
-
     table_data.append([Paragraph('Camp Site', styles['BoldLeft']), Paragraph(campsite, styles['Left'])])
-    
+
     table_data.append([Paragraph('Dates', styles['BoldLeft']), Paragraph(booking.stay_dates, styles['Left'])])
     table_data.append([Paragraph('Number of guests', styles['BoldLeft']), Paragraph(booking.stay_guests, styles['Left'])])
     table_data.append([Paragraph('Name', styles['BoldLeft']), Paragraph(u'{} {} ({})'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''), booking.customer.email if booking.customer else None), styles['Left'])])
@@ -141,7 +112,7 @@ def create_confirmation(confirmation_buffer, booking):
         vehicle_data = []
         for r in booking.vehicle_payment_status:
             data = [Paragraph(r['Type'], styles['Left']), Paragraph(r['Rego'], styles['Left'])]
-            if r.get('Paid') != None:
+            if r.get('Paid') is not None:
                 if r['Paid'] == 'Yes':
                     data.append(Paragraph('Entry fee paid', styles['Left']))
                 elif r['Paid'] == 'No':
@@ -149,21 +120,19 @@ def create_confirmation(confirmation_buffer, booking):
                 elif r['Paid'] == 'pass_required':
                     data.append(Paragraph('Park Pass Required', styles['Left']))
             vehicle_data.append(data)
-            
+
         vehicles = Table(vehicle_data, style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
         table_data.append([Paragraph('Vehicles', styles['BoldLeft']), vehicles])
     else:
         table_data.append([Paragraph('Vehicles', styles['BoldLeft']), Paragraph('No vehicles', styles['Left'])])
-        
-    if booking.campground.additional_info:        
+
+    if booking.campground.additional_info:
         table_data.append([Paragraph('Additional confirmation information', styles['BoldLeft']), Paragraph(booking.campground.additional_info, styles['Left'])])
 
     elements.append(Table(table_data, colWidths=(200, None), style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')])))
 
     doc.build(elements)
     return confirmation_buffer
-
-
 
 
 def test():

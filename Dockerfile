@@ -1,12 +1,12 @@
-# Dockerfile to build parkstay application images.
-# Copy this file into the project root when building a new image.
 # Prepare the base environment.
 FROM ubuntu:18.04 as builder_base_parkstay
 MAINTAINER asi@dbca.wa.gov.au
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update -y \
+ENV TZ=Australia/Perth
+RUN apt-get update \
+  && apt-get upgrade -y \
   && apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin \
-  python python-setuptools python-dev python-pip \
+  python python-setuptools python-dev python-pip tzdata \
   && pip install --upgrade pip
 
 # Install Python libs from requirements.txt.

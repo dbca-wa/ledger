@@ -30,7 +30,8 @@ def is_customer(user):
 def get_all_officers():
     return EmailUser.objects.filter(groups__name='Parkstay Officers')
 
-def can_view_campground(user,campground):
+
+def can_view_campground(user, campground):
     for g in campground.campgroundgroup_set.all():
         if user in g.members.all():
             return True
