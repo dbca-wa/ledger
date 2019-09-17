@@ -66,7 +66,7 @@
                             <div class="form-group">
                                 <label/>
                             <div>
-                                <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="disabled" @click.prevent="createEClassLicence()">New E-Class licence</button>
+                                <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="disabled" @click.prevent="createEClassLicence()">New E Class licence</button>
                             </div>
                             </div>
                         </div>
