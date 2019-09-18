@@ -24,9 +24,10 @@ class CashAdmin(admin.ModelAdmin):
 
 @admin.register(models.Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('reference','order','payment_status','settlement_date')
+    list_display = ('reference','order','payment_status','settlement_date','amount', 'system','created' )
     search_fields = ('reference',)
-
+    list_filter = ('system'),    
+   
 @admin.register(models.InvoiceBPAY)
 class InvoiceBpayAdmin(admin.ModelAdmin):
     pass
