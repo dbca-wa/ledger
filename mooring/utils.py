@@ -1005,7 +1005,7 @@ def calculate_price_booking_change(old_booking, new_booking,overide_change_fees=
              adjustment_fee = float(ob.amount) + adjustment_fee
              description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
 #             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})   
-             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(format(adjustment_fee - adjustment_fee - adjustment_fee, '.2f')), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group, 'line_status': 2})
+             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(format(adjustment_fee - adjustment_fee - adjustment_fee, '.2f')), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group, 'line_status': 3})
 
     return change_fees
 
