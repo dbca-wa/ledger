@@ -114,7 +114,7 @@ class OracleParserAdmin(admin.ModelAdmin):
 @admin.register(models.OracleInterface)
 class OracleInterfaceAdmin(admin.ModelAdmin):
     list_display = ['activity_name','amount','status','receipt_number','receipt_date','source','method']
-
+    search_fields = ('source','receipt_number')
 class OracleInterfaceRecipientInline(admin.TabularInline):
     model = models.OracleInterfaceRecipient
     extra = 1
