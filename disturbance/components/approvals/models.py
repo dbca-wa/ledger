@@ -87,6 +87,7 @@ class Approval(RevisionedMixin):
     set_to_cancel = models.BooleanField(default=False)
     set_to_suspend = models.BooleanField(default=False)
     set_to_surrender = models.BooleanField(default=False)
+    reissued= models.BooleanField(default=False)
 
     class Meta:
         app_label = 'disturbance'

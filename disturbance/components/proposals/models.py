@@ -822,6 +822,8 @@ class Proposal(RevisionedMixin):
             if self.__approver_group() in request.user.proposalapprovergroup_set.all():
                 self.processing_status = status
                 self.save()
+                self.approval.reissued=True
+                self.approval.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_REISSUE_APPROVAL.format(self.id),request)
             else:
@@ -1027,6 +1029,7 @@ class Proposal(RevisionedMixin):
                                 #'extracted_fields' = JSONField(blank=True, null=True)
                             }
                         )
+                        #print approval,approval.id, created
                     # Generate compliances
                     #self.generate_compliances(approval, request)
                     from disturbance.components.compliances.models import Compliance, ComplianceUserAction
