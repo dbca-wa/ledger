@@ -888,7 +888,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 for z in p.zones.all():
                     for a in z.park_activities.all():
                         zone_activities.append(a.activity_name)
-                    selected_parks_activities.append({'park': '{} - {}'.format(p.park.name, z.zone.name), 'activities': park_activities})
+                    selected_parks_activities.append({'park': '{} - {}'.format(p.park.name, z.zone.name), 'activities': zone_activities})
         for t in self.trails.all():
             #trails.append(t.trail.name)
             #trail_activities=[]

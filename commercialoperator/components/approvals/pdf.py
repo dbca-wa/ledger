@@ -400,8 +400,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
 
     elements.append(KeepTogether(delegation))
 
-    elements.append(Paragraph('Commencing on the date of execution of this licence and expiring on {}'.format(approval.expiry_date.strftime(DATE_FORMAT)),styles['BoldLeft']))
-    elements.append(Paragraph('to enter upon and use the land within parks/ reserves in order to conduct activites as contained in the schedule attached to this Commercial Operations Licence.',styles['BoldLeft']))
+    elements.append(Paragraph('Commencing on the {} and expiring on {}.'.format(approval.start_date.strftime(DATE_FORMAT), approval.expiry_date.strftime(DATE_FORMAT)),styles['BoldLeft']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('CONDITIONS', styles['BoldLeft']))
@@ -465,7 +464,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
         activities_str=[]
         for ac in p['activities']:
             activities_str.append(ac.encode('UTF-8'))
-        activities_str=str(activities_str).strip('[]')
+        activities_str=str(activities_str).strip('[]').replace('\'', '')
         park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
                               Paragraph(activities_str, styles['Left'])])
     if park_data:
