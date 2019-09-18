@@ -194,7 +194,7 @@ class CampgroundMapSerializer(gis_serializers.GeoFeatureModelSerializer):
     features = CampgroundMapFeatureSerializer(read_only=True, many=True)
     park = CampgroundMapParkSerializer(read_only=True)
     images = CampgroundMapImageSerializer(read_only=True, many=True)
-    price_hint = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True, source='campsites__rates__rate__adult__min')
+    price_hint = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True, source='get_cheapest_rate')
 
     class Meta:
         model = Campground

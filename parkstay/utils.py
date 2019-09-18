@@ -344,16 +344,24 @@ def get_visit_rates(campsites_qs, start_date, end_date):
         # for the period of the visit overlapped by the rate, set the amounts
         start = max(start_date, rate.date_start)
         # End and start date are the same leading to the lod rate not going thru the loop
+        end = min(end_date, rate.date_end) if rate.date_end else end_date
+        for i in range((end - start).days):
+            results[rate.campsite.pk][start + timedelta(days=i)]['adult'] = rate.rate.adult
+            results[rate.campsite.pk][start + timedelta(days=i)]['concession'] = rate.rate.concession
+            results[rate.campsite.pk][start + timedelta(days=i)]['child'] = rate.rate.child
+            results[rate.campsite.pk][start + timedelta(days=i)]['infant'] = rate.rate.infant
+
+        # End and start date are the same leading to the lod rate enot going thru the loop
         # Add 1 day if date_end exists(to cover all days before the new rate),previously it was skipping 2 days before the new rate date
         if(rate.date_end):
             rate.date_end += timedelta(days=1)
 
-        end = min(end_date, rate.date_end) if rate.date_end  else end_date
-        for i in range((end-start).days):
-            results[rate.campsite.pk][start+timedelta(days=i)]['adult'] = rate.rate.adult
-            results[rate.campsite.pk][start+timedelta(days=i)]['concession'] = rate.rate.concession
-            results[rate.campsite.pk][start+timedelta(days=i)]['child'] = rate.rate.child
-            results[rate.campsite.pk][start+timedelta(days=i)]['infant'] = rate.rate.infant
+        end = min(end_date, rate.date_end) if rate.date_end else end_date
+        for i in range((end - start).days):
+            results[rate.campsite.pk][start + timedelta(days=i)]['adult'] = rate.rate.adult
+            results[rate.campsite.pk][start + timedelta(days=i)]['concession'] = rate.rate.concession
+            results[rate.campsite.pk][start + timedelta(days=i)]['child'] = rate.rate.child
+            results[rate.campsite.pk][start + timedelta(days=i)]['infant'] = rate.rate.infant
 
     # complain if there's a Campsite without a CampsiteRate
     if len(early_rates) < rates_qs.count():
@@ -550,7 +558,7 @@ def price_or_lineitems(request, booking, campsite_list, lines=True, old_booking=
                     # This line is triggered when the rate for a particular date does not change compared to the previous day,only end date is updated in rate_list
                     rate_list[c['rate']['campsite']][c['rate']['id']]['end'] = c['date']
 
-    if len(campsite_list) > 1: # check if this is a multibook
+    if len(campsite_list) > 1:  # check if this is a multibook
         # Get the cheapest campsite (based on adult rate) to be used
         # for the whole booking period, using the first rate as default
         # Set initial campsite and rate to first in rate_list
