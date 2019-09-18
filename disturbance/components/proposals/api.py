@@ -2,6 +2,7 @@ import traceback
 import os
 import base64
 import geojson
+import json
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -41,6 +42,7 @@ from disturbance.components.proposals.models import (
     ProposalStandardRequirement,
     AmendmentRequest,
     AmendmentReason,
+    AmendmentRequestDocument,
 
 )
 from disturbance.components.proposals.serializers import (
@@ -1327,17 +1329,19 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            reason_id=request.data.get('reason')
-            data = {
-                #'schema': qs_proposal_type.order_by('-version').first().schema,
-                'text': request.data.get('text'),
-                'proposal': request.data.get('proposal'),
-                'reason': AmendmentReason.objects.get(id=reason_id) if reason_id else None,
-            }
-            serializer = self.get_serializer(data= request.data)
+            # reason_id=request.data.get('reason')
+            # data = {
+            #     #'schema': qs_proposal_type.order_by('-version').first().schema,
+            #     'text': request.data.get('text'),
+            #     'proposal': request.data.get('proposal'),
+            #     'reason': AmendmentReason.objects.get(id=reason_id) if reason_id else None,
+            # }
+            #serializer = self.get_serializer(data= request.data)
+            serializer = self.get_serializer(data= json.loads(request.data.get('data')))
             #serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception = True)
             instance = serializer.save()
+            instance.add_documents(request)
             instance.generate_amendment(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
@@ -1353,6 +1357,23 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def delete_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            AmendmentRequestDocument.objects.get(id=request.data.get('id')).delete()
+            return Response([dict(id=i.id, name=i.name,_file=i._file.url) for i in instance.requirement_documents.all()])
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
 

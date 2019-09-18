@@ -36,6 +36,10 @@ def update_proposal_doc_filename(instance, filename):
 def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
 
+def update_amendment_request_doc_filename(instance, filename):
+    return 'proposals/{}/amendment_request_documents/{}'.format(instance.amendment_request.proposal.id,filename)
+
+
 def application_type_choicelist():
     try:
         return [( (choice.name), (choice.name) ) for choice in ApplicationType.objects.filter(visible=True)]
@@ -1269,6 +1273,17 @@ class ProposalLogEntry(CommunicationsLogEntry):
             self.reference = self.proposal.reference
         super(ProposalLogEntry, self).save(**kwargs)
 
+class AmendmentRequestDocument(Document):
+    amendment_request = models.ForeignKey('AmendmentRequest',related_name='amendment_request_documents')
+    _file = models.FileField(upload_to=update_amendment_request_doc_filename)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
+
+    def delete(self):
+        if self.can_delete:
+            return super(AmendmentRequestDocument, self).delete()
+
 class ProposalRequest(models.Model):
     proposal = models.ForeignKey(Proposal)
     subject = models.CharField(max_length=200, blank=True)
@@ -1297,6 +1312,7 @@ class AmendmentReason(models.Model):
 
     def __str__(self):
         return self.reason
+
 
 
 class AmendmentRequest(ProposalRequest):
@@ -1349,6 +1365,26 @@ class AmendmentRequest(ProposalRequest):
                 self.save()
             except:
                 raise
+
+    def add_documents(self, request):
+        with transaction.atomic():
+            try:
+                # save the files
+                data = json.loads(request.data.get('data'))
+                if not data.get('update'):
+                    documents_qs = self.amendment_request_documents.filter(input_name='amendment_request_doc', visible=True)
+                    documents_qs.delete()
+                for idx in range(data['num_files']):
+                    _file = request.data.get('file-'+str(idx))
+                    document = self.amendment_request_documents.create(_file=_file, name=_file.name)
+                    document.input_name = data['input_name']
+                    document.can_delete = True
+                    document.save()
+                # end save documents
+                self.save()
+            except:
+                raise
+        return
 
 class Assessment(ProposalRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'),

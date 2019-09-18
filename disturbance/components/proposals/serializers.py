@@ -10,7 +10,8 @@ from disturbance.components.proposals.models import (
                                     ProposalStandardRequirement,
                                     ProposalDeclinedDetails,
                                     AmendmentRequest,
-                                    AmendmentReason
+                                    AmendmentReason,
+                                    AmendmentRequestDocument,
                                 )
 from disturbance.components.organisations.models import (
                                 Organisation
@@ -527,10 +528,16 @@ class ProposedApprovalSerializer(serializers.Serializer):
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
     cc_email = serializers.CharField(required=False, allow_null=True)
-   
+  
+class AmendmentRequestDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AmendmentRequestDocument
+        fields = ('id', 'name', '_file')
+        #fields = '__all__' 
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
     #reason = serializers.SerializerMethodField()
+    amendment_request_documents = AmendmentRequestDocumentSerializer(many=True, read_only=True)
 
     class Meta:
         model = AmendmentRequest

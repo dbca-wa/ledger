@@ -122,6 +122,15 @@ def send_amendment_email_notification(amendment_request, request, proposal):
         # remove '-internal'. This email is for external submitters 
         url = ''.join(url.split('-internal'))
 
+    attachments = []
+    if amendment_request.amendment_request_documents:
+        for doc in amendment_request.amendment_request_documents.all():
+            #file_name = doc._file.name
+            file_name = doc.name
+            attachment = (file_name, doc._file.file.read())
+            attachments.append(attachment)
+
+
     context = {
         'proposal': proposal,
         'reason': reason,
@@ -129,7 +138,7 @@ def send_amendment_email_notification(amendment_request, request, proposal):
         'url': url
     }
 
-    msg = email.send(proposal.submitter.email, context=context)
+    msg = email.send(proposal.submitter.email, context=context,  attachments=attachments)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)

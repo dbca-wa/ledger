@@ -309,7 +309,7 @@ export default {
     },
     deficientFields(){
       let vm=this;
-      console.log("I am here");
+      //console.log("I am here");
       let deficient_fields=[]
       $('.deficiency').each((i,d) => {
         if($(d).val() != ''){
