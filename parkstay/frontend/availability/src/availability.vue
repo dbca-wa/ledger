@@ -540,7 +540,7 @@ export default {
         this.arrivalEl = $('#date-arrival');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
-            endDate: moment.utc(this.arrivalEl).add(180, 'days').toDate(),
+            endDate: moment.utc(today).add(180, 'days').toDate(),
             onRender: function (date) {
                 // disallow start dates before today
                 //console.log(date);

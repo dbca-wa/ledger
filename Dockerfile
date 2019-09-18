@@ -1,11 +1,13 @@
-# Dockerfile to build parkstay application images.
-# Copy this file into the project root when building a new image.
 # Prepare the base environment.
 FROM python:3.7.2-slim-stretch as builder_base_parkstay
 MAINTAINER asi@dbca.wa.gov.au
+ENV TZ=Australia/Perth
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y \
-  && apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin python3-dev \
+  && apt-get upgrade -y \
+  && apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin python3-dev tzdata \
   && rm -rf /var/lib/apt/lists/*
+  && pip install --upgrade pip
 
 # Install Python libs from requirements.txt.
 FROM builder_base_parkstay as python_libs_parkstay

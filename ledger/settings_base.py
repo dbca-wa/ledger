@@ -233,15 +233,10 @@ LOGGING = {
         },
     },
     'loggers': {
-        '': {
-            'handlers': ['console'],
-            'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
-            'propagate': True
-        },
         'django': {
             'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
+            'level': env('LOG_CONSOLE_LEVEL', 'WARNING'),
+            'propagate': False
         },
         'log': {
             'handlers': ['console'],
