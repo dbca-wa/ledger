@@ -458,7 +458,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     park_data=[]
-    for p in approval.current_proposal.selected_parks_activities:
+    for p in approval.current_proposal.selected_parks_activities_pdf:
         #park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
         #                     [Paragraph(a, styles['Left']) for a in p['activities']]])
         activities_str=[]

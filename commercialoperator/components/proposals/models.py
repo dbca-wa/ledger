@@ -888,6 +888,35 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 for z in p.zones.all():
                     for a in z.park_activities.all():
                         zone_activities.append(a.activity_name)
+                    selected_parks_activities.append({'park': '{} - {}'.format(p.park.name, z.zone.name), 'activities': park_activities})
+        for t in self.trails.all():
+            #trails.append(t.trail.name)
+            #trail_activities=[]
+            for s in t.sections.all():
+                trail_activities=[]
+                for ts in s.trail_activities.all():
+                  trail_activities.append(ts.activity_name)
+                selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
+        return selected_parks_activities
+
+    @property
+    def selected_parks_activities_pdf(self):
+        """ duplicated selected_parks_activities to quickly fix the pdf licence generation of marine zonal activities
+            which was not previously displayed correctly. This function is called by pdf.py only. """
+        #list of selected parks and activities (to print on licence pdf)
+        selected_parks_activities=[]
+        for p in self.parks.all():
+            park_activities=[]
+            #parks.append(p.park.name)
+            if p.park.park_type=='land':
+                for a in p.activities.all():
+                    park_activities.append(a.activity_name)
+                selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
+            if p.park.park_type=='marine':
+                for z in p.zones.all():
+                    zone_activities = []
+                    for a in z.park_activities.all():
+                        zone_activities.append(a.activity_name)
                     selected_parks_activities.append({'park': '{} - {}'.format(p.park.name, z.zone.name), 'activities': zone_activities})
         for t in self.trails.all():
             #trails.append(t.trail.name)
