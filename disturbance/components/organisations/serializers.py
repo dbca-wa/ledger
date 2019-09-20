@@ -77,7 +77,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
 class DetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ledger_organisation
-        fields = ('id','name')
+        fields = ('id','name', 'email')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
     class Meta:

@@ -589,6 +589,8 @@ class Organisation(models.Model):
     identification = models.FileField(upload_to='%Y/%m/%d', null=True, blank=True)
     postal_address = models.ForeignKey('OrganisationAddress', related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
     billing_address = models.ForeignKey('OrganisationAddress', related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+    #email_contact = models.EmailField(blank=True, null=True)
+    email = models.EmailField(blank=True, null=True,)
 
     def upload_identification(self, request):
         with transaction.atomic():

@@ -138,7 +138,13 @@ def send_amendment_email_notification(amendment_request, request, proposal):
         'url': url
     }
 
-    msg = email.send(proposal.submitter.email, context=context,  attachments=attachments)
+    all_ccs = []
+    if proposal.applicant.email:
+        cc_list = proposal.applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+
+    msg = email.send(proposal.submitter.email, bcc=all_ccs, context=context,  attachments=attachments)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
@@ -175,7 +181,13 @@ def send_external_submit_email_notification(request, proposal):
         'url': url
     }
 
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.applicant.email:
+        cc_list = proposal.applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+
+    msg = email.send(proposal.submitter.email, bcc= all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
@@ -223,6 +235,8 @@ def send_proposal_decline_email_notification(proposal,request,proposal_decline):
     all_ccs = []
     if cc_list:
         all_ccs = cc_list.split(',')
+    if proposal.applicant.email:
+        all_ccs.append(proposal.applicant.email)
 
     msg = email.send(proposal.submitter.email, bcc= all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
@@ -256,6 +270,8 @@ def send_proposal_approval_email_notification(proposal,request):
     all_ccs = []
     if cc_list:
         all_ccs = cc_list.split(',')
+    if proposal.applicant.email:
+        all_ccs.append(proposal.applicant.email)
 
     licence_document= proposal.approval.licence_document._file
     if licence_document is not None:
