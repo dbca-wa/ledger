@@ -491,8 +491,9 @@ def get_campsite_availability(campsites_qs, start_date, end_date, ongoing_bookin
                                if ongoing_booking.old_booking is None:
                                   pass
                                else:
-                                   if nowtime > start_dt:
-                                        booking_period[bp.pk] = 'closed'
+                                    if nowtime > start_dt:
+                                       pass
+                                       #booking_period[bp.pk] = 'closed'
                          else:
                               pass
                               #if nowtime > start_dt:
@@ -1004,7 +1005,7 @@ def calculate_price_booking_change(old_booking, new_booking,overide_change_fees=
              adjustment_fee = float(ob.amount) + adjustment_fee
              description = 'Mooring {} ({} - {})'.format(ob.campsite.mooringarea.name,ob.from_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'),ob.to_dt.astimezone(pytimezone('Australia/Perth')).strftime('%d/%m/%Y %H:%M %p'))
 #             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(adjustment_fee - adjustment_fee - adjustment_fee), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group})   
-             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(format(adjustment_fee - adjustment_fee - adjustment_fee, '.2f')), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group, 'line_status': 2})
+             change_fees.append({'additional_fees': 'true', 'description': 'Adjustment - '+description ,'amount': str(format(adjustment_fee - adjustment_fee - adjustment_fee, '.2f')), 'oracle_code': str(ob.campsite.mooringarea.oracle_code), 'mooring_group': mooring_group, 'line_status': 3})
 
     return change_fees
 
