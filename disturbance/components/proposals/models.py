@@ -335,6 +335,7 @@ class Proposal(RevisionedMixin):
     approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
     approval_level_comment = models.TextField(blank=True)
     approval_comment = models.TextField(blank=True)
+    assessment_reminder_sent = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'disturbance'

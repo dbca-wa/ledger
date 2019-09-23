@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 
 from disturbance.components.emails.emails import TemplateEmailBase
+from ledger.accounts.models import EmailUser
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,11 @@ class SubmitSendNotificationEmail(TemplateEmailBase):
     subject = 'A new Proposal has been submitted.'
     html_template = 'disturbance/emails/proposals/send_submit_notification.html'
     txt_template = 'disturbance/emails/proposals/send_submit_notification.txt'
+
+class AssessmentReminderSendNotificationEmail(TemplateEmailBase):
+    subject = 'A Proposal is waiting for assessment.'
+    html_template = 'disturbance/emails/proposals/send_assessment_reminder_notification.html'
+    txt_template = 'disturbance/emails/proposals/send_assessment_reminder_notification.txt'
 
 class ExternalSubmitSendNotificationEmail(TemplateEmailBase):
     subject = 'A new Proposal has been submitted.'
@@ -285,6 +291,33 @@ def send_proposal_approval_email_notification(proposal,request):
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
+
+
+def send_assessment_reminder_email_notification(proposal):
+    email = AssessmentReminderSendNotificationEmail()
+    #url = request.build_absolute_uri(reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+    url=settings.SITE_URL if settings.SITE_URL else ''
+    url+=reverse('internal-proposal-detail',kwargs={'proposal_pk': proposal.id})
+    if "-internal" not in url:
+        # add it. This email is for internal staff (assessors)
+        url = '-internal.{}'.format(settings.SITE_DOMAIN).join(url.split('.' + settings.SITE_DOMAIN))
+
+    context = {
+        'proposal': proposal,
+        'url': url
+    }
+
+    msg = email.send(proposal.assessor_recipients, context=context)
+    #sender = request.user if request else settings.DEFAULT_FROM_EMAIL
+    sender = settings.DEFAULT_FROM_EMAIL
+    try:
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    except:
+        EmailUser.objects.create(email=sender, password='')
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    _log_proposal_email(msg, proposal, sender=sender_user)
+    _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender_user)
+    return msg
 
 
 
