@@ -211,7 +211,7 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(os.path.join(BASE_DIR, 'ledger', 'static')),
+    os.path.join(os.path.join(PROJECT_DIR, 'static'),
 # Removed as these should be in the individual app settings.py and not in ledger.
 # leaving hashed in case issues are caused by this.
 #    os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')),
