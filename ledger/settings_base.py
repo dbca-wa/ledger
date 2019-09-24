@@ -13,7 +13,7 @@ if BASE_DIR_ENV is None:
    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 else:
    BASE_DIR = BASE_DIR_ENV
-PROJECT_DIR = os.path.join(BASE_DIR, 'ledger')
+PROJECT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ledger')
 
 # Application definitions
 SECRET_KEY = env('SECRET_KEY')
