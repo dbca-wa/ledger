@@ -382,6 +382,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 path = default_storage.save('proposals/{}/documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
+                #import ipdb; ipdb.set_trace()
                 document.save()
                 instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
                 #instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history

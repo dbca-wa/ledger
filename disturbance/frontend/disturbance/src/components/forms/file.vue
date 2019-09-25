@@ -49,6 +49,7 @@
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
                     <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
+                    <alert :show.sync="showError" type="danger" style="color: red"><strong>{{errorString}}</strong></alert>
                 </div>
             </div>
 
@@ -115,6 +116,8 @@ export default {
             show_spinner: false,
             documents:[],
             filename:null,
+            showError:false,
+            errorString:'',
         }
     },
 
@@ -140,7 +143,8 @@ export default {
         },
         handleChange:function (e) {
             let vm = this;
-
+            vm.showError=false;
+            vm.errorString='';
             //vm.show_spinner = true;
             if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
@@ -249,7 +253,14 @@ export default {
             //var $spinner = $("#file-spinner");
             //$spinner.toggleClass("fa fa-cog fa-spin");
             vm.show_spinner = true;
-
+            if(e.target.files[0].name.length > 255){
+                vm.show_spinner=false;
+                vm.showError=true;
+                vm.errorString='File name exceeds maximum file name length limit';
+            }
+            else{
+            vm.showError=false;
+            vm.errorString='';
             var formData = new FormData();
             formData.append('action', 'save');
             formData.append('proposal_id', vm.proposal_id);
@@ -265,6 +276,7 @@ export default {
                     vm.show_spinner = false;
                 },err=>{
                 });
+            }
         },
 
         num_documents: function() {

@@ -185,7 +185,7 @@ class ProposalApproverGroup(models.Model):
 
 class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
-    _file = models.FileField(upload_to=update_proposal_doc_filename)
+    _file = models.FileField(upload_to=update_proposal_doc_filename, max_length=500)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     can_hide= models.BooleanField(default=False) # after initial submit, document cannot be deleted but can be hidden
@@ -1278,7 +1278,7 @@ class ProposalLogEntry(CommunicationsLogEntry):
 
 class AmendmentRequestDocument(Document):
     amendment_request = models.ForeignKey('AmendmentRequest',related_name='amendment_request_documents')
-    _file = models.FileField(upload_to=update_amendment_request_doc_filename)
+    _file = models.FileField(upload_to=update_amendment_request_doc_filename, max_length=500)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
