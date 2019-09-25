@@ -27,14 +27,14 @@ class Command(BaseCommand):
             'processing_status': 'with_assessor',
             'assessment_reminder_sent': False,
         }
+        assessment_reminder_days= settings.ASSESSMENT_REMINDER_DAYS
         qs=Proposal.objects.filter(**reminder_conditions)
         for proposal in qs:
             compare_date=None
             if proposal.lodgement_date:
-                compare_date=proposal.lodgement_date.date() + timedelta(days=494)
+                compare_date=proposal.lodgement_date.date() + timedelta(days=assessment_reminder_days)
                 if compare_date < today:
                     try:
-                        print proposal
                         send_assessment_reminder_email_notification(proposal)
                         proposal.assessment_reminder_sent=True
                         proposal.save()
