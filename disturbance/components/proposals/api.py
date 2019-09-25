@@ -363,6 +363,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 instance.save(version_comment='Approval File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
                 #instance.current_proposal.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
 
+            elif action == 'hide' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.documents.get(id=document_id)
+
+                document.hidden=True
+                document.save()
+                instance.save(version_comment='File hidden: {}'.format(document.name)) # to allow revision to be added to reversion history
+            
             elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
                 proposal_id = request.POST.get('proposal_id')
                 filename = request.POST.get('filename')
@@ -378,7 +386,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
                 #instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
 
-            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.documents.filter(input_name=section) if d._file] )
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete, can_hide=d.can_hide) for d in instance.documents.filter(input_name=section, hidden=False) if d._file] )
 
         except serializers.ValidationError:
             print(traceback.print_exc())
