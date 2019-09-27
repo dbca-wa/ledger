@@ -1532,7 +1532,10 @@ class Booking(models.Model):
             total_due = D('0.0')
             lines = []
             if not self.legacy_id:
-                lines = inv.order.lines.filter(oracle_code=self.mooringarea.park.oracle_code)
+                lines = []
+                if inv.order:
+                    lines = inv.order.lines.filter(oracle_code=self.mooringarea.park.oracle_code)
+                
 
             price_dict = {}
             for line in lines:

@@ -57,7 +57,7 @@ from '@/utils/hooks'
             let vm = this;
             return{
                 values: null,
-                headers: '{"Park": "select", "Arrival": "date", "Adults": "number", "Children": "number", "Free of Charge":"number", "Cost":"total"}',
+                headers: '{"Park": "select", "Arrival": "date", "Adults -> Passengers (6yrs+)": "number", "Children under 6 years": "number", "Free of Charge (Note: no capital for charge)":"number", "Cost":"total"}',
                 parks: [],
                 land_parks: [],
                 parks_available: false,

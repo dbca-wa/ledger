@@ -16,7 +16,8 @@ from django.template.loader import render_to_string, get_template
 from confy import env
 from django.template import Context
 from ledger.accounts.models import Document
-
+import datetime
+import hashlib
 
 default_from_email = settings.DEFAULT_FROM_EMAIL
 default_campground_email = settings.CAMPGROUNDS_EMAIL
@@ -34,6 +35,7 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
     override_email = env('OVERRIDE_EMAIL', None)
     context['default_url'] = env('DEFAULT_HOST', '')
     context['default_url_internal'] = env('DEFAULT_URL_INTERNAL', '')
+    log_hash = int(hashlib.sha1(str(datetime.datetime.now())).hexdigest(), 16) % (10 ** 8)
 
     if email_delivery != 'on':
         print ("EMAIL DELIVERY IS OFF NO EMAIL SENT -- email.py ")
@@ -95,7 +97,12 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
           #if attachment1:
           #    for a in attachment1:
           #        msg.attach(a)
-           msg.send()
+           try:
+                email_log(str(log_hash)+' '+subject) 
+                msg.send()
+                email_log(str(log_hash)+' Successfully sent to mail gateway')
+           except Exception as e:
+                email_log(str(log_hash)+' Error Sending - '+str(e)) 
     else:
           msg = EmailMultiAlternatives(subject, "Please open with a compatible html email client.", from_email=from_email, to=to, attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
           msg.attach_alternative(main_template, 'text/html')
@@ -105,7 +112,14 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
           #if attachment1:
           #    for a in attachment1:
           #        msg.attach(a)
-          msg.send()
+          try:
+               email_log(str(log_hash)+' '+subject) 
+               msg.send()
+               email_log(str(log_hash)+' Successfully sent to mail gateway')
+          except Exception as e:
+               email_log(str(log_hash)+' Error Sending - '+str(e))
+
+
     return True
 
 
@@ -523,5 +537,10 @@ def send_registered_vessels_email(content):
     email_obj.send(emails, from_address=default_from_email, context=context)
 
 
+def email_log(line):
+     dt = datetime.datetime.now()
+     f= open(settings.BASE_DIR+"/logs/email.log","a+")
+     f.write(str(dt.strftime('%Y-%m-%d %H:%M:%S'))+': '+line+"\r\n")
+     f.close()  
 
 
