@@ -424,11 +424,20 @@ from '@/utils/hooks'
                   }
                   else{
                     for(var k=0; k<marine_parks_activities[i].activities.length; k++){
-                      for(var l=0; l<marine_parks_activities[i].activities[k].activities.length; l++){
-                        if(vm.required_documents_list[j].activity== marine_parks_activities[i].activities[k].activities[l]){
-                        vm.required_documents_list[j].can_view=true;
+
+                      // for(var l=0; l<marine_parks_activities[i].activities[k].activities.length; l++){
+                      //   if(vm.required_documents_list[j].activity== marine_parks_activities[i].activities[k].activities[l]){
+                      //   vm.required_documents_list[j].can_view=true;
+                      //   }
+                      // }
+                      if(vm.required_documents_list[j].park== marine_parks_activities[i].park){
+                        for(var l=0; l<marine_parks_activities[i].activities[k].activities.length; l++){
+                          if(vm.required_documents_list[j].activity== marine_parks_activities[i].activities[k].activities[l]){
+                            vm.required_documents_list[j].can_view=true;
+                          }
                         }
                       }
+
                     }
                   }
                 }
