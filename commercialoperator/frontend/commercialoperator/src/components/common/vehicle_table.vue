@@ -2,9 +2,9 @@
     <div class="row">
         <div class="col-sm-12"> 
             <div class="row" >
-                <div class="col-md-3">
-                            <!-- <button style="margin-top:25px;" class="btn btn-primary pull-right">New Proposal</button> -->
-                            <input type="button" style="margin-top:25px;" @click.prevent="newVehicle" class="btn btn-primary" value="Add new vehicle"/>
+                <div class="col-md-3" v-if="!proposal.readonly">
+                            <!-- <button style="margin-top:25px;" class="btn btn-primary pull-right">New Application</button> -->
+                            <input type="button" style="margin-top:25px;" @click.prevent="newVehicle" class="btn btn-primary" value="Add new vehicle" />
                 </div>
             </div>
 
@@ -136,8 +136,10 @@ export default {
                         data: '',
                         mRender:function (data,type,full) {
                             let links = '';
+                            if(!vm.proposal.readonly){
                             links +=  `<a href='#${full.id}' data-edit-vehicle='${full.id}'>Edit Vehicle</a><br/>`;
                             links +=  `<a href='#${full.id}' data-discard-vehicle='${full.id}'>Discard</a><br/>`;
+                        }
                         //     if (!vm.is_external){
                         //         if (full.can_user_view) {
                         //             links +=  `<a href='/internal/compliance/${full.id}'>Process</a><br/>`;
@@ -237,9 +239,19 @@ export default {
             //console.log(vm.regions);
         },
         newVehicle: function(){
+            let vm=this;
             this.$refs.edit_vehicle.vehicle_id = null;
             //this.$refs.edit_vehicle.fetchVehicle(id);
-            this.$refs.edit_vehicle.vehicle=this.new_vehicle;
+            var new_vehicle_another={
+                access_type: null,
+                capacity:'',
+                rego:'',
+                rego_expiry:null,
+                license:'',
+                proposal: vm.proposal.id
+            }
+            //this.$refs.edit_vehicle.vehicle=this.new_vehicle;
+            this.$refs.edit_vehicle.vehicle=new_vehicle_another;
             this.$refs.edit_vehicle.vehicle_action='add'
             this.$refs.edit_vehicle.isModalOpen = true;
         },

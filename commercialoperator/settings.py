@@ -4,9 +4,13 @@ from ledger.settings_base import *
 ROOT_URLCONF = 'commercialoperator.urls'
 SITE_ID = 1
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
-SUPERVISOR_STOP_CMD = env('SUPERVISOR_STOP_CMD')
 SYSTEM_MAINTENANCE_WARNING = env('SYSTEM_MAINTENANCE_WARNING', 24) # hours
 DISABLE_EMAIL = env('DISABLE_EMAIL', False)
+PS_PAYMENT_SYSTEM_ID = env('PS_PAYMENT_SYSTEM_ID', 'S557')
+MEDIA_APP_DIR = env('MEDIA_APP_DIR', 'cols')
+
+if not VALID_SYSTEMS:
+    VALID_SYSTEMS = [PS_PAYMENT_SYSTEM_ID]
 
 INSTALLED_APPS += [
     'reversion_compare',
@@ -18,6 +22,7 @@ INSTALLED_APPS += [
     'commercialoperator.components.proposals',
     'commercialoperator.components.approvals',
     'commercialoperator.components.compliances',
+    'commercialoperator.components.bookings',
     'taggit',
     'rest_framework',
     'rest_framework_datatables',
@@ -58,8 +63,9 @@ REST_FRAMEWORK = {
 
 
 MIDDLEWARE_CLASSES += [
+    'commercialoperator.middleware.BookingTimerMiddleware',
     'commercialoperator.middleware.FirstTimeNagScreenMiddleware',
-    'reversion.middleware.RevisionMiddleware'
+    'commercialoperator.middleware.RevisionOverrideMiddleware'
 ]
 
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'commercialoperator', 'templates'))
@@ -90,7 +96,7 @@ if DEV_STATIC and not DEV_STATIC_URL:
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 # Department details
-SYSTEM_NAME = env('SYSTEM_NAME', 'Commercial Operator Licensing System')
+SYSTEM_NAME = env('SYSTEM_NAME', 'Commercial Operator Licensing')
 SYSTEM_NAME_SHORT = env('SYSTEM_NAME_SHORT', 'COLS')
 SITE_PREFIX = env('SITE_PREFIX')
 SITE_DOMAIN = env('SITE_DOMAIN')
@@ -105,6 +111,13 @@ DEP_NAME_SHORT = env('DEP_NAME_SHORT','DBCA')
 SITE_URL = env('SITE_URL', 'https://' + SITE_PREFIX + '.' + SITE_DOMAIN)
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', 'no-reply@' + SITE_DOMAIN)
 TENURE_SECTION = env('TENURE_SECTION', None)
+COLS_ADMIN_GROUP = env('COLS_ADMIN_GROUP', 'COLS Admin')
+
+# for ORACLE Job Notification - override settings_base.py
+EMAIL_FROM = DEFAULT_FROM_EMAIL
+
+OSCAR_BASKET_COOKIE_OPEN = 'cols_basket'
+os.environ['LEDGER_PRODUCT_CUSTOM_FIELDS'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code')"
 
 BASE_URL=env('BASE_URL')
 
@@ -119,4 +132,17 @@ CKEDITOR_CONFIGS = {
         'toolbar': 'Basic',
     },
 }
+
+# Additional logging for commercialoperator
+LOGGING['handlers']['payment_checkout'] = {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'cols_payment_checkout.log'),
+            'formatter': 'verbose',
+            'maxBytes': 5242880
+        }
+LOGGING['loggers']['payment_checkout'] = {
+            'handlers': ['payment_checkout'],
+            'level': 'INFO'
+        }
 

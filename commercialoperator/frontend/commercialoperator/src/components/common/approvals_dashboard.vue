@@ -3,7 +3,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Approvals <small v-if="is_external">View existing approvals and amend or renew them</small>
+                    <h3 class="panel-title">Licences <small v-if="is_external">View existing licences and amend or renew them</small>
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -11,6 +11,7 @@
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
                     <div class="row">
+                        <!--
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Region</label>
@@ -29,6 +30,7 @@
                                 </select>
                             </div>
                         </div>
+                        -->
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Status</label>
@@ -38,24 +40,34 @@
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-3">
-                            <label for="">Expiry From</label>
-                            <div class="input-group date" ref="proposalDateFromPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
+                            <div class="form-group">
+                                <label for="">Expiry From</label>
+                                <div class="input-group date" ref="proposalDateFromPicker">
+                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedFrom">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <label for="">Expiry To</label>
-                            <div class="input-group date" ref="proposalDateToPicker">
-                                <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
-                                <span class="input-group-addon">
-                                    <span class="glyphicon glyphicon-calendar"></span>
-                                </span>
+                            <div class="form-group">
+                                <label for="">Expiry To</label>
+                                <div class="input-group date" ref="proposalDateToPicker">
+                                    <input type="text" class="form-control" placeholder="DD/MM/YYYY" v-model="filterProposalLodgedTo">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="is_internal" class="col-md-3">
+                            <div class="form-group">
+                                <label/>
+                            <div>
+                                <button style="width:80%;" class="btn btn-primary top-buffer-s" :disabled="disabled" @click.prevent="createEClassLicence()">New E-Class licence</button>
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -67,9 +79,12 @@
                 </div>
             </div>
         </div>
+        <ApprovalExtend ref="approval_extend"  @refreshFromResponse="refreshFromResponse"></ApprovalExtend>
         <ApprovalCancellation ref="approval_cancellation"  @refreshFromResponse="refreshFromResponse"></ApprovalCancellation>
         <ApprovalSuspension ref="approval_suspension"  @refreshFromResponse="refreshFromResponse"></ApprovalSuspension>
         <ApprovalSurrender ref="approval_surrender"  @refreshFromResponse="refreshFromResponse"></ApprovalSurrender>
+        <!--<EClassLicence ref="eclass_licence" :processing_status="proposal.processing_status" :proposal_id="proposal.id"></EClassLicence>-->
+        <EClassLicence ref="eclass_licence"></EClassLicence>
 
 
     </div>
@@ -77,9 +92,12 @@
 <script>
 import datatable from '@/utils/vue/datatable.vue'
 import Vue from 'vue'
+import ApprovalExtend from '../internal/approvals/approval_extend.vue'
 import ApprovalCancellation from '../internal/approvals/approval_cancellation.vue'
 import ApprovalSuspension from '../internal/approvals/approval_suspension.vue'
 import ApprovalSurrender from '../internal/approvals/approval_surrender.vue'
+import EClassLicence from '../internal/approvals/approval_eclass.vue'
+
 import {
     api_endpoints,
     helpers
@@ -100,6 +118,14 @@ export default {
             required: true
         }
     },
+    components:{
+        datatable,
+        ApprovalExtend,
+        ApprovalCancellation,
+        ApprovalSuspension,
+        ApprovalSurrender,
+        EClassLicence,
+    },
     data() {
         let vm = this;
         return {
@@ -108,8 +134,6 @@ export default {
             //Profile to check if user has access to process Proposal
             profile: {},
             // Filters for Proposals
-            filterProposalRegion: 'All',
-            filterProposalActivity: 'All',
             filterProposalStatus: 'All',
             filterProposalLodgedFrom: '',
             filterProposalLodgedTo: '',
@@ -123,12 +147,9 @@ export default {
                 allowInputToggle:true
             },
             approval_status:[],
-            proposal_activityTitles : [],
-            proposal_regions: [],
             proposal_submitters: [],
             proposal_headers:[
-                "Number","Region","Activity","Title","Holder","Status","Start Date","Expiry Date","Approval","Action",
-                //"LodgementNo","CanReissue","CanAction","CanReinstate","SetToCancel","SetToSuspend","SetToSurrender","CurrentProposal","RenewalDoc","RenewalSent","CanAmend","CanRenew"
+                "Number","Licence Type","Holder","Status","Start Date","Expiry Date","Licence","Action",
             ],
             proposal_options:{
                 language: {
@@ -143,7 +164,6 @@ export default {
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
-                        //d.regions = vm.filterProposalRegion.join(); // no need to add this since we can filter normally (filter is not multi-select in Approval table)
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                     }
@@ -166,13 +186,13 @@ export default {
                             if(full.can_reissue){
                                 if(!full.can_action){
                                     if(full.set_to_cancel){
-                                        message = 'This Approval is marked for cancellation to future date';
+                                        message = 'This Licence is marked for cancellation to future date';
                                     }
                                     if(full.set_to_suspend){
-                                        message = 'This Approval is marked for suspension to future date';
+                                        message = 'This Licence is marked for suspension to future date';
                                     }
                                     if(full.set_to_surrender){
-                                        message = 'This Approval is marked for surrendering to future date';
+                                        message = 'This Licence is marked for surrendering to future date';
                                     }
                                     popTemplate = _.template('<a href="#" ' +
                                             'role="button" ' +
@@ -197,28 +217,12 @@ export default {
                         name: "id, lodgement_number",
                     },
                     {
-                        data: "region",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn,
-                        name: 'current_proposal__region__name'// will be use like: Approval.objects.filter(current_proposal__region__name='Kimberley')
-                    },
-                    {
-                        data: "activity",
-                        name: "current_proposal__activity"
-                    },
-                    {
-                        data: "title",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn,
-                        name: "current_proposal__title"
+                        data: "application_type",
+                        name: "current_proposal__application_type__name"
                     },
                     {
                         data: "applicant",
-                        name: "applicant__organisation__name" // will be use like: Approval.objects.all().order_by('applicant__organisation__nane')
+                        name: "org_applicant__organisation__name, proxy_applicant__email, proxy_applicant__first_name, proxy_applicant__last_name"
                     },
                     {data: "status"},
                     {
@@ -238,8 +242,31 @@ export default {
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
-                            return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            var result = '';
+                            var popTemplate = '';
+                            if(!full.migrated){
+                            // return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            result= `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            }
+                            else if(full.migrated){
+                               var icon = "<i class='fa fa-file-pdf-o' style='color:red'></i>"
+                               var message= 'This is a migrated licence';
+                               popTemplate = _.template('<a href="#" ' +
+                                            'role="button" ' +
+                                            'data-toggle="popover" ' +
+                                            'data-trigger="hover" ' +
+                                            'data-placement="top auto"' +
+                                            'data-html="true" ' +
+                                            'data-content="<%= text %>" ' +
+                                            '><%= tick %></a>');
+                                    result += popTemplate({
+                                        text: message,
+                                        tick: icon
+                                    });
+                            }
+                            return result;
                         },
+                        'createdCell': helpers.dtPopoverCellFn,
                         name: 'licence_document__name'
                     },
                     {
@@ -250,6 +277,13 @@ export default {
                                 if(vm.check_assessor(full)){
                                     if(full.can_reissue){
                                         links +=  `<a href='#${full.id}' data-reissue-approval='${full.current_proposal}'>Reissue</a><br/>`;
+                                    }
+                                    if(full.application_type=='E Class' && (full.status=='Current' || full.status=='Suspended')){
+                                        if(full.can_extend){
+                                            links +=  `<a href='#${full.id}' data-extend-approval='${full.id}'>Extend</a><br/>`;
+                                        } else {
+                                            links +=  `<a class='disabled' title='Licence has already been extended' style="color: grey;text-decoration: none;">Extend</a><br/>`;
+                                        }
                                     }
                                     if(full.can_reissue && full.can_action){
                                         links +=  `<a href='#${full.id}' data-cancel-approval='${full.id}'>Cancel</a><br/>`;
@@ -296,34 +330,12 @@ export default {
                         orderable: false,
                         name: ''
                     },
+                    {data: "migrated", visible: false},
                     
                 ],
                 processing: true,
-				/*
+                /*
                 initComplete: function () {
-                    // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
-                    regionColumn.data().unique().sort().each( function ( d, j ) {
-                        let regionTitles = [];
-                        $.each(d,(index,a) => {
-                            // Split region string to array
-                            if (a != null){
-                                $.each(a.split(','),(i,r) => {
-                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                                });
-                            }
-                        })
-                        vm.proposal_regions = regionTitles;
-                    });
-                    // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
-                    titleColumn.data().unique().sort().each( function ( d, j ) {
-                        let activityTitles = [];
-                        $.each(d,(index,a) => {
-                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
-                        })
-                        vm.proposal_activityTitles = activityTitles;
-                    });
                     // Grab Status from the data in the table
                     var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(5);
                     statusColumn.data().unique().sort().each( function ( d, j ) {
@@ -336,50 +348,27 @@ export default {
                     // Fix the table rendering columns
                     vm.$refs.proposal_datatable.vmDataTable.columns.adjust().responsive.recalc();
                 }
-				*/
+                */
             }
         }
     },
-    components:{
-        datatable,
-        ApprovalCancellation,
-        ApprovalSuspension,
-        ApprovalSurrender
-    },
     watch:{
-        filterProposalRegion: function(){
-            //this.$refs.proposal_datatable.vmDataTable.draw();
-            let vm = this;
-            if (vm.filterProposalRegion!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(1).search('').draw();
-            }
-        },
-        filterProposalActivity: function() {
-            let vm = this;
-            if (vm.filterProposalActivity!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalActivity).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
-            }
-        },
         filterProposalSubmitter: function(){
             //this.$refs.proposal_datatable.vmDataTable.draw();
             let vm = this;
             if (vm.filterProposalSubmitter!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalSubmitter).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
 
         },
         filterProposalStatus: function() {
             let vm = this;
             if (vm.filterProposalStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(5).search(vm.filterProposalStatus).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(3).search(vm.filterProposalStatus).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(3).search('').draw();
             }
         },
         filterProposalLodgedFrom: function(){
@@ -397,17 +386,23 @@ export default {
         is_external: function(){
             return this.level == 'external';
         },
+        is_internal: function(){
+            return this.level == 'internal';
+        },
         is_referral: function(){
             return this.level == 'referral';
         }
     },
     methods:{
+        createEClassLicence: function(){
+            //this.save_wo();
+            this.$refs.eclass_licence.isModalOpen = true;
+        },
+
         fetchFilterLists: function(){
             let vm = this;
 
             vm.$http.get(api_endpoints.filter_list_approvals).then((response) => {
-                vm.proposal_regions = response.body.regions;
-                vm.proposal_activityTitles = response.body.activities;
                 vm.proposal_submitters = response.body.submitters;
                 vm.approval_status = response.body.approval_status_choices;
             },(error) => {
@@ -446,6 +441,14 @@ export default {
                 var id = $(this).attr('data-reissue-approval');
                 vm.reissueApproval(id);
             });
+
+            // Internal Extend listener
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-extend-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-extend-approval');
+                vm.extendApproval(id);
+            });
+
 
             //Internal Cancel listener
             vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-cancel-approval]', function(e) {
@@ -491,30 +494,7 @@ export default {
 
         },
         initialiseSearch:function(){
-            this.regionSearch();
             this.dateSearch();
-        },
-        regionSearch:function(){
-            let vm = this;
-            vm.$refs.proposal_datatable.table.dataTableExt.afnFiltering.push(
-                function(settings,data,dataIndex,original){
-                    let found = false;
-                    let filtered_regions = vm.filterProposalRegion.split(',');
-                    if (filtered_regions == 'All'){ return true; } 
-
-                    let regions = original.region != '' && original.region != null ? original.region.split(','): [];
-
-                    $.each(regions,(i,r) => {
-                        if (filtered_regions.indexOf(r) != -1){
-                            found = true;
-                            return false;
-                        }
-                    });
-                    if  (found) { return true; }
-
-                    return false;
-                }
-            );
         },
         submitterSearch:function(){
             let vm = this;
@@ -567,26 +547,22 @@ export default {
             let vm = this;
             Vue.http.get(api_endpoints.profile).then((response) => {
                 vm.profile = response.body
-                              
             },(error) => {
                 console.log(error);
-                
             })
         },
 
         check_assessor: function(proposal){
-            let vm = this;         
-            
+            let vm = this;
+
             var assessor = proposal.allowed_assessors.filter(function(elem){
                     return(elem.id=vm.profile.id)
                 });
-                
             if (assessor.length > 0)
                 return true;
             else
-                return false;       
-            
-            return false;       
+                return false;
+            return false;
         },
 
         reissueApproval:function (proposal_id) {
@@ -594,18 +570,16 @@ export default {
             let status= 'with_approver'
             let data = {'status': status}
             swal({
-                title: "Reissue Approval",
-                text: "Are you sure you want to reissue this approval?",
+                title: "Reissue Licence",
+                text: "Are you sure you want to reissue this licence?",
                 type: "warning",
-                showCancelButton: true,
-                confirmButtonText: 'Reissue approval',
+                confirmButtonText: 'Reissue licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/reissue_approval')),JSON.stringify(data),{
                 emulateJSON:true,
                 })
                 .then((response) => {
-                    
                     vm.$router.push({
                     name:"internal-proposal",
                     params:{proposal_id:proposal_id}
@@ -613,9 +587,9 @@ export default {
                 }, (error) => {
                     console.log(error);
                     swal({
-                    title: "Reissue Approval",
+                    title: "Reissue Licence",
                     text: error.body,
-                    type: "error",                   
+                    type: "error",
                     })
                 });
             },(error) => {
@@ -623,35 +597,73 @@ export default {
             });
         },
 
+        _extendApproval:function (approval_id) {
+            let vm = this;
+            let status= 'with_approver'
+            let data = {'status': status}
+            swal({
+                title: "Renew Licence",
+                //text: "Are you sure you want to extend this licence?",
+                //type: "warning",
+                text: "<input type='email' class='form-control' name='email' id='email'/>",
+                type: "input",
+                showCancelButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Extend licence',
+            }).then(() => {
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,(approval_id+'/approval_extend')),JSON.stringify(data),{
+                emulateJSON:true,
+                })
+                .then((response) => {
+                    vm.$router.push({
+                    name:"internal-proposal",
+                    params:{approval_id:approval_id}
+                    });
+                }, (error) => {
+                    console.log(error);
+                    swal({
+                    title: "Extend Licence",
+                    text: error.body,
+                    type: "error",
+                    })
+                });
+            },(error) => {
+
+            });
+        },
+
+        extendApproval: function(approval_id){
+            this.$refs.approval_extend.approval_id = approval_id;
+            this.$refs.approval_extend.isModalOpen = true;
+        },
+
         reinstateApproval:function (approval_id) {
             let vm = this;
             let status= 'with_approver'
             //let data = {'status': status}
             swal({
-                title: "Reinstate Approval",
-                text: "Are you sure you want to reinstate this approval?",
+                title: "Reinstate Licence",
+                text: "Are you sure you want to reinstate this licence?",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: 'Reinstate approval',
+                confirmButtonText: 'Reinstate licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.approvals,(approval_id+'/approval_reinstate')),{
-                
                 })
                 .then((response) => {
                     swal(
                         'Reinstate',
-                        'Your approval has been reinstated',
+                        'Your licence has been reinstated',
                         'success'
                     )
                     vm.$refs.proposal_datatable.vmDataTable.ajax.reload();
-                    
                 }, (error) => {
                     console.log(error);
                     swal({
-                    title: "Reinstate Approval",
+                    title: "Reinstate Licence",
                     text: error.body,
-                    type: "error",                   
+                    type: "error",
                     })
                 });
             },(error) => {
@@ -664,11 +676,11 @@ export default {
             let status= 'with_approver'
             //let data = {'status': status}
             swal({
-                title: "Renew Approval",
-                text: "Are you sure you want to renew this approval?",
+                title: "Renew Licence",
+                text: "Are you sure you want to renew this licence?",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: 'Renew approval',
+                confirmButtonText: 'Renew licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/renew_approval')),{
@@ -685,7 +697,7 @@ export default {
                 }, (error) => {
                     console.log(error);
                     swal({
-                    title: "Renew Approval",
+                    title: "Renew Licence",
                     text: error.body,
                     type: "error",                   
                     })
@@ -698,11 +710,11 @@ export default {
         amendApproval:function (proposal_id) {
             let vm = this;
             swal({
-                title: "Amend Approval",
-                text: "Are you sure you want to amend this approval?",
+                title: "Amend Licence",
+                text: "Are you sure you want to amend this licence?",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: 'Amend approval',
+                confirmButtonText: 'Amend licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/amend_approval')),{
@@ -719,7 +731,7 @@ export default {
                 }, (error) => {
                     console.log(error);
                     swal({
-                    title: "Amend Approval",
+                    title: "Amend Licence",
                     text: error.body,
                     type: "error",                   
                     })
@@ -731,7 +743,6 @@ export default {
         },
 
         cancelApproval: function(approval_id){
-           
             this.$refs.approval_cancellation.approval_id = approval_id;
             this.$refs.approval_cancellation.isModalOpen = true;
         },
@@ -743,7 +754,6 @@ export default {
         },
 
         surrenderApproval: function(approval_id){
-           
             this.$refs.approval_surrender.approval_id = approval_id;
             this.$refs.approval_surrender.isModalOpen = true;
         },
@@ -755,7 +765,7 @@ export default {
 
     },
     mounted: function(){
-		this.fetchFilterLists();
+        this.fetchFilterLists();
         this.fetchProfile();
         let vm = this;
         $( 'a[data-toggle="collapse"]' ).on( 'click', function () {

@@ -2,31 +2,30 @@
     <div>
         <template v-if="isFinalised">
             <div class="col-md-12 alert alert-success" v-if="proposal.processing_status == 'Approved'">
-                <p>The approval has been issued and has been emailed to {{proposal.applicant.name}}</p>
+                <p>The licence has been issued and has been emailed to {{proposal.applicant.name}}</p>
                 <p>Expiry date: {{proposal.proposed_issuance_approval.expiry_date}}
-                <p>Permit: <a target="_blank" :href="proposal.permit">approval.pdf</a></p>
+                <p>Permit: <a target="_blank" :href="proposal.permit">licence.pdf</a></p>
             </div>
             <div v-else class="col-md-12 alert alert-warning">
-                <p>The proposal was declined. The decision was emailed to {{proposal.applicant.name}}</p>
+                <p>The application was declined. The decision was emailed to {{proposal.applicant}}</p>
             </div>    
         </template>
+        <!--
         <div class="col-md-12">
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Level of Approval
+                        <h3 class="panel-title">Level of Licence
                             <a class="panelClicker" :href="'#'+proposedLevel" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="proposedLevel">
                                 <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                             </a>
                         </h3>
                     </div>
                     <div class="panel-body panel-collapse collapse in" :id="proposedLevel">
-
                         <div class="row">
                             <div class="col-sm-12">
                                     <template v-if="!isFinalised">
-                                        <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
-                                        
+                                        <p><strong>Level of licence: {{proposal.approval_level}}</strong></p>
                                     <div v-if="isApprovalLevel">    
                                         <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
                                         <span>
@@ -36,9 +35,8 @@
                                             <p><strong>Attach documents:</strong></p>
                                             <p>
                                             <span class="btn btn-info btn-file pull-left">
-                                            Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                            Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                             </span>
-                                            <!--<span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName()}}</span>-->
                                             </span>
                                             </p>
                                         </div>
@@ -47,19 +45,19 @@
                                     </template> 
 
                                     <template v-if="isFinalised">
-                                        <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
-                                        
+                                        <p><strong>Level of licence: {{proposal.approval_level}}</strong></p>
                                     <div v-if="isApprovalLevel">    
                                         <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
                                         </p>
                                     </div>
-                                    </template>                                    
+                                    </template>
                             </div>
                         </div> 
                     </div>
                 </div>
             </div>
         </div>
+        -->
         <div class="col-md-12">
             <div class="row">
                 <div class="panel panel-default">

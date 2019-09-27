@@ -1,5 +1,6 @@
 <template>
-    <div class="container" id="userInfo">
+    <div :class="classCompute" id="userInfo">
+      <div class="col-sm-12">
         <div v-if="showCompletion" class="row">
             <div class="col-sm-12">
                 <div class="well well-sm">
@@ -7,7 +8,7 @@
                         <div class="col-sm-12">
                             <p>
                                 We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
-                                (personal details, address details, contact details, and weather you are managing approvals for an organisation).
+                                (personal details, address details, contact details, and weather you are managing licences for an organisation).
                                 Once completed, click Continue to start using the system.
                             </p>
                             <a :disabled="!completedProfile" href="/" class="btn btn-primary pull-right">Continue</a>
@@ -163,13 +164,19 @@
                         <alert v-if="showContactError" type="danger" style="color:red"><div v-for="item in errorListContact"><strong>{{item}}</strong></div></alert>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label">Phone (work)</label>
-                            <div class="col-sm-6">
+                            <div v-if="profile.is_department_user" class="col-sm-6">
+                               <input readonly="readonly" type="text" class="form-control" id="phone" name="Phone" placeholder="" v-model="profile.phone_number">           
+                            </div>
+                            <div v-else class="col-sm-6">
                                 <input type="text" class="form-control" id="phone" name="Phone" placeholder="" v-model="profile.phone_number">
                             </div>
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Mobile</label>
-                            <div class="col-sm-6">
+                            <div v-if="profile.is_department_user" class="col-sm-6">
+                                <input readonly="readonly" type="text" class="form-control" id="mobile" name="Mobile" placeholder="" v-model="profile.mobile_number">
+                            </div>
+                            <div v-else class="col-sm-6">
                                 <input type="text" class="form-control" id="mobile" name="Mobile" placeholder="" v-model="profile.mobile_number">
                             </div>
                           </div>
@@ -194,7 +201,7 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing approvals</small>
+                    <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing licences</small>
                         <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
@@ -203,7 +210,7 @@
                   <div class="panel-body collapse" :id="oBody">
                       <form class="form-horizontal" name="orgForm" method="post">
                           <div class="form-group">
-                            <label for="" class="col-sm-5 control-label">Do you manage approvals on behalf of an organisation?</label>
+                            <label for="" class="col-sm-5 control-label">Do you manage licences on behalf of an organisation?</label>
                             <div class="col-sm-4">
                                 <label class="radio-inline">
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
@@ -264,14 +271,16 @@
                                       <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="">
                                   </div>
                                   <div class="col-sm-2">
-                                      <button @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
+                                      <!--<button @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>-->
+                                      <button v-if="newOrg.detailsChecked" @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
                                   </div>
                               </div>
-                              <div class="form-group" v-if="newOrg.detailsChecked">
+                              <!--<div class="form-group" v-if="newOrg.detailsChecked">-->
+                              <div class="form-group">
                                     <label class="col-sm-12" style="text-align:left;">
                                       Please upload a letter on organisation letter head stating that you are a consultant for the organisation.
                                         <span class="btn btn-info btn-file">
-                                            Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                            Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                         </span>
                                         <span  style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                                     </label>
@@ -282,7 +291,7 @@
 
 
                                     <div class="col-sm-12">
-                                      <button v-if="!registeringOrg" @click.prevent="orgRequest()" class="btn btn-primary pull-left">Submit</button>
+                                      <button v-if="!registeringOrg" @click.prevent="orgConsultRequest()" class="btn btn-primary pull-left">Submit</button>
                                       <button v-else disabled class="btn btn-primary pull-right"><i class="fa fa-spin fa-spinner"></i>&nbsp;Submitting</button>
                                     </div>
                               </div>
@@ -330,7 +339,7 @@
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-primary btn-file pull-left">
-                                        Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                     </span>
                                     <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                                   </div>
@@ -348,6 +357,7 @@
                 </div>
             </div>
         </div>
+      </div>
     </div>
 </template>
 
@@ -430,6 +440,9 @@ export default {
         },
     },
     computed: {
+        classCompute:function(){
+          return this.isApplication? 'row' : 'container';
+        },
         hasOrgs: function() {
             return this.profile.commercialoperator_organisations && this.profile.commercialoperator_organisations.length > 0 ? true: false;
         },
@@ -672,7 +685,7 @@ export default {
 
         fetchOrgRequestList: function() { //Fetch all the Organisation requests submitted by user which are pending for approval.
             let vm = this;
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'user_list')).then((response) => {
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response) => {
                 
                 vm.orgRequest_list=response.body; 
             }, (error) => {
@@ -763,6 +776,68 @@ export default {
                 });
             }
 
+        },
+        orgConsultRequest: function() {
+            let vm = this;
+            vm.registeringOrg = true;
+            let data = new FormData();
+            let new_organisation = vm.newOrg;
+            for (var organisation in vm.profile.commercialoperator_organisations) {
+                if (new_organisation.abn && vm.profile.commercialoperator_organisations[organisation].abn == new_organisation.abn) {
+                    swal({
+                        title: 'Checking Organisation',
+                        html: 'You are already associated with this organisation.',
+                        type: 'info'
+                    })
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    return;
+                }
+            }
+            data.append('name', vm.newOrg.name);
+            data.append('abn', vm.newOrg.abn);
+            data.append('identification', vm.uploadedFile);
+            data.append('role',vm.role);
+            if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
+                vm.registeringOrg = false;
+                swal(
+                    'Error submitting organisation request',
+                    'Please enter the organisation details and attach a file before submitting your request.',
+                    'error'
+                )
+            } else {
+                vm.$http.post(api_endpoints.organisation_requests,data,{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    swal({
+                        title: 'Sent',
+                        html: 'Your organisation request has been successfully submitted.',
+                        type: 'success',
+                    }).then(() => {
+                        if (this.$route.name == 'account'){
+                           window.location.reload(true);
+                        }
+                    });
+                }, (error) => {
+                    console.log(error);
+                    vm.registeringOrg = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                    swal(
+                        'Error submitting organisation request',
+                        error_msg,
+                        'error'
+                    );
+                });
+            }
         },
         toggleSection: function (e) {
             let el = e.target;

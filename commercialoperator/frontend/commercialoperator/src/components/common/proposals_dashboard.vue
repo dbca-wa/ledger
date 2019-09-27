@@ -3,7 +3,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Proposals <small v-if="is_external">View existing proposals and lodge new ones</small>
+                    <h3 class="panel-title">Applications <small v-if="is_external">View existing applications and lodge new ones</small>
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -11,6 +11,7 @@
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
                     <div class="row">
+                        <!--
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Region</label>
@@ -28,6 +29,7 @@
                                 </select>
                             </div>
                         </div>
+                        -->
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Status</label>
@@ -37,8 +39,17 @@
                                 </select>
                             </div>
                         </div>
-                        <div v-if="is_external" class="col-md-3">
-                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Proposal</router-link>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="">Submitter</label>
+                                <select class="form-control" v-model="filterProposalSubmitter">
+                                    <option value="All">All</option>
+                                    <option v-for="s in proposal_submitters" :value="s.email">{{s.search_term}}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div v-if="is_external" class="col-md-6">
+                            <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'apply_proposal' }">New Application</router-link>
                         </div>
                     </div>
                     <div class="row">
@@ -60,7 +71,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <!-- <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Submitter</label>
                                 <select class="form-control" v-model="filterProposalSubmitter">
@@ -68,7 +79,7 @@
                                     <option v-for="s in proposal_submitters" :value="s.email">{{s.search_term}}</option>
                                 </select>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -116,8 +127,6 @@ export default {
             //Profile to check if user has access to process Proposal
             profile: {},
             // Filters for Proposals
-            filterProposalRegion: [],
-            filterProposalActivity: 'All',
             filterProposalStatus: 'All',
             filterProposalLodgedFrom: '',
             filterProposalLodgedTo: '',
@@ -140,6 +149,8 @@ export default {
             internal_status:[
                 {value: 'draft', name: 'Draft'},
                 {value: 'with_assessor', name: 'With Assessor'},
+                {value: 'on_hold', name: 'On Hold'},
+                {value: 'with_qa_officer', name: 'With QA Officer'},
                 {value: 'with_referral', name: 'With Referral'},
                 {value: 'with_assessor_requirements', name: 'With Assessor (Requirements)'},
                 {value: 'with_approver', name: 'With Approver'},
@@ -147,13 +158,10 @@ export default {
                 {value: 'declined', name: 'Declined'},
                 {value: 'discarded', name: 'Discarded'},
             ],
-            proposal_activityTitles : [],
-            proposal_regions: [],
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Application Type","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
-                //"LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
+                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Action"
             ],
 
             proposal_ex_options:{
@@ -170,7 +178,6 @@ export default {
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
-                        d.regions = vm.filterProposalRegion.join();
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
@@ -192,25 +199,6 @@ export default {
 						name: "application_type"
 					},
                     {
-                        data: "region",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn,
-                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
-                    },
-                    {
-						data: "activity",
-						name: "activity"
-					},
-                    {
-                        data: "title",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
-                    {
                         data: "submitter",
                         mRender:function (data,type,full) {
                             if (data) {
@@ -222,7 +210,7 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "applicant__organisation__name",
+                        name: "org_applicant__organisation__name, proxy_applicant__email, proxy_applicant__first_name, proxy_applicant__last_name"
                     },
                     {
                         data: "customer_status",
@@ -262,6 +250,9 @@ export default {
                                     links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
                                 }
                             }
+                            if (full.fee_paid){
+                                links +=  `<a href='/cols/payments/invoice-pdf/${full.fee_invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${full.fee_invoice_reference}</a><br/>`;
+                            }
                             return links;
                         },
                         name: '',
@@ -273,31 +264,8 @@ export default {
                 processing: true,
                 /*
                 initComplete: function () {
-                    // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
-                    regionColumn.data().unique().sort().each( function ( d, j ) {
-                        let regionTitles = [];
-                        $.each(d,(index,a) => {
-                            // Split region string to array
-                            if (a != null){
-                                $.each(a.split(','),(i,r) => {
-                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                                });
-                            }
-                        })
-                        vm.proposal_regions = regionTitles;
-                    });
-                    // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
-                    titleColumn.data().unique().sort().each( function ( d, j ) {
-                        let activityTitles = [];
-                        $.each(d,(index,a) => {
-                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
-                        })
-                        vm.proposal_activityTitles = activityTitles;
-                    });
                     // Grab submitters from the data in the table
-                    var submittersColumn = vm.$refs.proposal_datatable.vmDataTable.columns(4);
+                    var submittersColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
                         $.each(d,(index,s) => {
@@ -311,7 +279,7 @@ export default {
                         vm.proposal_submitters = submitters;
                     });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(6);
+                    var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(4);
                     statusColumn.data().unique().sort().each( function ( d, j ) {
                         let statusTitles = [];
                         $.each(d,(index,a) => {
@@ -323,8 +291,7 @@ export default {
                 */
             },
             proposal_headers:[
-                "Number","Application Type","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
-                //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
+                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action",
             ],
             proposal_options:{
                 autoWidth: false,
@@ -340,7 +307,6 @@ export default {
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
-                        d.regions = vm.filterProposalRegion.join();
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
@@ -359,24 +325,8 @@ export default {
                     },
                     {
 						data: "application_type",
-						name: "application_type"
+						name: "application_type__name"
 					},
-                    {
-                        data: "region",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn,
-                        searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
-                    },
-                    {data: "activity"},
-                    {
-                        data: "title",
-                        'render': function (value) {
-                            return helpers.dtPopover(value);
-                        },
-                        'createdCell': helpers.dtPopoverCellFn
-                    },
                     {
                         data: "submitter",
                         mRender:function (data,type,full) {
@@ -389,7 +339,7 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "applicant__organisation__name",
+                        name: "org_applicant__organisation__name, proxy_applicant__email, proxy_applicant__first_name, proxy_applicant__last_name"
                     },
                     {
                         data: "processing_status",
@@ -433,6 +383,10 @@ export default {
                                     links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
                                 }
                             }
+                            if (full.fee_paid){
+                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                                links +=  `<a href='/cols/payments/invoice-pdf/${full.fee_invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${full.fee_invoice_reference}</a><br/>`;
+                            }
                             return links;
                         },
                         name: '',
@@ -444,31 +398,8 @@ export default {
                 processing: true,
                 /*
                 initComplete: function () {
-                    // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
-                    regionColumn.data().unique().sort().each( function ( d, j ) {
-                        let regionTitles = [];
-                        $.each(d,(index,a) => {
-                            // Split region string to array
-                            if (a != null){
-                                $.each(a.split(','),(i,r) => {
-                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                                });
-                            }
-                        })
-                        vm.proposal_regions = regionTitles;
-                    });
-                    // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
-                    titleColumn.data().unique().sort().each( function ( d, j ) {
-                        let activityTitles = [];
-                        $.each(d,(index,a) => {
-                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
-                        })
-                        vm.proposal_activityTitles = activityTitles;
-                    });
                     // Grab submitters from the data in the table
-                    var submittersColumn = vm.$refs.proposal_datatable.vmDataTable.columns(4);
+                    var submittersColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
                     submittersColumn.data().unique().sort().each( function ( d, j ) {
                         var submitters = [];
                         $.each(d,(index,s) => {
@@ -482,7 +413,7 @@ export default {
                         vm.proposal_submitters = submitters;
                     });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(6);
+                    var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(4);
                     statusColumn.data().unique().sort().each( function ( d, j ) {
                         let statusTitles = [];
                         $.each(d,(index,a) => {
@@ -502,34 +433,21 @@ export default {
         datatable
     },
     watch:{
-        filterProposalRegion: function(){
-            this.$refs.proposal_datatable.vmDataTable.draw();
-            //let vm = this;
-            //vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion.join()).draw();
-        },
-        filterProposalActivity: function() {
-            let vm = this;
-            if (vm.filterProposalActivity!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalActivity).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
-            }
-        },
         filterProposalSubmitter: function(){
             //this.$refs.proposal_datatable.vmDataTable.draw();
             let vm = this;
             if (vm.filterProposalSubmitter!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalSubmitter).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
             }
         },
         filterProposalStatus: function() {
             let vm = this;
             if (vm.filterProposalStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterProposalStatus).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalStatus).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
             }
         },
         filterProposalLodgedFrom: function(){
@@ -554,9 +472,6 @@ export default {
 
             //vm.$http.get('/api/list_proposal/filter_list/').then((response) => {
             vm.$http.get(api_endpoints.filter_list).then((response) => {
-                vm.proposal_regions = response.body.regions;
-                //vm.proposal_districts = response.body.districts;
-                vm.proposal_activityTitles = response.body.activities;
                 vm.proposal_submitters = response.body.submitters;
                 //vm.proposal_status = vm.level == 'internal' ? response.body.processing_status_choices: response.body.customer_status_choices;
                 vm.proposal_status = vm.level == 'internal' ? vm.internal_status: vm.external_status;
@@ -569,11 +484,11 @@ export default {
         discardProposal:function (proposal_id) {
             let vm = this;
             swal({
-                title: "Discard Proposal",
+                title: "Discard Application",
                 text: "Are you sure you want to discard this proposal?",
                 type: "warning",
                 showCancelButton: true,
-                confirmButtonText: 'Discard Proposal',
+                confirmButtonText: 'Discard Application',
                 confirmButtonColor:'#d9534f'
             }).then(() => {
                 vm.$http.delete(api_endpoints.discard_proposal(proposal_id))
@@ -620,47 +535,10 @@ export default {
                 var id = $(this).attr('data-discard-proposal');
                 vm.discardProposal(id);
             });
-            // Initialise select2 for region
-            $(vm.$refs.filterRegion).select2({
-                "theme": "bootstrap",
-                allowClear: true,
-                placeholder:"Select Region"
-            }).
-            on("select2:select",function (e) {
-                var selected = $(e.currentTarget);
-                vm.filterProposalRegion = selected.val();
-            }).
-            on("select2:unselect",function (e) {
-                var selected = $(e.currentTarget);
-                vm.filterProposalRegion = selected.val();
-            });
         },
         initialiseSearch:function(){
-            this.regionSearch();
             this.submitterSearch();
             this.dateSearch();
-        },
-        regionSearch:function(){
-            let vm = this;
-            vm.$refs.proposal_datatable.table.dataTableExt.afnFiltering.push(
-                function(settings,data,dataIndex,original){
-                    let found = false;
-                    let filtered_regions = vm.filterProposalRegion;
-                    if (filtered_regions.length == 0){ return true; } 
-
-                    let regions = original.region != '' && original.region != null ? original.region.split(','): [];
-
-                    $.each(regions,(i,r) => {
-                        if (filtered_regions.indexOf(r) != -1){
-                            found = true;
-                            return false;
-                        }
-                    });
-                    if  (found) { return true; }
-
-                    return false;
-                }
-            );
         },
         submitterSearch:function(){
             let vm = this;

@@ -16,6 +16,6 @@
 
         ABN : {{ organisation.abn}}
     {% endif %}
-    You can no longer make proposals on behalf of this organisation.
+    You can no longer make applications on behalf of this organisation.
 
 {%  endblock %}

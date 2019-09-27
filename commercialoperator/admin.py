@@ -12,6 +12,7 @@ from copy import deepcopy
 class CommercialOperatorAdminSite(AdminSite):
     site_header = 'Commercial Operator Administration'
     site_title = 'Commercial Operator Licensing'
+    index_title = 'Commercial Operator Licensing'
 
 commercialoperator_admin_site = CommercialOperatorAdminSite(name='commercialoperatoradmin')
 

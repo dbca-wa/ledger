@@ -54,16 +54,19 @@
                                     <span class="icon-bar"></span>
                                     <span class="icon-bar"></span>
                                 </button>
-                                <a class="navbar-brand" href="{% url 'ds_home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">{% if is_internal_login %}Proposals {% else %}Home {% endif %}</div></a>
+                                <a class="navbar-brand" href="{% url 'ds_home' %}"><div style="inline"><img src="{% static 'wl/img/dpaw_small.png' %}">{% if is_internal_login %}Applications {% else %}Home {% endif %}</div></a>
                             </div>
                             <div id="navbar" class="navbar-collapse collapse">
                                 <ul class="nav navbar-nav">
                                     {% block left_menu_items %}
                                         {% if is_internal_login %}
-                                        <li><a href="/internal/approvals">Approvals</a></li>
+                                        <li><a href="/internal/approvals">Licences</a></li>
                                         <li><a href="/internal/compliances">Compliance with Requirements</a></li>
                                         <li><a href="/internal/organisations/access">Organisation Access</a></li>
                                         <li><a href="/internal/search">Search</a></li>
+                                        <li><a href="/internal/payment">Payment</a></li>
+                                        {% else %}
+                                        <li><a href="/external/payment">Payment</a></li>
                                         {% endif %}
                                     {% endblock %}
                                 </ul>
@@ -91,15 +94,32 @@
                                             <ul class="dropdown-menu">
                                                 {% if is_commercialoperator_admin_user or request.user.is_superuser %}
                                                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                                    <li><a href="/internal/reports">Reports</a></li>
                                                     <li role="separator" class="divider"></li>
                                                 {% endif %}
                                                 {% if request.user.is_superuser %}
                                                     <li><a href="{% url 'mgt-commands' %}">Management Commands</a></li>
                                                 {% endif %}
                                                 <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
+                                                <!-- <li><a href="{% url 'manage-profiles' %}">Manage Profiles</a></li> -->
+                                                {% for org in request.user.commercialoperator_organisations.all %}
+                                                    {% for org_contact in org.contacts.all%}
+                                                        {% ifequal org_contact.email request.user.email %}
+                                                            {% if org_contact.user_status == 'active' %}
+                                                                {% if org_contact.is_admin or org_contact.check_consultant %}
+                                                                    <li><a href="/external/organisations/manage/{{org.id}}">Manage {{ org.organisation.name}} </a></li>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        {% endifequal %}
+                                                    {% endfor %}
+                                                {% endfor %}
+                                                <li role="separator" class="divider"></li>
+
+                                                <!--
                                                 {% for org in request.user.commercialoperator_organisations.all %}
                                                     <li><a href="/external/organisations/manage/{{org.id}}">Manage {{ org.organisation.name}}</a></li>
                                                 {% endfor %}
+                                                -->
 
                                                 <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
                                             </ul>

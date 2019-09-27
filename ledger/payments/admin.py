@@ -24,9 +24,10 @@ class CashAdmin(admin.ModelAdmin):
 
 @admin.register(models.Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('reference','order','payment_status')
+    list_display = ('reference','order','payment_status','settlement_date','amount', 'system','created' )
     search_fields = ('reference',)
-
+    list_filter = ('system'),    
+   
 @admin.register(models.InvoiceBPAY)
 class InvoiceBpayAdmin(admin.ModelAdmin):
     pass
@@ -113,7 +114,7 @@ class OracleParserAdmin(admin.ModelAdmin):
 @admin.register(models.OracleInterface)
 class OracleInterfaceAdmin(admin.ModelAdmin):
     list_display = ['activity_name','amount','status','receipt_number','receipt_date','source','method']
-
+    search_fields = ('source','receipt_number')
 class OracleInterfaceRecipientInline(admin.TabularInline):
     model = models.OracleInterfaceRecipient
     extra = 1

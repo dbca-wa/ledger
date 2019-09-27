@@ -1,0 +1,5 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+        Please find attached the confirmation for the application fee, for Application <strong>{{ booking_number }}, for your own records.
+{%  endblock %}

@@ -5,6 +5,6 @@
         Organisation : {{ organisation.name }}
         ABN : {{ organisation.abn}}
     
-    You can not make proposals on behalf of this organisation now.
+    You can not make applications on behalf of this organisation now.
 
 {%  endblock %}

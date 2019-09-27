@@ -1,6 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,OrganisationAddress
-from commercialoperator.components.organisations.models import (   
+from commercialoperator.components.organisations.models import (
                                 Organisation,
                                 OrganisationContact,
                                 OrganisationRequest,
@@ -14,9 +14,11 @@ from commercialoperator.components.organisations.utils import (
                                 can_manage_org,
                                 can_admin_org,
                                 is_consultant,
-                                can_relink,
                                 can_approve,
+                                can_relink,
+                                is_last_admin,
                             )
+from commercialoperator.components.main.serializers import CommunicationLogEntrySerializer
 from rest_framework import serializers, status
 import rest_framework_gis.serializers as gis_serializers
 
@@ -25,6 +27,24 @@ class LedgerOrganisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ledger_organisation
         fields = '__all__'
+
+
+class LedgerOrganisationFilterSerializer(serializers.ModelSerializer):
+    #address = serializers.SerializerMethodField(read_only=True)
+    email = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ledger_organisation
+        fields = (
+            'id',
+            'name',
+            'email',
+            #'address',
+        )
+
+    def get_email(self, obj):
+        return ''
+
 
 class OrganisationCheckSerializer(serializers.Serializer):
     # Validation serializer for new Organisations
@@ -53,7 +73,7 @@ class OrganisationAddressSerializer(serializers.ModelSerializer):
             'state',
             'country',
             'postcode'
-        ) 
+        )
 
 class DelegateSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='get_full_name')
@@ -70,12 +90,14 @@ class OrganisationSerializer(serializers.ModelSerializer):
     pins = serializers.SerializerMethodField(read_only=True)
     delegates = DelegateSerializer(many=True, read_only=True)
     organisation = LedgerOrganisationSerializer()
+    trading_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Organisation
         fields = (
             'id',
             'name',
+            'trading_name',
             'abn',
             'address',
             'email',
@@ -84,6 +106,9 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'pins',
             'delegates'
         )
+
+    def get_trading_name(self, obj):
+        return obj.organisation.trading_name
 
     def get_pins(self, obj):
         try:
@@ -151,12 +176,12 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
 class DetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ledger_organisation
-        fields = ('id','name')
+        fields = ('id','name', 'trading_name')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
     user_status= serializers.SerializerMethodField()
     user_role= serializers.SerializerMethodField()
-    
+
     class Meta:
         model = OrganisationContact
         fields = '__all__'
@@ -188,6 +213,7 @@ class OrganisationRequestSerializer(serializers.ModelSerializer):
     requester = OrgRequestRequesterSerializer(read_only=True)
     status = serializers.SerializerMethodField()
     # role = serializers.SerializerMethodField()
+
     class Meta:
         model = OrganisationRequest
         fields = '__all__'
@@ -220,13 +246,13 @@ class UserOrganisationSerializer(serializers.ModelSerializer):
 class OrganisationRequestActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
     class Meta:
-        model = OrganisationRequestUserAction 
+        model = OrganisationRequestUserAction
         fields = '__all__'
 
 class OrganisationActionSerializer(serializers.ModelSerializer):
     who = serializers.CharField(source='who.get_full_name')
     class Meta:
-        model = OrganisationAction 
+        model = OrganisationAction
         fields = '__all__'
 
 class OrganisationRequestCommsSerializer(serializers.ModelSerializer):
@@ -238,6 +264,18 @@ class OrganisationCommsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganisationLogEntry
         fields = '__all__'
+
+class OrganisationLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = OrganisationLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
 
 class OrganisationUnlinkUserSerializer(serializers.Serializer):
     user = serializers.IntegerField()

@@ -94,7 +94,7 @@ export default {
             return vm.errors;
         },
         title: function(){
-            return 'Cancel Approval';
+            return 'Cancel Licence';
         }
     },
     methods:{
@@ -137,7 +137,7 @@ export default {
                         vm.close();
                         swal(
                              'Cancelled',
-                             'An email has been sent to applicant about cancellation of this approval',
+                             'An email has been sent to applicant about cancellation of this licence',
                              'success'
                         );
                         vm.$emit('refreshFromResponse',response);

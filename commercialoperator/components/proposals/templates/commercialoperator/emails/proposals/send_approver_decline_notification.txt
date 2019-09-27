@@ -1,7 +1,7 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-	Your Proposal {{ proposal.lodgement_number }} has been reviewed and has been recommended for decline.
+	Your Application {{ proposal.lodgement_number }} has been reviewed and has been recommended for decline.
 
     {% if reason %}
         <p>
@@ -10,9 +10,9 @@
     {% endif %}
 
     <p>
-    You can access this Proposal using the following link:
+    You can access this Application using the following link:
     </p>
-    <a href="{{url}}">Access Proposal</a>
+    <a href="{{url}}">Access Application</a>
 
 
 {%  endblock %}

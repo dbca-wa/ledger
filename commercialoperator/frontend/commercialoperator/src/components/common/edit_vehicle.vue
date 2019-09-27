@@ -176,6 +176,9 @@ export default {
             this.errors = false;
             $('.has-error').removeClass('has-error');
             $(this.$refs.rego_expiry).data('DateTimePicker').clear();
+            this.$refs.capacity='';
+            this.$refs.license='';
+            this.$refs.rego='';
             this.validation_form.resetForm();
         },
         fetchContact: function(id){
@@ -229,6 +232,7 @@ export default {
                         emulateJSON:true,
                     }).then((response)=>{
                         vm.issuingVehicle = false;
+                        vm.vehicle={};
                         vm.close();
                         swal(
                              'Created',
@@ -247,6 +251,7 @@ export default {
                         emulateJSON:true,
                     }).then((response)=>{
                         vm.issuingVehicle = false;
+                        vm.vehicle={};
                         vm.close();
                         swal(
                              'Saved',
