@@ -148,7 +148,7 @@ export default {
             proposal_submitters: [],
             proposal_parks: [],
             proposal_headers:[
-                " Number","Licence","Holder","Status","Payment Type","Arrival","Park","Invoice/Confirmation","Action",
+                " Number","Licence","Holder","Status","Payment Method","Arrival","Park","Invoice/Confirmation","Action",
             ],
             proposal_options:{
                 language: {
@@ -232,10 +232,13 @@ export default {
                         data: '',
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (full.payment_status=='paid'){
+                            if (full.payment_status.toLowerCase()=='paid' || full.payment_method.toUpperCase()=='BPAY' || (full.payment_method.toLowerCase()=='monthly invoicing' && full.application_fee_invoice !== null)){
                                 links +=  `<a href='/cols/payments/invoice-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a> &nbsp`;
                                 links +=  `<a href='/cols/payments/confirmation-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
-                            }
+                            } else if (full.payment_method.toLowerCase()=='monthly invoicing' && full.application_fee_invoice == null){
+                                // running aggregated monthly booking - not yet invoiced
+                                links +=  `<a href='/cols/payments/monthly_confirmation-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
+                            } 
                             return links;
                         },
                         name: '',
@@ -246,7 +249,7 @@ export default {
                         data: "",
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (full.payment_status=='paid'){
+                            if (full.payment_status=='Paid'){
                                 if(vm.is_payment_admin){
 
                                 links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;

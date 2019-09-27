@@ -8,6 +8,7 @@ from django.conf import settings
 from commercialoperator.components.emails.emails import TemplateEmailBase
 from commercialoperator.components.bookings.invoice_pdf import create_invoice_pdf_bytes
 from commercialoperator.components.bookings.confirmation_pdf import create_confirmation_pdf_bytes
+from commercialoperator.components.bookings.models import Booking
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,11 @@ class ConfirmationTClassSendNotificationEmail(TemplateEmailBase):
     subject = 'Your booking confirmation.'
     html_template = 'commercialoperator/emails/bookings/tclass/send_confirmation_notification.html'
     txt_template = 'commercialoperator/emails/bookings/tclass/send_confirmation_notification.txt'
+
+class MonthlyInvoicesFailedTClassEmail(TemplateEmailBase):
+    subject = 'Failed: COLS Monthly Invoices.'
+    html_template = 'commercialoperator/emails/bookings/tclass/send_monthly_invoices_failed_notification.html'
+    txt_template = 'commercialoperator/emails/bookings/tclass/send_monthly_invoices_failed_notification.txt'
 
 def send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients, is_test=False):
     email = ApplicationFeeInvoiceTClassSendNotificationEmail()
@@ -169,7 +175,36 @@ def send_proposal_approval_email_notification(proposal,request):
     else:
         _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
 
+def send_monthly_invoice_tclass_email_notification(sender, booking, invoice, recipients, is_test=False):
+    email = MonthlyInvoiceTClassSendNotificationEmail()
 
+    context = {
+        'booking_number': booking.booking_number,
+    }
+
+    filename = 'monthly_invoice.pdf'
+    doc = create_invoice_pdf_bytes(filename, invoice, booking.proposal)
+    attachment = (filename, doc, 'application/pdf')
+
+    msg = email.send(recipients, attachments=[attachment], context=context)
+    if is_test:
+        return
+
+    _log_proposal_email(msg, booking.proposal, sender=sender)
+    if booking.proposal.org_applicant:
+        _log_org_email(msg, booking.proposal.org_applicant, booking.proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, booking.proposal.submitter, booking.proposal.submitter, sender=sender)
+
+def send_monthly_invoices_failed_tclass(booking_ids):
+    """ Internal failed notification email for Monthly Invoicing script """
+    email = MonthlyInvoicesFailedTClassEmail()
+
+    context = {
+        'bookings': Booking.objects.filter(id__in=booking_ids).values_list('id', 'admission_number', 'proposal__lodgement_number', 'proposal__org_applicant__organisation__name'),
+    }
+
+    msg = email.send(settings.NOTIFICATION_EMAIL, context=context)
 
 def _log_proposal_email(email_message, proposal, sender=None):
     from commercialoperator.components.proposals.models import ProposalLogEntry

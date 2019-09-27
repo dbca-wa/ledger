@@ -2414,6 +2414,8 @@ class ProposalUserAction(UserAction):
     ACTION_WITH_QA_OFFICER = "Send Application QA Officer {}"
     ACTION_QA_OFFICER_COMPLETED = "QA Officer Assessment Completed {}"
 
+    # monthly invoicing by cron
+    ACTION_SEND_MONTHLY_INVOICE = "Send monthly invoice {} for application {} to {}"
 
     class Meta:
         app_label = 'commercialoperator'

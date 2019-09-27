@@ -67,7 +67,7 @@ class ApplicationFeeView(TemplateView):
         #proposal = Proposal.objects.get(id=proposal_id)
 
         proposal = self.get_object()
-        application_fee = ApplicationFee.objects.create(proposal=proposal, created_by=request.user, payment_type=3)
+        application_fee = ApplicationFee.objects.create(proposal=proposal, created_by=request.user, payment_type=ApplicationFee.PAYMENT_TYPE_TEMPORARY)
 
         try:
             with transaction.atomic():
@@ -147,20 +147,13 @@ class MakePaymentView(TemplateView):
 
     def post(self, request, *args, **kwargs):
 
-        proposal_id = int(kwargs['proposal_pk'])
-        if request.GET.get('method') == 'monthly':
-            booking = create_booking(request, proposal_id, booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING)
-            order = create_invoice(booking, payment_method='monthly_invoicing')
-
+        import ipdb; ipdb.set_trace()
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
-        if proposal.org_applicant:
-            monthly_invoicing_allowed = proposal.org_applicant.monthly_invoicing_allowed if proposal.org_applicant else False
-            #bpay_allowed = proposal.org_applicant.bpay_allowed if proposal.org_applicant and not monthly_invoicing_allowed else False
-            bpay_allowed = proposal.org_applicant.bpay_allowed if proposal.org_applicant else False
+        bpay_allowed = proposal.org_applicant.bpay_allowed if proposal.org_applicant else False
 
         try:
-            booking = create_booking(request, proposal_id)
+            booking = create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORARY)
             with transaction.atomic():
                 set_session_booking(request.session,booking)
                 #lines = create_lines(request)
@@ -172,9 +165,7 @@ class MakePaymentView(TemplateView):
                     return_url_ns='public_booking_success',
                     return_preload_url_ns='public_booking_success',
                     invoice_text='Payment Invoice',
-                    bpay_allowed=bpay_allowed,
-                    monthly_invoicing_allowed=monthly_invoicing_allowed,
-                    #proxy=monthly_invoicing_allowed
+                    bpay_allowed=proposal.org_applicant.bpay_allowed if proposal.org_applicant else False
                 )
 
                 logger.info('{} built payment line items {} for Park Bookings and handing over to payment gateway'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
@@ -185,6 +176,7 @@ class MakePaymentView(TemplateView):
             if booking:
                 booking.delete()
             raise
+
 
 from commercialoperator.components.proposals.utils import proposal_submit
 class ApplicationFeeSuccessView(TemplateView):
@@ -222,7 +214,7 @@ class ApplicationFeeSuccessView(TemplateView):
             invoice_ref = invoice.reference
             fee_inv, created = ApplicationFeeInvoice.objects.get_or_create(application_fee=application_fee, invoice_reference=invoice_ref)
 
-            if application_fee.payment_type == 3:
+            if application_fee.payment_type == ApplicationFee.PAYMENT_TYPE_TEMPORARY:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
                     order = Order.objects.get(number=inv.order_number)
@@ -236,7 +228,8 @@ class ApplicationFeeSuccessView(TemplateView):
                     return redirect('external-proposal-detail', args=(proposal.id,))
 
                 if fee_inv:
-                    application_fee.payment_type = 1  # internet booking
+                    #application_fee.payment_type = 1  # internet booking
+                    application_fee.payment_type = ApplicationFee.PAYMENT_TYPE_INTERNET
                     application_fee.expiry_time = None
                     update_payments(invoice_ref)
 
@@ -319,7 +312,7 @@ class BookingSuccessView(TemplateView):
             invoice_ref = invoice.reference
             book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref, payment_method=invoice.payment_method)
 
-            if booking.booking_type == 3:
+            if booking.booking_type == Booking.BOOKING_TYPE_TEMPORARY:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
                     order = Order.objects.get(number=inv.order_number)
@@ -333,7 +326,7 @@ class BookingSuccessView(TemplateView):
                     return redirect('external-proposal-detail', args=(proposal.id,))
 
                 if book_inv:
-                    booking.booking_type = 1  # internet booking
+                    booking.booking_type = Booking.BOOKING_TYPE_INTERNET  
                     booking.expiry_time = None
                     #booking.set_admission_number()
                     update_payments(invoice_ref)

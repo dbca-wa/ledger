@@ -10,6 +10,7 @@
             <button type="submit" name="script" value="send_compliance_reminder" {% if send_compliance_reminder == 'true' %}style="color:green" {% endif %} title="Send notification emails for compliances which has past due dates, and also reminder notification emails for those that are within the daterange prior to due_date (eg. within 14 days of due date)">Run Script 'send_compliance_reminder'</button><br><br>
             <button type="submit" name="script" value="update_approval_status" {% if update_approval_status == 'true' %}style="color:green" {% endif %} title="Change the status of Approvals to Surrender/Cancelled/Suspended">Run Script 'update_approval_status'</button><br><br>
             <button type="submit" name="script" value="update_compliance_status" {% if update_compliance_status == 'true' %}style="color:green" {% endif %} title="Change the status of Compliances from future to due when they are close to due date (eg. within 14 days)">Run Script 'update_compliance_status'</button><br><br>
+            <button type="submit" name="script" value="monthly_invoices" {% if monthly_invoices == 'true' %}style="color:green" {% endif %} title="Run the monthly_invoices script">Run Script 'monthly_invoices'</button><br><br>
         </form>
         <br>
     </div>

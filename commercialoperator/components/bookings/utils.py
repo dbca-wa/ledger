@@ -11,6 +11,7 @@ from commercialoperator.components.main.models import Park
 from commercialoperator.components.proposals.models import Proposal
 from commercialoperator.components.organisations.models import Organisation
 from commercialoperator.components.bookings.models import Booking, ParkBooking, BookingInvoice, ApplicationFee
+from commercialoperator.components.bookings.email import send_monthly_invoice_tclass_email_notification
 from ledger.checkout.utils import create_basket_session, create_checkout_session, calculate_excl_gst
 from ledger.payments.models import Invoice
 from ledger.payments.utils import oracle_parser
@@ -28,7 +29,7 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
     if booking_type == Booking.BOOKING_TYPE_MONTHLY_INVOICING and proposal.org_applicant and proposal.org_applicant.monthly_invoicing_allowed:
         booking, created = Booking.objects.get_or_create(
             invoices__isnull=True,
-            proposal_id=proposal_id,
+            proposal_id=proposal.id,
             booking_type=booking_type,
             created__month=timezone.now().month,
             defaults={
@@ -37,7 +38,7 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
             }
         )
     else:
-        booking = Booking.objects.create(proposal_id=proposal_id, created_by=request.user, booking_type=booking_type)
+        booking = Booking.objects.create(proposal_id=proposal.id, created_by=request.user, booking_type=booking_type)
 
     #Booking.objects.filter(invoices__isnull=True, booking_type=4, proposal_id=478, proposal__org_applicant=org)
 
@@ -65,7 +66,7 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
 
     return booking
 
-def create_monthly_invoice(offset_months=-1):
+def create_monthly_invoice(user, offset_months=-1):
     bookings = Booking.objects.filter(
         invoices__isnull=True,
         booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING,
@@ -81,10 +82,16 @@ def create_monthly_invoice(offset_months=-1):
                     invoice = Invoice.objects.get(order_number=order.number)
                     invoice.settlement_date = calc_payment_due_date(booking, invoice.created)
                     invoice.save()
+
                     book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method)
-                    #send_monthly_invoice_tclass_email_notification(request, booking, invoice, recipients=[booking.proposal.applicant_email])
-                except:
+                    booking.booking_type == Booking.BOOKING_TYPE_BLACK
+                    booking.save()
+
+                    send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
+                    ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
+                except Exception, e:
                     logger.error('Failed to create monthly invoice for booking_id {}'.format(booking.id))
+                    logger.error('{}'.format(e))
                     failed_bookings.append(booking.id)
 
     return failed_bookings
