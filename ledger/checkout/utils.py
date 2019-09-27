@@ -31,24 +31,32 @@ def create_basket_session(request, parameters):
     else:
         product_serializer = serializers.CheckoutProductSerializer(data=serializer.initial_data.get('products'), many=True)
     product_serializer.is_valid(raise_exception=True)
-        
+
     # validate basket
     if serializer.validated_data.get('vouchers'):
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
                                         request.user, serializer.validated_data['system'],
-                                        vouchers=serializer.validated_data['vouchers'])
+                                        vouchers=serializer.validated_data['vouchers'],
+                                        bpay_allowed=serializer.validated_data['bpay_allowed'],
+                                        monthly_invoicing_allowed=serializer.validated_data['monthly_invoicing_allowed'])
         else:
             basket = createBasket(serializer.validated_data['products'], request.user,
                                     serializer.validated_data['system'],
-                                    vouchers=serializer.validated_data['vouchers'])
+                                    vouchers=serializer.validated_data['vouchers'],
+                                    bpay_allowed=serializer.validated_data['bpay_allowed'],
+                                    monthly_invoicing_allowed=serializer.validated_data['monthly_invoicing_allowed'])
     else:
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
-                                        request.user, serializer.validated_data['system'])
+                                        request.user, serializer.validated_data['system'],
+                                        bpay_allowed=serializer.validated_data['bpay_allowed'],
+                                        monthly_invoicing_allowed=serializer.validated_data['monthly_invoicing_allowed'])
         else:
             basket = createBasket(serializer.validated_data['products'],
-                                    request.user, serializer.validated_data['system'])
+                                    request.user, serializer.validated_data['system'],
+                                    bpay_allowed=serializer.validated_data['bpay_allowed'],
+                                    monthly_invoicing_allowed=serializer.validated_data['monthly_invoicing_allowed'])
 
     return basket, BasketMiddleware().get_basket_hash(basket.id)
 
@@ -74,11 +82,11 @@ def create_checkout_session(request, parameters):
     serializer = serializers.CheckoutSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
 
-    session_data = CheckoutSessionData(request) 
+    session_data = CheckoutSessionData(request)
 
     # reset method of payment when creating a new session
     session_data.pay_by(None)
-    
+
     session_data.use_system(serializer.validated_data['system'])
     session_data.charge_by(serializer.validated_data['card_method'])
     session_data.use_shipping_method(serializer.validated_data['shipping_method'])
@@ -156,15 +164,15 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     # ===========================
     def use_system(self, system_id):
         self._set('ledger','system_id',system_id)
-        
+
     def system(self):
         return self._get('ledger','system_id')
-    
+
     # BPAY Methods
     # ===========================
     def bpay_using(self, method):
         self._set('ledger','bpay_method',method)
- 
+
     def bpay_method(self):
         return self._get('ledger','bpay_method')
 
@@ -256,7 +264,7 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def get_invoice_text(self):
         return self._get('ledger','invoice_text')
 
-    # Last check url per system 
+    # Last check url per system
     # ==========================
     def set_last_check(self,text):
         self._set('ledger','last_check',text)
@@ -272,7 +280,7 @@ def calculate_excl_gst(amount):
     return result
 
 
-def createBasket(product_list, owner, system, vouchers=None, force_flush=True):
+def createBasket(product_list, owner, system, vouchers=None, force_flush=True, bpay_allowed=False, monthly_invoicing_allowed=False):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -309,6 +317,8 @@ def createBasket(product_list, owner, system, vouchers=None, force_flush=True):
             basket.owner = owner
         basket.system = system
         basket.strategy = selector.strategy(user=owner)
+        basket.bpay_allowed = bpay_allowed
+        basket.monthly_invoicing_allowed = monthly_invoicing_allowed
         # Check if there are products to be added to the cart and if they are valid products
         if not product_list:
             raise ValueError('There are no products to add to the order.')
@@ -333,7 +343,7 @@ def createBasket(product_list, owner, system, vouchers=None, force_flush=True):
         raise
 
 
-def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True):
+def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True, bpay_allowed=False, monthly_invoicing_allowed=False):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -343,7 +353,6 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         ]
         @param - owner (user id or user object)
     '''
-    #import pdb; pdb.set_trace()
     try:
         old_basket = basket = None
         valid_products = []
@@ -373,6 +382,8 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         basket.system = system
         basket.strategy = selector.strategy(user=owner)
         basket.custom_ledger = True
+        basket.bpay_allowed = bpay_allowed
+        basket.monthly_invoicing_allowed = monthly_invoicing_allowed
         # Check if there are products to be added to the cart and if they are valid products
         # EXAMPLE config for settings.py: os.environ['LEDGER_CUSTOM_PRODUCT_LIST'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code','line_status')"
         # you can import def calculate_excl_gst and use this funcation to calculate the mount with out gst on line items that have gst component.
@@ -414,4 +425,8 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         raise
     except Exception as e:
         raise
+
+def bpay_allowed(is_bpay_allowed=None):
+    return is_bpay_allowed if is_bpay_allowed is not None else settings.BPAY_ALLOWED
+
 

@@ -194,7 +194,6 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
-    #import ipdb; ipdb.set_trace()
     #queryset = Proposal.objects.all()
     queryset = Proposal.objects.none()
     #serializer_class = ProposalSerializer
@@ -202,7 +201,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def create(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
         response = super(PaymentViewSet, self).create(request, *args, **kwargs)
         # here may be placed additional operations for
         # extracting id of the object and using reverse()
@@ -213,7 +211,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
     @renderer_classes((JSONRenderer,))
     def park_payment(self, request, *args, **kwargs):
 
-        #import ipdb; ipdb.set_trace()
         try:
             with transaction.atomic():
                 #instance = self.get_object()

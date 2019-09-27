@@ -24,7 +24,26 @@
                         <label>Licence</label><v-select :options="licences" @change="proposal_parks()" v-model="selected_licence" />
                         <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="" id="id_payment" />
 
-                        <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
+                        <div v-if="selected_licence.org_applicant==null">
+                            <-- Individual applicants must pay using Credit Card -->
+                            <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
+                        </div>
+                        <div v-else class="dropdown" style="float: right;">
+                          <button :disabled="!parks_available" class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" name="payment_method" value="credit_card">
+                            Proceed
+                          </button>
+                          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <button class="dropdown-item" type="submit">Pay by Credit Card</button><br>
+                            <span v-if="selected_licence.bpay_allowed">
+                                <button class="dropdown-item" type="submit">Pay by BPAY</button><br>
+                            </span>
+                            <span v-if="selected_licence.monthly_invoicing_allowed">
+                                <!--<button  class="dropdown-item" @click="submit_monthly_invoicing">Monthly Invoicing</button>-->
+                                <button type="submit" class="dropdown-item" @click="payment_method='monthly_invoicing'">Monthly Invoicing</button>
+                            </span>
+                          </div>
+                        </div>
+
                     </form>
                 </div>
             </div>
@@ -64,6 +83,7 @@ from '@/utils/hooks'
                 licences: [],
                 errors: [],
                 table_values: null,
+                payment_method: null,
                 selected_licence:{
                     default:function () {
                         return {
@@ -198,20 +218,31 @@ from '@/utils/hooks'
                 vm.errors = vm.check_form_valid();
 
                 var form = document.forms.new_payment;
-                form.action = '/payment/' + vm.selected_licence.value  + '/';
+                if (vm.payment_method == 'monthly_invoicing') {
+                    form.action = '/payment_monthly/' + vm.selected_licence.value  + '/';
+                } else {
+                    form.action = '/payment/' + vm.selected_licence.value  + '/';
+                }
                 if (vm.errors.length == 0) {
-                    form.submit();
+                        form.submit();
                 } else {
                     return;
                 }
-
             },
+
             get_user_approvals: function(e) {
                 let vm = this;
                 vm.$http.get('/api/filtered_payments').then((res) => {
                     var licences = res.body;
                     for (var i in licences) {
-                        vm.licences.push({value:licences[i].current_proposal, label:licences[i].lodgement_number, expiry_date:licences[i].expiry_date});
+                        vm.licences.push({
+                            value:licences[i].current_proposal,
+                            label:licences[i].lodgement_number,
+                            expiry_date:licences[i].expiry_date,
+                            org_applicant:licences[i].org_applicant,
+                            bpay_allowed:licences[i].bpay_allowed,
+                            monthly_invoicing_allowed:licences[i].monthly_invoicing_allowed,
+                        });
                     }
                     console.log(vm.licences);
                 },err=>{
@@ -253,5 +284,15 @@ from '@/utils/hooks'
 </script>
 
 <style lang="css" scoped>
+
+.dropdown-item {
+  border: 2px solid white;
+  background-color: white;
+  color: blue;
+  padding: 10px 20px;
+  font-size: 12;
+  cursor: pointer;
+}
+
 </style>
 

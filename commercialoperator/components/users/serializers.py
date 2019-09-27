@@ -1,6 +1,6 @@
 from django.conf import settings
 from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Document, EmailUserAction, EmailUserLogEntry, CommunicationsLogEntry
-from commercialoperator.components.organisations.models import (   
+from commercialoperator.components.organisations.models import (
                                     Organisation,
                                 )
 from commercialoperator.components.organisations.utils import can_admin_org, is_consultant
@@ -24,7 +24,7 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'state',
             'country',
             'postcode'
-        ) 
+        )
 
 class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
@@ -104,7 +104,7 @@ class UserSerializer(serializers.ModelSerializer):
             'is_department_user',
             'is_payment_admin'
         )
-    
+
     def get_personal_details(self,obj):
         return True if obj.last_name  and obj.first_name else False
 
@@ -113,6 +113,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_contact_details(self,obj):
         if obj.mobile_number and obj.email:
+            return True
+        elif obj.phone_number and obj.email:
             return True
         elif obj.mobile_number and obj.phone_number:
             return True

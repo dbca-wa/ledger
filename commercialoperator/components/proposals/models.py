@@ -619,7 +619,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 self.submitter.first_name,
                 self.submitter.last_name)
 
-
+    @property
+    def applicant_email(self):
+        if self.org_applicant:
+            return self.org_applicant.organisation.email
+        elif self.proxy_applicant:
+            return self.proxy_applicant.email,
+        else:
+            return self.submitter.email,
 
     @property
     def applicant_details(self):

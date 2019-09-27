@@ -113,6 +113,7 @@ urlpatterns = [
     # payment related urls
     url(r'^application_fee/(?P<proposal_pk>\d+)/$', booking_views.ApplicationFeeView.as_view(), name='application_fee'),
     url(r'^payment/(?P<proposal_pk>\d+)/$', booking_views.MakePaymentView.as_view(), name='make_payment'),
+    url(r'^payment_monthly/(?P<proposal_pk>\d+)/$', booking_views.MonthlyInvoicingView.as_view(), name='monthly_invoicing'),
     url(r'^success/booking/$', booking_views.BookingSuccessView.as_view(), name='public_booking_success'),
     url(r'^success/fee/$', booking_views.ApplicationFeeSuccessView.as_view(), name='fee_success'),
     url(r'cols/payments/invoice-pdf/(?P<reference>\d+)',booking_views.InvoicePDFView.as_view(), name='cols-invoice-pdf'),

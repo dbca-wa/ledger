@@ -30,6 +30,15 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="">Payment Method</label>
+                                <select class="form-control" v-model="filterProposalPaymentMethod">
+                                    <option value="All">All</option>
+                                    <option v-for="s in payment_method" :value="s.value">{{s.name}}</option>
+                                </select>
+                            </div>
+                        </div>
                         <div v-if="is_external" class="col-md-3">
                             <div class="form-group">
                                 <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'payment_order'  }">Make Payment</router-link>
@@ -112,6 +121,7 @@ export default {
             // Filters for Proposals
             filterProposalPark: 'All',
             filterProposalStatus: 'All',
+            filterProposalPaymentMethod: 'All',
             filterProposalLodgedFrom: '',
             filterProposalLodgedTo: '',
             filterProposalSubmitter: 'All',
@@ -129,10 +139,16 @@ export default {
                 {name:'Partially Paid', value:'partially_paid'},
                 {name:'Unpaid', value:'unpaid'}
             ],
+            payment_method:[
+                {name:'Credit Card', value:'0'},
+                {name:'BPAY', value:'1'},
+                {name:'Monthly Invoicing', value:'2'},
+                {name:'Other', value:'3'}
+            ],
             proposal_submitters: [],
             proposal_parks: [],
             proposal_headers:[
-                " Number","Licence","Holder","Status","Arrival","Park","Invoice/Confirmation","Action",
+                " Number","Licence","Holder","Status","Payment Type","Arrival","Park","Invoice/Confirmation","Action",
             ],
             proposal_options:{
                 language: {
@@ -151,6 +167,7 @@ export default {
                     "data": function ( d ) {
                         d.park = vm.filterProposalPark != 'All' && vm.filterProposalPark != null ? vm.filterProposalPark : '';
                         d.payment_status = vm.filterProposalStatus != 'All' && vm.filterProposalStatus != null ? vm.filterProposalStatus : '';
+                        d.payment_method = vm.filterProposalPaymentMethod != 'All' && vm.filterProposalPaymentMethod != null ? vm.filterProposalPaymentMethod : '';
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                     }
@@ -175,6 +192,12 @@ export default {
                     {
                         data: "payment_status",
                         name: "payment_status",
+                        searchable: false,
+                        orderable: false
+                    },
+                    {
+                        data: "payment_method",
+                        name: "payment_method",
                         searchable: false,
                         orderable: false
                     },
@@ -274,9 +297,17 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(3).search('').draw();
             }
         },
+        filterProposalPaymentMethod: function() {
+            let vm = this;
+            if (vm.filterProposalPaymentMethod!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalPaymentMethod).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+            }
+        },
         filterProposalPark: function() {
             let vm = this;
-            vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
+            vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
         },
 
         filterProposalLodgedFrom: function(){

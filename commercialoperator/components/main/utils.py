@@ -1,5 +1,6 @@
 import requests
 import json
+from datetime import timedelta, date
 from django.conf import settings
 from django.core.cache import cache
 
@@ -23,4 +24,23 @@ def get_department_user(email):
             return None
     except:
         raise
+
+def add_business_days(from_date, number_of_days):
+    """ given from_date and number_of_days, returns the next weekday date i.e. excludes Sat/Sun """
+    to_date = from_date
+    while number_of_days:
+        to_date += timedelta(1)
+        if to_date.weekday() < 5: # i.e. is not saturday or sunday
+            number_of_days -= 1
+    return to_date
+
+def get_next_weekday(from_date):
+    """ given from_date and number_of_days, returns the next weekday date i.e. excludes Sat/Sun """
+    if from_date.weekday() == 5: # i.e. Sat
+        from_date += timedelta(2)
+    elif from_date.weekday() == 6: # i.e. Sun
+        from_date += timedelta(1)
+
+    return from_date
+
 

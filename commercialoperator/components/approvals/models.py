@@ -103,6 +103,30 @@ class Approval(RevisionedMixin):
         unique_together= ('lodgement_number', 'issue_date')
 
     @property
+    def bpay_allowed(self):
+        if self.org_applicant:
+            return self.org_applicant.bpay_allowed
+        return False
+
+    @property
+    def monthly_invoicing_allowed(self):
+        if self.org_applicant:
+            return self.org_applicant.monthly_invoicing_allowed
+        return False
+
+    @property
+    def monthly_invoicing_period(self):
+        if self.org_applicant:
+            return self.org_applicant.monthly_invoicing_period
+        return None
+
+    @property
+    def monthly_payment_due_period(self):
+        if self.org_applicant:
+            return self.org_applicant.monthly_payment_due_period
+        return None
+
+    @property
     def applicant(self):
         if self.org_applicant:
             return self.org_applicant.organisation.name
@@ -134,6 +158,10 @@ class Approval(RevisionedMixin):
         else:
             #return None
             return "submitter"
+
+    @property
+    def is_org_applicant(self):
+        return True if self.org_applicant else False
 
     @property
     def applicant_id(self):
@@ -197,11 +225,11 @@ class Approval(RevisionedMixin):
     def allowed_assessors(self):
         return self.current_proposal.allowed_assessors
 
-    
+
     def is_assessor(self,user):
         return self.current_proposal.is_assessor(user)
 
-    
+
     def is_approver(self,user):
         return self.current_proposal.is_approver(user)
 
