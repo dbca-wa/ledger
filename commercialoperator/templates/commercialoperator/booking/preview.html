@@ -5,6 +5,9 @@
 {% load purchase_info_tags %}
 {% load staticfiles %}
 
+{% block shipping_address %}
+{% endblock shipping_address %}
+
 {% block order_contents %}
     <div class="sub-header">
         {% block order_contents_actions %}
@@ -19,42 +22,26 @@
             <p class="col-sm-2 h4 align-right">{% trans "Total" %}</p>
         </div>
     </div>
-        {% for line in basket.all_lines %}
-        {% for line in booking.as_line_items %}
+        {% for line in lines %}
             <div class="basket-items">
                 <div class="row">
                     <div class="col-sm-2">
+                        {{ forloop.counter  }}
                     </div>
                     <div class="col-sm-7">
-                        <h3>{{ line['ledger_description'] }}</a></h3>
+                        <h3>{{ line.ledger_description }}</h3>
                     </div>
                     <div class="col-sm-1 align-center">
-                        {{ line['quantity'] }}
+                        {{ line.quantity }}
                     </div>
                     <div class="col-sm-2 align-right">
                         <p class="price_color">
-                            {% if not show_tax_separately and line.is_tax_known %}
-                                {{ line['line_price_incl_tax'] | currency:basket.currency }}
-                            {% else %}
-                                {{ line['line_price_excl_tax'] | currency:basket.currency }}
-                            {% endif %}
+                            {{ line.price_incl_tax  }}
                         </p>
                     </div>
                 </div>
             </div>
         {% endfor %}
-
-    <!--
-    <div class="row">
-        <div class="col-sm-6">&nbsp;</div>
-        <div class="col-sm-6">
-            <div class="sub-header">
-                <h2>{% trans 'Totals' %}</h2>
-            </div>
-            {% include 'basket/partials/basket_totals.html' %}
-        </div>
-    </div>
-    -->
 
 {% endblock order_contents %}
 
@@ -62,4 +49,21 @@
 
 {% endblock %}
 
+{% block place_order %}
+    <form method="post" action="{% url 'monthly_invoicing' proposal_id %}" id="place_order_form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="place_order" />
+        <input type="hidden" name='line_details' value='{{ line_details }}' />
 
+        <div class="form-group clearfix">
+            <div class="row">
+                <div class="col-sm-3 col-sm-offset-9">
+                     <input type="button" class="btn btn-primary btn-lg" value="Cancel" onclick="window.history.back()" />
+                     <button id="place-order" formnovalidate type="submit" class="btn btn-primary btn-lg" data-loading-text="{% trans 'Submitting...' %}">
+                        {% trans "Continue" %}
+                     </button>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock place_order %}

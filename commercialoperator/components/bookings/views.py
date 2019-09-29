@@ -31,7 +31,7 @@ from commercialoperator.components.bookings.utils import (
     get_session_booking,
     set_session_booking,
     delete_session_booking,
-    #create_lines,
+    create_lines,
     checkout,
     create_fee_lines,
     get_session_application_invoice,
@@ -92,12 +92,51 @@ class ApplicationFeeView(TemplateView):
                 application_fee.delete()
             raise
 
-class MonthlyInvoicingView(TemplateView):
-    #template_name = 'mooring/booking/make_booking.html'
-    template_name = 'commercialoperator/booking/success.html'
+class MonthlyInvoicingPreviewView(TemplateView):
+    template_name = 'commercialoperator/booking/preview.html'
 
     def post(self, request, *args, **kwargs):
 
+        #import ipdb;ipdb.set_trace()
+        context = template_context(self.request)
+        proposal_id = int(kwargs['proposal_pk'])
+        proposal = Proposal.objects.get(id=proposal_id)
+        try:
+            recipient = proposal.applicant.email
+            submitter = proposal.applicant
+        except:
+            recipient = proposal.submitter.email
+            submitter = proposal.submitter
+
+        if isinstance(proposal.org_applicant, Organisation) and proposal.org_applicant.monthly_invoicing_allowed:
+            try:
+                lines = create_lines(request)
+                logger.info('{} Show Park Bookings Prevew for monthly invoicing'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
+                context.update({
+                    'lines': lines,
+                    'line_details': request.POST['payment'],
+                    'proposal_id': proposal_id,
+                    'submitter': submitter,
+                    'monthly_invoicing': True,
+                })
+                return render(request, self.template_name, context)
+
+
+            except Exception, e:
+                logger.error('Error creating booking preview: {}'.format(e))
+        else:
+            logger.error('Error creating booking preview: {}'.format(e))
+            raise
+
+
+class MonthlyInvoicingView(TemplateView):
+    #template_name = 'mooring/booking/make_booking.html'
+    template_name = 'commercialoperator/booking/success.html'
+    #template_name = 'commercialoperator/booking/preview.html'
+
+    def post(self, request, *args, **kwargs):
+
+        #import ipdb;ipdb.set_trace()
         context = template_context(self.request)
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
@@ -124,6 +163,7 @@ class MonthlyInvoicingView(TemplateView):
                 logger.info('{} Created Park Bookings for monthly invoicing'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
                 #send_monthly_invoicing_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
                 context.update({
+                    'booking': booking,
                     'booking_id': booking.id,
                     'submitter': submitter,
                     'monthly_invoicing': True,

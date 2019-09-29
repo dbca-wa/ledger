@@ -219,7 +219,8 @@ from '@/utils/hooks'
 
                 var form = document.forms.new_payment;
                 if (vm.payment_method == 'monthly_invoicing') {
-                    form.action = '/payment_monthly/' + vm.selected_licence.value  + '/';
+                    //form.action = '/payment_monthly/' + vm.selected_licence.value  + '/';
+                    form.action = '/preview_monthly/' + vm.selected_licence.value  + '/';
                 } else {
                     form.action = '/payment/' + vm.selected_licence.value  + '/';
                 }

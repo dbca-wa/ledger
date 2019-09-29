@@ -16,6 +16,7 @@ from ledger.checkout.utils import create_basket_session, create_checkout_session
 from ledger.payments.models import Invoice
 from ledger.payments.utils import oracle_parser
 import json
+import ast
 from decimal import Decimal
 
 
@@ -26,6 +27,7 @@ logger = logging.getLogger('payment_checkout')
 def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORARY):
     """ Create the ledger lines - line items for invoice sent to payment system """
 
+    #mport ipdb; ipdb.set_trace()
     if booking_type == Booking.BOOKING_TYPE_MONTHLY_INVOICING and proposal.org_applicant and proposal.org_applicant.monthly_invoicing_allowed:
         booking, created = Booking.objects.get_or_create(
             invoices__isnull=True,
@@ -42,8 +44,9 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
 
     #Booking.objects.filter(invoices__isnull=True, booking_type=4, proposal_id=478, proposal__org_applicant=org)
 
-    tbody = json.loads(request.POST['payment'])['tbody']
-    for row in tbody:
+    #tbody = json.loads(request.POST['payment'])['tbody']
+    lines = ast.literal_eval(request.POST['line_details'])['tbody']
+    for row in lines:
         park_id = row[0]['value']
         arrival = row[1]
         no_adults = int(row[2]) if row[2] else 0
@@ -173,41 +176,42 @@ def create_fee_lines(proposal, invoice_text=None, vouchers=[], internal=False):
     logger.info('{}'.format(line_items))
     return line_items
 
-#def create_lines(request, invoice_text=None, vouchers=[], internal=False):
-#    """ Create the ledger lines - line items for invoice sent to payment system """
-#
-#    def add_line_item(park, arrival, age_group, price, no_persons):
-#        price = Decimal(price)
-#        if no_persons > 0:
-#            return {
-#                'ledger_description': '{} - {} - {}'.format(park.name, arrival, age_group),
-#                'oracle_code': park.oracle_code,
-#                'price_incl_tax':  price,
-#                'price_excl_tax':  price if park.is_gst_exempt else calculate_excl_gst(price),
-#                'quantity': no_persons,
-#            }
-#        return None
-#
-#    lines = []
-#    tbody = json.loads(request.POST['payment'])['tbody']
-#    for row in tbody:
-#        park_id = row[0]['value']
-#        arrival = row[1]
-#        no_adults = int(row[2]) if row[2] else 0
-#        no_children = int(row[3]) if row[3] else 0
-#        no_free_of_charge = int(row[4]) if row[4] else 0
-#        park= Park.objects.get(id=park_id)
-#
-#        if no_adults > 0:
-#            lines.append(add_line_item(park, arrival, 'Adult', price=park.adult_price, no_persons=no_adults))
-#
-#        if no_children > 0:
-#            lines.append(add_line_item(park, arrival, 'Child', price=park.child_price, no_persons=no_children))
-#
-#        if no_free_of_charge > 0:
-#            lines.append(add_line_item(park, arrival, 'Free', price=0.0, no_persons=no_free_of_charge))
-#
-#    return lines
+def create_lines(request, invoice_text=None, vouchers=[], internal=False):
+    """ Create the ledger lines - line items for invoice sent to payment system """
+
+    def add_line_item(park, arrival, age_group, price, no_persons):
+        #price = Decimal(price)
+        price = round(float(price), 2)
+        if no_persons > 0:
+            return {
+                'ledger_description': '{} - {} - {}'.format(park.name, arrival, age_group),
+                'oracle_code': park.oracle_code.encode('utf-8'),
+                'price_incl_tax':  price,
+                'price_excl_tax':  price if park.is_gst_exempt else round(float(calculate_excl_gst(price)), 2),
+                'quantity': no_persons,
+            }
+        return None
+
+    lines = []
+    tbody = json.loads(request.POST['payment'])['tbody']
+    for row in tbody:
+        park_id = row[0]['value']
+        arrival = row[1]
+        no_adults = int(row[2]) if row[2] else 0
+        no_children = int(row[3]) if row[3] else 0
+        no_free_of_charge = int(row[4]) if row[4] else 0
+        park= Park.objects.get(id=park_id)
+
+        if no_adults > 0:
+            lines.append(add_line_item(park, arrival, 'Adult', price=park.adult_price, no_persons=no_adults))
+
+        if no_children > 0:
+            lines.append(add_line_item(park, arrival, 'Child', price=park.child_price, no_persons=no_children))
+
+        if no_free_of_charge > 0:
+            lines.append(add_line_item(park, arrival, 'Free', price=0.0, no_persons=no_free_of_charge))
+
+    return lines
 
 def checkout(request, proposal, lines, return_url_ns='public_booking_success', return_preload_url_ns='public_booking_success', invoice_text=None, vouchers=[], proxy=False, bpay_allowed=False, monthly_invoicing_allowed=False):
     basket_params = {
