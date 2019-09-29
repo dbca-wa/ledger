@@ -19,6 +19,7 @@ from commercialoperator.components.organisations.models import Organisation
 from commercialoperator.components.bookings.context_processors import commercialoperator_url, template_context
 from commercialoperator.components.bookings.invoice_pdf import create_invoice_pdf_bytes
 from commercialoperator.components.bookings.confirmation_pdf import create_confirmation_pdf_bytes
+from commercialoperator.components.bookings.monthly_confirmation_pdf import create_monthly_confirmation_pdf_bytes
 from commercialoperator.components.bookings.email import (
     send_invoice_tclass_email_notification,
     send_confirmation_tclass_email_notification,
@@ -326,7 +327,7 @@ class BookingSuccessView(TemplateView):
                     return redirect('external-proposal-detail', args=(proposal.id,))
 
                 if book_inv:
-                    booking.booking_type = Booking.BOOKING_TYPE_INTERNET  
+                    booking.booking_type = Booking.BOOKING_TYPE_INTERNET
                     booking.expiry_time = None
                     #booking.set_admission_number()
                     update_payments(invoice_ref)
@@ -408,4 +409,13 @@ class ConfirmationPDFView(InvoiceOwnerMixin,View):
     def get_object(self):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         return invoice
+
+
+class MonthlyConfirmationPDFView(View):
+    def get(self, request, *args, **kwargs):
+        booking = get_object_or_404(Booking, id=self.kwargs['id'])
+
+        response = HttpResponse(content_type='application/pdf')
+        response.write(create_monthly_confirmation_pdf_bytes('monthly_confirmation.pdf', booking))
+        return response
 

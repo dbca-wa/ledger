@@ -1,0 +1,65 @@
+{% extends 'oscar/checkout/preview.html' %}
+{% load currency_filters %}
+{% load i18n %}
+{% load thumbnail %}
+{% load purchase_info_tags %}
+{% load staticfiles %}
+
+{% block order_contents %}
+    <div class="sub-header">
+        {% block order_contents_actions %}
+        {% endblock %}
+
+        <h2>{% trans "Order contents" %}</h2>
+    </div>
+    <div class="basket-title">
+        <div class="row">
+            <p class="col-sm-9 h4">{% trans "Item" %}</p>
+            <p class="col-sm-1 h4 align-center">{% trans "Quantity" %}</p>
+            <p class="col-sm-2 h4 align-right">{% trans "Total" %}</p>
+        </div>
+    </div>
+        {% for line in basket.all_lines %}
+        {% for line in booking.as_line_items %}
+            <div class="basket-items">
+                <div class="row">
+                    <div class="col-sm-2">
+                    </div>
+                    <div class="col-sm-7">
+                        <h3>{{ line['ledger_description'] }}</a></h3>
+                    </div>
+                    <div class="col-sm-1 align-center">
+                        {{ line['quantity'] }}
+                    </div>
+                    <div class="col-sm-2 align-right">
+                        <p class="price_color">
+                            {% if not show_tax_separately and line.is_tax_known %}
+                                {{ line['line_price_incl_tax'] | currency:basket.currency }}
+                            {% else %}
+                                {{ line['line_price_excl_tax'] | currency:basket.currency }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+    <!--
+    <div class="row">
+        <div class="col-sm-6">&nbsp;</div>
+        <div class="col-sm-6">
+            <div class="sub-header">
+                <h2>{% trans 'Totals' %}</h2>
+            </div>
+            {% include 'basket/partials/basket_totals.html' %}
+        </div>
+    </div>
+    -->
+
+{% endblock order_contents %}
+
+{% block payment_method %}
+
+{% endblock %}
+
+
