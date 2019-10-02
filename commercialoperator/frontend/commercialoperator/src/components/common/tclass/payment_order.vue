@@ -25,7 +25,7 @@
                         <OrderTable ref="order_table" :expiry_date="selected_licence.expiry_date" :disabled="!parks_available" :headers="headers" :options="parks" name="payment" label="" id="id_payment" />
 
                         <div v-if="selected_licence.org_applicant==null">
-                            <-- Individual applicants must pay using Credit Card -->
+                            <!-- Individual applicants must pay using Credit Card -->
                             <button :disabled="!parks_available" class="btn btn-primary pull-right" type="submit" style="margin-top:5px;">Proceed to Payment</button>
                         </div>
                         <div v-else class="dropdown" style="float: right;">
@@ -76,7 +76,7 @@ from '@/utils/hooks'
             let vm = this;
             return{
                 values: null,
-                headers: '{"Park": "select", "Arrival": "date", "Adults -> Passengers (6yrs+)": "number", "Children under 6 years": "number", "Free of Charge (Note: no capital for charge)":"number", "Cost":"total"}',
+                headers: '{"Park": "select", "Arrival": "date", "Passengers (6yrs+)": "number", "Children under 6 years": "number", "Free of charge":"number", "Cost":"total"}',
                 parks: [],
                 land_parks: [],
                 parks_available: false,
