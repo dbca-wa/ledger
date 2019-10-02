@@ -123,7 +123,7 @@ def create_monthly_invoice(user, offset_months=-1):
                     logger.info('Creating monthly invoice for booking {}'.format(booking.admission_number))
                     order = create_invoice(booking, payment_method='monthly_invoicing')
                     invoice = Invoice.objects.get(order_number=order.number)
-                    invoice.settlement_date = calc_payment_due_date(booking, invoice.created)
+                    invoice.settlement_date = calc_payment_due_date(booking, invoice.created + relativedelta(months=1))
                     invoice.save()
 
                     book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method)

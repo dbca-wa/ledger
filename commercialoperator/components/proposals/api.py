@@ -188,9 +188,13 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(Q(invoices__payment_method=payment_method) | Q(booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING))
 
             if payment_status:
-                refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last()]
-                filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
-                queryset = queryset.filter(invoices__invoice_reference__in=filtered_refs)#.distinct('id')
+                if payment_status.lower() == 'overdue':
+                    refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last() and i.booking.invoices.last().overdue]
+                    queryset = queryset.filter(invoices__invoice_reference__in=refs)
+                else:
+                    refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last()]
+                    filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
+                    queryset = queryset.filter(invoices__invoice_reference__in=filtered_refs)#.distinct('id')
 
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')

@@ -137,7 +137,8 @@ export default {
                 {name:'Paid', value:'paid'},
                 {name:'Over Paid', value:'over_paid'},
                 {name:'Partially Paid', value:'partially_paid'},
-                {name:'Unpaid', value:'unpaid'}
+                {name:'Unpaid', value:'unpaid'},
+                {name:'Overdue', value:'overdue'}
             ],
             payment_method:[
                 {name:'Credit Card', value:'0'},

@@ -10,7 +10,9 @@ from django.views.decorators.csrf import csrf_protect
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 
 from commercialoperator.components.proposals.models import Proposal
 from commercialoperator.components.compliances.models import Compliance
@@ -36,7 +38,8 @@ from commercialoperator.components.bookings.utils import (
     create_fee_lines,
     get_session_application_invoice,
     set_session_application_invoice,
-    delete_session_application_invoice
+    delete_session_application_invoice,
+    calc_payment_due_date
 )
 
 from commercialoperator.components.proposals.serializers import ProposalSerializer
@@ -356,6 +359,13 @@ class BookingSuccessView(TemplateView):
             if booking.booking_type == Booking.BOOKING_TYPE_TEMPORARY:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
+                    if (inv.payment_method == Invoice.PAYMENT_METHOD_BPAY):
+                        # will return 1st of the next month + monthly_payment_due_period (days) e.g 20th of next month
+                        now = timezone.now().date()
+                        dt = date(now.year, now.month, 1) + relativedelta(months=1)
+                        inv.settlement_date = calc_payment_due_date(booking, dt) - relativedelta(days=1)
+                        inv.save()
+
                     order = Order.objects.get(number=inv.order_number)
                     order.user = submitter
                     order.save()

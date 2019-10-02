@@ -47,13 +47,6 @@
 
                 <div class="row" style="margin-bottom: 50px">
                         <div  class="container">
-                          <!-- <p class="pull-right" style="margin-top:5px;">
-                            <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
-                            <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                            <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>
-
-                            <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
-                          </p> -->
                           <div class="row" style="margin-bottom: 50px">
                               <div class="navbar navbar-fixed-bottom"  style="background-color: #f5f5f5;">
                                   <div class="navbar-inner">
@@ -61,8 +54,7 @@
                                       <p class="pull-right" style="margin-top:5px">
                                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                        <!-- <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/> -->
-                                        <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()"/>
+                                        <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>
                                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                                       </p>
                                     </div>

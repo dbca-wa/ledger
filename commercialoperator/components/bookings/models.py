@@ -239,7 +239,7 @@ class ParkBooking(RevisionedMixin):
             lines.append(add_line_item('Adult', price=self.park.adult_price, no_persons=self.no_adults))
 
         if self.no_children > 0:
-            lines.append(add_line_item('Child', price=self.park.adult_price, no_persons=self.no_children))
+            lines.append(add_line_item('Child', price=self.park.child_price, no_persons=self.no_children))
 
         if self.no_free_of_charge > 0:
             lines.append(add_line_item('Free', price=0.0, no_persons=self.no_free_of_charge))
@@ -289,8 +289,7 @@ class BookingInvoice(RevisionedMixin):
 
     @property
     def overdue(self):
-        invoice = Invoice.objects.filter(reference=self.invoice_reference, settlement_date__lt=timezone.now())
-        if self.invoice and (self.invoice.payment_status == 'unpaid' or self.invoice.payment_status == 'partially_paid') and self.settlement_date==timezone.now():
+        if self.invoice and self.invoice.settlement_date and (self.invoice.payment_status == 'unpaid' or self.invoice.payment_status == 'partially_paid') and self.invoice.settlement_date<timezone.now().date():
             return True
         return False
 
