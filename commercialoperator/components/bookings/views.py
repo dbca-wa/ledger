@@ -188,7 +188,7 @@ class MakePaymentView(TemplateView):
 
     def post(self, request, *args, **kwargs):
 
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
         bpay_allowed = proposal.org_applicant.bpay_allowed if proposal.org_applicant else False

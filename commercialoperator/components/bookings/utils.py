@@ -131,7 +131,7 @@ def create_monthly_invoice(user, offset_months=-1):
                     booking.save()
 
                     #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
-                    ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
+                    #ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
                 except Exception, e:
                     logger.error('Failed to create monthly invoice for booking_id {}'.format(booking.id))
                     logger.error('{}'.format(e))
@@ -389,23 +389,12 @@ def create_invoice(booking, payment_method='bpay'):
     from ledger.accounts.models import EmailUser
     from decimal import Decimal
 
-    products = [{
-        'oracle_code': 'ABC123 GST',
-        'price_incl_tax': Decimal('10.00'),
-        'price_excl_tax': Decimal('9.090909090909'),
-        'ledger_description': 'Booking Date 2019-09-24: Neale Junction Nature Reserve - 2019-09-24 - Adult',
-        'quantity': 1
-    }]
-    #products = Booking.objects.last().as_line_items
+    products = Booking.objects.last().as_line_items
+    user = EmailUser.objects.get(email=booking.proposal.applicant_email)
 
-    user = EmailUser.objects.get(email='jawaid.mushtaq@dbca.wa.gov.au')
-    #payment_method = 'bpay'
-    payment_method = 'monthly_invoicing'
-
+    #import ipdb; ipdb.set_trace()
     basket  = createCustomBasket(products, user, settings.PAYMENT_SYSTEM_ID, bpay_allowed=True, monthly_invoicing_allowed=True)
-    order = CreateInvoiceBasket(payment_method=payment_method, system=settings.PAYMENT_SYSTEM_PREFIX).create_invoice_and_order(basket, 0, None, None, user=user, invoice_text='CIB7')
-    print 'Created Order: {}'.format(order.number)
-    print 'Created Invoice: {}'.format(Invoice.objects.get(order_number=order.number))
+    order = CreateInvoiceBasket(payment_method=payment_method, system=settings.PAYMENT_SYSTEM_PREFIX).create_invoice_and_order(basket, 0, None, None, user=user, invoice_text='Monthly Payment Invoice')
 
     return order
 

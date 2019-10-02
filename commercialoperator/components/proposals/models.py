@@ -624,9 +624,9 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         if self.org_applicant and hasattr(self.org_applicant.organisation, 'email') and self.org_applicant.organisation.email:
             return self.org_applicant.organisation.email
         elif self.proxy_applicant:
-            return self.proxy_applicant.email,
+            return self.proxy_applicant.email
         else:
-            return self.submitter.email,
+            return self.submitter.email
 
     @property
     def applicant_details(self):
