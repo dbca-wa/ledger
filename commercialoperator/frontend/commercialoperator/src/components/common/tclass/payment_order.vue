@@ -291,8 +291,9 @@ from '@/utils/hooks'
   background-color: white;
   color: blue;
   padding: 10px 20px;
-  font-size: 12;
+  font-size: 10;
   cursor: pointer;
+  min-width: 180px;
 }
 
 </style>
