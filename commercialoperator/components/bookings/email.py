@@ -40,6 +40,21 @@ class MonthlyInvoicesFailedTClassEmail(TemplateEmailBase):
     html_template = 'commercialoperator/emails/bookings/tclass/send_monthly_invoices_failed_notification.html'
     txt_template = 'commercialoperator/emails/bookings/tclass/send_monthly_invoices_failed_notification.txt'
 
+class SendPaymentDueNotificationTClassEmail(TemplateEmailBase):
+    subject = 'COLS Monthly/BPAY Bookings Invoices Overdue.'
+    html_template = 'commercialoperator/emails/bookings/tclass/send_payment_due_notification.html'
+    txt_template = 'commercialoperator/emails/bookings/tclass/send_payment_due_notification.txt'
+
+class SendExternalPaymentDueNotificationTClassEmail(TemplateEmailBase):
+    subject = 'Your booking invoice is overdue.'
+    html_template = 'commercialoperator/emails/bookings/tclass/send_external_payment_due_notification.html'
+    txt_template = 'commercialoperator/emails/bookings/tclass/send_external_payment_due_notification.txt'
+
+class PaymentDueNotificationFailedTClassEmail(TemplateEmailBase):
+    subject = 'Failed: COLS Payment Due Notifications'
+    html_template = 'commercialoperator/emails/bookings/tclass/send_external_payment_due_notification_failed.html'
+    txt_template = 'commercialoperator/emails/bookings/tclass/send_external_payment_due_notification_failed.txt'
+
 def send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients, is_test=False):
     email = ApplicationFeeInvoiceTClassSendNotificationEmail()
     #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
@@ -203,8 +218,49 @@ def send_monthly_invoices_failed_tclass(booking_ids):
     context = {
         'bookings': Booking.objects.filter(id__in=booking_ids).values_list('id', 'admission_number', 'proposal__lodgement_number', 'proposal__org_applicant__organisation__name'),
     }
-
     msg = email.send(settings.NOTIFICATION_EMAIL, context=context)
+
+def send_payment_due_notification_failed_tclass(bookings):
+    """ Internal failed notification email for Payment Due Notification script """
+    email = PaymentDueNotificationFailedTClassEmail()
+
+    context = {
+        'bookings': bookings
+    }
+    msg = email.send(settings.NOTIFICATION_EMAIL, context=context)
+
+def send_invoice_payment_due_tclass_email_notification(sender, bookings, recipients, is_test=False):
+    email = SendPaymentDueNotificationTClassEmail()
+
+    context = {
+        'bookings': bookings,
+    }
+
+    msg = email.send(booking.proposal.submitter.email, context=context)
+    #sender = sender if sender else settings.DEFAULT_FROM_EMAIL
+    #_log_proposal_email(msg, booking.proposal, sender=sender)
+    #if booking.proposal.org_applicant:
+    #    _log_org_email(msg, booking.proposal.org_applicant, booking.proposal.submitter, sender=sender)
+    #else:
+    #    _log_user_email(msg, booking.proposal.submitter, booking.proposal.submitter, sender=sender)
+
+def send_invoice_payment_due_tclass_external_email_notification(sender, booking, recipients, is_test=False):
+    email = SendExternalPaymentDueNotificationTClassEmail()
+
+    context = {
+        'booking': booking,
+    }
+
+    msg = email.send(booking.proposal.submitter.email, context=context)
+    sender = sender if sender else settings.DEFAULT_FROM_EMAIL
+    _log_proposal_email(msg, booking.proposal, sender=sender)
+    if booking.proposal.org_applicant:
+        _log_org_email(msg, booking.proposal.org_applicant, booking.proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, booking.proposal.submitter, booking.proposal.submitter, sender=sender)
+
+
+
 
 def _log_proposal_email(email_message, proposal, sender=None):
     from commercialoperator.components.proposals.models import ProposalLogEntry

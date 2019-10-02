@@ -19,6 +19,7 @@ from django.conf import settings
 
 from ledger.accounts.models import Document
 from ledger.checkout.utils import calculate_excl_gst
+from ledger.checkout.utils import bpay_allowed
 
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dbca_logo.jpg')
 DPAW_HEADER_LOGO_SM = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dbca_logo_small.png')
@@ -101,11 +102,11 @@ class Remittance(Flowable):
         canvas.setFont(BOLD_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawRightString(current_x * 45,current_y,'Remittance Advice')
 
-        current_y -= 20
-        canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
-        canvas.drawString(current_x * 27,current_y,'PLEASE DETACH AND RETURN WITH YOUR PAYMENT')
+        #current_y -= 20
+        #canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
+        #canvas.drawString(current_x * 27,current_y,'PLEASE DETACH AND RETURN WITH YOUR PAYMENT')
 
-        current_y -= 20
+        current_y -= 50
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawString(current_x, current_y, 'ABN: 38 052 249 024')
         self.current_y = current_y
@@ -117,19 +118,19 @@ class Remittance(Flowable):
         #current_y -= 40
         # Pay By Cheque
         cheque_x = current_x + 4 * inch
-        cheque_y = current_y -30
-        canvas.setFont(BOLD_FONTNAME, MEDIUM_FONTSIZE)
-        canvas.drawString(cheque_x, cheque_y, 'Pay By Cheque:')
-        canvas.setFont(DEFAULT_FONTNAME, 9)
-        cheque_y -= 15
-        canvas.drawString(cheque_x, cheque_y, 'Make cheque payable to: Department of Parks and Wildlife')
-        cheque_y -= 15
-        canvas.drawString(cheque_x, cheque_y, 'Mail to: Department of Parks and Wildlife')
-        cheque_y -= 15
-        canvas.drawString(cheque_x + 32, cheque_y, 'Locked Bag 30')
-        cheque_y -= 15
-        canvas.drawString(cheque_x + 32, cheque_y, 'Bentley Delivery Centre WA 6983')
-        if settings.BPAY_ALLOWED:
+        cheque_y = current_y - 10
+        #canvas.setFont(BOLD_FONTNAME, MEDIUM_FONTSIZE)
+        #canvas.drawString(cheque_x, cheque_y, 'Pay By Cheque:')
+        #canvas.setFont(DEFAULT_FONTNAME, 9)
+        #cheque_y -= 15
+        #canvas.drawString(cheque_x, cheque_y, 'Make cheque payable to: Department of Parks and Wildlife')
+        #cheque_y -= 15
+        #canvas.drawString(cheque_x, cheque_y, 'Mail to: Department of Parks and Wildlife')
+        #cheque_y -= 15
+        #canvas.drawString(cheque_x + 32, cheque_y, 'Locked Bag 30')
+        #cheque_y -= 15
+        #canvas.drawString(cheque_x + 32, cheque_y, 'Bentley Delivery Centre WA 6983')
+        if self.invoice.payment_method in [self.invoice.PAYMENT_METHOD_MONTHLY_INVOICING, self.invoice.PAYMENT_METHOD_BPAY]:
             # Outer BPAY Box
             canvas.rect(current_x,current_y - 25,2.3*inch,-1.2*inch)
             canvas.setFillColorCMYK(0.8829,0.6126,0.0000,0.5647)
@@ -174,7 +175,8 @@ class Remittance(Flowable):
         canvas.drawString((PAGE_WIDTH/4) * 3, current_y, currency(self.invoice.amount))
 
     def draw(self):
-        if settings.BPAY_ALLOWED:
+        #if settings.BPAY_ALLOWED:
+        if self.invoice.payment_method in [self.invoice.PAYMENT_METHOD_MONTHLY_INVOICING, self.invoice.PAYMENT_METHOD_BPAY]:
             self.__logo_line()
             self.__payment_line()
         self.__footer_line()
@@ -205,7 +207,7 @@ def _create_header(canvas, doc, draw_page_number=True):
 
     # Invoice address details
     invoice_details_offset = 37
-    current_y -= 20
+    current_y -= 10
 
     invoice = doc.invoice
     proposal = doc.proposal
@@ -236,6 +238,11 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, currency(invoice.payment_amount))
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 8, 'Outstanding (AUD)')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 8, currency(invoice.balance))
+
+    if invoice.settlement_date and invoice.payment_method in [invoice.PAYMENT_METHOD_MONTHLY_INVOICING, invoice.PAYMENT_METHOD_BPAY]:
+        canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 9, 'Settlement Date')
+        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 9, invoice.settlement_date.strftime(DATE_FORMAT))
+
     canvas.restoreState()
 
 def _create_invoice(invoice_buffer, invoice, proposal):

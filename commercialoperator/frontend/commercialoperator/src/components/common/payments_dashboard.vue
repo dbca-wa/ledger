@@ -232,12 +232,12 @@ export default {
                         data: '',
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (full.payment_status.toLowerCase()=='paid' || full.payment_method.toUpperCase()=='BPAY' || (full.payment_method.toLowerCase()=='monthly invoicing' && full.application_fee_invoice !== null)){
+                            if (full.payment_status.toLowerCase()=='paid' || full.payment_method.toUpperCase()=='BPAY' || (full.payment_method.toLowerCase()=='monthly invoicing' && full.invoice_reference !== null)){
                                 links +=  `<a href='/cols/payments/invoice-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a> &nbsp`;
                                 links +=  `<a href='/cols/payments/confirmation-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
-                            } else if (full.payment_method.toLowerCase()=='monthly invoicing' && full.application_fee_invoice == null){
+                            } else if (full.payment_method.toLowerCase()=='monthly invoicing' && full.invoice_reference == null){
                                 // running aggregated monthly booking - not yet invoiced
-                                links +=  `<a href='/cols/payments/monthly_confirmation-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
+                                links +=  `<a href='/cols/payments/monthly-confirmation-pdf/${full.id}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
                             } 
                             return links;
                         },

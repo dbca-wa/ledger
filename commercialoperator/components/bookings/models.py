@@ -188,6 +188,10 @@ class Booking(Payment):
             lines += park_booking.as_line_items
         return lines
 
+    @property
+    def invoice(self):
+        self.invoices.last().invoice
+
 class ParkBooking(RevisionedMixin):
     created = models.DateTimeField(default=timezone.now())
     booking = models.ForeignKey(Booking, on_delete=models.PROTECT, blank=True, null=True, related_name='park_bookings')
@@ -257,6 +261,7 @@ class BookingInvoice(RevisionedMixin):
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
     payment_method = models.SmallIntegerField(choices=PAYMENT_METHOD_CHOICES, default=0) # duplicating from ledger Invoice model to allow easier filtering on payment dashboard
     deferred_payment_date = models.DateField(blank=True, null=True)
+    payment_due_notification_sent = models.BooleanField(default=False)
 
     def __str__(self):
         return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
@@ -272,6 +277,23 @@ class BookingInvoice(RevisionedMixin):
         except Invoice.DoesNotExist:
             pass
         return False
+
+    @property
+    def invoice(self):
+        try:
+            invoice = Invoice.objects.get(reference=self.invoice_reference)
+            return invoice
+        except Invoice.DoesNotExist:
+            pass
+        return False
+
+    @property
+    def overdue(self):
+        invoice = Invoice.objects.filter(reference=self.invoice_reference, settlement_date__lt=timezone.now())
+        if self.invoice and (self.invoice.payment_status == 'unpaid' or self.invoice.payment_status == 'partially_paid') and self.settlement_date==timezone.now():
+            return True
+        return False
+
 
 class ApplicationFee(Payment):
     PAYMENT_TYPE_INTERNET = 0

@@ -191,7 +191,7 @@ def _create_header(canvas, doc, draw_page_number=True):
     dpaw_header_logo_size = dpaw_header_logo.getSize()
     canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - (dpaw_header_logo_size[1]/2),width=dpaw_header_logo_size[0]/2, height=dpaw_header_logo_size[1]/2, mask='auto')
 
-    current_y -= 100
+    current_y -= 70
     invoice = doc.invoice
     booking = doc.booking
     if hasattr(booking, 'payment_type'):
@@ -223,6 +223,11 @@ def _create_header(canvas, doc, draw_page_number=True):
     if hasattr(booking, 'booking_type'):
         canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, 'Booking No.')
         canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, booking.booking_number)
+
+    if invoice.settlement_date and invoice.payment_method in [invoice.PAYMENT_METHOD_MONTHLY_INVOICING, invoice.PAYMENT_METHOD_BPAY]:
+        canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, 'Settlement Date')
+        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, invoice.settlement_date.strftime(DATE_FORMAT))
+
     canvas.restoreState()
 
 

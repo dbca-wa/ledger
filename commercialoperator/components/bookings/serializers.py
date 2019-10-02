@@ -113,14 +113,19 @@ class BookingSerializer(serializers.ModelSerializer):
             return ''
 
     def get_invoice_reference(self,obj):
-        if obj and obj.invoices.all().last():
-            inv = obj.invoices.all().last()
-            return inv.invoice_reference
+        if obj and obj.invoices.last():
+            return obj.invoices.last().invoice_reference
+        return None
+
+    def get_overdue(self,obj):
+        if obj and obj.invoices.last():
+            bi = obj.invoices.last()
+            return bi.overdue
         return None
 
     def get_payment_status(self,obj):
-        if obj and obj.invoices.all().last():
-            inv = obj.invoices.all().last()
+        if obj and obj.invoices.last():
+            inv = obj.invoices.last()
             payment_status =  Invoice.objects.get(reference=inv.invoice_reference).payment_status
             return ' '.join([i.capitalize() for i in payment_status.replace('_',' ').split()])
         elif obj.unpaid:
@@ -129,8 +134,8 @@ class BookingSerializer(serializers.ModelSerializer):
         return None
 
     def get_payment_method(self,obj):
-        if obj and obj.invoices.all().last():
-            inv = obj.invoices.all().last()
+        if obj and obj.invoices.last():
+            inv = obj.invoices.last()
             return Invoice.objects.get(reference=inv.invoice_reference).get_payment_method_display()
         else:
             # if no invoice exists, likely this is booking is for monthly_invoicing

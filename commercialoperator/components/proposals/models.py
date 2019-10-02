@@ -621,7 +621,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     @property
     def applicant_email(self):
-        if self.org_applicant:
+        if self.org_applicant and hasattr(self.org_applicant.organisation, 'email') and self.org_applicant.organisation.email:
             return self.org_applicant.organisation.email
         elif self.proxy_applicant:
             return self.proxy_applicant.email,
@@ -2416,6 +2416,7 @@ class ProposalUserAction(UserAction):
 
     # monthly invoicing by cron
     ACTION_SEND_MONTHLY_INVOICE = "Send monthly invoice {} for application {} to {}"
+    ACTION_SEND_PAYMENT_DUE_NOTIFICATION = "Send monthly invoice/BPAY payment due notification {} for application {} to {}"
 
     class Meta:
         app_label = 'commercialoperator'

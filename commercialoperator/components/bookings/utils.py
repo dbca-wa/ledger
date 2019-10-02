@@ -39,13 +39,15 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
                 'created': timezone.now(),
             }
         )
+        lines = ast.literal_eval(request.POST['line_details'])['tbody']
     else:
         booking = Booking.objects.create(proposal_id=proposal.id, created_by=request.user, booking_type=booking_type)
+        lines = json.loads(request.POST['payment'])['tbody']
 
     #Booking.objects.filter(invoices__isnull=True, booking_type=4, proposal_id=478, proposal__org_applicant=org)
 
     #tbody = json.loads(request.POST['payment'])['tbody']
-    lines = ast.literal_eval(request.POST['line_details'])['tbody']
+    #lines = ast.literal_eval(request.POST['line_details'])['tbody']
     for row in lines:
         park_id = row[0]['value']
         arrival = row[1]
@@ -69,18 +71,56 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
 
     return booking
 
+"""
+TEST 1:
+1. create 1 Organisation:
+   a. monthly_invoicing_allowed = True
+   b. monthly_invoicing_period = 5 (create invoice 0 days from 1st of the month)
+   c. monthly_payment_due = 20 (set settlement_date to 20 days after invoice created)
+2. For Org, create 2 or 3 bookings, add parks --> pre-date booking to last month
+3. run monthly invoice script:
+   a. confirm monthly_script SKIPS invoice creation, if executed before the invoicing date (1st of the month + monthly_invoicing_period(5) --> before 6th day of the month)
+   b. confirm monthly_script creates invoice, if executed after the invoicing date (1st of the month + monthly_invoicing_period(5) --> on or after 6th of the month)
+   b. confirm the created invoice has the correct payment date printed on the PDF (invoice_created + monthly_invoicing_period(20) --> 26th of the month)
+4. confirm cannot re-create invoice again for this booking
+
+TEST 2:
+1. create 2 Organisations (with different invoicing periods):
+   ORG_1:
+       a. monthly_invoicing_allowed = True
+       b. monthly_invoicing_period = 3 (create invoice 3 days from 1st of the month)
+       c. monthly_payment_due = 20 (set settlement_date to 20 days after invoice created)
+   ORG_2:
+       a. monthly_invoicing_allowed = True
+       b. monthly_invoicing_period = 5 (create invoice 5 days from 1st of the month)
+       c. monthly_payment_due = 20 (set settlement_date to 20 days after invoice created)
+2. For Org_1, create 2 or 3 bookings, add parks --> pre-date booking to last month
+3. For Org_3, create 2 or 3 bookings, add parks --> pre-date booking to last month
+4. run monthly invoice script:
+   a. confirm monthly_script SKIPS invoice creation (for both Orgs), if executed before the invoicing date (1st of the month + monthly_invoicing_period(3) --> before 4th day of the month)
+   b. confirm monthly_script creates invoice for Org_1 only, if executed after the Org_1 invoicing date (1st of the month + monthly_invoicing_period(3) --> on or after 4th of the month)
+   c. confirm monthly_script creates invoice for Org_2 only, if executed after the Org_2 invoicing date (1st of the month + monthly_invoicing_period(5) --> on or after 6th of the month)
+   d. confirm the Org_1 invoice has the correct payment date printed on the PDF (invoice_created_date + monthly_invoicing_period(20) --> 24h of the month)
+   e. confirm the Org_2 invoice has the correct payment date printed on the PDF (invoice_created_date + monthly_invoicing_period(20) --> 26 of the month)
+4. confirm cannot re-create invoices again for these booking
+
+
+
+"""
 def create_monthly_invoice(user, offset_months=-1):
     bookings = Booking.objects.filter(
         invoices__isnull=True,
         booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING,
         created__month=(timezone.now() + relativedelta(months=offset_months)).month
     )
+    #import ipdb; ipdb.set_trace()
 
     failed_bookings = []
     for booking in bookings:
         with transaction.atomic():
             if booking.booking_type == Booking.BOOKING_TYPE_MONTHLY_INVOICING and booking.proposal.org_applicant and booking.proposal.org_applicant.monthly_invoicing_allowed:
                 try:
+                    logger.info('Creating monthly invoice for booking {}'.format(booking.admission_number))
                     order = create_invoice(booking, payment_method='monthly_invoicing')
                     invoice = Invoice.objects.get(order_number=order.number)
                     invoice.settlement_date = calc_payment_due_date(booking, invoice.created)
@@ -90,7 +130,7 @@ def create_monthly_invoice(user, offset_months=-1):
                     booking.booking_type == Booking.BOOKING_TYPE_BLACK
                     booking.save()
 
-                    send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
+                    #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
                     ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
                 except Exception, e:
                     logger.error('Failed to create monthly invoice for booking_id {}'.format(booking.id))
@@ -362,8 +402,8 @@ def create_invoice(booking, payment_method='bpay'):
     #payment_method = 'bpay'
     payment_method = 'monthly_invoicing'
 
-    basket  = createCustomBasket(products, user, 'S557', bpay_allowed=True, monthly_invoicing_allowed=True)
-    order = CreateInvoiceBasket(payment_method=payment_method, system='0557').create_invoice_and_order(basket, 0, None, None, user=user, invoice_text='CIB7')
+    basket  = createCustomBasket(products, user, settings.PAYMENT_SYSTEM_ID, bpay_allowed=True, monthly_invoicing_allowed=True)
+    order = CreateInvoiceBasket(payment_method=payment_method, system=settings.PAYMENT_SYSTEM_PREFIX).create_invoice_and_order(basket, 0, None, None, user=user, invoice_text='CIB7')
     print 'Created Order: {}'.format(order.number)
     print 'Created Invoice: {}'.format(Invoice.objects.get(order_number=order.number))
 

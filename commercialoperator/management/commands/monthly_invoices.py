@@ -23,7 +23,7 @@ class Command(BaseCommand):
         failed_bookings = create_monthly_invoice(user, offset_months=-1)
 
         if failed_bookings:
-            # some invoices failed 
+            # some invoices failed
             logger.info('Command {} failed. Invoice failed to generate for booking IDs {}'.format(__name__, ret))
             send_monthly_invoices_failed_tclass(failed_bookings)
         logger.info('Command {} completed'.format(__name__))

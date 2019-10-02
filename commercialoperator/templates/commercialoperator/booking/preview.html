@@ -5,8 +5,13 @@
 {% load purchase_info_tags %}
 {% load staticfiles %}
 
+<!-- remove shipping content -->
 {% block shipping_address %}
 {% endblock shipping_address %}
+
+<!-- remove nav/breadcrumbs content -->
+{% block checkout_nav %}
+{% endblock %}
 
 {% block order_contents %}
     <div class="sub-header">
@@ -36,7 +41,7 @@
                     </div>
                     <div class="col-sm-2 align-right">
                         <p class="price_color">
-                            {{ line.price_incl_tax  }}
+                            {% widthratio line.price_incl_tax 1 line.quantity %}
                         </p>
                     </div>
                 </div>
