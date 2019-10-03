@@ -329,7 +329,9 @@
                                     <input type="text" class="form-control" name="abn" v-model="newOrg.pin2" placeholder="">
                                   </div>
                                   <div class="col-sm-2">
-                                    <button v-if="!validatingPins" @click.prevent="validatePins()" class="btn btn-primary pull-left">Validate</button>
+                                    <button v-if="!completedProfile && !validatingPins" disabled title="Please complete all the personal details." class="btn btn-primary pull-left">Validate</button>
+
+                                    <button v-else-if="!validatingPins && completedProfile" @click.prevent="validatePins()" class="btn btn-primary pull-left">Validate</button>
                                     <button v-else class="btn btn-primary pull-left"><i class="fa fa-spin fa-spinner"></i>&nbsp;Validating Pins</button>
                                   </div>
                               </div>

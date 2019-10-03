@@ -98,7 +98,8 @@
                     <div class="col-sm-12" >
                         <div>
                             <!--<pre>{{ selected_trail_ids }}</pre>-->
-                            <label class="control-label">Select the required activities</label>
+                            <!-- <label class="control-label">Select the required activities</label> -->
+                            <label class="control-label">Select the long distance trails</label>
                             <TreeSelect :proposal="proposal" :value.sync="selected_trail_ids" :options="trail_options" :default_expand_level="1" open_direction="top" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
                         </div>
                     </div>
@@ -599,8 +600,14 @@ export default {
                   }
                   else{
                     for(var k=0; k<selected_parks_activities[i].activities.length; k++){
-                      if(vm.required_documents_list[j].activity== selected_parks_activities[i].activities[k]){
-                      vm.required_documents_list[j].can_view=true;
+
+                      // if(vm.required_documents_list[j].activity== selected_parks_activities[i].activities[k]){
+                      // vm.required_documents_list[j].can_view=true;
+                      // }
+                      if(vm.required_documents_list[j].park== selected_parks_activities[i].park){
+                        if(vm.required_documents_list[j].activity== selected_parks_activities[i].activities[k]){
+                            vm.required_documents_list[j].can_view=true;
+                          }
                       }
                     }
                   }
