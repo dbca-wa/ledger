@@ -11,7 +11,6 @@ from django.http import HttpResponse
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.utils import checkURL
 from ledger.payments.cash.models import REGION_CHOICES
-from ledger.checkout.utils import bpay_allowed
 #
 from ledger.payments.models import Invoice
 from ledger.payments.mixins import InvoiceOwnerMixin
@@ -38,8 +37,7 @@ class InvoiceDetailView(InvoiceOwnerMixin,generic.DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super(InvoiceDetailView,self).get_context_data(**kwargs)
-        #ctx['bpay_allowed'] = settings.BPAY_ALLOWED
-        ctx['bpay_allowed'] = bpay_allowed(self.request.basket.bpay_allowed)
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         return ctx
 
     def get_object(self):
@@ -75,8 +73,7 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
         invoices = []
         UPDATE_PAYMENT_ALLOCATION = env('UPDATE_PAYMENT_ALLOCATION', False)
         ctx['payment_allocation'] = UPDATE_PAYMENT_ALLOCATION
-        #ctx['bpay_allowed'] = settings.BPAY_ALLOWED
-        ctx['bpay_allowed'] = bpay_allowed(self.request.basket.bpay_allowed)
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['months'] = self.month_choices
         ctx['years'] = self.year_choices
         ctx['regions'] = list(REGION_CHOICES)

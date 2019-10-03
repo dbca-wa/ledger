@@ -8,8 +8,6 @@ from ledger.catalogue.models import Product
 class Basket(CoreAbstractBasket):
     system = models.CharField(max_length=4)
     custom_ledger = models.BooleanField(default=False)
-    bpay_allowed = models.BooleanField(default=False)
-    monthly_invoicing_allowed = models.BooleanField(default=False)
 
     def all_lines(self):
         """
@@ -34,7 +32,7 @@ class Basket(CoreAbstractBasket):
         '''
 
         if not data.get('quantity'):
-            data['quantity'] = 1
+            data['quantity'] = 1 
         line = self.lines.create(**data)
         return line
 
@@ -93,7 +91,7 @@ class Line(CoreAbstractLine):
             info.price.excl_tax = self.price_excl_tax
             info.price.incl_tax =  self.price_incl_tax
             info.price.tax = (self.price_incl_tax - self.price_excl_tax)
-            info.price.is_tax_known = True
+            info.price.is_tax_known = True 
 
             self._info = info
             return self._info

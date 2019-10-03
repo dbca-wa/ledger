@@ -194,7 +194,6 @@ class MakePaymentView(TemplateView):
         #import ipdb; ipdb.set_trace()
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
-        bpay_allowed = proposal.org_applicant.bpay_allowed if proposal.org_applicant else False
 
         try:
             booking = create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORARY)
@@ -209,7 +208,6 @@ class MakePaymentView(TemplateView):
                     return_url_ns='public_booking_success',
                     return_preload_url_ns='public_booking_success',
                     invoice_text='Payment Invoice',
-                    bpay_allowed=proposal.org_applicant.bpay_allowed if proposal.org_applicant else False
                 )
 
                 logger.info('{} built payment line items {} for Park Bookings and handing over to payment gateway'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
@@ -359,12 +357,12 @@ class BookingSuccessView(TemplateView):
             if booking.booking_type == Booking.BOOKING_TYPE_TEMPORARY:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
-                    if (inv.payment_method == Invoice.PAYMENT_METHOD_BPAY):
-                        # will return 1st of the next month + monthly_payment_due_period (days) e.g 20th of next month
-                        now = timezone.now().date()
-                        dt = date(now.year, now.month, 1) + relativedelta(months=1)
-                        inv.settlement_date = calc_payment_due_date(booking, dt) - relativedelta(days=1)
-                        inv.save()
+                    #if (inv.payment_method == Invoice.PAYMENT_METHOD_BPAY):
+                    #    # will return 1st of the next month + monthly_payment_due_period (days) e.g 20th of next month
+                    #    now = timezone.now().date()
+                    #    dt = date(now.year, now.month, 1) + relativedelta(months=1)
+                    #    inv.settlement_date = calc_payment_due_date(booking, dt) - relativedelta(days=1)
+                    #    inv.save()
 
                     order = Order.objects.get(number=inv.order_number)
                     order.user = submitter
@@ -382,8 +380,7 @@ class BookingSuccessView(TemplateView):
                     #booking.set_admission_number()
                     update_payments(invoice_ref)
 
-                    if (invoice.payment_status == 'unpaid' and invoice.payment_method == Invoice.PAYMENT_METHOD_CC) or \
-                       (not (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid') and invoice.payment_method == Invoice.PAYMENT_METHOD_CC):
+                    if not (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid') and invoice.payment_method == Invoice.PAYMENT_METHOD_CC:
                         logger.error('Payment Method={} - Admission Fee Invoice payment status is {}'.format(invoice.get_payment_method_display(), invoice.payment_status))
                         raise
 

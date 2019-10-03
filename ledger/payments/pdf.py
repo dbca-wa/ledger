@@ -18,7 +18,7 @@ from django.core.files import File
 from django.conf import settings
 
 from ledger.accounts.models import Document
-from ledger.checkout.utils import calculate_excl_gst, bpay_allowed
+from ledger.checkout.utils import calculate_excl_gst
 
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dbca_logo.jpg')
 DPAW_HEADER_LOGO_SM = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dbca_logo_small.png')
@@ -129,8 +129,7 @@ class Remittance(Flowable):
         canvas.drawString(cheque_x + 32, cheque_y, 'Locked Bag 30')
         cheque_y -= 15
         canvas.drawString(cheque_x + 32, cheque_y, 'Bentley Delivery Centre WA 6983')
-        #if settings.BPAY_ALLOWED:
-        if bpay_allowed(self.invoice.order.basket.bpay_allowed):
+        if settings.BPAY_ALLOWED:
             # Outer BPAY Box
             canvas.rect(current_x,current_y - 25,2.3*inch,-1.2*inch)
             canvas.setFillColorCMYK(0.8829,0.6126,0.0000,0.5647)
@@ -175,8 +174,7 @@ class Remittance(Flowable):
         canvas.drawString((PAGE_WIDTH/4) * 3, current_y, currency(self.invoice.amount))
 
     def draw(self):
-        #if settings.BPAY_ALLOWED:
-        if bpay_allowed(self.invoice.order.basket.bpay_allowed):
+        if settings.BPAY_ALLOWED:
             self.__logo_line()
             self.__payment_line()
         self.__footer_line()

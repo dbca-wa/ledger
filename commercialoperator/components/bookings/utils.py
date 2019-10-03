@@ -253,14 +253,12 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
 
     return lines
 
-def checkout(request, proposal, lines, return_url_ns='public_booking_success', return_preload_url_ns='public_booking_success', invoice_text=None, vouchers=[], proxy=False, bpay_allowed=False, monthly_invoicing_allowed=False):
+def checkout(request, proposal, lines, return_url_ns='public_booking_success', return_preload_url_ns='public_booking_success', invoice_text=None, vouchers=[], proxy=False):
     basket_params = {
         'products': lines,
         'vouchers': vouchers,
         'system': settings.PAYMENT_SYSTEM_ID,
         'custom_basket': True,
-        'bpay_allowed': bpay_allowed,
-        'monthly_invoicing_allowed': monthly_invoicing_allowed,
     }
 
     basket, basket_hash = create_basket_session(request, basket_params)
@@ -372,7 +370,7 @@ def test_create_invoice(payment_method='bpay'):
     #payment_method = 'bpay'
     payment_method = 'monthly_invoicing'
 
-    basket  = createCustomBasket(products, user, 'S557', bpay_allowed=True, monthly_invoicing_allowed=True)
+    basket  = createCustomBasket(products, user, 'S557')
     order = CreateInvoiceBasket(payment_method=payment_method, system='0557').create_invoice_and_order(basket, 0, None, None, user=user, invoice_text='CIB7')
     print 'Created Order: {}'.format(order.number)
     print 'Created Invoice: {}'.format(Invoice.objects.get(order_number=order.number))
@@ -393,8 +391,15 @@ def create_invoice(booking, payment_method='bpay'):
     user = EmailUser.objects.get(email=booking.proposal.applicant_email)
 
     #import ipdb; ipdb.set_trace()
-    basket  = createCustomBasket(products, user, settings.PAYMENT_SYSTEM_ID, bpay_allowed=True, monthly_invoicing_allowed=True)
-    order = CreateInvoiceBasket(payment_method=payment_method, system=settings.PAYMENT_SYSTEM_PREFIX).create_invoice_and_order(basket, 0, None, None, user=user, invoice_text='Monthly Payment Invoice')
+    if payment_method=='monthly_invoicing':
+        invoice_text = 'Monthly Payment Invoice'
+    elif payment_method=='bpay':
+        invoice_text = 'BPAY Payment Invoice'
+    else:
+        invoice_text = 'Payment Invoice'
+
+    basket  = createCustomBasket(products, user, settings.PAYMENT_SYSTEM_ID)
+    order = CreateInvoiceBasket(payment_method=payment_method, system=settings.PAYMENT_SYSTEM_PREFIX).create_invoice_and_order(basket, 0, None, None, user=user, invoice_text=invoice_text)
 
     return order
 

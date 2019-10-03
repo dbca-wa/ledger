@@ -19,7 +19,6 @@ from django.conf import settings
 
 from ledger.accounts.models import Document
 from ledger.checkout.utils import calculate_excl_gst
-from ledger.checkout.utils import bpay_allowed
 
 DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dbca_logo.jpg')
 DPAW_HEADER_LOGO_SM = os.path.join(settings.BASE_DIR, 'ledger', 'payments','static', 'payments', 'img','dbca_logo_small.png')

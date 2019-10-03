@@ -24,7 +24,6 @@ from ledger.payments.models import Invoice, BpointToken
 from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
 from ledger.payments.utils import isLedgerURL, systemid_check
-from ledger.checkout.utils import bpay_allowed
 
 Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -141,9 +140,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 ctx['cards'] = cards
 
         ctx['custom_template'] = custom_template
-        #ctx['bpay_allowed'] = settings.BPAY_ALLOWED
-        ctx['bpay_allowed'] = bpay_allowed(self.request.basket.bpay_allowed)
-        ctx['monthly_invoicing_allowed'] = self.request.basket.monthly_invoicing_allowed
+        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['payment_method'] = method
         ctx['bankcard_form'] = kwargs.get(
             'bankcard_form', forms.BankcardForm())
@@ -163,10 +160,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 return self.handle_place_order_submission(request)
         # Validate the payment method
         payment_method = request.POST.get('payment_method', '')
-        #if payment_method == 'bpay' and settings.BPAY_ALLOWED:
-        if payment_method == 'monthly_invoicing' and self.request.basket.monthly_invoicing_allowed:
-            self.checkout_session.pay_by('monthly_invoicing')
-        elif payment_method == 'bpay' and bpay_allowed(self.request.basket.bpay_allowed):
+        if payment_method == 'bpay' and settings.BPAY_ALLOWED:
             self.checkout_session.pay_by('bpay')
         elif payment_method == 'card':
             self.checkout_session.pay_by('card')
@@ -397,8 +391,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # error occurs.
         error_msg = _("A problem occurred while processing payment for this "
                       "order - no payment has been taken.")
-        #if settings.BPAY_ALLOWED:
-        if bpay_allowed(basket.bpay_allowed):
+        if settings.BPAY_ALLOWED:
             error_msg += _("  Please "
                       "use the pay later option if this problem persists")
 
@@ -416,8 +409,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             # thing. This type of exception is supposed to set a friendly error
             # message that makes sense to the customer.
             msg = six.text_type(e) + '.'
-            #if settings.BPAY_ALLOWED:
-            if bpay_allowed(basket.bpay_allowed):
+            if settings.BPAY_ALLOWED:
                 msg += ' You can alternatively use the pay later option.'
             logger.warning(
                 "Order #%s: unable to take payment (%s) - restoring basket",
