@@ -35,7 +35,7 @@
                           <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                             <button class="dropdown-item" type="submit">Pay by Credit Card</button><br>
                             <span v-if="selected_licence.bpay_allowed">
-                                <button class="dropdown-item" type="submit">Pay by BPAY</button><br>
+                                <button class="dropdown-item" @click="payment_method='bpay'" type="submit">Pay by BPAY</button><br>
                             </span>
                             <span v-if="selected_licence.monthly_invoicing_allowed">
                                 <!--<button  class="dropdown-item" @click="submit_monthly_invoicing">Monthly Invoicing</button>-->
@@ -218,9 +218,9 @@ from '@/utils/hooks'
                 vm.errors = vm.check_form_valid();
 
                 var form = document.forms.new_payment;
-                if (vm.payment_method == 'monthly_invoicing') {
+                if (vm.payment_method == 'monthly_invoicing' || vm.payment_method == 'bpay') {
                     //form.action = '/payment_monthly/' + vm.selected_licence.value  + '/';
-                    form.action = '/preview_monthly/' + vm.selected_licence.value  + '/';
+                    form.action = '/preview_deferred/' + vm.selected_licence.value  + '/?method=' + vm.payment_method;
                 } else {
                     form.action = '/payment/' + vm.selected_licence.value  + '/';
                 }

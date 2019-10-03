@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from commercialoperator.components.main.models import Park
@@ -19,7 +19,6 @@ import json
 import ast
 from decimal import Decimal
 
-
 import logging
 logger = logging.getLogger('payment_checkout')
 
@@ -27,7 +26,6 @@ logger = logging.getLogger('payment_checkout')
 def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORARY):
     """ Create the ledger lines - line items for invoice sent to payment system """
 
-    #mport ipdb; ipdb.set_trace()
     if booking_type == Booking.BOOKING_TYPE_MONTHLY_INVOICING and proposal.org_applicant and proposal.org_applicant.monthly_invoicing_allowed:
         booking, created = Booking.objects.get_or_create(
             invoices__isnull=True,
@@ -40,6 +38,11 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
             }
         )
         lines = ast.literal_eval(request.POST['line_details'])['tbody']
+
+    elif booking_type == Booking.BOOKING_TYPE_INTERNET and proposal.org_applicant and proposal.org_applicant.bpay_allowed:
+        booking = Booking.objects.create(proposal_id=proposal.id, created_by=request.user, booking_type=booking_type)
+        lines = ast.literal_eval(request.POST['line_details'])['tbody']
+
     else:
         booking = Booking.objects.create(proposal_id=proposal.id, created_by=request.user, booking_type=booking_type)
         lines = json.loads(request.POST['payment'])['tbody']
@@ -113,12 +116,11 @@ def create_monthly_invoice(user, offset_months=-1):
         booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING,
         created__month=(timezone.now() + relativedelta(months=offset_months)).month
     )
-    #import ipdb; ipdb.set_trace()
 
     failed_bookings = []
     for booking in bookings:
         with transaction.atomic():
-            if booking.booking_type == Booking.BOOKING_TYPE_MONTHLY_INVOICING and booking.proposal.org_applicant and booking.proposal.org_applicant.monthly_invoicing_allowed:
+            if is_invoicing_period(booking) and is_monthly_invoicing_allowed(booking):
                 try:
                     logger.info('Creating monthly invoice for booking {}'.format(booking.admission_number))
                     order = create_invoice(booking, payment_method='monthly_invoicing')
@@ -127,8 +129,8 @@ def create_monthly_invoice(user, offset_months=-1):
                     invoice.save()
 
                     book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method)
-                    booking.booking_type == Booking.BOOKING_TYPE_BLACK
-                    booking.save()
+                    #booking.booking_type == Booking.BOOKING_TYPE_BLACK
+                    #booking.save()
 
                     #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
                     #ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
@@ -139,13 +141,53 @@ def create_monthly_invoice(user, offset_months=-1):
 
     return failed_bookings
 
+def create_bpay_invoice(user, booking):
+
+    failed_bookings = []
+    with transaction.atomic():
+        if booking.booking_type == Booking.BOOKING_TYPE_INTERNET and booking.proposal.org_applicant and booking.proposal.org_applicant.bpay_allowed:
+            try:
+                now = timezone.now().date()
+                dt = date(now.year, now.month, 1) + relativedelta(months=1)
+                logger.info('Creating BPAY invoice for booking {}'.format(booking.admission_number))
+                order = create_invoice(booking, payment_method='bpay')
+                invoice = Invoice.objects.get(order_number=order.number)
+                invoice.settlement_date = calc_payment_due_date(booking, dt) - relativedelta(days=1)
+                invoice.save()
+
+                book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method)
+
+                #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
+                #ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
+            except Exception, e:
+                logger.error('Failed to create monthly invoice for booking_id {}'.format(booking.id))
+                logger.error('{}'.format(e))
+                failed_bookings.append(booking.id)
+
+    return failed_bookings
+
+
 def calc_payment_due_date(booking, _date):
     org_applicant = booking.proposal.org_applicant
     if isinstance(org_applicant, Organisation):
         return calc_monthly_invoicing_date(_date, org_applicant.monthly_invoicing_period) + relativedelta(days=org_applicant.monthly_payment_due_period)
+    return None
 
 def calc_monthly_invoicing_date(_date, offset_days):
     return _date + relativedelta(days=offset_days)
+
+def is_invoicing_period(booking):
+    org_applicant = booking.proposal.org_applicant
+    if isinstance(org_applicant, Organisation):
+        return timezone.now().day >= org_applicant.monthly_invoicing_period
+    return False
+
+def is_monthly_invoicing_allowed(booking):
+    org_applicant = booking.proposal.org_applicant
+    if isinstance(org_applicant, Organisation):
+        return booking.booking_type == Booking.BOOKING_TYPE_MONTHLY_INVOICING and org_applicant and org_applicant.monthly_invoicing_allowed
+    return False
+
 
 def get_session_booking(session):
     if 'cols_booking' in session:
@@ -390,7 +432,6 @@ def create_invoice(booking, payment_method='bpay'):
     products = Booking.objects.last().as_line_items
     user = EmailUser.objects.get(email=booking.proposal.applicant_email)
 
-    #import ipdb; ipdb.set_trace()
     if payment_method=='monthly_invoicing':
         invoice_text = 'Monthly Payment Invoice'
     elif payment_method=='bpay':

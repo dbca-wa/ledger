@@ -190,7 +190,7 @@ class Booking(Payment):
 
     @property
     def invoice(self):
-        self.invoices.last().invoice
+        return self.invoices.last().invoice
 
 class ParkBooking(RevisionedMixin):
     created = models.DateTimeField(default=timezone.now())

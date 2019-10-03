@@ -79,10 +79,11 @@ class BrokenLine(Flowable):
         self.canv.line(0, self.height,self.width,self.height)
 
 class Remittance(Flowable):
-    def __init__(self,current_x,current_y,invoice):
+    def __init__(self, current_x, current_y, proposal, invoice):
         Flowable.__init__(self)
         self.current_x = current_x
         self.current_y = current_y
+        self.proposal = proposal
         self.invoice = invoice
 
     def __repr__(self):
@@ -170,7 +171,7 @@ class Remittance(Flowable):
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawString(current_x, current_y, self.invoice.reference)
         canvas.drawString(PAGE_WIDTH/4, current_y, self.invoice.created.strftime(DATE_FORMAT))
-        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(self.invoice.amount - calculate_excl_gst(self.invoice.amount)))
+        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(self.invoice.amount - calculate_excl_gst(self.invoice.amount) if not _is_gst_exempt(self.proposal, self.invoice) else 0.0))
         canvas.drawString((PAGE_WIDTH/4) * 3, current_y, currency(self.invoice.amount))
 
     def draw(self):
@@ -212,7 +213,7 @@ def _create_header(canvas, doc, draw_page_number=True):
     proposal = doc.proposal
 
     # TODO need to fix, since individual parks can be exempt, Below calculation assumes NO PARK IS exempt
-    is_gst_exempt = proposal.application_type.is_gst_exempt if proposal.fee_invoice_reference == invoice.reference else False
+    #is_gst_exempt = proposal.application_type.is_gst_exempt if proposal.fee_invoice_reference == invoice.reference else False
 
     canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
     current_x = PAGE_MARGIN + 5
@@ -234,7 +235,7 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Total (AUD)')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, currency(invoice.amount))
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, 'GST included (AUD)')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, currency(invoice.amount - calculate_excl_gst(invoice.amount) if not is_gst_exempt else 0.0))
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, currency(invoice.amount - calculate_excl_gst(invoice.amount) if not _is_gst_exempt(proposal, invoice) else 0.0))
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, 'Paid (AUD)')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, currency(invoice.payment_amount))
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 8, 'Outstanding (AUD)')
@@ -245,6 +246,10 @@ def _create_header(canvas, doc, draw_page_number=True):
         canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 9, invoice.settlement_date.strftime(DATE_FORMAT))
 
     canvas.restoreState()
+
+def _is_gst_exempt(proposal, invoice):
+    # TODO need to fix, since individual parks can be exempt, Below calculation assumes NO PARK IS exempt
+    return proposal.application_type.is_gst_exempt if proposal.fee_invoice_reference == invoice.reference else False
 
 def _create_invoice(invoice_buffer, invoice, proposal):
 
@@ -349,7 +354,7 @@ def _create_invoice(invoice_buffer, invoice, proposal):
     elements.append(boundary)
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    remittance = Remittance(HEADER_MARGIN,HEADER_MARGIN - 10,invoice)
+    remittance = Remittance(HEADER_MARGIN,HEADER_MARGIN - 10, proposal, invoice)
     elements.append(remittance)
     #_create_remittance(invoice_buffer,doc)
     doc.build(elements)

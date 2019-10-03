@@ -39,7 +39,8 @@ from commercialoperator.components.bookings.utils import (
     get_session_application_invoice,
     set_session_application_invoice,
     delete_session_application_invoice,
-    calc_payment_due_date
+    calc_payment_due_date,
+    create_bpay_invoice,
 )
 
 from commercialoperator.components.proposals.serializers import ProposalSerializer
@@ -95,12 +96,14 @@ class ApplicationFeeView(TemplateView):
                 application_fee.delete()
             raise
 
-class MonthlyInvoicingPreviewView(TemplateView):
+
+class DeferredInvoicingPreviewView(TemplateView):
     template_name = 'commercialoperator/booking/preview.html'
 
     def post(self, request, *args, **kwargs):
 
         #import ipdb;ipdb.set_trace()
+        payment_method = self.request.GET.get('method')
         context = template_context(self.request)
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
@@ -111,16 +114,16 @@ class MonthlyInvoicingPreviewView(TemplateView):
             recipient = proposal.submitter.email
             submitter = proposal.submitter
 
-        if isinstance(proposal.org_applicant, Organisation) and proposal.org_applicant.monthly_invoicing_allowed:
+        if isinstance(proposal.org_applicant, Organisation) and (proposal.org_applicant.monthly_invoicing_allowed or proposal.org_applicant.bpay_allowed):
             try:
                 lines = create_lines(request)
-                logger.info('{} Show Park Bookings Prevew for monthly invoicing'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
+                logger.info('{} Show Park Bookings Preview for BPAY/monthly invoicing'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
                 context.update({
                     'lines': lines,
                     'line_details': request.POST['payment'],
                     'proposal_id': proposal_id,
                     'submitter': submitter,
-                    'monthly_invoicing': True,
+                    'payment_method': payment_method,
                 })
                 return render(request, self.template_name, context)
 
@@ -132,14 +135,14 @@ class MonthlyInvoicingPreviewView(TemplateView):
             raise
 
 
-class MonthlyInvoicingView(TemplateView):
+class DeferredInvoicingView(TemplateView):
     #template_name = 'mooring/booking/make_booking.html'
     template_name = 'commercialoperator/booking/success.html'
     #template_name = 'commercialoperator/booking/preview.html'
 
     def post(self, request, *args, **kwargs):
 
-        #import ipdb;ipdb.set_trace()
+        payment_method = self.request.POST.get('method')
         context = template_context(self.request)
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
@@ -150,27 +153,29 @@ class MonthlyInvoicingView(TemplateView):
             recipient = proposal.submitter.email
             submitter = proposal.submitter
 
-        if isinstance(proposal.org_applicant, Organisation) and proposal.org_applicant.monthly_invoicing_allowed:
+        if isinstance(proposal.org_applicant, Organisation):
             try:
-                booking = create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING)
+                if proposal.org_applicant.bpay_allowed and payment_method=='bpay':
+                    booking_type = Booking.BOOKING_TYPE_INTERNET
+                elif proposal.org_applicant.monthly_invoicing_allowed and payment_method=='monthly_invoicing':
+                    booking_type = Booking.BOOKING_TYPE_MONTHLY_INVOICING
 
-                # TODO ideally send to a preview basket view in Oscar before continuing to confirmation below
+                booking = create_booking(request, proposal, booking_type=booking_type)
+                invoice_reference = None
+                if booking and payment_method=='bpay':
+                    # BPAY invoice are created immediately. Monthly invoices are created later by Cron
+                    ret = create_bpay_invoice(submitter, booking)
+                    invoice_reference = booking.invoice.reference
 
-                #with transaction.atomic():
-                #    order = create_invoice(booking, payment_method='monthly_invoicing')
-                #    invoice = Invoice.objects.get(order_number=order.number)
-                #    invoice_ref = invoice.reference
-                #    book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref, payment_method=invoice.payment_method)
-                #    send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
-
-                logger.info('{} Created Park Bookings for monthly invoicing'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
+                logger.info('{} Created Park Bookings with payment method {} for Proposal ID {}'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), payment_method, proposal.id))
                 #send_monthly_invoicing_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
                 context.update({
                     'booking': booking,
                     'booking_id': booking.id,
                     'submitter': submitter,
                     'monthly_invoicing': True,
-                    'invoice_reference': None #invoice.reference
+                    #'invoice_reference': None #invoice.reference
+                    'invoice_reference': invoice_reference # None for Monthly invoices
                 })
                 return render(request, self.template_name, context)
 

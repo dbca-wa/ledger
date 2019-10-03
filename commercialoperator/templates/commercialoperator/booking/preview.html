@@ -55,10 +55,11 @@
 {% endblock %}
 
 {% block place_order %}
-    <form method="post" action="{% url 'monthly_invoicing' proposal_id %}" id="place_order_form">
+    <form method="post" action="{% url 'deferred_invoicing' proposal_id %}" id="place_order_form">
         {% csrf_token %}
         <input type="hidden" name="action" value="place_order" />
         <input type="hidden" name='line_details' value='{{ line_details }}' />
+        <input type="hidden" name='method' value='{{ payment_method }}' />
 
         <div class="form-group clearfix">
             <div class="row">
