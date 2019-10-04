@@ -67,6 +67,7 @@ from disturbance.components.proposals.serializers import (
     ListProposalSerializer,
     ProposalReferralSerializer,
     AmendmentRequestDisplaySerializer,
+    SaveProposalRegionSerializer,
 )
 from disturbance.components.approvals.models import Approval
 from disturbance.components.approvals.serializers import ApprovalSerializer
@@ -940,6 +941,41 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
         raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def update_region_section(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            region = request.data.get('region')
+            district = request.data.get('district')
+            activity = request.data.get('activity')
+            sub_activity1 = request.data.get('sub_activity1')
+            sub_activity2 = request.data.get('sub_activity2')
+            management_area = request.data.get('category')
+            approval_level = request.data.get('approval_level')
+            data={
+                'region': region,
+                'district': district,
+                'activity': activity,
+                'sub_activity_level1': sub_activity1,
+                'sub_activity_level2': sub_activity2,
+                'management_area': management_area,
+                'approval_level': approval_level,
+            }
+            serializer = SaveProposalRegionSerializer(instance,data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            serializer = self.get_serializer(instance, context={'request':request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
+
 #    @detail_route(methods=['post'])
 #    @renderer_classes((JSONRenderer,))
 #    def save_section(self, request, *args, **kwargs):
@@ -1053,6 +1089,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'district': district,
                 'activity': activity,
                 'approval_level': approval_level,
+                'sub_activity_level1':sub_activity1,
+                'sub_activity_level2':sub_activity2,
+                'management_area':category,
                 #'tenure': tenure,
                 'data': [
                     {

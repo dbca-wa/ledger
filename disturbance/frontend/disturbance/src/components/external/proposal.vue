@@ -36,8 +36,10 @@
                 </ul>
             </div>
 
-            
-            <Proposal v-if="proposal" :proposal="proposal" id="proposalStart" :showSections="sectionShow">
+<!--             <NewApply v-if="proposal" :proposal="proposal"></NewApply>
+ -->            <Proposal v-if="proposal" :proposal="proposal" id="proposalStart" :showSections="sectionShow">
+                  <NewApply v-if="proposal" :proposal="proposal"></NewApply>
+
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
@@ -76,6 +78,7 @@
 </template>
 <script>
 import Proposal from '../form.vue'
+import NewApply from './proposal_apply_new.vue'
 import Vue from 'vue' 
 import {
   api_endpoints,
@@ -101,7 +104,8 @@ export default {
     }
   },
   components: {
-      Proposal
+      Proposal,
+      NewApply,
   },
   computed: {
     isLoading: function() {

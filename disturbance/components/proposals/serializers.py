@@ -90,7 +90,10 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'lodgement_sequence',
                 'can_officer_process',
                 'allowed_assessors',
-                'proposal_type'
+                'proposal_type',
+                'sub_activity_level1',
+                'sub_activity_level2',
+                'management_area',
                 )
         read_only_fields=('documents',)
 
@@ -238,8 +241,8 @@ class ProposalSerializer(BaseProposalSerializer):
     customer_status = serializers.SerializerMethodField(read_only=True)
 
     application_type = serializers.CharField(source='application_type.name', read_only=True)
-    region = serializers.CharField(source='region.name', read_only=True)
-    district = serializers.CharField(source='district.name', read_only=True)
+    #region = serializers.CharField(source='region.name', read_only=True)
+    #district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
     comment_data= serializers.SerializerMethodField(read_only=True)
        
@@ -290,10 +293,27 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 'lodgement_sequence',
                 'can_officer_process',
+                'sub_activity_level1',
+                'sub_activity_level2',
+                'management_area',
                 )
         read_only_fields=('documents','requirements')
 
+class SaveProposalRegionSerializer(BaseProposalSerializer):
 
+    class Meta:
+        model = Proposal
+        fields = (
+                'id',
+                'region',
+                'district',
+                'activity',
+                'sub_activity_level1',
+                'sub_activity_level2',
+                'management_area',
+                'approval_level',
+                )
+        #read_only_fields=('documents','requirements')
 
 class ApplicantSerializer(serializers.ModelSerializer):
     from disturbance.components.organisations.serializers import OrganisationAddressSerializer
@@ -337,8 +357,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
     allowed_assessors = EmailUserSerializer(many=True)
     approval_level_document = serializers.SerializerMethodField()
     application_type = serializers.CharField(source='application_type.name', read_only=True)
-    region = serializers.CharField(source='region.name', read_only=True)
-    district = serializers.CharField(source='district.name', read_only=True)
+    #region = serializers.CharField(source='region.name', read_only=True)
+    #district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
 
     class Meta:
@@ -391,7 +411,10 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'can_officer_process',
                 'proposal_type',
                 'hasAmendmentRequest',
-                'referral_email_list'
+                'referral_email_list',
+                'sub_activity_level1',
+                'sub_activity_level2',
+                'management_area',
                 )
         read_only_fields=('documents','requirements')
 
