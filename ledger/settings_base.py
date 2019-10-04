@@ -325,6 +325,9 @@ if not PRODUCTION_EMAIL:
     if EMAIL_INSTANCE == 'PROD':
         raise ImproperlyConfigured('EMAIL_INSTANCE cannot be \'PROD\' if PRODUCTION_EMAIL is set to False')
 
+SYSTEM_GROUPS = env('SYSTEM_GROUPS', None)
+PAYMENT_OFFICERS_GROUP = env('PAYMENT_OFFICERS_GROUP','Payments Officers')
+
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True
