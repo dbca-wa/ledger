@@ -63,6 +63,8 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
     # Main Email Template Style ( body template is populated in the center
     if template_group == 'rottnest':
         main_template = get_template('mooring/email/base_email-rottnest.html').render(Context(context))
+    elif template_group == 'system-oim':
+        main_template = get_template('mooring/email/base_email-oim.html').render(Context(context))
     else:
         main_template = get_template('mooring/email/base_email2.html').render(Context(context))
    
