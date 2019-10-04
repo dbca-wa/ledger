@@ -51,7 +51,7 @@ class Command(BaseCommand):
                  print (invoice_total)
 
                  if bpoint_total != oracle_total:
-                      raise ValidationError("Bpoint and Oracle Totals do not match. Bpoint Total: "+str(oracle_total)+" Oracle Total: "+str(invoice_total))
+                      raise ValidationError("Bpoint and Oracle Totals do not match. Bpoint Total: "+str(bpoint_total)+" Oracle Total: "+str(oracle_total))
             except Exception as e:
                  print ("Error: Sending Email Notification: "+settings.NOTIFICATION_EMAIL)
                  context = {
