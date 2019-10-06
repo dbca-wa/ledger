@@ -1018,7 +1018,7 @@ export default {
             //vm.initialiseOrgContactTable();
             vm.initialiseSelects();
 
-            //  hack - after a local update these are being reset to null, so resetting these to the correct values here
+            //  hack - after a local update (re-assign assessor or send referral) these are being reset to null, so resetting these to the correct values here
             vm.proposal.selected_parks_activities = vm.$refs.tclass.$refs.activities_land.selected_parks_activities;
             vm.proposal.selected_trails_activities = vm.$refs.tclass.$refs.activities_land.selected_trails_activities;
             vm.proposal.marine_parks_activities = vm.$refs.tclass.$refs.activities_marine.marine_parks_activities;
