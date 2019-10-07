@@ -608,8 +608,6 @@ export default {
             formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
             formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{
-
-              
                 },err=>{
             });
         },

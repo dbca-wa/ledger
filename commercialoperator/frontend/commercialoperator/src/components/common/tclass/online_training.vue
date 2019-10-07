@@ -74,6 +74,12 @@
 </template>
 
 <script>
+import {
+    api_endpoints,
+    helpers
+}
+from '@/utils/hooks'
+
     export default {
         props:{
             proposal:{
@@ -171,6 +177,7 @@
                     }
                     if(all_correct==true){
                         vm.proposal.training_completed=true;
+                        vm.updateTrainingFlag();
 
                         /* Enable Payment tab (disabled by default in form_tclass.vue) */
                         $('#pills-payment-tab').attr('style', '');
@@ -183,6 +190,18 @@
                     vm.errors=true;
 
                 }
+            },
+            updateTrainingFlag: function(){
+                let vm = this;
+                vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/update_training_flag')), JSON.stringify({'training_completed': true})).then((response) => {
+                    vm.proposal.training_completed = response.body['training_completed'];
+                }, (error) => {
+                    swal(
+                        'Application Error',
+                        helpers.apiVueResourceError(error),
+                        'error'
+                    )
+                });
             },
             fetchGlobalSettings: function(){
                 let vm = this;
