@@ -108,7 +108,6 @@ class _ApprovalPaymentSerializer(serializers.ModelSerializer):
     def get_land_parks(self,obj):
         return None #obj.current_proposal.land_parks
         #return AuthorSerializer(obj.author).data
-        #import ipdb; ipdb.set_trace()
         #if obj.current_proposal.land_parks:
         #    return ProposalParkSerializer(obj.current_proposal.land_parks).data
         #return None

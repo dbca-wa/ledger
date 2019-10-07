@@ -16,7 +16,6 @@ class ProposalView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         extracted_fields = []
-        #import ipdb; ipdb.set_trace()
         try:
             proposal_id = request.POST.pop('proposal_id')
             proposal = Proposal.objects.get(proposal_id)

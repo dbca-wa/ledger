@@ -350,7 +350,6 @@ def _log_user_email(email_message, emailuser, customer ,sender=None):
     customer = customer
 
     staff = sender
-    #import ipdb; ipdb.set_trace()
 
     kwargs = {
         'subject': subject,

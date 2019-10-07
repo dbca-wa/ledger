@@ -359,7 +359,6 @@ class Approval(RevisionedMixin):
                 self.renewal_count += 1
                 self.extend_details = details.get('extend_details')
                 self.expiry_date = datetime.date(self.expiry_date.year + self.current_proposal.application_type.max_renewal_period, self.expiry_date.month, self.expiry_date.day)
-                #import ipdb; ipdb.set_trace()
                 today = timezone.now().date()
                 if self.expiry_date <= today:
                     if not self.status == 'extended':

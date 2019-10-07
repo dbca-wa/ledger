@@ -131,7 +131,6 @@ class UserSerializer(serializers.ModelSerializer):
             return False
 
     def get_is_payment_admin(self, obj):
-        #import ipdb; ipdb.set_trace()
         return is_payment_admin(obj)
 
     def get_commercialoperator_organisations(self, obj):
@@ -162,7 +161,6 @@ class ContactSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, obj):
-        #import ipdb; ipdb.set_trace()
         #Mobile and phone number for dbca user are updated from active directory so need to skip these users from validation.
         domain=None
         if obj['email']:

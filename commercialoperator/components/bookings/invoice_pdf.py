@@ -270,7 +270,6 @@ def _create_invoice(invoice_buffer, invoice, proposal):
     doc = BaseDocTemplate(invoice_buffer, pageTemplates=[every_page_template], pagesize=A4)
 
 
-    #import ipdb; ipdb.set_trace()
     # this is the only way to get data into the onPage callback function
     doc.invoice = invoice
     doc.proposal = proposal

@@ -266,7 +266,6 @@ def _create_confirmation(confirmation_buffer, invoice, booking):
         ])
     items = invoice.order.lines.all()
     discounts = invoice.order.basket_discounts
-    #import ipdb; ipdb.set_trace()
     #if invoice.text:
     #    elements.append(Paragraph(invoice.text, styles['Left']))
     #    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))

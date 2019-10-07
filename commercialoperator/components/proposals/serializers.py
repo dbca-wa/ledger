@@ -318,7 +318,6 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     trail_section_activities = serializers.SerializerMethodField()
 
 #    def __init__(self, *args, **kwargs):
-#        import ipdb; ipdb.set_trace()
 #        user = kwargs['context']['request'].user
 #
 #        super(BaseProposalSerializer, self).__init__(*args, **kwargs)

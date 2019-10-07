@@ -257,7 +257,6 @@ def _create_confirmation(confirmation_buffer, booking):
     #items = invoice.order.lines.all()
     #items = booking.as_line_items
     #discounts = invoice.order.basket_discounts
-    #import ipdb; ipdb.set_trace()
     #if invoice.text:
     #    elements.append(Paragraph(invoice.text, styles['Left']))
     #    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
@@ -272,7 +271,6 @@ def _create_confirmation(confirmation_buffer, booking):
     s.wordWrap = 'CJK'
 
     for val, item in enumerate(booking.as_line_items, 1):
-        #import ipdb; ipdb.set_trace()
         data.append(
             [
                 val,
