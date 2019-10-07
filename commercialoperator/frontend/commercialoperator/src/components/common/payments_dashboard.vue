@@ -188,7 +188,8 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email, proposal__approval__proxy_applicant__first_name, proposal__approval__proxy_applicant__last_name"
+                        name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email, proposal__approval__proxy_applicant__first_name, proposal__approval__proxy_applicant__last_name",
+                        visible: this.level=='internal' ? true : false,
                     },
                     {
                         data: "payment_status",
@@ -228,7 +229,6 @@ export default {
                         name: "park_bookings__park__name"
 
                     },
-
                     {
                         data: '',
                         mRender:function (data,type,full) {
@@ -250,17 +250,17 @@ export default {
                         data: "",
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (full.payment_status=='Paid'){
+                            if (full.payment_status.toLowerCase()=='paid' && vm.is_internal){
                                 if(vm.is_payment_admin){
-
-                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                                    links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
                                 }
                             }
                             return links;
                         },
                         name: '',
                         searchable: false,
-                        orderable: false
+                        orderable: false,
+                        visible: vm.level=='internal' ? true : false
                     }
 
                 ],
@@ -437,9 +437,9 @@ export default {
                 vm.amendApproval(id);
             });
 
-            if(vm.is_external){
-                vm.$refs.proposal_datatable.vmDataTable.column(7).visible(false);
-            }
+            //if(vm.is_external){
+            //    vm.$refs.proposal_datatable.vmDataTable.column(7).visible(false);
+            //}
 
         },
         initialiseSearch:function(){
