@@ -8,7 +8,7 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 #from mooring.models import Booking, BookingInvoice, OutstandingBookingRecipient, BookingHistory, AdmissionsBooking, AdmissionsBookingInvoice
 from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction,Invoice, TrackRefund
-from commercialoperator.components.bookings.models import BookingInvoice
+from commercialoperator.components.bookings.models import BookingInvoice, ApplicationFeeInvoice
 
 
 def booking_bpoint_settlement_report(_date):
@@ -29,59 +29,67 @@ def booking_bpoint_settlement_report(_date):
                 invoice = Invoice.objects.get(reference=b.crn1)
                 try:
                     booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
-                except:
-                    booking = ApplicationFeeInvoice.objects.get(invoice_reference=invoice.reference).application_fee
+                except BookingInvoice.DoesNotExist:
+                    pass
 
-#                except BookingInvoice.DoesNotExist:
-#                    pass
+                try:
+                    application_fee = ApplicationFeeInvoice.objects.get(invoice_reference=invoice.reference).application_fee
+                except ApplicationFeeInvoice.DoesNotExist:
+                    pass
+
 
                 if booking:
-                    b_name = u'{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
+                    b_name = u'{}'.format(booking.proposal.applicant)
                     created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-                    import ipdb; ipdb.set_trace()
-                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),booking.confirmation_number,b_name.encode('utf-8'),str(b.action),b.amount,invoice.reference])
+                    settlement_date = invoice.settlement_date.strftime('%d/%m/%Y') if invoice.settlement_date else ''
+                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),settlement_date,booking.admission_number,b_name.encode('utf-8'),invoice.get_payment_method_display(),invoice.amount,invoice.reference])
+                elif application_fee:
+                    b_name = u'{}'.format(application_fee.proposal.applicant)
+                    created = timezone.localtime(application_fee.created, pytz.timezone('Australia/Perth'))
+                    settlement_date = invoice.settlement_date.strftime('%d/%m/%Y') if invoice.settlement_date else ''
+                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),settlement_date, application_fee.proposal.lodgement_number, b_name.encode('utf-8'),invoice.get_payment_method_display(),invoice.amount,invoice.reference])
                 else:
-                    import ipdb; ipdb.set_trace()
                     writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
                 pass
 
-#        for b in bpay:
-#            booking, invoice = None, None
-#            try:
-#                invoice = Invoice.objects.get(reference=b.crn)
-#                try:
-#                    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
-#                except BookingInvoice.DoesNotExist:
-#                    pass
-#
-#                if booking:
-#                    b_name = u'{}'.format(booking.proposal.applicant)
-#                    created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-#                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),invoice.settlement_date.strftime('%d/%m/%Y'),booking.admission_number,b_name.encode('utf-8'),invoice.get_payment_method_display(),invoice.amount,invoice.reference])
-#                else:
-#                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])
-#            except Invoice.DoesNotExist:
-#                pass
-#
-#
-#        for b in cash:
-#            booking, invoice = None, None
-#            try:
-#                invoice = b.invoice
-#                try:
-#                    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
-#                except BookingInvoice.DoesNotExist:
-#                    pass
-#
-#                if booking:
-#                    b_name = u'{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-#                    created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-#                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),booking.confirmation_number,b_name.encode('utf-8'),str(b.type),b.amount,invoice.reference])
-#                else:
-#                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),'','',str(b.type),b.amount,invoice.reference])
-#            except Invoice.DoesNotExist:
-#                pass
+        for b in bpay:
+            booking, invoice = None, None
+            try:
+                invoice = Invoice.objects.get(reference=b.crn)
+                try:
+                    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
+                except BookingInvoice.DoesNotExist:
+                    pass
+
+                if booking:
+                    b_name = u'{}'.format(booking.proposal.applicant)
+                    created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
+                    settlement_date = invoice.settlement_date.strftime('%d/%m/%Y') if invoice.settlement_date else ''
+                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),settlement_date,booking.admission_number,b_name.encode('utf-8'),invoice.get_payment_method_display(),invoice.amount,invoice.reference])
+                else:
+                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])
+            except Invoice.DoesNotExist:
+                pass
+
+
+        for b in cash:
+            booking, invoice = None, None
+            try:
+                invoice = b.invoice
+                try:
+                    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
+                except BookingInvoice.DoesNotExist:
+                    pass
+
+                if booking:
+                    b_name = u'{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
+                    created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
+                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),booking.confirmation_number,b_name.encode('utf-8'),str(b.type),b.amount,invoice.reference])
+                else:
+                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),'','',str(b.type),b.amount,invoice.reference])
+            except Invoice.DoesNotExist:
+                pass
 
         strIO.flush()
         strIO.seek(0)
