@@ -556,7 +556,9 @@ export default {
             vm.chainedSelectDistricts2(vm.proposal.region, regions);
             vm.chainedSelectSubActivities1(vm.proposal.activity);
             //vm.selected_sub_activity1=vm.proposal.sub_activity_level1;
+            if(vm.proposal.sub_activity_level1!=""){
             vm.chainedSelectSubActivities2(vm.proposal.sub_activity_level1);
+            }
             //vm.selected_sub_activity2=vm.proposal.sub_activity_level2;
             if(vm.proposal.sub_activity_level2!=""){
                 chainedSelectCategories(vm.proposal.sub_activity_level2);

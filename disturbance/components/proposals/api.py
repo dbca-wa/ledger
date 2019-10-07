@@ -565,6 +565,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET',])
     def internal_proposal(self, request, *args, **kwargs):
         instance = self.get_object()
+        instance.internal_view_log(request)
         serializer = InternalProposalSerializer(instance,context={'request':request})
         return Response(serializer.data)
 
@@ -1094,18 +1095,18 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'management_area':category,
                 #'tenure': tenure,
                 'data': [
-                    {
-                        u'regionActivitySection': [{
-                            'Region': Region.objects.get(id=region).name if region else None,
-                            'District': District.objects.get(id=district).name if district else None,
-                            #'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
-                            #'ApplicationType': ApplicationType.objects.get(id=application_type).name
-                            'ActivityType': activity,
-                            'Sub-activity level 1': sub_activity1,
-                            'Sub-activity level 2': sub_activity2,
-                            'Management area': category,
-                        }]
-                    }
+                    # {
+                    #     u'regionActivitySection': [{
+                    #         'Region': Region.objects.get(id=region).name if region else None,
+                    #         'District': District.objects.get(id=district).name if district else None,
+                    #         #'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
+                    #         #'ApplicationType': ApplicationType.objects.get(id=application_type).name
+                    #         'ActivityType': activity,
+                    #         'Sub-activity level 1': sub_activity1,
+                    #         'Sub-activity level 2': sub_activity2,
+                    #         'Management area': category,
+                    #     }]
+                    # }
 
                 ],
             }

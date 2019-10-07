@@ -1259,6 +1259,10 @@ class Proposal(RevisionedMixin):
                 #proposal.save()
             return proposal
 
+    def internal_view_log(self,request):
+        self.log_user_action(ProposalUserAction.ACTION_VIEW_PROPOSAL.format(self.id),request)
+        return self
+
 
 class ProposalLogDocument(Document):
     log_entry = models.ForeignKey('ProposalLogEntry',related_name='documents')
@@ -1478,6 +1482,7 @@ class ProposalUserAction(UserAction):
     ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
     ACTION_APPROVAL_LEVEL_DOCUMENT = "Assign Approval level document {}"
     ACTION_APPROVAL_LEVEL_COMMENT = "Save Approval level comment {}"
+    ACTION_VIEW_PROPOSAL = "View Proposal {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
