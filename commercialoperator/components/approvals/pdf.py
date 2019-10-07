@@ -26,7 +26,7 @@ COLOUR_DPAW_HEADER_LOGO = os.path.join(settings.BASE_DIR, 'wildlifelicensing', '
                                        'colour_dpaw_header_logo.png')
 
 #LICENCE_HEADER_IMAGE_WIDTH = 170
-LICENCE_HEADER_IMAGE_WIDTH = 420
+LICENCE_HEADER_IMAGE_WIDTH = 320
 #LICENCE_HEADER_IMAGE_HEIGHT = 42
 LICENCE_HEADER_IMAGE_HEIGHT = 60
 
@@ -54,6 +54,7 @@ PARAGRAPH_BOTTOM_MARGIN = 5
 SECTION_BUFFER_HEIGHT = 10
 
 DATE_FORMAT = '%d/%m/%Y'
+DATE_FORMAT2 = '%d %B %Y'
 
 HEADER_MARGIN = 10
 HEADER_SMALL_BUFFER = 3
@@ -87,6 +88,7 @@ styles.add(ParagraphStyle(name='BoldRight', fontName=BOLD_FONTNAME, fontSize=MED
 styles.add(ParagraphStyle(name='BoldCenter', fontName=BOLD_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_CENTER))
 styles.add(ParagraphStyle(name='ItalicLeft', fontName=ITALIC_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='ItalifRight', fontName=ITALIC_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_RIGHT))
+styles.add(ParagraphStyle(name='ItalicCenter', fontName=ITALIC_FONTNAME, fontSize=MEDIUM_FONTSIZE, alignment=enums.TA_CENTER))
 styles.add(ParagraphStyle(name='Center', alignment=enums.TA_CENTER))
 styles.add(ParagraphStyle(name='Left', alignment=enums.TA_LEFT))
 styles.add(ParagraphStyle(name='Right', alignment=enums.TA_RIGHT))
@@ -137,7 +139,8 @@ def _create_approval_header(canvas, doc, draw_page_number=True):
 
     #current_y -= 36
     current_y -= 2
-    current_x += 10
+    #current_x += 10
+    current_x += 150
 
     if draw_page_number:
         canvas.drawString(current_x, current_y - (LARGE_FONTSIZE + HEADER_SMALL_BUFFER), 'PAGE')
@@ -362,12 +365,12 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     else:
         email= proposal.submitter.email
     #elements.append(Paragraph(email,styles['BoldLeft']))
-    elements.append(Paragraph('CONSERVATION AND LAND MANAGEMENT REGULATIONS 2002 (PART 7)', styles['BoldCenter']))
+    elements.append(Paragraph('CONSERVATION AND LAND MANAGEMENT REGULATIONS 2002 (PART 7)', styles['ItalicCenter']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE', styles['InfoTitleVeryLargeCenter']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
-    elements.append(Paragraph('The Director General of the Department of Biodiversity, Conservation and Attractions hereby grants a commercial operations licence to:', styles['BoldLeft']))
+    elements.append(Paragraph('The Chief Executive Officer (CEO) of the Department of Biodiversity, Conservation and Attractions hereby grants a commercial operations licence to enter upon and conduct activities within the parks/reserves listed in Schedule 1 of this licence to:', styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     # delegation holds the Licence number and applicant name in table format.
@@ -400,20 +403,20 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
 
     elements.append(KeepTogether(delegation))
 
-    elements.append(Paragraph('Commencing on the {} and expiring on {}.'.format(approval.start_date.strftime(DATE_FORMAT), approval.expiry_date.strftime(DATE_FORMAT)),styles['BoldLeft']))
+    elements.append(Paragraph('Commencing on the {} and expiring on {}.'.format(approval.start_date.strftime(DATE_FORMAT2), approval.expiry_date.strftime(DATE_FORMAT2)),styles['BoldLeft']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('CONDITIONS', styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
 
     list_of_bullets= []
-    list_of_bullets.append('This commercial Operations Licence is subject to the provisions of the Conservation and Land Management Act 1984 and all subsidiary legislation made under it.')
-    list_of_bullets.append('The Licensee must comply with and not contravene the conditions and restrictions set out in the Commercial Operator Handbook - Terrestrical and the Commercial Operator Handbook - Marine as varied from time to time by the Director General or his delegate.')
-    list_of_bullets.append('The Licensee must comply with the conditions contained in any schedule of conditions attached to this Commercial Operations Licence')
+    list_of_bullets.append('This Commercial Operations Licence is subject to the provisions of the <i>Conservation and Land Management Act 1984</i> and all subsidiary legislation made under it.')
+    list_of_bullets.append('The Licensee must comply with and not contravene the conditions and restrictions set out in the Commercial Operator Handbook as varied from time to time by the CEO.')
+    list_of_bullets.append('The Licensee must comply with the conditions contained in any schedule of conditions attached to this Commercial Operations Licence.')
 
     understandingList = ListFlowable(
-            [ListItem(Paragraph(a, styles['Left']), bulletColour='black', value='circle') for a in list_of_bullets],
-            bulletFontName=BOLD_FONTNAME, bulletFontSize=SMALL_FONTSIZE, bulletType='bullet')
+            [ListItem(Paragraph(a, styles['Left']), bulletColour='black') for a in list_of_bullets],
+            bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
             #bulletFontName=BOLD_FONTNAME
     elements.append(understandingList)
 
@@ -444,11 +447,9 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
 
     elements.append(PageBreak())
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    table_data=[[Paragraph('License Number', styles['BoldLeft']),
-                              Paragraph(_format_name(approval.lodgement_number),
-                                         styles['Left'])], [Paragraph('Expiry Date', styles['BoldLeft']),
-                              Paragraph(_format_name(approval.expiry_date).strftime(DATE_FORMAT),
-                                         styles['Left'])]]
+    table_data=[[Paragraph('Licence Number', styles['BoldLeft']), Paragraph(_format_name(approval.lodgement_number), styles['Left'])],
+                [Paragraph('Commencement Date', styles['BoldLeft']), Paragraph(_format_name(approval.start_date).strftime(DATE_FORMAT), styles['Left'])],    
+                [Paragraph('Expiry Date', styles['BoldLeft']), Paragraph(_format_name(approval.expiry_date).strftime(DATE_FORMAT), styles['Left'])]]
     t=Table(table_data, colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=box_table_style)
     elements.append(t)
