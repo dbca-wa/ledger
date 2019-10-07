@@ -539,9 +539,7 @@ export default {
     },
     setProposalData2: function(regions){
         let vm=this;
-        //console.log("here", vm.proposal)
         if(vm.proposal){
-            //console.log("here", vm.proposal)
             vm.selected_application_name=vm.proposal.application_type;
             if (vm.selected_application_name == 'Apiary') {
                 vm.display_region_selectbox = false;
@@ -550,21 +548,15 @@ export default {
                 vm.display_region_selectbox = true;
                 vm.display_activity_matrix_selectbox = true;
             }
-            // vm.selected_region=vm.proposal.region;
-            // vm.selected_district=vm.proposal.district;
-            // vm.selected_activity=vm.proposal.activity;
+            
             vm.chainedSelectDistricts2(vm.proposal.region, regions);
             vm.chainedSelectSubActivities1(vm.proposal.activity);
-            //vm.selected_sub_activity1=vm.proposal.sub_activity_level1;
             if(vm.proposal.sub_activity_level1!=""){
             vm.chainedSelectSubActivities2(vm.proposal.sub_activity_level1);
             }
-            //vm.selected_sub_activity2=vm.proposal.sub_activity_level2;
             if(vm.proposal.sub_activity_level2!=""){
                 chainedSelectCategories(vm.proposal.sub_activity_level2);
             }
-            // vm.selected_category= vm.proposal.management_area;
-            // vm.approval_level= vm.proposal.approval_level;
         }
     }
 
@@ -575,12 +567,6 @@ export default {
     vm.fetchRegions();
     vm.fetchApplicationTypes();
     vm.fetchActivityMatrix();
-    // if(vm.regions.length >0){
-    //     vm.setProposalData();
-    // }
-    // this.$nextTick(() => {
-    //         vm.setProposalData();
-    //     });
     vm.form = document.forms.new_proposal;
   },
   
@@ -589,7 +575,6 @@ export default {
     let initialisers = [
         utils.fetchProfile(),
         
-        //utils.fetchProposal(to.params.proposal_id)
     ]
     next(vm => {
         vm.loading.push('fetching profile')
