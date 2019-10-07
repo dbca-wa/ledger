@@ -735,6 +735,7 @@ class ReportCreateView(views.APIView):
     renderer_classes = (JSONRenderer,)
 
     def get(self,request,format=None):
+        import ipdb; ipdb.set_trace()
         try:
             http_status = status.HTTP_200_OK
             #parse and validate data
@@ -781,6 +782,7 @@ class ReportCreateAllocatedView(views.APIView):
     renderer_classes = (JSONRenderer,)
 
     def get(self,request,format=None):
+        import ipdb; ipdb.set_trace()
         try:
             http_status = status.HTTP_200_OK
             #parse and validate data

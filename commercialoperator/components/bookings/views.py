@@ -172,9 +172,8 @@ class DeferredInvoicingView(TemplateView):
                     'booking': booking,
                     'booking_id': booking.id,
                     'submitter': submitter,
-                    'monthly_invoicing': True,
-                    #'invoice_reference': None #invoice.reference
-                    'invoice_reference': invoice_reference # None for Monthly invoices
+                    'monthly_invoicing': True if payment_method=='monthly_invoicing' else False,
+                    'invoice_reference': invoice_reference
                 })
                 return render(request, self.template_name, context)
 
