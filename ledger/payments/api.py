@@ -21,7 +21,7 @@ from ledger.payments.models import TrackRefund
 from ledger.payments.utils import systemid_check, update_payments
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv, generate_items_csv_allocated
-from ledger.payments.emails import send_refund_email 
+from ledger.payments.emails import send_refund_email
 
 from ledger.accounts.models import EmailUser
 from oscar.apps.order.models import Order
@@ -735,7 +735,6 @@ class ReportCreateView(views.APIView):
     renderer_classes = (JSONRenderer,)
 
     def get(self,request,format=None):
-        import ipdb; ipdb.set_trace()
         try:
             http_status = status.HTTP_200_OK
             #parse and validate data
@@ -782,7 +781,6 @@ class ReportCreateAllocatedView(views.APIView):
     renderer_classes = (JSONRenderer,)
 
     def get(self,request,format=None):
-        import ipdb; ipdb.set_trace()
         try:
             http_status = status.HTTP_200_OK
             #parse and validate data
