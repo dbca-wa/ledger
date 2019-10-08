@@ -462,7 +462,6 @@ export default {
         }
     },
     watch: {
-
     },
     computed: {
         history_url: function(){
@@ -664,7 +663,7 @@ export default {
             let vm = this;
             let unassign = true;
             let data = {};
-            if (vm.processing_status == 'With Approver'){
+            if (vm.proposal.processing_status == 'With Approver'){
                 unassign = vm.proposal.assigned_approver != null && vm.proposal.assigned_approver != 'undefined' ? false: true;
                 data = {'assessor_id': vm.proposal.assigned_approver};
             }
@@ -1016,10 +1015,12 @@ export default {
             //vm.initialiseOrgContactTable();
             vm.initialiseSelects();
 
-            //  hack - after a local update (re-assign assessor or send referral) these are being reset to null, so resetting these to the correct values here
-            vm.proposal.selected_parks_activities = vm.$refs.tclass.$refs.activities_land.selected_parks_activities;
-            vm.proposal.selected_trails_activities = vm.$refs.tclass.$refs.activities_land.selected_trails_activities;
-            vm.proposal.marine_parks_activities = vm.$refs.tclass.$refs.activities_marine.marine_parks_activities;
+            if (typeof vm.$refs.tclass !== 'undefined') {
+                //  hack - after a local update (re-assign assessor or send referral) these are being reset to null, so resetting these to the correct values here
+                vm.proposal.selected_parks_activities = vm.$refs.tclass.$refs.activities_land.selected_parks_activities;
+                vm.proposal.selected_trails_activities = vm.$refs.tclass.$refs.activities_land.selected_trails_activities;
+                vm.proposal.marine_parks_activities = vm.$refs.tclass.$refs.activities_marine.marine_parks_activities;
+            }
 
             vm.form = document.forms.new_proposal;
         });
