@@ -13,6 +13,7 @@ from commercialoperator.components.main.models import Activity, Park, AccessType
 import traceback
 import os
 from copy import deepcopy
+from datetime import datetime
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
     data = {}
@@ -702,13 +703,19 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
                 for acc in other_details_data['accreditations']:
                     #print acc
                     if 'id' in acc:
-                        acc_instance=ProposalAccreditation.objects.get(id=acc['id'])
-                        if acc['is_deleted']==True:
-                            acc_instance.delete()
+                        acc_qs = ProposalAccreditation.objects.filter(id=acc['id'])
+                        if acc_qs and acc['is_deleted']==True:
+                            acc_qs[0].delete()
+
                         else:
-                            serializer=ProposalAccreditationSerializer(acc_instance,data=acc)
-                            serializer.is_valid(raise_exception=True)
-                            serializer.save()
+                            ProposalAccreditation.objects.update_or_create(
+                                id=acc['id'],
+                                accreditation_type=acc['accreditation_type'],
+                                defaults = {
+                                    'comments': acc['comments'],
+                                    'accreditation_expiry': datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date()
+                                }
+                            )
                     else:
                         serializer=ProposalAccreditationSerializer(data=acc)
                         serializer.is_valid(raise_exception=True)
