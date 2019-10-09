@@ -276,6 +276,25 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['GET',])
+    def approval_pdf_view_log(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.pdf_view_log(request)
+            serializer = ApprovalSerializer(instance,context={'request':request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['GET',])
     def action_log(self, request, *args, **kwargs):
         try:
             instance = self.get_object()

@@ -372,6 +372,10 @@ class Approval(RevisionedMixin):
             except:
                 raise
 
+    def pdf_view_log(self,request):
+        self.log_user_action(ApprovalUserAction.ACTION_APPROVAL_PDF_VIEW.format(self.id),request)
+        return self
+
 class PreviewTempApproval(Approval):
     class Meta:
         app_label = 'disturbance'
@@ -408,7 +412,7 @@ class ApprovalUserAction(UserAction):
     ACTION_SURRENDER_APPROVAL = "Surrender approval {}"
     ACTION_RENEW_APPROVAL = "Create renewal Proposal for approval {}"
     ACTION_AMEND_APPROVAL = "Create amendment Proposal for approval {}"
-
+    ACTION_APPROVAL_PDF_VIEW ="View approval PDF for approval {}"
 
     class Meta:
         app_label = 'disturbance'
