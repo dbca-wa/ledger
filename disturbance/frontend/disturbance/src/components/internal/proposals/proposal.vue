@@ -526,6 +526,28 @@ export default {
         },
     },
     methods: {
+        checkAssessorData: function(){
+            //check assessor boxes and clear value of hidden assessor boxes so it won't get printed on approval pdf.
+
+            //select all fields including hidden fields
+            //console.log("here");
+            var all_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required')
+
+            all_fields.each(function() {
+                var ele=null;
+                //check the fields which has assessor boxes.
+                ele = $("[name="+this.name+"-Assessor]");
+                if(ele.length>0){
+                    var visiblity=$("[name="+this.name+"-Assessor]").is(':visible')
+                    if(!visiblity){
+                        if(ele[0].value!=''){
+                            //console.log(visiblity, ele[0].name, ele[0].value)
+                            ele[0].value=''
+                        } 
+                    }
+                }
+            });
+        },
         initialiseOrgContactTable: function(){
             let vm = this;
             if (vm.proposal && !vm.contacts_table_initialised){
@@ -626,6 +648,7 @@ export default {
         },
         save: function(e) {
           let vm = this;
+          vm.checkAssessorData();
           let formData = new FormData(vm.form);
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
               swal(
@@ -638,6 +661,7 @@ export default {
         },
         save_wo: function() {
           let vm = this;
+          vm.checkAssessorData();
           let formData = new FormData(vm.form);
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
 
@@ -747,6 +771,7 @@ export default {
             //vm.save_wo();
             //let vm = this;
             if(vm.proposal.processing_status == 'With Assessor' && status == 'with_assessor_requirements'){
+            vm.checkAssessorData();
             let formData = new FormData(vm.form);
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{ //save Proposal before changing status so that unsaved assessor data is saved.
             
@@ -903,6 +928,7 @@ export default {
         sendReferral: function(){
             let vm = this;
             //vm.save_wo();
+            vm.checkAssessorData();
             let formData = new FormData(vm.form);
             vm.sendingReferral = true;
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{
