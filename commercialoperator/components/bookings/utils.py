@@ -125,12 +125,11 @@ def create_monthly_invoice(user, offset_months=-1):
                     logger.info('Creating monthly invoice for booking {}'.format(booking.admission_number))
                     order = create_invoice(booking, payment_method='monthly_invoicing')
                     invoice = Invoice.objects.get(order_number=order.number)
-                    invoice.settlement_date = calc_payment_due_date(booking, invoice.created + relativedelta(months=1))
-                    invoice.save()
+                    #invoice.settlement_date = calc_payment_due_date(booking, invoice.created + relativedelta(months=1))
+                    #invoice.save()
 
-                    book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method)
-                    #booking.booking_type == Booking.BOOKING_TYPE_BLACK
-                    #booking.save()
+                    deferred_payment_date = calc_payment_due_date(booking, invoice.created + relativedelta(months=1))
+                    book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method, deferred_payment_date=deferred_payment_date)
 
                     #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
                     #ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
@@ -152,10 +151,11 @@ def create_bpay_invoice(user, booking):
                 logger.info('Creating BPAY invoice for booking {}'.format(booking.admission_number))
                 order = create_invoice(booking, payment_method='bpay')
                 invoice = Invoice.objects.get(order_number=order.number)
-                invoice.settlement_date = calc_payment_due_date(booking, dt) - relativedelta(days=1)
-                invoice.save()
+                #invoice.settlement_date = calc_payment_due_date(booking, dt) - relativedelta(days=1)
+                #invoice.save()
 
-                book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method)
+                deferred_payment_date = calc_payment_due_date(booking, dt) - relativedelta(days=1)
+                book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method, deferred_payment_date=deferred_payment_date)
 
                 #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
                 #ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)

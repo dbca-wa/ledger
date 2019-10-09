@@ -15,7 +15,7 @@ def booking_bpoint_settlement_report(_date):
     try:
         bpoint, bpay, cash = [], [], []
         bpoint.extend([x for x in BpointTransaction.objects.filter(created__date=_date,response_code=0,crn1__startswith='0557').exclude(crn1__endswith='_test')])
-        bpay.extend([x for x in BpayTransaction.objects.filter(created__date=_date, crn__startswith='0557').exclude(crn__endswith='_test')])
+        bpay.extend([x for x in BpayTransaction.objects.filter(p_date__date=_date, crn__startswith='0557').exclude(crn__endswith='_test')])
         cash = CashTransaction.objects.filter(created__date=_date,invoice__reference__startswith='0557').exclude(type__in=['move_out','move_in'])
 
         strIO = StringIO()
@@ -65,7 +65,7 @@ def booking_bpoint_settlement_report(_date):
                 if booking:
                     b_name = u'{}'.format(booking.proposal.applicant)
                     created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-                    settlement_date = invoice.settlement_date.strftime('%d/%m/%Y') if invoice.settlement_date else ''
+                    settlement_date = b.p_date.strftime('%d/%m/%Y')
                     writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),settlement_date,booking.admission_number,b_name.encode('utf-8'),invoice.get_payment_method_display(),invoice.amount,invoice.reference])
                 else:
                     writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])

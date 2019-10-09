@@ -197,7 +197,7 @@ def _create_header(canvas, doc, draw_page_number=True):
     current_y -= 100
     #invoice = doc.invoice
     booking = doc.booking
-    PAGE_TITLE = 'MONTHLY BOOKING CONFIRMATION'
+    PAGE_TITLE = 'BOOKING CONFIRMATION(S)'
     canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, PAGE_TITLE)
 
     # Invoice address details

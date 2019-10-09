@@ -192,6 +192,10 @@ class Booking(Payment):
     def invoice(self):
         return self.invoices.last().invoice
 
+    @property
+    def deferred_payment_date(self):
+        return self.invoices.last().deferred_payment_date
+
 class ParkBooking(RevisionedMixin):
     created = models.DateTimeField(default=timezone.now())
     booking = models.ForeignKey(Booking, on_delete=models.PROTECT, blank=True, null=True, related_name='park_bookings')

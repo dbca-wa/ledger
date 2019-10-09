@@ -211,6 +211,7 @@ def _create_header(canvas, doc, draw_page_number=True):
 
     invoice = doc.invoice
     proposal = doc.proposal
+    bi = proposal.bookings.filter(invoices__invoice_reference=invoice.reference)
 
     # TODO need to fix, since individual parks can be exempt, Below calculation assumes NO PARK IS exempt
     #is_gst_exempt = proposal.application_type.is_gst_exempt if proposal.fee_invoice_reference == invoice.reference else False
@@ -241,9 +242,9 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 8, 'Outstanding (AUD)')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 8, currency(invoice.balance))
 
-    if invoice.settlement_date and invoice.payment_method in [invoice.PAYMENT_METHOD_MONTHLY_INVOICING, invoice.PAYMENT_METHOD_BPAY]:
+    if bi and bi[0].deferred_payment_date and invoice.payment_method in [invoice.PAYMENT_METHOD_MONTHLY_INVOICING, invoice.PAYMENT_METHOD_BPAY]:
         canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 9, 'Payment Due Date')
-        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 9, invoice.settlement_date.strftime(DATE_FORMAT))
+        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 9, bi[0].deferred_payment_date.strftime(DATE_FORMAT))
 
     canvas.restoreState()
 
