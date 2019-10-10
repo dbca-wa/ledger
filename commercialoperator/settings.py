@@ -112,6 +112,7 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', 'no-reply@' + SITE_DOMAIN)
 MEDIA_APP_DIR = env('MEDIA_APP_DIR', 'cols')
 ADMIN_GROUP = env('ADMIN_GROUP', 'COLS Admin')
 COLS_HANDBOOK_URL = env('COLS_HANDBOOK_URL', 'https://parks.dpaw.wa.gov.au/know/commercial-operator-handbook')
+CRON_RUN_AT_TIMES = env('CRON_RUN_AT_TIMES', '04:05')
 # for ORACLE Job Notification - override settings_base.py
 EMAIL_FROM = DEFAULT_FROM_EMAIL
 
