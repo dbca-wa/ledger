@@ -368,7 +368,7 @@
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmendmentRequest ref="amendment_request" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
-        <ProposedApproval ref="proposed_approval" :processing_status="proposal.processing_status" :proposal_id="proposal.id" :proposal_type='proposal.proposal_type' :isApprovalLevelDocument="isApprovalLevelDocument" @refreshFromResponse="refreshFromResponse"/>
+        <ProposedApproval ref="proposed_approval" :processing_status="proposal.processing_status" :proposal_id="proposal.id" :proposal_type='proposal.proposal_type' :isApprovalLevelDocument="isApprovalLevelDocument" :submitter_email="proposal.submitter_email" :applicant_email="applicant_email" @refreshFromResponse="refreshFromResponse"/>
     </div>
 </template>
 <script>
@@ -524,6 +524,9 @@ export default {
         isApprovalLevelDocument: function(){
             return this.proposal && this.proposal.processing_status == 'With Approver' && this.proposal.approval_level != null && this.proposal.approval_level_document == null ? true : false;
         },
+        applicant_email:function(){
+            return this.proposal && this.proposal.applicant.email ? this.proposal.applicant.email : '';
+        },
     },
     methods: {
         checkAssessorData: function(){
@@ -573,6 +576,10 @@ export default {
             this.$refs.proposed_approval.approval=helpers.copyObject(test_approval);
                 // this.$refs.proposed_approval.$refs.bcc_email=this.proposal.referral_email_list;
             }
+            //this.$refs.proposed_approval.submitter_email=helpers.copyObject(this.proposal.submitter_email);
+            // if(this.proposal.applicant.email){
+            //     this.$refs.proposed_approval.applicant_email=helpers.copyObject(this.proposal.applicant.email);
+            // }
             this.$refs.proposed_approval.isModalOpen = true;
         },
         issueProposal:function(){
@@ -607,6 +614,10 @@ export default {
             this.$refs.proposed_approval.approval = this.proposal.proposed_issuance_approval != null ? helpers.copyObject(this.proposal.proposed_issuance_approval) : {};
             this.$refs.proposed_approval.state = 'final_approval';
             this.$refs.proposed_approval.isApprovalLevelDocument = this.isApprovalLevelDocument;
+            //this.$refs.proposed_approval.submitter_email=helpers.copyObject(this.proposal.submitter_email);
+            // if(this.proposal.applicant.email){
+            //     this.$refs.proposed_approval.applicant_email=helpers.copyObject(this.proposal.applicant.email);
+            // }
             this.$refs.proposed_approval.isModalOpen = true; 
             }
             
