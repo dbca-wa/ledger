@@ -370,12 +370,21 @@ export default {
       if (vm.proposal.other_details.preferred_licence_period=='' || vm.proposal.other_details.preferred_licence_period==null ){
         blank_fields.push(' Preferred Licence Period is required')
       }
+      if (vm.proposal.other_details.nominated_start_date=='' || vm.proposal.other_details.nominated_start_date==null ){
+        blank_fields.push(' Licence Nominated Start Date is required')
+      }
+
       if(vm.$refs.proposal_tclass.$refs.other_details.$refs.deed_poll_doc.documents.length==0){
         blank_fields.push(' Deed poll document is missing')
       }
+
       if(vm.$refs.proposal_tclass.$refs.other_details.$refs.currency_doc.documents.length==0){
         blank_fields.push(' Certificate of currency document is missing')
       }
+      if(vm.proposal.other_details.insurance_expiry=='' || vm.proposal.other_details.insurance_expiry==null){
+        blank_fields.push(' Certificate of currency expiry date is missing')
+      }
+
       if(blank_fields.length==0){
         return true;
       }

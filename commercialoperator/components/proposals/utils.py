@@ -700,26 +700,44 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
             if 'accreditations' in other_details_data:
+                accreditation_types = instance.other_details.accreditations.values_list('accreditation_type', flat=True)
+                #import ipdb; ipdb.set_trace()
                 for acc in other_details_data['accreditations']:
                     #print acc
                     if 'id' in acc:
-                        acc_qs = ProposalAccreditation.objects.filter(id=acc['id'])
-                        if acc_qs and acc['is_deleted']==True:
+                        #acc_qs = ProposalAccreditation.objects.filter(id=acc['id'])
+                        acc_qs = instance.other_details.accreditations.filter(id=acc['id'])
+
+                        if acc_qs and 'is_deleted' in acc and acc['is_deleted']==True:
                             acc_qs[0].delete()
 
+                        elif acc['accreditation_type'] in accreditation_types:
+                            try:
+                                instance.other_details.accreditations.filter(id=acc['id']).update(
+                                    accreditation_type = acc['accreditation_type'],
+                                    comments = acc['comments'],
+                                    accreditation_expiry = datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date(),
+                                )
+                            except Exception, e:
+                                logger.error('An error occurred while updating Accreditations {}'.format(e))
                         else:
-                            ProposalAccreditation.objects.update_or_create(
-                                id=acc['id'],
-                                accreditation_type=acc['accreditation_type'],
-                                defaults = {
-                                    'comments': acc['comments'],
-                                    'accreditation_expiry': datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date()
-                                }
-                            )
-                    else:
+                            serializer=ProposalAccreditationSerializer(data=acc)
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                            #ProposalAccreditation.objects.create(
+                            #    id=acc['id'],
+                            #    accreditation_type=acc['accreditation_type'],
+                            #    comments = acc['comments'],
+                            #    accreditation_expiry = datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date(),
+                            #)
+
+                    elif acc['accreditation_type'] not in accreditation_types:
                         serializer=ProposalAccreditationSerializer(data=acc)
                         serializer.is_valid(raise_exception=True)
                         serializer.save()
+                    else:
+                        logger.warn('Possible duplicate Accreditation Type for Application {}'.format(instance.lodgement_number))
+
             if select_parks_activities or len(select_parks_activities)==0:
                 try:
 
