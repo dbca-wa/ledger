@@ -146,7 +146,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             return Approval.objects.all()
         elif is_customer(self.request):
             user_orgs = [org.id for org in self.request.user.commercialoperator_organisations.all()]
-            queryset =  Approval.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(submitter = request.user))
+            queryset =  Approval.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(submitter = self.request.user))
             return queryset
         return Approval.objects.none()
 
