@@ -367,6 +367,12 @@ export default {
     can_submit: function(){
       let vm=this;
       let blank_fields=[]
+      this.proposal.other_details.accreditation_type
+
+      if (vm.$refs.proposal_tclass.$refs.other_details.selected_accreditations.length==0 ){
+        blank_fields.push(' Level of Accreditation is required')
+      }
+
       if (vm.proposal.other_details.preferred_licence_period=='' || vm.proposal.other_details.preferred_licence_period==null ){
         blank_fields.push(' Preferred Licence Period is required')
       }
