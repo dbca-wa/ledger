@@ -701,7 +701,6 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
             viewset.perform_update(serializer)
             if 'accreditations' in other_details_data:
                 accreditation_types = instance.other_details.accreditations.values_list('accreditation_type', flat=True)
-                #import ipdb; ipdb.set_trace()
                 for acc in other_details_data['accreditations']:
                     #print acc
                     if 'id' in acc:
@@ -716,7 +715,7 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
                                 instance.other_details.accreditations.filter(id=acc['id']).update(
                                     accreditation_type = acc['accreditation_type'],
                                     comments = acc['comments'],
-                                    accreditation_expiry = datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date(),
+                                    accreditation_expiry = datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date() if acc['accreditation_expiry'] else None, # TODO later this may be mandatory
                                 )
                             except Exception, e:
                                 logger.error('An error occurred while updating Accreditations {}'.format(e))
