@@ -194,6 +194,8 @@ def _create_header(canvas, doc, draw_page_number=True):
     current_y -= 70
     invoice = doc.invoice
     booking = doc.booking
+    licence_number = booking.proposal.approval.lodgement_number if booking.proposal.approval else None  
+
     if hasattr(booking, 'payment_type'):
         PAGE_TITLE = 'APPLICATION & LICENCE FEE CONFIRMATION'
     else:
@@ -216,8 +218,8 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.created.strftime(DATE_FORMAT))
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Page')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, str(canvas.getPageNumber()))
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Application Number')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, booking.proposal.lodgement_number)
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Licence Number')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, licence_number)
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Invoice Number')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, invoice.reference)
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Paid (AUD)')

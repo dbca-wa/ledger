@@ -212,6 +212,7 @@ def _create_header(canvas, doc, draw_page_number=True):
     invoice = doc.invoice
     proposal = doc.proposal
     bi = proposal.bookings.filter(invoices__invoice_reference=invoice.reference)
+    licence_number = proposal.approval.lodgement_number if proposal.approval else None
 
     # TODO need to fix, since individual parks can be exempt, Below calculation assumes NO PARK IS exempt
     #is_gst_exempt = proposal.application_type.is_gst_exempt if proposal.fee_invoice_reference == invoice.reference else False
@@ -229,8 +230,8 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.created.strftime(DATE_FORMAT))
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Page')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, str(canvas.getPageNumber()))
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Application Number')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, proposal.lodgement_number)
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Licence Number')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, licence_number)
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Invoice Number')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, invoice.reference)
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Total (AUD)')
