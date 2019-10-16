@@ -29,6 +29,7 @@ from commercialoperator.components.approvals.email import (
     send_approval_surrender_email_notification
 )
 from commercialoperator.utils import search_keys, search_multiple_keys
+from commercialoperator.helpers import is_customer
 #from commercialoperator.components.approvals.email import send_referral_email_notification
 
 
@@ -471,7 +472,7 @@ class Approval(RevisionedMixin):
         with transaction.atomic():
             try:
                 if not request.user.commercialoperator_organisations.filter(organisation_id = self.applicant_id):
-                    if not request.user in self.allowed_assessors:
+                    if request.user not in self.allowed_assessors and not is_customer(request):
                         raise ValidationError('You do not have access to surrender this approval')
                 if not self.can_reissue and self.can_action:
                     raise ValidationError('You cannot surrender approval if it is not current or suspended')
