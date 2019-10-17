@@ -1,8 +1,11 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Approval has been cancelled:
-
+	{% if future_cancel%}
+		Your Approval has been set to cancel in future:
+	{% else %}
+    	Your Approval has been cancelled:
+    {% endif %}
     Approval : {{ approval.lodgement_number}}
 
     Cancellation Details : {{ approval.cancellation_details}}

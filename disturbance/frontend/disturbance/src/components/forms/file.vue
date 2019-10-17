@@ -35,6 +35,9 @@
                         <span v-if="!readonly && v.can_delete">
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
+                        <span v-else-if="!readonly && !v.can_delete && v.can_hide">
+                            <a @click="hide_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
+                        </span>
                         <span v-else>
                             <span v-if="!assessorMode">
                                 <i class="fa fa-info-circle" aria-hidden="true" title="Previously submitted documents cannot be deleted" style="cursor: pointer;"></i>
@@ -46,6 +49,7 @@
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
                     <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
+                    <alert :show.sync="showError" type="danger" style="color: red"><strong>{{errorString}}</strong></alert>
                 </div>
             </div>
 
@@ -112,6 +116,8 @@ export default {
             show_spinner: false,
             documents:[],
             filename:null,
+            showError:false,
+            errorString:'',
         }
     },
 
@@ -137,7 +143,8 @@ export default {
         },
         handleChange:function (e) {
             let vm = this;
-
+            vm.showError=false;
+            vm.errorString='';
             //vm.show_spinner = true;
             if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
@@ -207,6 +214,24 @@ export default {
                 });
 
         },
+
+        hide_document: function(file) {
+            let vm = this;
+
+            vm.show_spinner = true;
+            var formData = new FormData();
+            formData.append('action', 'hide');
+            formData.append('document_id', file.id);
+            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+
+            vm.$http.post(vm.proposal_document_action, formData)
+                .then(res=>{
+                    vm.documents = vm.get_documents()
+                    //vm.documents = res.body;
+                    vm.show_spinner = false;
+                });
+
+        },
         
         uploadFile(e){
             let vm = this;
@@ -228,7 +253,14 @@ export default {
             //var $spinner = $("#file-spinner");
             //$spinner.toggleClass("fa fa-cog fa-spin");
             vm.show_spinner = true;
-
+            if(e.target.files[0].name.length > 255){
+                vm.show_spinner=false;
+                vm.showError=true;
+                vm.errorString='File name exceeds maximum file name length limit';
+            }
+            else{
+            vm.showError=false;
+            vm.errorString='';
             var formData = new FormData();
             formData.append('action', 'save');
             formData.append('proposal_id', vm.proposal_id);
@@ -244,6 +276,7 @@ export default {
                     vm.show_spinner = false;
                 },err=>{
                 });
+            }
         },
 
         num_documents: function() {

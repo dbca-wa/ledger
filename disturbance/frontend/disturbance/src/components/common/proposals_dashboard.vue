@@ -152,7 +152,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
+                "Number","Region","District","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
                 //"LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
             ],
 
@@ -194,6 +194,11 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn,
                         searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
+                    },
+                    {
+                        data: "district",
+                        name: "District",
+                        visible: false,
                     },
                     {
 						data: "activity",
@@ -319,7 +324,7 @@ export default {
                 */
             },
             proposal_headers:[
-                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
+                "Number","Region","District","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
                 //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
             ],
             proposal_options:{
@@ -360,6 +365,11 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn,
                         searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
+                    },
+                    {
+                        data: "district",
+                        //name: "District",
+                        visible: false,
                     },
                     {data: "activity"},
                     {

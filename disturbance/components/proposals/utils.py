@@ -7,6 +7,8 @@ from disturbance.components.proposals.serializers import SaveProposalSerializer
 import traceback
 import os
 
+import json
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -297,13 +299,18 @@ def save_proponent_data(instance,request,viewset):
     with transaction.atomic():
         try:
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+
             extracted_fields,special_fields = create_data_from_form(instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
             instance.data = extracted_fields
             #import ipdb; ipdb.set_trace()
 
+            form_data=json.loads(request.POST['schema'])
+            sub_activity_level1=form_data.get('sub_activity_level1')
+            print(sub_activity_level1)
+
             logger.info("Region: {}, Activity: {}".format(special_fields.get('isRegionColumnForDashboard',None), special_fields.get('isActivityColumnForDashboard',None)))
 
-            data = {
+            data1 = {
                 #'region': special_fields.get('isRegionColumnForDashboard',None),
                 'title': special_fields.get('isTitleColumnForDashboard',None),
                 'activity': special_fields.get('isActivityColumnForDashboard',None),
@@ -314,6 +321,24 @@ def save_proponent_data(instance,request,viewset):
                # 'lodgement_sequence': 1 if instance.lodgement_sequence == 0 else instance.lodgement_sequence,
 
             }
+            data = {
+                #'region': special_fields.get('isRegionColumnForDashboard',None),
+                'title': special_fields.get('isTitleColumnForDashboard',None),
+
+                'data': extracted_fields,
+                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
+                'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
+               # 'lodgement_sequence': 1 if instance.lodgement_sequence == 0 else instance.lodgement_sequence,
+                'activity': form_data.get('activity',None),
+                'region': form_data.get('region',None),
+                'district': form_data.get('district',None),
+                'sub_activity_level1': form_data.get('sub_activity_level1',None),
+                'sub_activity_level2': form_data.get('sub_activity_level2',None),
+                'management_area': form_data.get('management_area',None),
+                'approval_level': form_data.get('approval_level',None),
+
+            }
+
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)

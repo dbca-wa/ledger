@@ -1,0 +1,8 @@
+{%  extends 'disturbance/emails/base_email.html' %}
+
+{%  block content %}
+        <p>A referral for Proposal <strong>{{proposal.lodgement_number}}</strong> has been recalled.</p>
+        
+    <p>You can access this Proposal using the following link:</p>
+    <a href="{{url}}">Access Proposal</a>
+{%  endblock %}
