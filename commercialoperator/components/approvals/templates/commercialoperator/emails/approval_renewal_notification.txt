@@ -1,0 +1,12 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Licence is due for renewal:
+
+    Licence : {{ approval.lodgement_number}}
+    Application : {{ proposal.lodgement_number}}
+
+    Please find the attached renewal notice.
+
+   
+{%  endblock %}

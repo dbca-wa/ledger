@@ -21,8 +21,7 @@ def is_email_auth_backend(request):
     return 'EmailAuth' in request.session.get('_auth_user_backend')
 
 def is_wildlifecompliance_admin(request):
-    #return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(request) and (belongs_to(request.user, 'Wildlife Compliance Admin'))
-    return True
+    return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(request) and ((belongs_to(request.user, 'Wildlife Compliance Admin')) or request.user.is_superuser)
 
 def in_dbca_domain(request):
     user = request.user

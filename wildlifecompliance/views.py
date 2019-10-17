@@ -10,14 +10,15 @@ from datetime import datetime, timedelta
 
 from wildlifecompliance.helpers import is_internal
 from wildlifecompliance.forms import *
-from wildlifecompliance.components.applications.models import Referral,Application
+from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.returns.models import Return
-from wildlifecompliance.components.applications.mixins import ReferralOwnerMixin
 from wildlifecompliance.components.main import utils
 from wildlifecompliance.exceptions import BindApplicationException
 from django.core.management import call_command
 
-
+class ApplicationView(DetailView):
+    model=Application
+    template_name='wildlifecompliance/dash/index.html'
 
 class ExternalApplicationView(DetailView):
     model = Application
@@ -49,14 +50,6 @@ class ExternalView(LoginRequiredMixin, TemplateView):
         context['dev_url'] = settings.DEV_STATIC_URL
         context['wc_version'] = settings.WC_VERSION
         return context
-
-class ReferralView(ReferralOwnerMixin, DetailView):
-    model = Referral
-    template_name = 'wildlifecompliance/dash/index.html'
-
-class ApplicationView(ReferralOwnerMixin,DetailView):
-    model=Application
-    template_name='wildlifecompliance/dash/index.html'
 
 class WildlifeComplianceRoutingView(TemplateView):
     template_name = 'wildlifecompliance/index.html'

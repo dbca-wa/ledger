@@ -2,7 +2,8 @@
 
 {%  block content %}
         <p>A new Application has been submitted with below details</p>
-        <p><strong>Application : {{ application.id }}</strong></p>
+        <p><strong>Application: {{ application.id }}</strong></p>
         <p><strong>Submitter: {{application.submitter}}</strong></p>
-        <p><strong>Link: {{url}}</strong></p>
+        <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
+        <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
 {%  endblock %}
