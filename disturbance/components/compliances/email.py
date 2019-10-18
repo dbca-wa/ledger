@@ -70,7 +70,7 @@ def send_amendment_email_notification(amendment_request, request, compliance):
         if cc_list:
             all_ccs = [cc_list]
 
-    msg = email.send(compliance.submitter.email, bcc=all_ccs, context=context)
+    msg = email.send(compliance.submitter.email, cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL  
     _log_compliance_email(msg, compliance, sender=sender)
     _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
@@ -94,7 +94,7 @@ def send_reminder_email_notification(compliance):
             all_ccs = [cc_list]
 
     submitter = compliance.submitter.email if compliance.submitter and compliance.submitter.email else compliance.proposal.submitter.email
-    msg = email.send(submitter, bcc=all_ccs, context=context)
+    msg = email.send(submitter, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     try:
         sender_user = EmailUser.objects.get(email__icontains=sender)
@@ -142,7 +142,7 @@ def send_due_email_notification(compliance):
             all_ccs = [cc_list]
 
     submitter = compliance.submitter.email if compliance.submitter and compliance.submitter.email else compliance.proposal.submitter.email
-    msg = email.send(submitter, bcc=all_ccs, context=context)
+    msg = email.send(submitter, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     try:
         sender_user = EmailUser.objects.get(email__icontains=sender)
@@ -186,7 +186,7 @@ def send_compliance_accept_email_notification(compliance,request):
         cc_list = compliance.proposal.applicant.email
         if cc_list:
             all_ccs = [cc_list]
-    msg = email.send(compliance.submitter.email, bcc=all_ccs, context=context)
+    msg = email.send(compliance.submitter.email, cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_compliance_email(msg, compliance, sender=sender)
     _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)
@@ -206,7 +206,7 @@ def send_external_submit_email_notification(request, compliance):
         if cc_list:
             all_ccs = [cc_list]
 
-    msg = email.send(compliance.submitter.email, bcc=all_ccs, context=context)
+    msg = email.send(compliance.submitter.email, cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_compliance_email(msg, compliance, sender=sender)
     _log_org_email(msg, compliance.proposal.applicant, compliance.submitter, sender=sender)

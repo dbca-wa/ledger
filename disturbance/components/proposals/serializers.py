@@ -358,6 +358,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     allowed_assessors = EmailUserSerializer(many=True)
     approval_level_document = serializers.SerializerMethodField()
     application_type = serializers.CharField(source='application_type.name', read_only=True)
+    referral_email_list=serializers.SerializerMethodField()
     #region = serializers.CharField(source='region.name', read_only=True)
     #district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
@@ -450,6 +451,13 @@ class InternalProposalSerializer(BaseProposalSerializer):
 
     def get_assessor_data(self,obj):
         return obj.assessor_data
+
+    def get_referral_email_list(self,obj):
+        request = self.context['request']
+        user = request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
+        return obj.referral_email_list(user)
+
+
 
 class ReferralProposalSerializer(InternalProposalSerializer):
     def get_assessor_mode(self,obj):
