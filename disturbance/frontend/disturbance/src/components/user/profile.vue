@@ -434,7 +434,11 @@ export default {
                     vm.missing_fields.push({id: this.id});
                 }
             });
-            if (vm.profile.mobile_number == '' || vm.profile.phone_number ==''){
+            // if (vm.profile.mobile_number == '' || vm.profile.phone_number ==''){
+            //   vm.errorListContact.push('Value not provided: mobile/ Phone number')
+            //   vm.missing_fields.push({id: $('#mobile').id});
+            // }
+            if ((vm.profile.mobile_number == '' && vm.profile.phone_number =='')|| (vm.profile.mobile_number == null && vm.profile.phone_number ==null)){
               vm.errorListContact.push('Value not provided: mobile/ Phone number')
               vm.missing_fields.push({id: $('#mobile').id});
             }
