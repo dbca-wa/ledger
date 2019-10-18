@@ -548,7 +548,7 @@ class ProposedApprovalSerializer(serializers.Serializer):
     expiry_date = serializers.DateField(input_formats=['%d/%m/%Y'])
     start_date = serializers.DateField(input_formats=['%d/%m/%Y'])
     details = serializers.CharField()
-    cc_email = serializers.CharField(required=False,allow_null=True)
+    cc_email = serializers.CharField(required=False,allow_null=True, allow_blank=True)
 
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
