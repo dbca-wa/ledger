@@ -29,6 +29,7 @@ from wildlifecompliance.components.organisations.models import  (
                                     Organisation,
                                 )
 
+from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.users.serializers import   (   
                                                 UserSerializer,
                                                 UserProfileSerializer,
@@ -46,11 +47,14 @@ from wildlifecompliance.components.main.utils import retrieve_department_users
 class DepartmentUserList(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self, request, format=None):
-        data = cache.get('department_users')
-        if not data:
-            retrieve_department_users()
+        if is_internal(request):
             data = cache.get('department_users')
-        return Response(data)
+            if not data:
+                retrieve_department_users()
+                data = cache.get('department_users')
+            return Response(data)
+        else:
+            return Response()
 
 
 class GetProfile(views.APIView):
@@ -86,6 +90,14 @@ class UserProfileCompleted(views.APIView):
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = UserProfileSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Profile.objects.all()
+        elif is_customer(self.request):
+            return Profile.objects.filter(user=user)
+        return Profile.objects.none()
 
     @detail_route(methods=['POST',])
     def update_profile(self, request, *args, **kwargs):
@@ -129,7 +141,13 @@ class UserViewSet(viewsets.ModelViewSet):
 		- dob
 		- email 
         """
-        queryset = EmailUser.objects.all()
+        user = self.request.user
+        if is_internal(self.request):
+            queryset = EmailUser.objects.all()
+        elif is_customer(self.request):
+            queryset = EmailUser.objects.filter(id=user.id)
+        else:
+            queryset = EmailUser.objects.none()
         first_name = self.request.query_params.get('first_name', None)
         last_name = self.request.query_params.get('last_name', None)
         dob = self.request.query_params.get('dob', None)
@@ -323,7 +341,13 @@ class EmailIdentityViewSet(viewsets.ModelViewSet):
         Optionally restrict the query if the following parameters are in the URL:
 		- email
         """
-        queryset = EmailIdentity.objects.all()
+        user = self.request.user
+        if is_internal(self.request):
+            queryset = EmailIdentity.objects.all()
+        elif is_customer(self.request):
+            queryset = user.emailidentity_set.all()
+        else:
+            queryset = EmailIdentity.objects.none()
         email = self.request.query_params.get('email', None)
         exclude_user = self.request.query_params.get('exclude_user', None)
         if email is not None:

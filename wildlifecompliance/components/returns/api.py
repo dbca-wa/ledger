@@ -47,6 +47,16 @@ class ReturnViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ReturnSerializer
     queryset = Return.objects.all()
 
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Return.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            user_licences = [wildlifelicence.id for wildlifelicence in WildlifeLicence.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(proxy_applicant = user) | Q(submitter = user) )]
+            return Return.objects.filter(Q(licence_id__in = user_licences))
+        return Return.objects.none()
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         # Filter by org

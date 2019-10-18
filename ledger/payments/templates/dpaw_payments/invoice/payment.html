@@ -91,8 +91,7 @@
                                                 {% endfor %}
                                             </select>
                                     </div>
-                                    <div class="float-right status"> Status: <strong id="invoice_status">{{invoices.0.payment_status}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount Outstanding: <strong id="invoice_balance">${{invoices.0.balance}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount
-                                        Paid: <strong id="invoice_paid">${{invoices.0.payment_amount}}</strong></div>
+                                    <div class="float-right status"> Status: <strong id="invoice_status">{{invoices.0.payment_status}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount Outstanding: <strong id="invoice_balance">${{invoices.0.balance}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount Paid: <strong id="invoice_paid">${{invoices.0.payment_amount}}</strong>&nbsp;&nbsp;Invoice Date: <strong id='invoice_date'>{{invoices.0.created }}</strong></div>
                                 </div>
                             </div>
                         </div>
@@ -107,8 +106,7 @@
                                 <div class="row">
                                     <div class="columns small-12">
                                         <div class="primary callout" data-closable="slide-out-right">
-                                            <p class="text-center invoice_details" data-reference={{invoice.reference}}>Invoice <strong>{{invoice.reference}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Status: <strong class="invoice_status" data-reference={{invoice.reference}}>{{invoice.payment_status}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount
-                                                Outstanding: <strong class="invoice_balance" data-reference={{invoice.reference}}>${{invoice.balance}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Amount Paid: <strong class="invoice_paid" data-reference={{invoice.reference}}>${{invoice.payment_amount}}</strong></p>
+                                            <p class="text-center invoice_details" data-reference={{invoice.reference}}>Invoice <strong>{{invoice.reference}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;Status: <strong class="invoice_status" data-reference={{invoice.reference}}>{{invoice.payment_status}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;Amount Outstanding: <strong class="invoice_balance" data-reference={{invoice.reference}}>${{invoice.balance}}</strong>&nbsp;&nbsp;&nbsp;&nbsp;Amount Paid: <strong class="invoice_paid" data-reference={{invoice.reference}}>${{invoice.payment_amount}}</strong>&nbsp;&nbsp;Invoice Date: <strong>{{invoice.created }}</strong></p>
                                         </div>
                                     </div>
                                 </div>
@@ -214,7 +212,7 @@
                                 <div class="columns large-12">
                                     <form id="other_form" class="{% if invoices.0.payment_status == 'paid' or invoices.0.payment_status == 'over_paid' or invoices.0.voided %}hide{% endif %}">
                                         <h3> Record Payment</h3>
-                                        <label>
+                                            <label>
                                                 Amount
                                                 <input class="money" id="other_amount" name="other_amount" type="text" value=""/>
                                             </label>
@@ -264,6 +262,7 @@
                                     </form>
                                 </div>
                             </div>
+                            <!-- START Refund Interface -->
                             <div class="large reveal" id="refundModal" data-reveal>
                                 <div id="refundLoader">
                                     <p class="text-center"><i class="fa fa-spin fa-spinner fa-2x"></i><br />Loading...</p>
@@ -336,6 +335,8 @@
                                     </div>
                                 </form>
                             </div>
+                            <!-- END Refund Interface -->
+
                             <div class="row">
                                 <div class="large-12 columns">
                                     <h3>Received Payments</h3>
@@ -359,7 +360,10 @@
                                             </table>
                                             <div class="row align-right">
                                                 <div class="large-4 columns">
-                                                    <button id="refund_btn" class="{% if not invoices.0.refundable%}hide{% endif %} button float-right">Refund</button>
+                                                    {% if payment_allocation == True %}
+						    {% else %}
+	                                                <button id="refund_btn" class="{% if not invoices.0.refundable%}hide{% endif %} button float-right">Refund</button>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>

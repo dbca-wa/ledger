@@ -2,14 +2,14 @@
 
 {%  block content %}
     {% if linked_by.email != user.email %}
-        <p>Your have been suspended from:</p>
-        <p><strong>Organisation : {{ organisation.name }}</strong></p>
-        <p><strong>ABN : {{ organisation.abn}}</strong></p>
-        <p>You were linked to this organisation by {{linked_by.get_full_name}}({{linked_by.email}}).</p>
+        <p>Your link to the following organisation has been suspended:</p>
+        <p><strong>Organisation: {{ organisation.name }}</strong></p>
+        <p><strong>ABN: {{ organisation.abn }}</strong></p>
+        <p>You were suspended from this organisation by {{linked_by.get_full_name}} ({{linked_by.email}}).</p>
     {% else %}
-        <p>You have suspended yourself from:</p>
-        <p><strong>Organisation : {{ organisation.name }}</strong></p>
-        <p><strong>ABN : {{ organisation.abn}}</strong></p>
+        <p>You have suspended yourself from the following organisation:</p>
+        <p><strong>Organisation: {{ organisation.name }}</strong></p>
+        <p><strong>ABN: {{ organisation.abn }}</strong></p>
     {% endif %}
-    <p>You can not make applications on behalf of this organisation now.</p>
+    <p>You can no longer make applications on behalf of this organisation.</p>
 {%  endblock %}

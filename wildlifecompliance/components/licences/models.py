@@ -19,7 +19,6 @@ from wildlifecompliance import exceptions
 from wildlifecompliance.components.organisations.models import Organisation
 from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.main.models import CommunicationsLogEntry, UserAction, Document
-#from wildlifecompliance.components.licences.email import send_referral_email_notification
 
 
 def update_licence_doc_filename(instance, filename):

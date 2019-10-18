@@ -105,7 +105,7 @@ class AssessorDataSearch(object):
         res = {
             'name': item,
             'assessor': '',
-            'referrals':[]
+            'assessments':[]
         }
         for k in post_data:
             if re.match(item,k):
@@ -115,11 +115,11 @@ class AssessorDataSearch(object):
                 for k,v in v.items():
                     parts = k.split('{}-'.format(item))
                     if len(parts) > 1:
-                        # split parts to see if referall
-                        ref_parts = parts[1].split('Referral-')
+                        # split parts to see if assessment
+                        ref_parts = parts[1].split('Assessment-')
                         if len(ref_parts) > 1:
-                            # Referrals
-                            res['referrals'].append({
+                            # Assessments
+                            res['assessments'].append({
                                 'value':v,
                                 'email':ref_parts[1],
                                 'full_name': EmailUser.objects.get(email=ref_parts[1]).get_full_name()

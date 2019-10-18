@@ -1,0 +1,9 @@
+{%  extends 'wildlifecompliance/emails/base_email.html' %}
+
+{%  block content %}
+        <p>You have been made a consultant to the following organisation:</p>
+        <p><strong>Organisation: {{ organisation.name }}</strong></p>
+        <p><strong>ABN: {{ organisation.abn }}</strong></p>
+        <p>You were linked to this organisation by {{linked_by.get_full_name}} ({{linked_by.email}}).</p>
+        <p>You can now make applications on behalf of and manage this organisation.</p>
+{%  endblock %}

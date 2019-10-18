@@ -429,16 +429,17 @@ def create_approval_doc(approval,proposal, copied_to_permit, user):
 
     return document
 
-def create_approval_pdf_bytes(licence, application, site_url, original_issue_date):
+def create_approval_pdf_bytes(approval,proposal, copied_to_permit, user):
     licence_buffer = BytesIO()
 
-    _create_approval(approval_buffer, approval, proposal)
+    _create_approval(licence_buffer, approval, proposal, copied_to_permit, user)
 
     # Get the value of the BytesIO buffer
     value = licence_buffer.getvalue()
     licence_buffer.close()
 
     return value
+
 
 def create_renewal_doc(approval,proposal):
     renewal_buffer = BytesIO()

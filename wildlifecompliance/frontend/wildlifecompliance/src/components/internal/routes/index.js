@@ -6,7 +6,6 @@ import Organisation from '../organisations/manage.vue'
 import UserDashTable from '../users/dashboard.vue'
 import User from '../users/manage.vue'
 import Application from '../applications/application.vue'
-import Referral from '../referrals/referral.vue'
 import LicenceDashTable from '../licences/dashboard.vue'
 import ReturnDashTable from '../returns/dashboard.vue'
 export default
@@ -110,11 +109,7 @@ export default
                             component: Application,
                             name:"internal-application"
                         },
-                        {
-                            path: 'referral/:referral_id',
-                            component: Referral,
-                            name:"internal-referral"
-                        },
+                        
                     ]
                 },
  

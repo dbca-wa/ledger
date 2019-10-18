@@ -22,21 +22,20 @@ def can_manage_org(organisation,user):
     return False
 
 
-def can_change_role(organisation, user):
+def is_last_admin(organisation, user):
     from wildlifecompliance.components.organisations.models import OrganisationContact
-    ''' Check user contact can change their role specifically from admin to non admin. At least one
-        Administrator must exists on an Organisation. '''
-    _can_change = True
+    ''' A check for whether the user contact is the only administrator for the Organisation. '''
+    _last_admin = False
     try:
         _admin_contacts = OrganisationContact.objects.filter(organisation_id=organisation,
                                                              user_status='active',
                                                              user_role='organisation_admin')
         _is_admin = _admin_contacts.filter(email=user.email).exists()
         if _is_admin and _admin_contacts.count() < 2:
-            _can_change = False
+            _last_admin = True
     except OrganisationContact.DoesNotExist:
-        _can_change = False
-    return _can_change
+        _last_admin = False
+    return _last_admin
 
 
 def can_admin_org(organisation,user):
@@ -54,15 +53,28 @@ def can_admin_org(organisation,user):
 
 def can_relink(organisation, user):
     from wildlifecompliance.components.organisations.models import OrganisationContact
+    ''' Check user contact can be relinked to the Organisation. '''
     _can_relink = False
     try:
         _can_relink = OrganisationContact.objects.filter(organisation_id=organisation.id,
                                                          email=user.email,
-                                                         user_role__in=('organisation_admin', 'consultant'),
                                                          user_status='unlinked').exists()
     except OrganisationContact.DoesNotExist:
         _can_relink = False
     return _can_relink
+
+
+def can_approve(organisation, user):
+    from wildlifecompliance.components.organisations.models import OrganisationContact
+    ''' Check user contact linkage to the Organisation can be approved. '''
+    _can_approve = False
+    try:
+        _can_approve = OrganisationContact.objects.filter(organisation_id=organisation.id,
+                                                          email=user.email,
+                                                          user_status__in=('declined', 'pending')).exists()
+    except OrganisationContact.DoesNotExist:
+        _can_approve = False
+    return _can_approve
 
 
 def is_consultant(organisation,user):

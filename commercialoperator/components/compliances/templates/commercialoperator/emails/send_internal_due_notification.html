@@ -1,0 +1,12 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+
+	A Compliance with requirements {{ compliance.reference }} {{compliance.requirement.requirement}} is due for submission.   
+    <p>
+    You can access this Compliance using the following link:
+    </p>
+    <a href="{{url}}">Access Compliance</a>
+
+
+{%  endblock %}

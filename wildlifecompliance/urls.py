@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.conf.urls import url, include
+from django.views.generic.base import TemplateView, RedirectView
 from django.conf.urls.static import static
 from rest_framework import routers
 
@@ -20,7 +21,6 @@ from ledger.urls import urlpatterns as ledger_patterns
 router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
 router.register(r'application',application_api.ApplicationViewSet)
-router.register(r'referrals',application_api.ReferralViewSet)
 router.register(r'assessment',application_api.AssessmentViewSet)
 router.register(r'amendment',application_api.AmendmentRequestViewSet)
 router.register(r'assessor_group',application_api.AssessorGroupViewSet)
@@ -42,7 +42,6 @@ api_patterns = [
     url(r'^api/is_new_user/$', users_api.IsNewUser.as_view(), name='is-new-user'),
     url(r'^api/user_profile_completed/$', users_api.UserProfileCompleted.as_view(), name='get-user-profile-completed'),
     url(r'^api/department_users/$', users_api.DepartmentUserList.as_view(), name='department-users-list'),
-    url(r'^api/application_type/$', application_api.GetApplicationType.as_view(), name='get-application-type'),
     url(r'^api/amendment_request_reason_choices',application_api.AmendmentRequestReasonChoicesView.as_view(),name='amendment_request_reason_choices'),
     url(r'^api/empty_list/$', application_api.GetEmptyList.as_view(), name='get-empty-list'),
     url(r'^api/organisation_access_group_members',org_api.OrganisationAccessGroupMembers.as_view(),name='organisation-access-group-members'),
@@ -51,11 +50,12 @@ api_patterns = [
 
 # URL Patterns
 urlpatterns = [
+    url(r'contact-us/$', TemplateView.as_view(template_name="wildlifecompliance/contact_us.html"), name='wc_contact'),
+    url(r'further-info/$', RedirectView.as_view(url='https://www.dpaw.wa.gov.au/plants-and-animals/licences-and-permits'), name='wc_further_info'),
     url(r'^admin/', wildlifecompliance_admin_site.urls),
     url(r'', include(api_patterns)),
     url(r'^$', views.WildlifeComplianceRoutingView.as_view(), name='wc_home'),
     url(r'^internal/', views.InternalView.as_view(), name='internal'),
-    url(r'^internal/application/(?P<application_pk>\d+)/referral/(?P<referral_pk>\d+)/$', views.ReferralView.as_view(), name='internal-referral-detail'),
     url(r'^external/', views.ExternalView.as_view(), name='external'),
     url(r'^external/application/(?P<application_pk>\d+)/$', views.ExternalApplicationView.as_view(), name='external-application-detail'),
     url(r'^external/return/(?P<return_pk>\d+)/$', views.ExternalReturnView.as_view(), name='external-return-detail'),

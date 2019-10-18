@@ -1,7 +1,11 @@
 {%  extends 'disturbance/emails/base_email.html' %}
 
 {%  block content %}
-    <p>Your Approval has been suspended:</p>
+	{% if future_suspend %}
+		<p>Your Approval has been set to suspend in future:</p>
+	{% else %}
+    	<p>Your Approval has been suspended:</p>
+    {% endif %}
     <p><strong>Approval : {{ approval.lodgement_number}}</strong></p>
     <p><strong>Suspension Details : {{details}}</strong></p>
     <p><strong>From Date : {{from_date}}</strong></p>

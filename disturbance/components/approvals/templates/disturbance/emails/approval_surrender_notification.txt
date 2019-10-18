@@ -1,7 +1,11 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Approval has been surrendered:
+	{% if future_surrender %}
+		Your Approval has been set to surrender in future:
+	{% else %}
+    	Your Approval has been surrendered:
+    {% endif %}
 
     Approval : {{ approval.lodgement_number}}
 

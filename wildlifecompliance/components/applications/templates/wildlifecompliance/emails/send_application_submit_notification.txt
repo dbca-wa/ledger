@@ -3,10 +3,11 @@
 {%  block content %}
         A new Application has been submitted with below details
 
-        Application : {{ application.id }}
+        Application: {{ application.id }}
 
         Submitter: {{application.submitter}}
 
         Link: {{url}}
 
+        Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
 {%  endblock %}
