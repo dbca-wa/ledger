@@ -10,9 +10,33 @@
         </div>
         <div class="row" v-else-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
+
+              <!-- Expected changes for the more info for non bookable sites
+              <div class="row" v-if="name">
+                    <div class="columns small-12">
+                        <h1>Info about camping at {{ name }}</h1>
+                    </div>
+               </div>
+
+              <div class="columns small-6 medium-6 large-3">
+                        <button type="button" class="button formButton" @click="toggleMoreInfo">
+                            More Information &nbsp;&nbsp;
+                            <i style="font-size:large;" v-if="!showMoreInfo" class="fa fa-caret-down"></i>
+                            <i style="font-size:large;" v-else class="fa fa-caret-up"></i>
+                        </button>
+              </div>
+
+               <div class="row" style="margin-bottom:15px;" v-if="showMoreInfo">
+                      <div class="columns small-12 medium-12 large-12">
+                        <div v-html="long_description"></div>
+                      </div>
+                </div>    -->
+
+                <!-- Original implementation for offline
                 <div class="callout alert">
                     Sorry, this campground doesn't yet support online bookings. Please visit the <a href="https://parks.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
-                </div>
+                </div> -->
+
             </div>
         </div>
         <div class="row" v-else-if="status == 'empty'">
@@ -64,9 +88,9 @@
                 </div>
             </div>
         </div>
-        <div class="row" v-show="status == 'online'">
+
             <div v-if="long_description" class="columns small-12 medium-12 large-12">
-                <div class="row">
+                <div class="row"><div class="row" v-show="status == 'online'">
                     <div class="columns small-6 medium-6 large-3">
                         <button type="button" class="button formButton" @click="toggleMoreInfo">
                             More Information &nbsp;&nbsp;
@@ -74,6 +98,15 @@
                             <i style="font-size:large;" v-else class="fa fa-caret-up"></i>
                         </button>
                     </div>
+
+                    <!-- Added button to scroll down to booking section -->
+                    <div>
+                      <button type="button" class="button formButton" @click = "scrollMeTo('bookSection') ">
+                        Booking Section &nbsp;&nbsp;
+                        </button>
+                    </div>
+                    <!-- End of addition -->
+
                 </div>
                 <div class="row" style="margin-bottom:15px;" v-if="showMoreInfo">
                     <div class="columns small-12 medium-12 large-12">
@@ -81,7 +114,7 @@
                     </div>
                 </div>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div ref="bookSection" class="columns small-6 medium-6 large-3">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
@@ -93,7 +126,7 @@
             </div>
             <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns">
                 <label>
-                    Guests 
+                    Guests
                     <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
                 </label>
                 <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
@@ -139,7 +172,7 @@
                         <option value="caravan" v-if="gearTotals.caravan">Caravan / Camper trailer</option>
                     </select>
                 </label>
-            </div>           
+            </div>
         </div>
         <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
             <table class="hover">
@@ -164,7 +197,7 @@
                             </template>
                         </td>
                         <td v-if="!useAdminApi" class="date" v-for="(day, siteAvailabilityIndex) in site.availability" v-bind:key="siteAvailabilityIndex" v-bind:class="{available: day[0]}" > {{ day[1] }} </td>
-                        <td v-if="useAdminApi" class="date" v-for="(day, siteAvailabilityIndex) in site.availability" v-bind:key="siteAvailabilityIndex" v-bind:class="{available: day[0]}" > 
+                        <td v-if="useAdminApi" class="date" v-for="(day, siteAvailabilityIndex) in site.availability" v-bind:key="siteAvailabilityIndex" v-bind:class="{available: day[0]}" >
                             <span data-tooltip v-bind:title="day[3]"> {{ day[1] }} </span>
                         </td>
                     </tr>
@@ -234,8 +267,8 @@
         background-color: #656869;
         color: white;
     }
-    table tbody tr.breakdown:nth-child(2n), 
-    table tbody tr.breakdown:nth-child(2n):hover, 
+    table tbody tr.breakdown:nth-child(2n),
+    table tbody tr.breakdown:nth-child(2n):hover,
     table.hover:not(.unstriped) tr.breakdown:nth-of-type(2n):hover {
         background-color: #454d50;
         color: white;
@@ -323,9 +356,9 @@ export default {
             errorMsg: null,
             classes: {},
             sites: [],
-            long_description: '',   
+            long_description: '',
             map: null,
-            showMoreInfo: false,
+            showMoreInfo: true,
             ongoing_booking: false,
             ongoing_booking_id: null,
             showSecondErrorLine: true,
@@ -386,6 +419,16 @@ export default {
                 site.showBreakdown = true;
             }
         },
+
+        // Added function to scroll to the booking section when the book button is clicked
+        scrollMeTo: function(refName){
+          var element = this.$refs[refName];
+          var top = element.offsetTop;
+
+          window.scrollTo(0, top);
+        },
+        // End of new function
+
         submitBooking: function (site) {
             var vm = this;
             var submitData = {
@@ -591,13 +634,14 @@ export default {
             }
         }).data('datepicker');
 
-        
+
         this.arrivalData.date = this.arrivalDate.toDate();
         this.arrivalData.setValue();
         this.arrivalData.fill();
         this.departureData.date = this.departureDate.toDate();
         this.departureData.setValue();
         this.departureData.fill();
+
         this.update();
     }
 }
