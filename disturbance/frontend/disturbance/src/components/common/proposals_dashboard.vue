@@ -197,8 +197,9 @@ export default {
                     },
                     {
                         data: "district",
-                        name: "District",
+                        //name: "District",
                         visible: false,
+                        searchable: false,
                     },
                     {
 						data: "activity",
@@ -374,6 +375,7 @@ export default {
                         data: "district",
                         //name: "District",
                         visible: false,
+                        searchable: false,
                     },
                     {data: "activity"},
                     {
