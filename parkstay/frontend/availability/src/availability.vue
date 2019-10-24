@@ -11,7 +11,7 @@
         <div class="row" v-else-if="status == 'offline'">
             <div class="columns small-12 medium-12 large-12">
 
-              <!-- Expected changes for the more info for non bookable sites
+              <!-- Expected changes for the more info for non bookable sites -->
               <div class="row" v-if="name">
                     <div class="columns small-12">
                         <h1>Info about camping at {{ name }}</h1>
@@ -30,7 +30,7 @@
                       <div class="columns small-12 medium-12 large-12">
                         <div v-html="long_description"></div>
                       </div>
-                </div>    -->
+                </div>
 
                 <!-- Original implementation for offline
                 <div class="callout alert">
@@ -357,6 +357,9 @@ export default {
             classes: {},
             sites: [],
             long_description: '',
+
+            campground_type: null,
+
             map: null,
             showMoreInfo: true,
             ongoing_booking: false,
@@ -516,11 +519,19 @@ export default {
                         vm.days = data.days;
                         vm.classes = data.classes;
                         vm.long_description = data.long_description;
+
+                        vm.campground_type = data.campground_type;
+
                         vm.map = data.map;
                         vm.ongoing_booking = data.ongoing_booking;
                         vm.ongoing_booking_id = data.ongoing_booking_id;
 
-                        if (data.sites.length == 0) {
+                        if (data.campground_type == 1){
+                          vm.status = 'offline';
+                          return;
+                        }
+
+                        else if (data.sites.length == 0) {
                             vm.status = 'empty';
                             return;
                         }

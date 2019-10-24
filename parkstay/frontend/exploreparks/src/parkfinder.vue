@@ -139,13 +139,20 @@
                                 <div v-html="f.description"/>
                                 <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
 
-                                <!-- This line has to be changed to use a v-if/else clause -->
+                                <!-- This line has to be changed to use a v-if/else clause
+                                 Changed again to utilize changes in api to further enable forwarding offline sites to availability app
+                                 -->
 
                                 <!--<a class="button" v-bind:href="f.info_url" target="_blank">More info</a> -->
 
-                                <a v-if="f.campground_type == 0" class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info/Book now</a>
+                                <!-- <a class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info/Book now</a> -->
+
+
+                                <a v-if="f.campground_type == 0 || f.campground_type == 1 " class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info/Book now</a>
 
                                 <a v-else class="button formButton" v-bind:href="f.info_url" target="_blank">More info/Book now</a>
+
+
                             <!-- End of change -->
 
                             </div>
@@ -613,7 +620,8 @@ export default {
                 });
 
                 // Open the popup
-                /*let feature = this.groundsData.a.find(f => parseInt(f.a) == parseInt(target.properties.id));
+                /*
+                let feature = this.groundsData.a.find(f => parseInt(f.a) == parseInt(target.properties.id));
                 if (feature){
                     setTimeout(() => {
                         vm.popup.setPosition(feature.getGeometry().getCoordinates());
@@ -633,19 +641,22 @@ export default {
                             $("#mapPopupPrice")[0].innerHTML = '';
                         }
                         $("#mapPopupDescription")[0].innerHTML = feature.get('description');
+
+                        // Disabled below line,as api is being used to differentiate btw offline and online site
                         $("#mapPopupInfo").attr('href', feature.get('info_url'));
 
-                        <!-- Made changes to show only one button -->
+
+                        // Made changes to show only one button -->
                         $("#mapPopupBookInfo").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
 
-                        <!-- if (feature.get('campground_type') == 0) {
-                            $("#mapPopupBook").show();
-                        } else {
-                            $("#mapPopupBook").hide();
-                        } -->
+                        // if (feature.get('campground_type') == 0) {
+                        //    $("#mapPopupBook").show();
+                        // } else {
+                        //    $("#mapPopupBook").hide();
+                        // }
 
-                    },1000);
-                }*/
+                    }, 1000);
+                } */
 
 
                 return;
@@ -703,8 +714,12 @@ export default {
 
                 //$("#mapPopupInfo").attr('href', feature.get('info_url'));
 
-                if (feature.get('campground_type') == 0){
+               // if/else used to diffrentiate campground type(if covers type 0 and 1) ,diffrentiated at api - backend
+                if (feature.get('campground_type') == 0 || feature.get('campground_type') == 1 ){
+
                 $("#mapPopupBookInfo").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+
+
                 } else {
                   $("#mapPopupBookInfo").attr('href', feature.get('info_url'));
                 }
@@ -1185,10 +1200,14 @@ export default {
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
 
                 // This portion needs to be modified to accomodate the new button
+                // Online/Offline sites is determined by the backend api
+                if (feature.get('campground_type') == 0 || feature.get('campground_type') == 1 ) {
 
-                if (feature.get('campground_type') == 0) {
                 $("#mapPopupBookInfo").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
-                } else {
+
+                }
+                // Now,this section is used for the partner accomadation
+                else {
                 $("#mapPopupBookInfo").attr('href', feature.get('info_url'));
                 }
 
