@@ -912,12 +912,55 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
         num_infant = serializer.validated_data['num_infant']
         gear_type = serializer.validated_data['gear_type']
 
-        # if campground doesn't support online bookings, abort!
-        if ground.campground_type != 0:
-            return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
-
         # get a length of the stay (in days), capped if necessary to the request maximum
         length = max(0, (end_date - start_date).days)
+
+        # if campground doesn't support online bookings, abort!
+        if ground.campground_type == 1:
+            context = {}
+            if gear_type != 'all':
+                context[gear_type] = True
+            sites_qs = Campsite.objects.filter(campground=ground).filter(**context)
+
+            rates = {
+                siteid: {
+                    date: num_adult * info['adult'] + num_concession * info['concession'] + num_child * info[
+                        'child'] + num_infant * info['infant']
+                    for date, info in dates.items()
+                } for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items()
+            }
+
+            availability = utils.get_campsite_availability(sites_qs, start_date, end_date)
+
+            # Added campground_type to enable offline booking more info in frontend
+            result = {
+                'id': ground.id,
+                'name': ground.name,
+                'long_description': ground.long_description,
+
+                'campground_type': ground.campground_type,
+
+                'map': ground.campground_map.url if ground.campground_map else None,
+                'ongoing_booking': True if ongoing_booking else False,
+                'ongoing_booking_id': ongoing_booking.id if ongoing_booking else None,
+                'arrival': start_date.strftime('%Y/%m/%d'),
+                'days': length,
+                'adults': 1,
+                'children': 0,
+                'maxAdults': 30,
+                'maxChildren': 30,
+                 'sites': [],
+                 'classes': {},
+
+            }
+
+            return Response(result)
+
+        if ground.campground_type != 0  and ground.campground_type != 1:
+            return Response({'error': 'Campground doesn\'t support online bookings'}, status=400)
+
+        # # get a length of the stay (in days), capped if necessary to the request maximum
+        # length = max(0, (end_date - start_date).days)
 
         # fetch all the campsites and applicable rates for the campground
         context = {}
