@@ -7,8 +7,13 @@ import os
 
 # Project paths
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROJECT_DIR = os.path.join(BASE_DIR, 'ledger')
+BASE_DIR = None
+BASE_DIR_ENV = env('BASE_DIR',None)
+if BASE_DIR_ENV is None:
+   BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+else:
+   BASE_DIR = BASE_DIR_ENV
+PROJECT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ledger')
 
 # Application definitions
 SECRET_KEY = env('SECRET_KEY')
@@ -206,7 +211,7 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(os.path.join(BASE_DIR, 'ledger', 'static')),
+    os.path.join(os.path.join(PROJECT_DIR, 'static')),
 # Removed as these should be in the individual app settings.py and not in ledger.
 # leaving hashed in case issues are caused by this.
 #    os.path.join(os.path.join(BASE_DIR, 'wildlifelicensing', 'static')),

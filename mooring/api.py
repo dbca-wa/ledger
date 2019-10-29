@@ -4437,8 +4437,14 @@ class RefundOracleView(views.APIView):
                     #new_invoice = Invoice.objects.get(order_number=order.number)
                 
                     for bp_txn in bpoint_trans_split_json:
-                        bpoint_id = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
-                        info = {'amount': Decimal('{:.2f}'.format(float(bp_txn['line-amount']))), 'details' : 'Refund via system'}
+                        bpoint_id = None
+                        try:
+                             bpoint_id = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
+                             info = {'amount': Decimal('{:.2f}'.format(float(bp_txn['line-amount']))), 'details' : 'Refund via system'}
+                        except Exception as e:
+                             print (e)
+                             info = {'amount': Decimal('{:.2f}'.format('0.00')), 'details' : 'Refund via system'}
+
                         refund = None
                         lines = []
                         if info['amount'] > 0:
@@ -4452,18 +4458,22 @@ class RefundOracleView(views.APIView):
                                 lines.append({'ledger_description':str("Payment Gateway Refund to "+bp_txn['txn_number']),"quantity":1,"price_incl_tax": bpoint_money_to,"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 3})
                                 bpoint = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
                                 refund = bpoint.refund(info,request.user)
-                            except:
+                            except Exception as e:
+                                print (e)
                                 failed_refund = True
                                 bpoint_failed_amount = Decimal(bp_txn['line-amount'])
                                 lines = []
                                 lines.append({'ledger_description':str("Refund failed for txn "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":bpoint_failed_amount,"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
                             order = utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
                             new_invoice = Invoice.objects.get(order_number=order.number)
-                            bpoint_refund = BpointTransaction.objects.get(txn_number=refund)
-                            bpoint_refund.crn1 = new_invoice.reference
-                            bpoint_refund.save()
-                            update_payments(new_invoice.reference)
-         
+
+                            if refund:
+                               bpoint_refund = BpointTransaction.objects.get(txn_number=refund.txn_number)
+                               bpoint_refund.crn1 = new_invoice.reference
+                               bpoint_refund.save()
+                               new_invoice.settlement_date = None
+                               new_invoice.save()
+                               update_payments(new_invoice.reference)
      
                 else:
                     lines = []
