@@ -2,11 +2,6 @@
 
 {%  block content %}
    
-      
-    
-        A Application for Proposal {{proposal.lodgement_number}} has been declined.
-
-   
-
+        An Application {{proposal.lodgement_number}} has been declined.
 
 {%  endblock %}

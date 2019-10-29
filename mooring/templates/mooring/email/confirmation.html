@@ -1,33 +1,27 @@
 {%  extends 'mooring/email/base_email.html' %}
 
 {% block greetings %}
-<p>{{booking.details.first_name}} {{booking.details.last_name}},</p>
+<p>Dear {{booking.details.first_name}} {{booking.details.last_name}},</p>
 {% endblock %}
 
 {% block content %}
-<p>Print or save this confirmation for presentation on arrival and at any time during your stay.</p>
-
-<p>Arrival: {{booking.arrival|date:"d/m/Y"}}</p>
-<p>Departure: {{booking.departure|date:"d/m/Y"}}</p>
-
-<p>Mooring: {{booking.mooringarea.name }}, {{ booking.mooringarea.park.name }}</p>
-
-{% for v in booking.vehicle_payment_status %}
-{% if not v.Paid %}
-    <p>Vessel: {{v.Rego}}</p>
+{% if booking.admission_payment %}
+    <p>Please find attached the confirmation for your booking PS{{ booking.id }} and the confirmation for your admission fees AD{{ booking.admission_payment.id }}.</p>
 {% else %}
-    <p>Vessel: {{v.Rego}}</p>
+    <p>Please find attached the confirmation for your booking PS{{ booking.id }}.</p>
 {% endif %}
-{% endfor %}
 
-<p>Phone Number: {{phone_number}}</p>
-<br />
+<p>Print or save the attached confirmation for presentation on arrival and at any time during your stay.</p>
 
 <p>Contact us about your booking</p>
-<p>{{campground_email}}</p>
-{% if booking.mooringarea.telephone %}
-<p>{{booking.mooringarea.telephone}}</p>
-{% endif %}
-<br />
+{% for contact in contact_list %}
+    <p>{{ contact.moorings }}<br/>
+        {{ contact.phone }}<br/>
+        {{ contact.email }}</p>
+{% endfor %}
+<br/>
+
+
+<a href="{{my_bookings}}">View my bookings</a>
 
 {% endblock %}

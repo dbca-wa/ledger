@@ -1,0 +1,55 @@
+{% extends 'commercialoperator/base.html' %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <div class="well">
+            <div class="row"><div class="col-sm-12">
+                <h2>Success!</h2>
+                <strong>A confirmation email has been sent to {{ submitter }}. </strong>
+            </div></div>
+            <br/>
+
+            {% if proposal and proposal.id %}
+                <div>
+                    <strong>Your application {{proposal.lodgement_number}} has been successfully submitted.</strong>
+                    <br/><br/>
+                    <table>
+                        <tr>
+                            <td><strong>Application:</strong></td>
+                            <td><strong>{{proposal.lodgement_number}}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Date/Time:</strong></td>
+                            <td><strong> {{proposal.lodgement_date}}</strong></td>
+                        </tr>
+                    </table>
+                    <br/>
+                    <label>Please note that it may take up to 21 business days to process your application.<br/><br/>If there is any missing information, the Department may assign this application back to you to complete. In that case you will be notified by email.</label>
+                  </div>
+            {% else %}
+                <div class="col-sm-offset-3 col-sm-6 borderDecoration">
+                    <strong>Sorry it looks like there isn't any proposal currently in your session.</strong>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="row"><div class="col-sm-12" style="margin-top: 1em">
+            {% if request.user == submitter or request.user.is_staff %}
+
+                {% if request.user.is_authenticated %}
+                    <span>
+                    <a href="{% url 'cols-invoice-pdf' fee_invoice.invoice_reference %}" class="btn btn-info btn-lg"  target="_blank">Invoice</a>
+                    </span>
+                    <span style="float:right;">
+                    <a href="{% url 'external' %}" class="btn btn-info btn-lg">Return to Dashboard</a>
+                    </span>
+                {% else %}
+                    <a href="{% url 'home' %}" class="btn btn-info btn-lg">Log in</a><p>You must be logged in to see your invoice online.</p>
+                {% endif %}
+
+            {% else %}
+                <p style="font-size: 1.5rem; font-weight: bold;">You do not have permission to access the confirmation or invoice for this booking.<br>Please check your email or contact COLS directly.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

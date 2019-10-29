@@ -870,8 +870,8 @@ class CampgroundViewSet(viewsets.ModelViewSet):
             available_serializers = []
             for k,v in available.items():
                 s = CampsiteClassSerializer(CampsiteClass.objects.get(id=k),context={'request':request},method='get').data
-                s['campsites'] = [c_id for c_id, stat in v.items() if stat != 'booked' and stat !='closed']
-                counts = {'open': 0, 'closed': 0, 'booked': 0}
+                s['campsites'] = [c_id for c_id, stat in v.items() if stat != 'closed & booked' and stat != 'booked' and stat !='closed']
+                counts = {'open': 0, 'closed': 0, 'booked': 0, 'closed & booked':0}
                 for c_id, stat in v.items():
                     counts[stat] += 1
                 s['status'] = ', '.join(['{} {}'.format(stat, type) for type, stat in counts.items() if stat])
@@ -992,7 +992,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                     'id': None, 
                     'type': c[1],
                     'price': '${}'.format(sum(rate.values())) if not show_all else False,
-                    'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], None, [0, 0]] for i in range(length)],
+                    'availability': [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], None, [0, 0, 0]] for i in range(length)],
                     'breakdown': OrderedDict(),
                     'gearType': {
                         'tent': c[3],
@@ -1006,8 +1006,7 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
             # make a map of class IDs to site IDs
             for s in sites_qs:
                 rate = rates_map[s.campsite_class.pk]
-                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)]] for i in range(length)]
-
+                classes_map[s.campsite_class.pk]['breakdown'][s.name] = [[True, '${}'.format(rate[start_date+timedelta(days=i)]), rate[start_date+timedelta(days=i)], None] for i in range(length)]
             # store number of campsites in each class
             class_sizes = {k: len(v) for k, v in class_sites_map.items()}
 
@@ -1026,17 +1025,27 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         # update the per-site availability
                         classes_map[key]['breakdown'][s.name][offset][0] = False
                         classes_map[key]['breakdown'][s.name][offset][1] = stat if show_all else 'Unavailable'
+                        classes_map[key]['breakdown'][s.name][offset][3] = closure_reason if show_all else None
 
                         # update the class availability status
-                        book_offset = 0 if (stat == 'booked') else 1
+                        if stat == 'booked':
+                            book_offset = 0
+                        elif stat == 'closed':
+                            book_offset = 1
+                        else:
+                            book_offset = 2
+
                         classes_map[key]['availability'][offset][4][book_offset] += 1
                         # if the number of booked entries equals the size of the class, it's fully booked
                         if classes_map[key]['availability'][offset][4][0] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Fully Booked' 
+                            classes_map[key]['availability'][offset][1] = 'Booked' 
                         # if the number of closed entries equals the size of the class, it's closed (admin) or unavailable (user)
                         elif classes_map[key]['availability'][offset][4][1] == class_sizes[key]:
-                            classes_map[key]['availability'][offset][1] = 'Closed & Booked' if show_all else 'Unavailable'
+                            classes_map[key]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
                             classes_map[key]['availability'][offset][3] = closure_reason if show_all else None
+                        elif classes_map[key]['availability'][offset][4][2] == class_sizes[key]:
+                            classes_map[key]['availability'][offset][1] = 'Closures/Bookings' if show_all else 'Unavailable'
+                            classes_map[key]['availability'][offset][3] = closure_reason if show_all else None 
                         # if all of the entries are closed, it's unavailable (user)
                         elif not show_all and (classes_map[key]['availability'][offset][4][0] + classes_map[key]['availability'][offset][4][1] == class_sizes[key]):
                             classes_map[key]['availability'][offset][1] = 'Unavailable'
@@ -1045,14 +1054,19 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                             # check if there are any booked or closed entries and change the message accordingly
                             test_bk = classes_map[key]['availability'][offset][4][0] > 0
                             test_cl = classes_map[key]['availability'][offset][4][1] > 0
-                            if test_bk and test_cl:
-                                classes_map[key]['availability'][offset][1] = 'Partially Booked or Closed'
+                            test_clbk = classes_map[key]['availability'][offset][4][2] > 0
+                            if test_clbk or (test_bk and test_cl):
+                                classes_map[key]['availability'][offset][1] = 'Closures/Bookings'
                                 if classes_map[key]['availability'][offset][3] is None:
                                     classes_map[key]['availability'][offset][3] = closure_reason
                             elif test_bk:
-                                classes_map[key]['availability'][offset][1] = 'Partially Booked'
+                                classes_map[key]['availability'][offset][1] = 'Some Booked'
                             elif test_cl:
-                                classes_map[key]['availability'][offset][1] = 'Partially Closed'
+                                classes_map[key]['availability'][offset][1] = 'Some Closed'
+                                if classes_map[key]['availability'][offset][3] is None:
+                                    classes_map[key]['availability'][offset][3] = closure_reason
+                            elif test_clbk:
+                                classes_map[key]['availability'][offset][1] = 'Closures/Bookings'
                                 if classes_map[key]['availability'][offset][3] is None:
                                     classes_map[key]['availability'][offset][3] = closure_reason
 
@@ -1125,8 +1139,9 @@ class BaseAvailabilityViewSet(viewsets.ReadOnlyModelViewSet):
                         if stat == 'closed':
                             bookings_map[s.name]['availability'][offset][1] = 'Closed' if show_all else 'Unavailable'
                             bookings_map[s.name]['availability'][offset][3] = closure_reason if show_all else None
-                            if any([v[0] == 'booked' for k, v in availability[s.pk].items()]):
-                                bookings_map[s.name]['availability'][offset][1] = 'Booked' if show_all else 'Unavailable'
+                        elif stat == 'closed & booked':
+                            bookings_map[s.name]['availability'][offset][1] = 'Closed & Booked' if show_all else 'Unavailable'
+                            bookings_map[s.name]['availability'][offset][3] = closure_reason if show_all else None                           
                         elif stat == 'booked':
                             bookings_map[s.name]['availability'][offset][1] = 'Booked' if show_all else 'Unavailable'
                         else:
@@ -1593,6 +1608,11 @@ class BookingViewSet(viewsets.ModelViewSet):
                 sqlParams['length'] = length
                 sqlParams['start'] = start
 
+            if length == 'all':
+                sql = sql + ' limit %(length)s offset %(start)s'
+                sqlParams['length'] = 2000
+                sqlParams['start'] = start
+
             sql += ';'
 
             cursor = connection.cursor()
@@ -1640,8 +1660,8 @@ class BookingViewSet(viewsets.ModelViewSet):
                     bk['override_reason_info'] = booking.override_reason_info
                 if booking.send_invoice:
                     bk['send_invoice'] = booking.send_invoice
-                if booking.override_price:
-                    discount = booking.discount
+                if booking.override_price >= 0:
+                    bk['discount'] = booking.discount
                 if not booking.paid:
                     bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
                 if booking.customer:
@@ -1783,6 +1803,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'num_concession' : guests['concession'],
                 'num_child' : guests['children'],
                 'num_infant' : guests['infants'],
+                'regos': request.data['entryFees']['regos'],
             }
             data = utils.update_booking(request,instance,booking_details)
             serializer = BookingSerializer(data)

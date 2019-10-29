@@ -30,7 +30,7 @@ def search(dictionary, search_list):
     result = []
     flat_dict = flatten(dictionary)
     for k, v in flat_dict.iteritems():
-        if any(x in v for x in search_list):
+        if any(x.lower() in v.lower() for x in search_list):
             result.append( {k: v} )
 
     return result
@@ -70,7 +70,7 @@ def search_approval(approval, searchWords):
         try:
             found = False
             for s in searchWords:
-                if s in a.cancellation_details:
+                if s.lower() in a.cancellation_details.lower():
                     found = True
             if found:
                 res = {
@@ -92,7 +92,7 @@ def search_compliance(compliance, searchWords):
         try:
             found = False
             for s in searchWords:
-                if s in c.text:
+                if s.lower() in c.text.lower():
                     found = True
             if found:
                 res = {
@@ -109,7 +109,7 @@ def search_compliance(compliance, searchWords):
         try:
             found = False
             for s in searchWords:
-                if s in c.requirement.requirement:
+                if s.lower() in c.requirement.requirement.lower():
                     found = True
             if found:
                 res = {
@@ -123,32 +123,6 @@ def search_compliance(compliance, searchWords):
         except:
             raise
     return qs
-
-def search_tenure(proposal):
-    """
-    Retrieves the tenure names/labels from the check boxes checked, by cross-referencing p.data with p.schema (since checkbox has section_name:'on')
-    Requires settings.TENURE_SECTION (eg. 'Section1-0')
-    """
-    if not  settings.TENURE_SECTION: #'Section1-0'
-        return
-
-    section_names = []
-    for i in flatten(proposal.data[0]):
-        if settings.TENURE_SECTION in i:
-            name = i.split('.')[-1]
-            res = search_multiple_keys(proposal.data[0], primary_search=name, search_list=['name'])
-            if res[0][name]:
-                section_names.append(name)
-
-
-    tenure_str = ''
-    s = search_keys(proposal.schema, search_list=['name', 'label'])
-    for name in section_names:
-        for i in s:
-            if name ==  i['name']:
-                tenure_str = tenure_str + ', ' + i['label'] if tenure_str else tenure_str + i['label']
-
-    return tenure_str
 
 def test_compare_data():
     p=Proposal.objects.get(id=100)

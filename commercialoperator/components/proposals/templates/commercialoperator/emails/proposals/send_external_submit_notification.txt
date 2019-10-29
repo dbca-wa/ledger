@@ -1,13 +1,13 @@
 {%  extends 'commercialoperator/emails/base_email.txt' %}
 
 {%  block content %}
-    Your Proposal {{ proposal.lodgement_number }} has been submitted.
+    Your Application {{ proposal.lodgement_number }} has been submitted.
 
 	Submitter: {{ proposal.submitter.get_full_name }}
 	Lodgement date: {{ proposal.lodgement_date }}
 
     <p>
-    You can access this Proposal using the following link:
+    You can access this Application using the following link:
     </p>
     {{url}}
 

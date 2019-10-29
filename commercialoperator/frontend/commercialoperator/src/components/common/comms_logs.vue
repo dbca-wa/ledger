@@ -56,7 +56,11 @@ export default {
         disable_add_entry: {
             type: Boolean,
             default: true
-        }
+        },
+        is_user_log:{
+              type: Boolean,              
+              default: false
+        },
     },
     data() {
         let vm = this;
@@ -71,7 +75,7 @@ export default {
                 responsive: true,
                 deferRender: true, 
                 autowidth: true,
-                order: [[2, 'desc']],
+				order: [[3, 'desc']], // order the non-formatted date as a hidden column
                 dom:
                     "<'row'<'col-sm-5'l><'col-sm-6'f>>" +
                     "<'row'<'col-sm-12'tr>>" +
@@ -95,9 +99,15 @@ export default {
                         data:"when",
                         orderable: false,
                         mRender:function(data,type,full){
-                            return moment(data).format(vm.DATE_TIME_FORMAT)
+                            //return moment(data).format(vm.DATE_TIME_FORMAT)
+                            return moment(data).format(vm.dateFormat);
                         }
                     },
+                    {
+                        title: 'Created',
+                        data: 'when',
+                        visible: false
+                    }
                 ]
             },
             commsDtOptions:{
@@ -107,7 +117,7 @@ export default {
                 responsive: true,
                 deferRender: true, 
                 autowidth: true,
-                order: [[0, 'desc']],
+				order: [[8, 'desc']], // order the non-formatted date as a hidden column
                 processing:true,
                 ajax: {
                     "url": vm.comms_url, 
@@ -124,7 +134,11 @@ export default {
                     },
                     {
                         title: 'Type',
-                        data: 'type'
+                        //data: 'type'
+                        data: '',
+                        mRender:function(data,type,full){
+                           return vm.is_user_log  ? full.log_type: full.type;
+                        },
                     },
                     /*{
                         title: 'Reference',
@@ -297,6 +311,11 @@ export default {
                             });
                             return result;
                         }
+                    },
+                    {
+                        title: 'Created',
+                        data: 'created',
+                        visible: false
                     }
                 ]
             },

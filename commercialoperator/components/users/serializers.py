@@ -1,10 +1,18 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Document, EmailUserAction, EmailUserLogEntry, CommunicationsLogEntry
 from commercialoperator.components.organisations.models import (   
                                     Organisation,
                                 )
+from commercialoperator.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
+from ledger.accounts.utils import in_dbca_domain
 
+
+class DocumentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Document
+        fields = ('id','description','file','name','uploaded_date')
 
 class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,21 +29,36 @@ class UserAddressSerializer(serializers.ModelSerializer):
 class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
     abn = serializers.CharField(source='organisation.abn')
+    email = serializers.SerializerMethodField()
+    is_consultant = serializers.SerializerMethodField(read_only=True)
+    is_admin = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Organisation
         fields = (
             'id',
             'name',
-            'abn'
+            'abn',
+            'email',
+            'is_consultant',
+            'is_admin'
         )
 
-class UserSerializer(serializers.ModelSerializer):
-    commercialoperator_organisations = UserOrganisationSerializer(many=True)
-    residential_address = UserAddressSerializer()
-    personal_details = serializers.SerializerMethodField()
-    address_details = serializers.SerializerMethodField()
-    contact_details = serializers.SerializerMethodField()
-    full_name = serializers.SerializerMethodField()
+    def get_is_admin(self, obj):
+        user = EmailUser.objects.get(id=self.context.get('user_id'))
+        return can_admin_org(obj, user)
+
+    def get_is_consultant(self, obj):
+        user = EmailUser.objects.get(id=self.context.get('user_id'))
+        return is_consultant(obj, user)
+
+    def get_email(self, obj):
+        email = EmailUser.objects.get(id=self.context.get('user_id')).email
+        return email
+
+
+class UserFilterSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -44,6 +67,31 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
             'first_name',
             'email',
+            'name'
+        )
+
+    def get_name(self, obj):
+        return obj.get_full_name()
+
+
+class UserSerializer(serializers.ModelSerializer):
+    commercialoperator_organisations = serializers.SerializerMethodField()
+    residential_address = UserAddressSerializer()
+    personal_details = serializers.SerializerMethodField()
+    address_details = serializers.SerializerMethodField()
+    contact_details = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
+    identification = DocumentSerializer()
+    is_department_user = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'last_name',
+            'first_name',
+            'email',
+            'identification',
             'residential_address',
             'phone_number',
             'mobile_number',
@@ -51,7 +99,8 @@ class UserSerializer(serializers.ModelSerializer):
             'personal_details',
             'address_details',
             'contact_details',
-            'full_name'
+            'full_name',
+            'is_department_user',
         )
     
     def get_personal_details(self,obj):
@@ -71,7 +120,18 @@ class UserSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         return obj.get_full_name()
 
+    def get_is_department_user(self, obj):
+        if obj.email:
+            return in_dbca_domain(obj)
+        else:
+            return False
 
+    def get_commercialoperator_organisations(self, obj):
+        commercialoperator_organisations = obj.commercialoperator_organisations
+        serialized_orgs = UserOrganisationSerializer(
+            commercialoperator_organisations, many=True, context={
+                'user_id': obj.id}).data
+        return serialized_orgs
 
 
 class PersonalSerializer(serializers.ModelSerializer):
@@ -97,3 +157,51 @@ class ContactSerializer(serializers.ModelSerializer):
         if not obj.get('phone_number') and not obj.get('mobile_number'):
             raise serializers.ValidationError('You must provide a mobile/phone number')
         return obj
+
+class EmailUserActionSerializer(serializers.ModelSerializer):
+    who = serializers.CharField(source='who.get_full_name')
+
+    class Meta:
+        model = EmailUserAction
+        fields = '__all__'
+
+class EmailUserCommsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailUserLogEntry
+        fields = '__all__'
+
+class CommunicationLogEntrySerializer(serializers.ModelSerializer):
+    customer = serializers.PrimaryKeyRelatedField(queryset=EmailUser.objects.all(),required=False)
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = CommunicationsLogEntry
+        fields = (
+            'id',
+            'customer',
+            'to',
+            'fromm',
+            'cc',
+            'log_type',
+            'reference',
+            'subject'
+            'text',
+            'created',
+            'staff',
+            'emailuser',
+            'documents'
+        )
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
+
+class EmailUserLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = EmailUserLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]

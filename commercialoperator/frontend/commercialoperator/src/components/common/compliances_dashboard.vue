@@ -1,4 +1,4 @@
-a<template id="proposal_dashboard">
+<template id="proposal_dashboard">
     <div class="row">
         <div class="col-sm-12">
             <div class="panel panel-default">
@@ -11,6 +11,7 @@ a<template id="proposal_dashboard">
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
                     <div class="row">
+                        <!--
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Region</label>
@@ -29,6 +30,7 @@ a<template id="proposal_dashboard">
                                 </select>
                             </div>
                         </div>
+                        -->
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label for="">Status</label>
@@ -38,8 +40,6 @@ a<template id="proposal_dashboard">
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-3">
                             <label for="">Due date From</label>
                             <div class="input-group date" ref="complianceDateFromPicker">
@@ -124,10 +124,8 @@ export default {
                 'Approved',
                 
             ],
-            proposal_activityTitles : [],
-            proposal_regions: [],
             proposal_submitters: [],
-            proposal_headers:["Number","Region/District","Activity","Title","Approval","Holder","Status","Due Date","Assigned To", "CustomerStatus", "Reference","Action"],
+            proposal_headers:["Number","Licence","Holder","Status","Due Date","Assigned To", "Action"],
             proposal_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -141,7 +139,6 @@ export default {
 
                     // adding extra GET params for Custom filtering
                     "data": function ( d ) {
-                        //d.regions = vm.filterProposalRegion.join();
                         d.date_from = vm.filterComplianceDueFrom != '' && vm.filterComplianceDueFrom != null ? moment(vm.filterComplianceDueFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterComplianceDueTo != '' && vm.filterComplianceDueTo != null ? moment(vm.filterComplianceDueTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                     }
@@ -160,27 +157,15 @@ export default {
                         name: "id, lodgement_number",
                     },
                     {
-                        data: "regions",
-                        name: "proposal__region__name" // will be use like: Approval.objects.filter(proposal__region__name='Kimberley')
-                    },
-                    {
-                        data: "activity",
-                        name: "proposal__activity",
-                    },
-                    {
-                        data: "title",
-                        name: "proposal__title",
-                    },
-                    {
                         data: "approval_lodgement_number",
                         mRender:function (data,type,full) {
-                            return `A${data}`;
+                            return data;
                         },
                         name: "approval__lodgement_number"
                     },
                     {
                         data: "holder",
-                        name: "proposal__applicant__organisation__name"
+                        name: "approval__org_applicant__organisation__name, approval__proxy_applicant__email, approval__proxy_applicant__first_name, approval__proxy_applicant__last_name"
                     },
                     {data: "processing_status",
                         mRender:function(data,type,full){
@@ -204,7 +189,7 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (!vm.is_external){
-                                if (full.can_user_view) {
+                                if (full.can_process) {
                                     links +=  `<a href='/internal/compliance/${full.id}'>Process</a><br/>`;
                                     
                                 }
@@ -228,35 +213,12 @@ export default {
                     {data: "reference", visible: false},
                     {data: "customer_status", visible: false},
                     {data: "can_user_view", visible: false},
+                    {data: "can_process", visible: false},
 
                 ],
                 processing: true,
                 /*
                 initComplete: function () {
-                    // Grab Regions from the data in the table
-                    var regionColumn = vm.$refs.proposal_datatable.vmDataTable.columns(1);
-                    regionColumn.data().unique().sort().each( function ( d, j ) {
-                        let regionTitles = [];
-                        $.each(d,(index,a) => {
-                            // Split region string to array
-                            if (a != null){
-                                $.each(a.split(','),(i,r) => {
-                                    r != null && regionTitles.indexOf(r) < 0 ? regionTitles.push(r): '';
-                                });
-                            }
-                        })
-                        vm.proposal_regions = regionTitles;
-                    });
-                    // Grab Activity from the data in the table
-                    var titleColumn = vm.$refs.proposal_datatable.vmDataTable.columns(2);
-                    titleColumn.data().unique().sort().each( function ( d, j ) {
-                        let activityTitles = [];
-                        $.each(d,(index,a) => {
-                            a != null && activityTitles.indexOf(a) < 0 ? activityTitles.push(a): '';
-                        })
-                        vm.proposal_activityTitles = activityTitles;
-                    });
-
                     // Grab Status from the data in the table
                     var statusColumn = vm.$refs.proposal_datatable.vmDataTable.columns(6);
                     statusColumn.data().unique().sort().each( function ( d, j ) {
@@ -275,29 +237,12 @@ export default {
         datatable
     },
     watch:{
-        filterProposalRegion: function() {
-            //this.$refs.proposal_datatable.vmDataTable.draw();
-            let vm = this;
-            if (vm.filterProposalRegion!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(1).search(vm.filterProposalRegion).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(1).search('').draw();
-            }
-        },
-        filterProposalActivity: function() {
-            let vm = this;
-            if (vm.filterProposalActivity!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalActivity).draw();
-            } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
-            }
-        },
         filterComplianceStatus: function() {
             let vm = this;
             if (vm.filterComplianceStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterComplianceStatus).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(3).search(vm.filterComplianceStatus).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(3).search('').draw();
             }
         },
         filterProposalSubmitter: function(){
@@ -325,8 +270,6 @@ export default {
             let vm = this;
 
             vm.$http.get(api_endpoints.filter_list_compliances).then((response) => {
-                vm.proposal_regions = response.body.regions;
-                vm.proposal_activityTitles = response.body.activities;
                 vm.status = vm.level == 'external' ? vm.external_status: vm.internal_status;
             },(error) => {
                 console.log(error);
@@ -358,48 +301,10 @@ export default {
                 }
             });
             // End Proposal Date Filters          
-            
 
-            // Initialise select2 for region
-            $(vm.$refs.filterRegion).select2({
-                "theme": "bootstrap",
-                allowClear: true,
-                placeholder:"Select Region"
-            }).
-            on("select2:select",function (e) {
-                var selected = $(e.currentTarget);
-                vm.filterProposalRegion = selected.val();
-            }).
-            on("select2:unselect",function (e) {
-                var selected = $(e.currentTarget);
-                vm.filterProposalRegion = selected.val();
-            });
         },
         initialiseSearch:function(){
-            this.regionSearch();
             this.dateSearch();
-        },
-        regionSearch:function(){
-            let vm = this;
-            vm.$refs.proposal_datatable.table.dataTableExt.afnFiltering.push(
-                function(settings,data,dataIndex,original){
-                    let found = false;
-                    let filtered_regions = vm.filterProposalRegion.split(',');
-                    if (filtered_regions == 'All'){ return true; } 
-
-                    let regions = original.regions != '' && original.regions != null ? original.regions.split(','): [];
-
-                    $.each(regions,(i,r) => {
-                        if (filtered_regions.indexOf(r) != -1){
-                            found = true;
-                            return false;
-                        }
-                    });
-                    if  (found) { return true; }
-
-                    return false;
-                }
-            );
         },
         submitterSearch:function(){
             let vm = this;

@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
+from django.conf import settings
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -100,9 +101,16 @@ class Compliance(RevisionedMixin):
     @property
     def can_user_view(self):
         """
-        :return: True if the application is in one of the editable status.
+        :return: True if the compliance is not in the editable status for external user.
         """
         return self.customer_status == 'with_assessor' or self.customer_status == 'approved'
+
+    @property
+    def can_process(self):
+        """
+        :return: True if the compliance is ready for assessment.
+        """
+        return self.processing_status == 'with_assessor'
 
 
     @property
@@ -163,6 +171,7 @@ class Compliance(RevisionedMixin):
 
     def assign_to(self, user,request):
         with transaction.atomic():
+            #import ipdb; ipdb.set_trace()
             self.assigned_to = user
             self.save()
             self.log_user_action(ComplianceUserAction.ACTION_ASSIGN_TO.format(user.get_full_name()),request)
@@ -215,7 +224,7 @@ class Compliance(RevisionedMixin):
 
 
 def update_proposal_complaince_filename(instance, filename):
-    return 'proposals/{}/compliance/{}/{}'.format(instance.compliance.proposal.id,instance.compliance.id,filename)
+    return '{}/proposals/{}/compliance/{}'.format(settings.MEDIA_APP_DIR, instance.compliance.proposal.id,filename)
 
 
 class ComplianceDocument(Document):
@@ -272,7 +281,7 @@ class ComplianceLogEntry(CommunicationsLogEntry):
         app_label = 'commercialoperator'
 
 def update_compliance_comms_log_filename(instance, filename):
-    return 'proposals/{}/compliance/{}/communications/{}/{}'.format(instance.log_entry.compliance.proposal.id,instance.log_entry.compliance.id,instance.id,filename)
+    return '{}/proposals/{}/compliance/communications/{}'.format(settings.MEDIA_APP_DIR, instance.log_entry.compliance.proposal.id,filename)
 
 
 class ComplianceLogDocument(Document):
@@ -333,22 +342,19 @@ class ComplianceAmendmentRequest(CompRequest):
             # Create a log entry for the proposal
             compliance.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
             # Create a log entry for the organisation
-            compliance.proposal.applicant.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
+            applicant_field=getattr(compliance.proposal, compliance.proposal.applicant_field)
+            applicant_field.log_user_action(ComplianceUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
             send_amendment_email_notification(self,request, compliance)
 
 
-def update_proposal_complaince_filename(instance, filename):
-    return 'proposals/{}/compliance/{}/{}'.format(instance.compliance.proposal.id,instance.compliance.id,filename)
-
-
-
 import reversion
-reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs'])
+reversion.register(Compliance, follow=['documents', 'action_logs', 'comms_logs', 'comprequest_set'])
 reversion.register(ComplianceDocument)
 reversion.register(ComplianceUserAction)
-reversion.register(ComplianceLogEntry)
+reversion.register(ComplianceLogEntry, follow=['documents'])
 reversion.register(ComplianceLogDocument)
 reversion.register(CompRequest)
-reversion.register(ComplianceAmendmentReason)
+reversion.register(ComplianceAmendmentReason, follow=['complianceamendmentrequest_set'])
 reversion.register(ComplianceAmendmentRequest)
+
 

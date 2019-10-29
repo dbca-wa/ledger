@@ -1,0 +1,31 @@
+{% extends 'wildlifecompliance/base.html' %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <div class="well">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-offset-3 col-sm-6 borderDecoration">
+                        <strong>Your application has been successfully submitted.</strong>
+                        <br/>
+                        <table>
+                            <tr>
+                                <td><strong>Application:</strong></td>
+                                <td><strong> {{application.id}}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Date:</strong></td>
+                                <td><strong> {{application.lodgement_date}}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Invoice:</strong></td>
+                                <td><a href="{{invoice_url}}" target="_blank" style="padding-left: 0px;">Download #{{invoice_ref}}</a></td>
+                            </tr>
+                        </table>
+                        <a href="{% url 'external' %}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

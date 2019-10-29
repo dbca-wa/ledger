@@ -4,7 +4,6 @@
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="approvalForm">
-                        <alert v-if="isApprovalLevelDocument" type="warning"><strong>{{warningString}}</strong></alert>
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
                             <div class="form-group">
@@ -35,7 +34,7 @@
                                     </div>
                                     <div class="col-sm-9">
                                         <div class="input-group date" ref="due_date" style="width: 70%;">
-                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" v-model="approval.expiry_date" :disabled="is_amendment">
+                                            <input type="text" class="form-control" name="due_date" placeholder="DD/MM/YYYY" ref="expiry_date" v-model="approval.expiry_date" :disabled="is_amendment">
                                             <span class="input-group-addon">
                                                 <span class="glyphicon glyphicon-calendar"></span>
                                             </span>
@@ -106,10 +105,6 @@ export default {
         proposal_type: {
             type: String,
             required: true
-        },
-        isApprovalLevelDocument: {
-            type: Boolean,
-            required: true
         }
     },
     data:function () {
@@ -136,7 +131,6 @@ export default {
                 keepInvalid:true,
                 allowInputToggle:true
             },
-            warningString: 'Please attach Level of Approval document before issuing Approval',
         }
     },
     computed: {
@@ -153,7 +147,7 @@ export default {
             return vm.startDateError;
         },
         title: function(){
-            return this.processing_status == 'With Approver' ? 'Issue Approval' : 'Propose to issue approval';
+            return this.processing_status == 'With Approver' ? 'Issue Licence' : 'Propose to issue licence';
         },
         is_amendment: function(){
             return this.proposal_type == 'Amendment' ? true : false;

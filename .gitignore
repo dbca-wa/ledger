@@ -60,6 +60,7 @@ coverage.xml
 # Django stuff:
 *.log
 staticfiles/
+staticfiles*
 
 # vim
 *.swp
@@ -91,11 +92,14 @@ media/
 import/
 importo.py
 
+#local uwsgi.ini files
+uwsgi*.ini
 *.djcache
-uwsgi.ini
 
-# npm locks
-*-lock.json
+# wildlifecompliance build static files
+wildlifecompliance/static/wildlifecompliance_vue/static/*
+
+
 commercialoperator/static/commercialoperator_vue/static/css/app.css
 commercialoperator/static/commercialoperator_vue/static/js/app.js
 commercialoperator/static/commercialoperator_vue/static/js/manifest.js

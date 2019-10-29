@@ -2,6 +2,7 @@ from django.contrib.admin import AdminSite
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
+from django.conf import settings
 
 from ledger.accounts import admin as ledger_admin
 #from ledger.accounts.models import EmailUser, Document, Address, Profile
@@ -12,6 +13,7 @@ from copy import deepcopy
 class CommercialOperatorAdminSite(AdminSite):
     site_header = 'Commercial Operator Administration'
     site_title = 'Commercial Operator Licensing'
+    index_title = 'Commercial Operator Licensing'
 
 commercialoperator_admin_site = CommercialOperatorAdminSite(name='commercialoperatoradmin')
 
@@ -31,7 +33,7 @@ class EmailUserAdmin(ledger_admin.EmailUserAdmin):
         if request.user.is_superuser:
             return fieldsets
 
-        group = Group.objects.filter(name='CommercialOperator Admin')
+        group = Group.objects.filter(name=settings.ADMIN_GROUP)
         if group and group[0] in request.user.groups.all():
             fieldsets = deepcopy(fieldsets)
             for fieldset in fieldsets:

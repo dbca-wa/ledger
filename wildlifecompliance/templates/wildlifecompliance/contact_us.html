@@ -1,0 +1,41 @@
+{% extends 'wildlifecompliance/base.html' %}
+
+{% load bootstrap3 %}
+
+{% load static %}
+
+{% block left_menu_items %}
+    <li><a href="{% url 'wc_contact' %}">Contact Us</a></li>
+    <li><a href="{% url 'wc_further_info' %}">Further Information</a></li>
+{% endblock %}
+
+{% block messages %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Contact Us</h2>
+                <p>
+                    If you have any enquiries about wildlife licensing, the Department of Biodiversity, Conservation and Attractions' Wildlife Licensing Section can be contacted:
+                </p>
+                <p>
+                    <strong>By email:</strong> <a href="mailto:wildlifelicensing@dbca.wa.gov.au">wildlifelicensing@dbca.wa.gov.au</a>
+                </p>
+                <p>
+                    <strong>By phone:</strong> (08) 9219 9000
+                </p>
+                <p>
+                    <strong>By post:</strong>
+                    <address>
+                        Wildlife Licensing Section<br>
+                        Department of Biodiversity, Conservation and Attractions<br>
+                        Locked Bag 30<br>
+                        BENTLEY DELIVERY CENTRE WA 6983
+                    </address>
+                </p>
+            </div>
+        </div>
+   </div>
+{% endblock %}

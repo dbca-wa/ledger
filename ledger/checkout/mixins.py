@@ -74,7 +74,8 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         if return_preload_url:
             try:
                 requests.get('{}?invoice={}'.format(return_preload_url, invoice.reference),
-                                cookies=self.request.COOKIES)
+                                cookies=self.request.COOKIES,
+                                verify=False)
                 # bodge for race condition: if preload updates the session, we need to update it
                 self.request.session._session_cache = self.request.session.load()
             except requests.exceptions.ConnectionError:

@@ -3,12 +3,18 @@ import Search from '../search.vue'
 import OrgAccessTable from '../organisations/dashboard.vue'
 import OrgAccess from '../organisations/access.vue'
 import Organisation from '../organisations/manage.vue'
+import User from '../users/manage.vue'
 import Proposal from '../proposals/proposal.vue'
+import ProposalCompare from '../proposals/proposal_compare.vue'
 import Referral from '../referrals/referral.vue'
 import ApprovalDash from '../approvals/dashboard.vue'
 import ComplianceDash from '../compliances/dashboard.vue'
 import Compliance from '../compliances/access.vue'
 import Approval from '../approvals/approval.vue'
+//import PaymentOrder from '@/components/common/tclass/payment_order.vue'
+import PaymentOrder from '@/components/common/tclass/payment_order.vue'
+import PaymentDash from '@/components/common/payments_dashboard.vue'
+import Reports from '@/components/reports/reports.vue'
 export default
 {
     path: '/internal',
@@ -32,7 +38,7 @@ export default
         {
             path: 'approval/:approval_id',
             component: Approval,
-           
+
         },
         {
             path: 'compliances',
@@ -42,13 +48,30 @@ export default
         {
             path: 'compliance/:compliance_id',
             component: Compliance,
-           
+
         },
         {
             path: 'search',
             component: Search,
             name:"internal-search"
         },
+        {
+            path: 'payment',
+            component: PaymentDash,
+            props: { level: 'internal' }
+            //component: PaymentOrder,
+        },
+        {
+            path: 'payment_order',
+            component: PaymentOrder,
+            name:"payment_order"
+        },
+        {
+            path:'reports',
+            name:'reports',
+            component:Reports
+        },
+
         {
             path: 'organisations',
             component: {
@@ -73,7 +96,23 @@ export default
                     component: Organisation,
                     name:"internal-org-detail"
                 },
- 
+
+            ]
+        },
+        {
+            path: 'users',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: ':user_id',
+                    component: User,
+                    name:"internal-user-detail"
+                },
             ]
         },
         {
@@ -106,9 +145,37 @@ export default
                         },
                     ]
                 },
- 
             ]
         },
+        {
+            path: 'proposal_compare',
+            component: {
+                render(c)
+                {
+                    return c('router-view')
+                }
+            },
+            children: [
+                {
+                    path: ':proposal_id',
+                    component: {
+                        render(c)
+                        {
+                            return c('router-view')
+                        }
+                    },
+                    children: [
+                        {
+                            path: '/',
+                            component: ProposalCompare,
+                            name:"proposal-compare"
+                        }
+                    ]
+                },
+            ]
+        },
+
+
         /*{
             path: 'proposal',
             component: Proposal,

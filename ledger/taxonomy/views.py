@@ -38,7 +38,7 @@ class SpeciesNamesJSON(View):
             add_filter('kingdom_id IN ({})'.format(fauna_kingdom), params)
         elif kingdom == 'flora':
             add_filter('kingdom_id NOT IN ({})'.format(fauna_kingdom), params)
-        r = requests.get(base_url, params=params)
+        r = requests.get(base_url, params=params, verify=False)
         names = []
         try:
             features = r.json()['features']

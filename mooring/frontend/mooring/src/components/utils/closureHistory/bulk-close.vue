@@ -3,14 +3,16 @@
         <modal okText="Close Moorings" @ok="closeCampgrounds()" :force="true">
             <h4 slot="title">Bulk Close Moorings</h4>
             <div class="body">
-                <alert :show="false" type="danger">{{errorString}}</alert>
                 <form name="closeForm" class="form-horizontal">
+                    <div class="row" v-if="showErrorClose">
+                        <div class="danger-message">&nbsp;{{errorStringClose}}</div>
+                    </div>
                     <div class="row">
                         <div class="form-group">
-                            <div class="col-md-4">
+                            <div class="col-md-2">
                                 <label for="Moorings">Moorings</label>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-10">
                                 <select  class="form-control" id="bc-campgrounds" name="campgrounds" placeholder="" multiple v-model="selected_campgrounds">
                                     <option v-for="c in campgrounds" :value="c.id">{{ c.name }}</option>
                                 </select>
@@ -19,10 +21,10 @@
                     </div>
                     <div class="row">
                         <div class="form-group">
-                            <div class="col-md-4">
-                                <label for="open_cg_range_start">Closure start: </label>
+                            <div class="col-md-2">
+                                <label for="close_cg_range_start">Closure start: </label>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-4">
                                 <div class='input-group date' :id='close_cg_range_start'>
                                     <input  name="closure_start"  v-model="range_start" type='text' class="form-control" />
                                     <span class="input-group-addon">
@@ -30,14 +32,26 @@
                                     </span>
                                 </div>
                             </div>
+                            <div class="col-md-1" />
+                            <div class="col-md-2">
+                                <label for="close_cg_range_start_time"> Start time: </label>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group date" :id="close_cg_range_start_time">
+                                    <input name="closure_start_time" v-model="range_start_time" type="text" value="00:00" class="form-control" />
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-time"></span>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="form-group">
-                            <div class="col-md-4">
-                                <label for="open_cg_range_start">Reopen: </label>
+                            <div class="col-md-2">
+                                <label for="close_cg_range_end">Reopen: </label>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-4">
                                 <div class='input-group date' :id='close_cg_range_end'>
                                     <input name="closure_end" v-model="range_end" type='text' class="form-control" />
                                     <span class="input-group-addon">
@@ -45,15 +59,27 @@
                                     </span>
                                 </div>
                             </div>
+                            <div class="col-md-1" />
+                            <div class="col-md-2">
+                                <label for="close_cg_range_end_time"> Reopen time: </label>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group date" :id="close_cg_range_end_time">
+                                    <input name="closure_end_time" v-model="range_end_time" type="text" value="23:59" class="form-control" />
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-time"></span>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <reason type="close" v-model="reason" :large="true" ></reason>
+                    <reason type="close" v-model="reason" :wide="true" ></reason>
                     <div v-show="requireDetails" class="row">
                         <div class="form-group">
-                            <div class="col-md-4">
+                            <div class="col-md-2">
                                 <label>Details: </label>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-10">
                                 <textarea name="closure_details" v-model="details" class="form-control" id="close_cg_details"></textarea>
                             </div>
                         </div>
@@ -69,7 +95,7 @@ import modal from '../bootstrap-modal.vue'
 import reason from '../reasons.vue'
 import alert from '../alert.vue'
 import { mapGetters } from 'vuex'
-import { $, datetimepicker,api_endpoints, validate, helpers } from '../../../hooks'
+import { $, datetimepicker,api_endpoints, validate, helpers, bus } from '../../../hooks'
 
 export default {
     name:"bulk-close",
@@ -78,19 +104,37 @@ export default {
         return {
             isModalOpen:false,
             closeEndPicker:null,
+            closeEndTimePicker:null,
             closeStartPicker:null,
+            closeStartTimePicker:null,
             reason:'',
+            reasons: [],
             range_start:'',
+            range_start_time: '',
             range_end:'',
+            range_end_time: '',
             close_cg_range_end:'close_cg_range_end'+vm._uid,
+            close_cg_range_end_time: 'close_cg_range_end_time'+vm.id,
             close_cg_range_start:'close_cg_range_start'+vm._uid,
+            close_cg_range_start_time: 'close_cg_range_start_time'+vm.id,
             selected_campgrounds:[],
+            errorStringClose: null,
             form: null
         }
     },
     computed:{
+        showErrorClose: function() {
+            var vm = this;
+            return vm.errorStringClose != null;
+        },
         requireDetails:function () {
-            return (this.reason == '1')
+            let vm = this;
+            var check = this.reason
+            for (var i = 0; i < vm.reasons.length; i++){
+                if (vm.reasons[i].id == check){
+                    return vm.reasons[i].detailRequired;
+                }
+            }
         },
         ...mapGetters([
           'campgrounds'
@@ -106,11 +150,17 @@ export default {
             this.isModalOpen = this.$parent.showBulkClose  = false;
             this.$parent.$refs.dtGrounds.vmDataTable.ajax.reload();
             this.range_start = "";
+            this.range_start_time = "";
             this.range_end = "";
+            this.range_end_time = "";
             this.campgrounds = "";
+            this.selected_campgrounds = "";
             this.reason = "";
+            this.errorStringClose = null;
 			this.closeStartPicker.data('DateTimePicker').date(new Date());
+            this.closeStartTimePicker.data('DateTimePicker').clear();
 			this.closeEndPicker.data('DateTimePicker').clear();
+            this.closeEndTimePicker.data('DateTimePicker').clear();
         },
         events:function () {
             let vm = this;
@@ -119,18 +169,33 @@ export default {
                 format: 'DD/MM/YYYY',
                 minDate: new Date()
             });
+            vm.closeStartTimePicker = $('#'+vm.close_cg_range_start_time).datetimepicker({
+                format: 'HH:mm',
+            });
             vm.closeEndPicker.datetimepicker({
                 format: 'DD/MM/YYYY',
                 useCurrent: false
+            });
+            vm.closeEndTimePicker = $('#'+vm.close_cg_range_end_time).datetimepicker({
+                format: 'HH:mm'
             });
             vm.closeStartPicker.on('dp.change', function(e){
                 vm.range_start = vm.closeStartPicker.data('DateTimePicker').date().format('DD/MM/YYYY');
                 vm.closeEndPicker.data("DateTimePicker").minDate(e.date);
             });
+            vm.closeStartTimePicker.on('dp.change', function(e){
+                vm.range_start_time = vm.closeStartTimePicker.data('DateTimePicker').date().format('HH:mm');
+            });
             vm.closeEndPicker.on('dp.change', function(e){
                 var date = vm.closeEndPicker.data('DateTimePicker').date();
                 vm.range_end = (date) ? date.format('DD/MM/YYYY') : null;
             });
+            vm.closeEndTimePicker.on('dp.change', function(e){
+                vm.range_end_time = vm.closeEndTimePicker.data('DateTimePicker').date().format('HH:mm');
+            });
+            vm.range_start_time = '00:00';
+            vm.range_end_time = '23:59';
+
             vm.addFormValidations();
             vm.fetchCampgrounds();
             vm.initSelectTwo();
@@ -165,7 +230,9 @@ export default {
                 let vm = this;
                 let data = {
                     range_start: vm.range_start,
+                    range_start_time: vm.range_start_time,
                     range_end: vm.range_end,
+                    range_end_time: vm.range_end_time,
                     campgrounds: vm.selected_campgrounds,
                     reason: vm.reason,
                     status:'1'
@@ -189,12 +256,17 @@ export default {
                        vm.close();
                     },
                     error:function (resp){
-                        vm.$store.dispatch("updateAlert",{
-        					visible:true,
-        					type:"danger",
-        					message: helpers.apiError(resp)
-                        });
-                        vm.close();
+                        console.log(resp);
+                        if(resp.responseJSON[0].includes("is already closed")){
+                            vm.errorStringClose = resp.responseJSON[0];
+                        } else {
+                            vm.$store.dispatch("updateAlert",{
+                                visible:true,
+                                type:"danger",
+                                message: helpers.apiError(resp)
+                            });
+                            vm.close();
+                        }
                     }
                 });
             }
@@ -210,7 +282,12 @@ export default {
                     closure_details: {
                         required: {
                             depends: function(el){
-                                return vm.reason === '1';
+                                var check = this.reason
+                                for (var i = 0; i < vm.reasons.length; i++){
+                                    if (vm.reasons[i].id == check){
+                                        return vm.reasons[i].detailRequired;
+                                    }
+                                }
                             }
                         }
                     }
@@ -248,6 +325,9 @@ export default {
         let vm = this;
         vm.form = $(document.forms.closeForm);
         vm.events();
+        bus.$once('closeReasons',setReasons => {
+            vm.reasons = setReasons;
+        });
     }
 }
 
@@ -256,5 +336,16 @@ export default {
 <style lang="css">
 .body{
     padding:0 20px;
+}
+.danger-message{
+    z-index: 999999;
+    background-color: #F2DEDE;
+    color: #A94442;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #A94442;
+    border-radius: 5px;
+    padding: 8px;
+    margin-bottom: 10px;
 }
 </style>
