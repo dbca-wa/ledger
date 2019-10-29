@@ -67,7 +67,6 @@ class ApplicationFeeView(TemplateView):
 
         proposal = self.get_object()
         application_fee = ApplicationFee.objects.create(proposal=proposal, created_by=request.user, payment_type=3)
-        #import ipdb; ipdb.set_trace()
 
         try:
             with transaction.atomic():
@@ -97,7 +96,6 @@ class MakePaymentView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
 
     def post(self, request, *args, **kwargs):
-        #import ipdb; ipdb.set_trace()
 
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
@@ -117,23 +115,7 @@ class MakePaymentView(TemplateView):
                 )
 
                 logger.info('{} built payment line items {} for Park Bookings and handing over to payment gateway'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
-                #import ipdb; ipdb.set_trace()
                 return checkout_response
-
-#                # FIXME: replace with session check
-#                invoice = None
-#                if 'invoice=' in checkout_response.url:
-#                    invoice = checkout_response.url.split('invoice=', 1)[1]
-#                else:
-#                    for h in reversed(checkout_response.history):
-#                        if 'invoice=' in h.url:
-#                            invoice = h.url.split('invoice=', 1)[1]
-#                            break
-#                print ("-== internal_booking ==-")
-#                self.internal_create_booking_invoice(booking, invoice)
-#                delete_session_booking(request.session)
-#
-#                return checkout_response
 
         except Exception, e:
             logger.error('Error Creating booking: {}'.format(e))
@@ -155,17 +137,10 @@ class ApplicationFeeSuccessView(TemplateView):
         submitter = None
         invoice = None
         try:
-            print '0a Session: {}'.format(request.session['cols_app_invoice'] if 'cols_app_invoice' in request.session else '')
-            print '0b Last Session: {}'.format(request.session['cols_last_app_invoice'] if 'cols_last_app_invoice' in request.session else '')
-            #import ipdb; ipdb.set_trace()
             context = template_context(self.request)
             basket = None
             application_fee = get_session_application_invoice(request.session)
-            print (" Session (App Fee) {}".format(application_fee))
-            print (" 1 ")
             proposal = application_fee.proposal
-            print (" 2 ")
-            #proposal = get_session_application_invoice(request.session)
 
             try:
                 recipient = proposal.applicant.email
@@ -174,43 +149,26 @@ class ApplicationFeeSuccessView(TemplateView):
                 recipient = proposal.submitter.email
                 submitter = proposal.submitter
 
-            print (" 3 ")
             if self.request.user.is_authenticated():
                 basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
-                #basket_open = Basket.objects.filter(status='Open', owner=request.user).order_by('-id')[:1]
-                #print '3a - Basket ID: {}, Status: {}'.format(basket_open[0].id, basket_open[0].status)
-                print (" 3a ")
             else:
                 basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
-                print (" 3b ")
 
-            print (" 4 ")
             order = Order.objects.get(basket=basket[0])
-            print (" 5 ")
             invoice = Invoice.objects.get(order_number=order.number)
-            print (" 6 ")
             invoice_ref = invoice.reference
-            print (" 7 ")
-            #book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
             fee_inv, created = ApplicationFeeInvoice.objects.get_or_create(application_fee=application_fee, invoice_reference=invoice_ref)
 
-            #import ipdb; ipdb.set_trace()
-            print 'Basket ID: {}, Status: {}, Order: {}, Invoice: {}'.format(basket[0].id, basket[0].status, order, invoice_ref)
             if application_fee.payment_type == 3:
                 try:
                     inv = Invoice.objects.get(reference=invoice_ref)
                     order = Order.objects.get(number=inv.order_number)
                     order.user = submitter
                     order.save()
-                    print (" 8 ")
                 except Invoice.DoesNotExist:
-                    print ("INVOICE ERROR")
                     logger.error('{} tried paying an application fee with an incorrect invoice'.format('User {} with id {}'.format(proposal.submitter.get_full_name(), proposal.submitter.id) if proposal.submitter else 'An anonymous user'))
                     return redirect('external-proposal-detail', args=(proposal.id,))
-                #if inv.system not in ['S557']:
-                print ("INVOICE SYSTEM {}, settings.PS_PAYMENT_SYSTEM_ID {}".format(inv.system, settings.PS_PAYMENT_SYSTEM_ID))
                 if inv.system not in ['0557']:
-                    print ("SYSTEM ERROR")
                     logger.error('{} tried paying an application fee with an invoice from another system with reference number {}'.format('User {} with id {}'.format(proposal.submitter.get_full_name(), proposal.submitter.id) if proposal.submitter else 'An anonymous user',inv.reference))
                     return redirect('external-proposal-detail', args=(proposal.id,))
 
@@ -219,37 +177,29 @@ class ApplicationFeeSuccessView(TemplateView):
                     application_fee.expiry_time = None
                     update_payments(invoice_ref)
 
-                    print (" 9 ")
                     proposal = proposal_submit(proposal, request)
                     if proposal and (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid'):
                         proposal.fee_invoice_reference = invoice_ref
                         proposal.save()
-                        print (" 10 ")
                     else:
                         logger.error('Invoice payment status is {}'.format(invoice.payment_status))
                         raise
 
                     application_fee.save()
-                    print (" 11 ")
                     request.session['cols_last_app_invoice'] = application_fee.id
                     delete_session_application_invoice(request.session)
-                    print '11a Session: {}'.format(request.session['cols_app_invoice'] if 'cols_app_invoice' in request.session else '')
-                    print '11b Last Session: {}'.format(request.session['cols_last_app_invoice'] if 'cols_last_app_invoice' in request.session else '')
 
                     send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
                     send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
-                    print (" 12 ")
 
                     context = {
                         'proposal': proposal,
                         'submitter': submitter,
                         'fee_invoice': invoice
                     }
-                    print (" 13 ")
                     return render(request, self.template_name, context)
 
         except Exception as e:
-            print 'My Exception: {}'.format(e)
             if ('cols_last_app_invoice' in request.session) and ApplicationFee.objects.filter(id=request.session['cols_last_app_invoice']).exists():
                 application_fee = ApplicationFee.objects.get(id=request.session['cols_last_app_invoice'])
                 proposal = application_fee.proposal
@@ -263,96 +213,16 @@ class ApplicationFeeSuccessView(TemplateView):
 
                 if ApplicationFeeInvoice.objects.filter(application_fee=application_fee).count() > 0:
                     afi = ApplicationFeeInvoice.objects.filter(application_fee=application_fee)
-                    #invoice = afi[0].invoice_reference
                     invoice = afi[0]
-                    print (" 13a: {} ".format(invoice))
-#                    book_inv = BookingInvoice.objects.get(booking=booking).invoice_reference
             else:
-                #import ipdb; ipdb.set_trace()
-                print (" 14 ")
                 return redirect('home')
 
         context = {
-            #'booking': booking,
-            #'book_inv': [app_inv]
             'proposal': proposal,
             'submitter': submitter,
             'fee_invoice': invoice
         }
-        print (" 15 ")
         return render(request, self.template_name, context)
-
-
-class _ApplicationFeeSuccessView(TemplateView):
-    template_name = 'commercialoperator/booking/success_fee.html'
-
-    def get(self, request, *args, **kwargs):
-
-        context = template_context(self.request)
-        basket = None
-        proposal = get_session_application_invoice(request.session)
-
-        #import ipdb; ipdb.set_trace()
-        if proposal.fee_paid:
-            #proposal.fee_invoice_reference = request.session.pop('checkout_invoice')
-            #proposal.save()
-            #TODO must remove this ''if-block' - temp hack, the method is executing twice - need to FIX
-            invoice = Invoice.objects.get(reference=proposal.fee_invoice_reference)
-            try:
-                recipient = proposal.applicant.email
-                submitter = proposal.applicant
-            except:
-                recipient = proposal.submitter.email
-                submitter = proposal.submitter
-            send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
-
-            context.update({
-                'proposal': proposal,
-                'submitter': submitter,
-                'fee_invoice': invoice
-            })
-            return render(request, self.template_name, context)
-
-        print (" APPLICATION FEE SUCCESS ")
-        if self.request.user.is_authenticated():
-            basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
-        else:
-            basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
-
-        order = Order.objects.get(basket=basket[0])
-        invoice = Invoice.objects.get(order_number=order.number)
-        invoice_ref = invoice.reference
-        #book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-
-        #import ipdb; ipdb.set_trace()
-        proposal = proposal_submit(proposal, request)
-        if proposal and (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid'):
-            proposal.fee_invoice_reference = invoice_ref
-            proposal.save()
-        else:
-            logger.error('Invoice payment status is {}'.format(invoice.payment_status))
-            raise
-
-        print ("APPLICATION FEE")
-        try:
-            recipient = proposal.applicant.email
-            submitter = proposal.applicant
-        except:
-            recipient = proposal.submitter.email
-            submitter = proposal.submitter
-        #import ipdb; ipdb.set_trace()
-        send_application_fee_invoice_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
-        send_application_fee_confirmation_tclass_email_notification(request, proposal, invoice, recipients=[recipient])
-
-        #delete_session_booking(request.session)
-
-        context.update({
-            'proposal': proposal,
-            'submitter': submitter,
-            'fee_invoice': invoice
-        })
-        return render(request, self.template_name, context)
-
 
 class BookingSuccessView(TemplateView):
     template_name = 'commercialoperator/booking/success.html'
@@ -360,39 +230,90 @@ class BookingSuccessView(TemplateView):
     def get(self, request, *args, **kwargs):
         print (" BOOKING SUCCESS ")
 
-        context = template_context(self.request)
-        basket = None
-        booking = get_session_booking(request.session)
-
-        if self.request.user.is_authenticated():
-            basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
-        else:
-            basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
-
-        order = Order.objects.get(basket=basket[0])
-        invoice = Invoice.objects.get(order_number=order.number)
-        invoice_ref = invoice.reference
-        book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
-
-        print ("BOOKING")
-
+        booking = None
+        submitter = None
+        invoice = None
         try:
-            recipient = booking.proposal.applicant.email
-            submitter = booking.proposal.applicant
-        except:
-            recipient = booking.proposal.submitter.email
-            submitter = booking.proposal.submitter
+            context = template_context(self.request)
+            basket = None
+            booking = get_session_booking(request.session)
+            proposal = booking.proposal
 
-        #import ipdb; ipdb.set_trace()
-        send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
-        send_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+            try:
+                recipient = proposal.applicant.email
+                submitter = proposal.applicant
+            except:
+                recipient = proposal.submitter.email
+                submitter = proposal.submitter
 
-        #delete_session_booking(request.session)
+            if self.request.user.is_authenticated():
+                basket = Basket.objects.filter(status='Submitted', owner=request.user).order_by('-id')[:1]
+            else:
+                basket = Basket.objects.filter(status='Submitted', owner=booking.proposal.submitter).order_by('-id')[:1]
+
+            order = Order.objects.get(basket=basket[0])
+            invoice = Invoice.objects.get(order_number=order.number)
+            invoice_ref = invoice.reference
+            book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=invoice_ref)
+
+            if booking.booking_type == 3:
+                try:
+                    inv = Invoice.objects.get(reference=invoice_ref)
+                    order = Order.objects.get(number=inv.order_number)
+                    order.user = submitter
+                    order.save()
+                except Invoice.DoesNotExist:
+                    logger.error('{} tried paying an admission fee with an incorrect invoice'.format('User {} with id {}'.format(proposal.submitter.get_full_name(), proposal.submitter.id) if proposal.submitter else 'An anonymous user'))
+                    return redirect('external-proposal-detail', args=(proposal.id,))
+                if inv.system not in ['0557']:
+                    logger.error('{} tried paying an admission fee with an invoice from another system with reference number {}'.format('User {} with id {}'.format(proposal.submitter.get_full_name(), proposal.submitter.id) if proposal.submitter else 'An anonymous user',inv.reference))
+                    return redirect('external-proposal-detail', args=(proposal.id,))
+
+                if book_inv:
+                    booking.booking_type = 1  # internet booking
+                    booking.expiry_time = None
+                    update_payments(invoice_ref)
+
+                    if not (invoice.payment_status == 'paid' or invoice.payment_status == 'over_paid'):
+                        logger.error('Admission Fee Invoice payment status is {}'.format(invoice.payment_status))
+                        raise
+
+                    booking.save()
+                    request.session['cols_last_booking'] = booking.id
+                    delete_session_booking(request.session)
+
+                    send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+                    send_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+
+                    context.update({
+                        'booking_id': booking.id,
+                        'submitter': submitter,
+                        'booking_invoice': invoice
+                    })
+                    return render(request, self.template_name, context)
+
+        except Exception as e:
+            if ('cols_last_booking' in request.session) and ApplicationFee.objects.filter(id=request.session['cols_last_booking']).exists():
+                booking = Booking.objects.get(id=request.session['cols_last_booking'])
+                proposal = booking.proposal
+
+                try:
+                    recipient = proposal.applicant.email
+                    submitter = proposal.applicant
+                except:
+                    recipient = proposal.submitter.email
+                    submitter = proposal.submitter
+
+                if BookingInvoice.objects.filter(booking=booking).count() > 0:
+                    bi = BookingInvoice.objects.filter(booking=booking)
+                    invoice = bi[0]
+            else:
+                return redirect('home')
 
         context.update({
             'booking_id': booking.id,
             'submitter': submitter,
-            'book_inv': [book_inv]
+            'booking_invoice': invoice
         })
         return render(request, self.template_name, context)
 
@@ -400,8 +321,14 @@ class BookingSuccessView(TemplateView):
 class InvoicePDFView(InvoiceOwnerMixin,View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
+        if bi:
+            proposal = bi.booking.proposal
+        else:
+            proposal = Proposal.objects.get(fee_invoice_reference=invoice.reference)
+
         response = HttpResponse(content_type='application/pdf')
-        response.write(create_invoice_pdf_bytes('invoice.pdf',invoice))
+        response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
         return response
 
     def get_object(self):
@@ -414,6 +341,7 @@ class ConfirmationPDFView(InvoiceOwnerMixin,View):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
 
+        # GST ignored here because GST amount is not included on the confirmation PDF
         response = HttpResponse(content_type='application/pdf')
         response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking))
         return response

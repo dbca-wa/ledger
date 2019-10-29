@@ -588,6 +588,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         return Invoice.objects.get(reference=self.fee_invoice_reference).amount if self.fee_paid else None
 
     @property
+    def licence_fee_amount(self):
+        period = self.other_details.preferred_licence_period
+        if period.split('_')[1].endswith('months'):
+            return self.application_type.licence_fee_2mth
+        else:
+            return int(period.split('_')[0]) * self.application_type.licence_fee_1yr
+
+    @property
     def reference(self):
         return '{}-{}'.format(self.lodgement_number, self.lodgement_sequence)
 

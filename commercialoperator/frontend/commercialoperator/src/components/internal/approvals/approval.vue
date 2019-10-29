@@ -163,8 +163,11 @@
                           </div>
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Document</label>
-                            <div class="col-sm-4">
+                            <div v-if="!approval.migrated" class="col-sm-4">
                                 <p><a target="_blank" :href="approval.licence_document" class="control-label pull-left">Licence.pdf</a></p>
+                            </div>
+                            <div v-else class="col-sm-4">
+                                <p class=""><a target="_blank" href="" >Licence.pdf</a> (This is a migrated licence)</p>
                             </div>
                           </div>
                        </form>
