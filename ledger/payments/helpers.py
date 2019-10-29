@@ -23,4 +23,4 @@ def belongs_to(user, group_name):
 
 
 def is_payment_admin(user):
-    return user.is_authenticated() and (belongs_to(user, 'Payments Officers') or user.is_superuser)
+    return user.is_authenticated() and (belongs_to(user, settings.PAYMENT_OFFICERS_GROUP) or user.is_superuser)

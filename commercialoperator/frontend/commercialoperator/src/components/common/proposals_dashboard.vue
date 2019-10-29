@@ -126,6 +126,7 @@ export default {
             datatable_id: 'proposal-datatable-'+vm._uid,
             //Profile to check if user has access to process Proposal
             profile: {},
+            is_payment_admin: false,
             // Filters for Proposals
             filterProposalStatus: 'All',
             filterProposalLodgedFrom: '',
@@ -161,9 +162,8 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Action"
+                "Number","Licence Type","Submitter","Applicant","Status","Lodged on","Action"
             ],
-
             proposal_ex_options:{
                 autoWidth: false,
                 language: {
@@ -181,7 +181,6 @@ export default {
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
-
                 },
                 dom: 'lBfrtip',
                 buttons:[
@@ -196,7 +195,7 @@ export default {
                     },
                     {
 						data: "application_type",
-						name: "application_type"
+						name: "application_type__name"
 					},
                     {
                         data: "submitter",
@@ -291,7 +290,7 @@ export default {
                 */
             },
             proposal_headers:[
-                "Number","Application Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action",
+                "Number","Licence Type","Submitter","Applicant","Status","Lodged on","Assigned Officer","Action",
             ],
             proposal_options:{
                 autoWidth: false,
@@ -320,7 +319,6 @@ export default {
                         mRender:function(data,type,full){
                             return full.lodgement_number;
                         },
-                        //name: "lodgement_number",
                         data: "id, lodgement_number"
                     },
                     {
@@ -352,9 +350,7 @@ export default {
                         data: "lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                            //return data != '' && data != null ? moment(data): '';
                         },
-                        //name: "assigned_officer__first_name, assigned_officer__last_name",
                         searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
                     {
@@ -384,7 +380,9 @@ export default {
                                 }
                             }
                             if (full.fee_paid){
+                                if(vm.is_payment_admin){
                                 links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                            }
                                 links +=  `<a href='/cols/payments/invoice-pdf/${full.fee_invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${full.fee_invoice_reference}</a><br/>`;
                             }
                             return links;
@@ -591,7 +589,8 @@ export default {
         fetchProfile: function(){
             let vm = this;
             Vue.http.get(api_endpoints.profile).then((response) => {
-                vm.profile = response.body
+                vm.profile = response.body;
+                vm.is_payment_admin=response.body.is_payment_admin;
                               
             },(error) => {
                 console.log(error);

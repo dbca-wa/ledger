@@ -50,16 +50,20 @@ class Organisation(models.Model):
             except UserDelegation.DoesNotExist:
                 delegate = UserDelegation.objects.create(organisation=self,user=user)
             # Create contact person
-            OrganisationContact.objects.create(
-                organisation = self,
-                first_name = user.first_name,
-                last_name = user.last_name,
-                mobile_number = user.mobile_number,
-                phone_number = user.phone_number,
-                fax_number = user.fax_number,
-                email = user.email
-            
-            )
+            try:
+                OrganisationContact.objects.create(
+                    organisation = self,
+                    first_name = user.first_name,
+                    last_name = user.last_name,
+                    mobile_number = user.mobile_number,
+                    phone_number = user.phone_number,
+                    fax_number = user.fax_number,
+                    email = user.email
+                )
+            except:
+                #Org Contact already exists
+                pass
+
             # log linking
             self.log_user_action(OrganisationAction.ACTION_LINK.format('{} {}({})'.format(delegate.user.first_name,delegate.user.last_name,delegate.user.email)),request)
             # send email

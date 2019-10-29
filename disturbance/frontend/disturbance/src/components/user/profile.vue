@@ -192,7 +192,7 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-3"> 
-                                    <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="" style="width: 100%">
                                 </div>
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
@@ -206,7 +206,7 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-3"> 
-                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="" style="width: 100%">
                                 </div>
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
@@ -240,11 +240,11 @@
                                   </label>
                                   <label for="" class="col-sm-2 control-label" >Pin 1</label>
                                   <div class="col-sm-2">
-                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin1" placeholder="">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin1" placeholder="" style="width: 100%">
                                   </div>
                                   <label for="" class="col-sm-2 control-label" >Pin 2</label>
                                   <div class="col-sm-2">
-                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin2" placeholder="">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin2" placeholder="" style="width: 100%">
                                   </div>
                                   <div class="col-sm-2">
                                     <button v-if="!validatingPins" @click.prevent="validatePins()" class="btn btn-primary pull-left">Validate</button>
@@ -257,7 +257,7 @@
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-primary btn-file pull-left">
-                                        Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                     </span>
                                     <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                                   </div>
@@ -434,7 +434,11 @@ export default {
                     vm.missing_fields.push({id: this.id});
                 }
             });
-            if (vm.profile.mobile_number == '' || vm.profile.phone_number ==''){
+            // if (vm.profile.mobile_number == '' || vm.profile.phone_number ==''){
+            //   vm.errorListContact.push('Value not provided: mobile/ Phone number')
+            //   vm.missing_fields.push({id: $('#mobile').id});
+            // }
+            if ((vm.profile.mobile_number == '' && vm.profile.phone_number =='')|| (vm.profile.mobile_number == null && vm.profile.phone_number ==null)){
               vm.errorListContact.push('Value not provided: mobile/ Phone number')
               vm.missing_fields.push({id: $('#mobile').id});
             }

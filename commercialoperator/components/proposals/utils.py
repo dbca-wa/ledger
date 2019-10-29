@@ -2,6 +2,7 @@ import re
 from django.db import transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
 from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails, ProposalAccreditation, ProposalUserAction, ProposalAssessment, ProposalAssessmentAnswer, ChecklistQuestion
@@ -12,6 +13,10 @@ from commercialoperator.components.main.models import Activity, Park, AccessType
 import traceback
 import os
 from copy import deepcopy
+from datetime import datetime
+
+import logging
+logger = logging.getLogger(__name__)
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
     data = {}
@@ -24,7 +29,6 @@ def create_data_from_form(schema, post_data, file_data, post_data_index=None,spe
         comment_fields_search = CommentDataSearch()
     try:
         for item in schema:
-            #import ipdb; ipdb.set_trace()
             data.update(_create_data_from_item(item, post_data, file_data, 0, ''))
             #_create_data_from_item(item, post_data, file_data, 0, '')
             special_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
@@ -54,11 +58,9 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     else:
         raise Exception('Missing name in item %s' % item['label'])
 
-    #import ipdb; ipdb.set_trace()
     if 'children' not in item:
         if item['type'] in ['checkbox' 'declaration']:
             #item_data[item['name']] = post_data[item['name']]
-            #import ipdb; ipdb.set_trace()
             item_data[item['name']] = extended_item_name in post_data
         elif item['type'] == 'file':
             if extended_item_name in file_data:
@@ -78,7 +80,6 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
         if 'repetition' in item:
             item_data = generate_item_data(extended_item_name,item,item_data,post_data,file_data,len(post_data[item['name']]),suffix)
         else:
-            #import ipdb; ipdb.set_trace()
             item_data = generate_item_data(extended_item_name, item, item_data, post_data, file_data,1,suffix)
 
 
@@ -87,13 +88,11 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
             for child in item['conditions'][condition]:
                 item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
-    #import ipdb; ipdb.set_trace()
     return item_data
 
 def generate_item_data(item_name,item,item_data,post_data,file_data,repetition,suffix):
     item_data_list = []
     for rep in xrange(0, repetition):
-        #import ipdb; ipdb.set_trace()
         child_data = {}
         for child_item in item.get('children'):
             child_data.update(_create_data_from_item(child_item, post_data, file_data, 0,
@@ -298,7 +297,7 @@ class SpecialFieldsSearch(object):
 def save_park_activity_data(instance,select_parks_activities, request):
     with transaction.atomic():
         try:
-            if select_parks_activities:
+            if select_parks_activities or len(select_parks_activities)==0:
                 try:
                     #current_parks=instance.parks.all()
                     selected_parks=[]
@@ -409,7 +408,7 @@ def save_park_activity_data(instance,select_parks_activities, request):
 def save_trail_section_activity_data(instance,select_trails_activities, request):
     with transaction.atomic():
         try:
-            if select_trails_activities:
+            if select_trails_activities or len(select_trails_activities)==0:
                 try:
                     #current_parks=instance.parks.all()
                     selected_trails=[]
@@ -530,7 +529,7 @@ def save_trail_section_activity_data(instance,select_trails_activities, request)
 def save_park_zone_activity_data(instance,marine_parks_activities, request):
     with transaction.atomic():
         try:
-            if marine_parks_activities:
+            if marine_parks_activities or len(marine_parks_activities)==0:
                 try:
                     #current_parks=instance.parks.all()
                     selected_parks=[]
@@ -661,7 +660,6 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
 #            extracted_fields,special_fields = create_data_from_form(instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
 #            instance.data = extracted_fields
-#            #import ipdb; ipdb.set_trace()
 #            data = {
 #                #'region': special_fields.get('isRegionColumnForDashboard',None),
 #                'title': special_fields.get('isTitleColumnForDashboard',None),
@@ -680,9 +678,10 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
                 schema=request.POST.get('schema')
             import json
             sc=json.loads(schema)
-            #import ipdb; ipdb.set_trace()
             other_details_data=sc['other_details']
             #print other_details_data
+            if instance.is_amendment_proposal or instance.pending_amendment_request:
+                other_details_data['preferred_licence_period']=instance.other_details.preferred_licence_period
             serializer = ProposalOtherDetailsSerializer(instance.other_details,data=other_details_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
@@ -704,36 +703,58 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
             if 'accreditations' in other_details_data:
+                accreditation_types = instance.other_details.accreditations.values_list('accreditation_type', flat=True)
                 for acc in other_details_data['accreditations']:
                     #print acc
                     if 'id' in acc:
-                        acc_instance=ProposalAccreditation.objects.get(id=acc['id'])
-                        if acc['is_deleted']==True:
-                            acc_instance.delete()
+                        #acc_qs = ProposalAccreditation.objects.filter(id=acc['id'])
+                        acc_qs = instance.other_details.accreditations.filter(id=acc['id'])
+
+                        if acc_qs and 'is_deleted' in acc and acc['is_deleted']==True:
+                            acc_qs[0].delete()
+
+                        elif acc['accreditation_type'] in accreditation_types:
+                            try:
+                                instance.other_details.accreditations.filter(id=acc['id']).update(
+                                    accreditation_type = acc['accreditation_type'],
+                                    comments = acc['comments'],
+                                    accreditation_expiry = datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date() if acc['accreditation_expiry'] else None, # TODO later this may be mandatory
+                                )
+                            except Exception, e:
+                                logger.error('An error occurred while updating Accreditations {}'.format(e))
                         else:
-                            serializer=ProposalAccreditationSerializer(acc_instance,data=acc)
+                            serializer=ProposalAccreditationSerializer(data=acc)
                             serializer.is_valid(raise_exception=True)
                             serializer.save()
-                    else:
+                            #ProposalAccreditation.objects.create(
+                            #    id=acc['id'],
+                            #    accreditation_type=acc['accreditation_type'],
+                            #    comments = acc['comments'],
+                            #    accreditation_expiry = datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date(),
+                            #)
+
+                    elif acc['accreditation_type'] not in accreditation_types:
                         serializer=ProposalAccreditationSerializer(data=acc)
                         serializer.is_valid(raise_exception=True)
                         serializer.save()
-            #import ipdb; ipdb.set_trace()
-            if select_parks_activities:
+                    else:
+                        logger.warn('Possible duplicate Accreditation Type for Application {}'.format(instance.lodgement_number))
+
+            if select_parks_activities or len(select_parks_activities)==0:
                 try:
 
                     save_park_activity_data(instance, select_parks_activities, request)
 
                 except:
                     raise
-            if select_trails_activities:
+            if select_trails_activities or len(select_trails_activities)==0:
                 try:
 
                     save_trail_section_activity_data(instance, select_trails_activities, request)
 
                 except:
                     raise
-            if marine_parks_activities:
+            if marine_parks_activities or len(marine_parks_activities)==0:
                 try:
                     save_park_zone_activity_data(instance, marine_parks_activities, request)
                 except:
@@ -765,7 +786,6 @@ def save_assessor_data(instance,request,viewset):
             sc=json.loads(schema)
             #select_parks_activities=sc['selected_parks_activities']
             #select_trails_activities=sc['selected_trails_activities']
-            #import ipdb; ipdb.set_trace()
             try:
                 select_parks_activities=json.loads(request.data.get('selected_parks_activities'))
                 select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
@@ -781,17 +801,17 @@ def save_assessor_data(instance,request,viewset):
                 if marine_parks_activities:
                     marine_parks_activities=json.loads(marine_parks_activities)
             #print select_parks_activities, selected_trails_activities
-            if select_parks_activities:
+            if select_parks_activities or len(select_parks_activities)==0:
                 try:
                     save_park_activity_data(instance, select_parks_activities, request)
                 except:
                     raise
-            if select_trails_activities:
+            if select_trails_activities or len(select_trails_activities)==0:
                 try:
                     save_trail_section_activity_data(instance, select_trails_activities, request)
                 except:
                     raise
-            if marine_parks_activities:
+            if marine_parks_activities or len(marine_parks_activities)==0:
                 try:
                     save_park_zone_activity_data(instance, marine_parks_activities, request)
                 except:
@@ -814,7 +834,6 @@ def save_assessor_data(instance,request,viewset):
 
 def proposal_submit(proposal,request):
         with transaction.atomic():
-            #import ipdb; ipdb.set_trace()
             if proposal.can_user_edit:
                 proposal.submitter = request.user
                 #proposal.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
@@ -834,11 +853,9 @@ def proposal_submit(proposal,request):
                 applicant_field=getattr(proposal, proposal.applicant_field)
                 applicant_field.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(proposal.id),request)
 
-                #import ipdb; ipdb.set_trace()
                 ret1 = send_submit_email_notification(request, proposal)
                 ret2 = send_external_submit_email_notification(request, proposal)
 
-                #import ipdb; ipdb.set_trace()
                 #proposal.save_form_tabs(request)
                 if ret1 and ret2:
                     proposal.processing_status = 'with_assessor'
@@ -866,6 +883,81 @@ def proposal_submit(proposal,request):
                 raise ValidationError('You can\'t edit this proposal at this moment')
 
 
-   
+def is_payment_officer(user):
+    from commercialoperator.components.proposals.models import PaymentOfficerGroup
+    try:
+        group= PaymentOfficerGroup.objects.get(default=True)
+    except PaymentOfficerGroup.DoesNotExist:
+        group= None
+    if group:
+        if user in group.members.all():
+            return True
+    return False
+
+
+from commercialoperator.components.proposals.models import Proposal, Referral, AmendmentRequest, ProposalDeclinedDetails
+from commercialoperator.components.approvals.models import Approval
+from commercialoperator.components.compliances.models import Compliance
+from commercialoperator.components.bookings.models import ApplicationFee, Booking
+from ledger.payments.models import Invoice
+from commercialoperator.components.proposals import email as proposal_email
+from commercialoperator.components.approvals import email as approval_email
+from commercialoperator.components.compliances import email as compliance_email
+from commercialoperator.components.bookings import email as booking_email
+def test_proposal_emails(request):
+    """ Script to test all emails (listed below) from the models """
+    # setup
+    if not (settings.PRODUCTION_EMAIL):
+        recipients = [request.user.email]
+        #proposal = Proposal.objects.last()
+        approval = Approval.objects.filter(migrated=False).last()
+        proposal = approval.current_proposal
+        referral = Referral.objects.last()
+        amendment_request = AmendmentRequest.objects.last()
+        reason = 'Not enough information'
+        proposal_decline = ProposalDeclinedDetails.objects.last()
+        compliance = Compliance.objects.last()
+
+        application_fee = ApplicationFee.objects.last()
+        api = Invoice.objects.get(reference=application_fee.application_fee_invoices.last().invoice_reference)
+
+        booking = Booking.objects.last()
+        bi = Invoice.objects.get(reference=booking.invoices.last().invoice_reference)
+
+        proposal_email.send_qaofficer_email_notification(proposal, recipients, request, reminder=False)
+        proposal_email.send_qaofficer_complete_email_notification(proposal, recipients, request, reminder=False)
+        proposal_email.send_referral_email_notification(referral,recipients,request,reminder=False)
+        proposal_email.send_referral_complete_email_notification(referral,request)
+        proposal_email.send_amendment_email_notification(amendment_request, request, proposal)
+        proposal_email.send_submit_email_notification(request, proposal)
+        proposal_email.send_external_submit_email_notification(request, proposal)
+        proposal_email.send_approver_decline_email_notification(reason, request, proposal)
+        proposal_email.send_approver_approve_email_notification(request, proposal)
+        proposal_email.send_proposal_decline_email_notification(proposal,request,proposal_decline)
+        proposal_email.send_proposal_approver_sendback_email_notification(request, proposal)
+        proposal_email.send_proposal_approval_email_notification(proposal,request)
+
+        approval_email.send_approval_expire_email_notification(approval)
+        approval_email.send_approval_cancel_email_notification(approval)
+        approval_email.send_approval_suspend_email_notification(approval, request)
+        approval_email.send_approval_surrender_email_notification(approval, request)
+        approval_email.send_approval_renewal_email_notification(approval)
+        approval_email.send_approval_reinstate_email_notification(approval, request)
+
+        compliance_email.send_amendment_email_notification(amendment_request, request, compliance, is_test=True)
+        compliance_email.send_reminder_email_notification(compliance, is_test=True)
+        compliance_email.send_internal_reminder_email_notification(compliance, is_test=True)
+        compliance_email.send_due_email_notification(compliance, is_test=True)
+        compliance_email.send_internal_due_email_notification(compliance, is_test=True)
+        compliance_email.send_compliance_accept_email_notification(compliance,request, is_test=True)
+        compliance_email.send_external_submit_email_notification(request, compliance, is_test=True)
+        compliance_email.send_submit_email_notification(request, compliance, is_test=True)
+
+
+        booking_email.send_application_fee_invoice_tclass_email_notification(request, proposal, api, recipients, is_test=True)
+        booking_email.send_application_fee_confirmation_tclass_email_notification(request, application_fee, api, recipients, is_test=True)
+        booking_email.send_invoice_tclass_email_notification(request, booking, bi, recipients, is_test=True)
+        booking_email.send_confirmation_tclass_email_notification(request, booking, bi, recipients, is_test=True)
+
 
 

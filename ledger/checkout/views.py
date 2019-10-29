@@ -175,7 +175,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         checkout_token = request.POST.get('checkout_token',False)
         if checkout_token:
             self.checkout_session.checkout_using_token(request.POST.get('card',''))
-        
+
         if self.checkout_session.payment_method() == 'card' and not checkout_token:
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
@@ -219,7 +219,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 total.incl_tax,
                 crn_string,
                 system,
-                self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '')
+                self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '',
+                self.checkout_session.payment_method() if self.checkout_session.payment_method() else None
+            )
         elif method == 'icrn':
             return invoice_facade.create_invoice_icrn(
                 order_number,
@@ -227,7 +229,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 crn_string,
                 icrn_format,
                 system,
-                self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '')
+                self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '',
+                self.checkout_session.payment_method() if self.checkout_session.payment_method() else None
+            )
 
         else:
             raise ValueError('{0} is not a supported BPAY method.'.format(method))
@@ -260,7 +264,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         """
         logger.info('Order #%s: handling payment', order_number)
         # Using preauth here (two-stage model). You could use payment to
-        # perform the preauth and capture in one step.  
+        # perform the preauth and capture in one step.
         with transaction.atomic():
             method = self.checkout_session.payment_method()
             # Last point to use the check url to see if the payment should be permitted

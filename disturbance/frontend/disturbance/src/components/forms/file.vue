@@ -26,12 +26,17 @@
                 </template>
                 <a href="" v-else  @click.prevent="toggleComment"><i class="fa fa-ban">&nbsp;</i></a>
             </template>
+            <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
+            <!-- <i id="file-spinner" class=""></i> -->
             <div v-if="files">
                 <div v-for="v in documents">
                     <p>
                         File: <a :href="v.file" target="_blank">{{v.name}}</a> &nbsp;
                         <span v-if="!readonly && v.can_delete">
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
+                        </span>
+                        <span v-else-if="!readonly && !v.can_delete && v.can_hide">
+                            <a @click="hide_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
                         <span v-else>
                             <span v-if="!assessorMode">
@@ -40,11 +45,11 @@
                         </span>
                     </p>
                 </div>
-                <span v-if="show_spinner"><i class='fa fa-2x fa-spinner fa-spin'></i></span>
             </div>
             <div v-if="!readonly" v-for="n in repeat">
                 <div v-if="isRepeatable || (!isRepeatable && num_documents()==0)">
                     <input :name="name" type="file" class="form-control" :data-que="n" :accept="fileTypes" @change="handleChange" :required="isRequired"/>
+                    <alert :show.sync="showError" type="danger" style="color: red"><strong>{{errorString}}</strong></alert>
                 </div>
             </div>
 
@@ -61,6 +66,7 @@ import {
 from '@/utils/hooks'
 import Comment from './comment.vue'
 import HelpText from './help_text.vue'
+import HelpTextUrl from './help_text_url.vue'
 export default {
     props:{
         proposal_id: null,
@@ -72,6 +78,8 @@ export default {
         assessor_readonly: Boolean,
         help_text:String,
         help_text_assessor:String,
+        help_text_url:String,
+        help_text_assessor_url:String,
         assessorMode:{
             default:function(){
                 return false;
@@ -99,7 +107,7 @@ export default {
         readonly:Boolean,
         docsUrl: String,
     },
-    components: {Comment, HelpText},
+    components: {Comment, HelpText, HelpTextUrl},
     data:function(){
         return {
             repeat:1,
@@ -108,6 +116,8 @@ export default {
             show_spinner: false,
             documents:[],
             filename:null,
+            showError:false,
+            errorString:'',
         }
     },
 
@@ -133,8 +143,9 @@ export default {
         },
         handleChange:function (e) {
             let vm = this;
-
-            vm.show_spinner = true;
+            vm.showError=false;
+            vm.errorString='';
+            //vm.show_spinner = true;
             if (vm.isRepeatable) {
                 let  el = $(e.target).attr('data-que');
                 let avail = $('input[name='+e.target.name+']');
@@ -161,7 +172,7 @@ export default {
                 vm.save_document(e);
             }
 
-            vm.show_spinner = false;
+            //vm.show_spinner = false;
         },
 
         /*
@@ -182,17 +193,34 @@ export default {
                 .then(res=>{
                     vm.documents = res.body;
                     //console.log(vm.documents);
-                    vm.show_spinner = false;
                 });
 
         },
 
         delete_document: function(file) {
             let vm = this;
-            vm.show_spinner = true;
 
+            vm.show_spinner = true;
             var formData = new FormData();
             formData.append('action', 'delete');
+            formData.append('document_id', file.id);
+            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+
+            vm.$http.post(vm.proposal_document_action, formData)
+                .then(res=>{
+                    vm.documents = vm.get_documents()
+                    //vm.documents = res.body;
+                    vm.show_spinner = false;
+                });
+
+        },
+
+        hide_document: function(file) {
+            let vm = this;
+
+            vm.show_spinner = true;
+            var formData = new FormData();
+            formData.append('action', 'hide');
             formData.append('document_id', file.id);
             formData.append('csrfmiddlewaretoken', vm.csrf_token);
 
@@ -222,7 +250,17 @@ export default {
 
         save_document: function(e) {
             let vm = this; 
-
+            //var $spinner = $("#file-spinner");
+            //$spinner.toggleClass("fa fa-cog fa-spin");
+            vm.show_spinner = true;
+            if(e.target.files[0].name.length > 255){
+                vm.show_spinner=false;
+                vm.showError=true;
+                vm.errorString='File name exceeds maximum file name length limit';
+            }
+            else{
+            vm.showError=false;
+            vm.errorString='';
             var formData = new FormData();
             formData.append('action', 'save');
             formData.append('proposal_id', vm.proposal_id);
@@ -234,9 +272,11 @@ export default {
             vm.$http.post(vm.proposal_document_action, formData)
                 .then(res=>{
                     vm.documents = res.body;
+                    //$spinner.toggleClass("fa fa-cog fa-spin");
+                    vm.show_spinner = false;
                 },err=>{
                 });
-
+            }
         },
 
         num_documents: function() {
