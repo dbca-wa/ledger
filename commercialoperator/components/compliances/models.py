@@ -171,7 +171,6 @@ class Compliance(RevisionedMixin):
 
     def assign_to(self, user,request):
         with transaction.atomic():
-            #import ipdb; ipdb.set_trace()
             self.assigned_to = user
             self.save()
             self.log_user_action(ComplianceUserAction.ACTION_ASSIGN_TO.format(user.get_full_name()),request)

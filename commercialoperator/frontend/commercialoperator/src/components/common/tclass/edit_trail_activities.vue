@@ -21,7 +21,7 @@
                                 <div class="form-horizontal col-sm-3">
                                   <div class="" >
                                     <div class="form-check">
-                                      <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="s.checked"  data-parsley-required /><a v-if="s.doc_url" :href="s.doc_url" target="_blank" >
+                                      <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="s.checked"  data-parsley-required :disabled="!canEditActivities"/><a v-if="s.doc_url" :href="s.doc_url" target="_blank" >
                                         {{ s.name }}</a><span v-else>
                                         {{ s.name }}</span>
                                     </div>
@@ -31,20 +31,20 @@
                                 <div class="form-horizontal col-sm-9">
                                   <div v-for="a in trail.allowed_activities" >
                                     <div class="form-check">
-                                      <input :disabled="!s.checked" :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" :id="'section'+s.id+'activity'+a.id" v-model="s.new_activities" :value="a.id" data-parsley-required   />
+                                      <input :disabled="!s.checked" :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" :id="'section'+s.id+'activity'+a.id" v-model="s.new_activities" :value="a.id" data-parsley-required :disabled="!canEditActivities" />
                                       {{ a.name }}
                                     </div>
                                   </div>
                                 </div>
                             </div>
-                            </form>                                        
+                            </form>
                         </div>
                     </form>
                 </div>
             </div>
             <div slot="footer">
                 <button type="button" v-if="issuingVehicle" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Processing</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
+                <button type="button" v-else class="btn btn-default" @click="ok" :disabled="!canEditActivities">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -64,7 +64,10 @@ export default {
         alert
     },
     props:{
-        
+        canEditActivities:{
+          type: Boolean,
+          default: true
+        }
     },
     data:function () {
         let vm = this;
@@ -176,9 +179,7 @@ export default {
             for(var i=0;i<vm.trail.sections.length; i++){
                 vm.trail.sections[i].checked= true;
                 vm.trail.sections[i].new_activities=[];  
-            
             }
-            //console.log(vm.trail)
         },
         fetchTrail: function(trail_id){
             let vm=this;
@@ -191,15 +192,12 @@ export default {
         },
 
         addFormValidations: function() {
-            
-       },
+        },
        eventListeners:function () {
-            
        }
    },
    mounted:function () {
         let vm =this;
-        //vm.fetchAccessTypes();        
         vm.form = document.forms.vehicleForm;
         vm.addFormValidations();
         this.$nextTick(()=>{

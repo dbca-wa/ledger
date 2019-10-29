@@ -554,12 +554,14 @@ class Proposal(RevisionedMixin):
             return True
         return False
     
-    @property
-    def referral_email_list(self):
+    
+    def referral_email_list(self,user):
         qs=self.referrals.all()
         email_list=[]
         if self.assigned_officer:
             email_list.append(self.assigned_officer.email)
+        else: 
+            email_list.append(user.email)
         if qs:
             for r in qs:
                 email_list.append(r.referral.email)

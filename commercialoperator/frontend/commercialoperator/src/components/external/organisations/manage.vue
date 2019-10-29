@@ -122,7 +122,7 @@
 
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title">Linked Persons<small> Manage the user accounts linked to the organisation</small>
+                        <h3 class="panel-title">Linked User Accounts<small> Manage the user accounts linked to the organisation</small>
                             <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                                 <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                             </a>
@@ -130,7 +130,7 @@
                     </div>
                     <div class="panel-body collapse" :id="oBody">
                         <div class="col-sm-12 row">
-                            <h6>Use the Organisation Administrator pin codes if you want the new user to be linked as organisation administrator.<br> Use the Organisation User pin codes if you want the new user to be linked as organisation user.</h6>
+                            Use the Organisation Administrator pin codes if you want the new user to be linked as organisation administrator.<br> Use the Organisation User pin codes if you want the new user to be linked as organisation user.
                         </div>
                         <form class="form-horizontal" action="index.html" method="post">
                              <div class="col-sm-6 row">
@@ -166,7 +166,17 @@
                             <div class="col-sm-12 row">
                                 <div class="row">
                                     <div class="col-sm-12 top-buffer-s">
-                                        <strong>Persons linked to the organisation are controlled by the organisation. The Department cannot manage this list of people.</strong>
+                                        It is the responsibility of the organisation administrator to manage the distribution of pin codes. If you are not sure which pin code to give to your staff member please call the Tourism and Concessions Branch on (08) 9219 9978.
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-12 top-buffer-s">
+                                        Please ensure the pin codes are not provided to people that are not authorised to apply/cancel/surrender/pay fees on behalf of this organisation.
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-12 top-buffer-s">
+                                        The list of accounts linked to the organisation is controlled by the organisation. The Department cannot manage this list of accounts.
                                     </div>
                                 </div>
                             </div>
@@ -557,7 +567,7 @@ export default {
                                 title: 'Contact Accept',
                                 text: 'You have successfully accepted ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -597,7 +607,7 @@ export default {
                                 title: 'Contact Accept (Previously Declined)',
                                 text: 'You have successfully accepted ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -638,7 +648,7 @@ export default {
                                 title: 'Contact Decline',
                                 text: 'You have successfully declined ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -678,7 +688,7 @@ export default {
                                 title: 'Unlink',
                                 text: 'You have successfully unlinked ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                     vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -720,7 +730,7 @@ export default {
                                 title: 'Organisation Admin',
                                 text: 'You have successfully made ' + name + ' an Organisation Admin.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -761,7 +771,7 @@ export default {
                                 title: 'Organisation User',
                                 text: 'You have successfully made ' + name + ' an Organisation User.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -801,7 +811,7 @@ export default {
                                 title: 'Suspend User',
                                 text: 'You have successfully suspended ' + name + ' as a User.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -841,7 +851,7 @@ export default {
                                 title: 'Reinstate User',
                                 text: 'You have successfully reinstated ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -881,7 +891,7 @@ export default {
                                 title: 'Relink User',
                                 text: 'You have successfully relinked ' + name + '.',
                                 type: 'success',
-                                confirmButtonText: 'Okay'
+                                confirmButtonText: 'OK'
                             }).then(() => {
                                 vm.$refs.contacts_datatable_user.vmDataTable.ajax.reload();
                             },(error) => {
@@ -904,11 +914,13 @@ export default {
                 vm.updatingDetails = false;
                 vm.org = response.body;
                 if (vm.org.address == null){ vm.org.address = {}; }
+                if(!vm.isApplication){
                 swal(
                     'Saved',
                     'Organisation details have been saved',
                     'success'
                 )
+                }
             }, (error) => {
                 console.log(error);
                 vm.updatingDetails = false;
@@ -952,11 +964,13 @@ export default {
             }).then((response) => {
                 vm.updatingAddress = false;
                 vm.org = response.body;
+                if(!vm.isApplication){
                 swal(
                     'Saved',
                     'Address details have been saved',
                     'success'
                 )
+                }
                 if (vm.org.address == null){ vm.org.address = {}; }
             }, (error) => {
                 console.log(error);

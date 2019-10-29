@@ -88,13 +88,11 @@ class ProposalApproverGroupAdmin(admin.ModelAdmin):
         return actions
 
     def has_delete_permission(self, request, obj=None):
-        #import ipdb; ipdb.set_trace()
         if self.model.objects.count() == 1:
             return False
         return super(ProposalApproverGroupAdmin, self).has_delete_permission(request, obj)
 
     def has_add_permission(self, request):
-        #import ipdb; ipdb.set_trace()
         if self.model.objects.count() > 0:
             return False
         return super(ProposalApproverGroupAdmin, self).has_add_permission(request)
@@ -130,7 +128,7 @@ class HelpPageAdmin(admin.ModelAdmin):
 
 @admin.register(models.ChecklistQuestion)
 class ChecklistQuestionAdmin(admin.ModelAdmin):
-    list_display = ['text', 'list_type', 'obsolete',]
+    list_display = ['text', 'list_type', 'obsolete','answer_type']
     ordering = ('list_type',)
 
 @admin.register(SystemMaintenance)

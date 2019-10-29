@@ -2,7 +2,7 @@ from django.contrib import admin
 from ledger.accounts.models import EmailUser
 from disturbance.components.proposals import models
 from disturbance.components.proposals import forms
-from disturbance.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType
+from disturbance.components.main.models import ActivityMatrix, SystemMaintenance, ApplicationType, GlobalSettings
 #from disturbance.components.main.models import Activity, SubActivityLevel1, SubActivityLevel2, SubCategory
 from reversion.admin import VersionAdmin
 from django.conf.urls import url
@@ -114,4 +114,7 @@ class ApplicationTypeAdmin(admin.ModelAdmin):
     list_display = ['name', 'order', 'visible']
     ordering = ('order',)
 
-
+@admin.register(GlobalSettings)
+class GlobalSettingsAdmin(admin.ModelAdmin):
+    list_display = ['key', 'value']
+    ordering = ('key',)

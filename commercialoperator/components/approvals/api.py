@@ -82,7 +82,6 @@ class ApprovalPaginatedViewSet(viewsets.ModelViewSet):
             http://localhost:8000/api/approval_paginated/approvals_external/?format=datatables&draw=1&length=2
         """
 
-        #import ipdb; ipdb.set_trace()
         #qs = self.queryset().order_by('lodgement_number', '-issue_date').distinct('lodgement_number')
         #qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
 
@@ -118,7 +117,6 @@ class ApprovalPaymentFilterViewSet(generics.ListAPIView):
         """
         Return All approvals associated with user (proxy_applicant and org_applicant)
         """
-        #import ipdb; ipdb.set_trace()
         #return Approval.objects.filter(proxy_applicant=self.request.user)
         user = self.request.user
 
@@ -148,7 +146,7 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             return Approval.objects.all()
         elif is_customer(self.request):
             user_orgs = [org.id for org in self.request.user.commercialoperator_organisations.all()]
-            queryset =  Approval.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(submitter = request.user))
+            queryset =  Approval.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(submitter = self.request.user))
             return queryset
         return Approval.objects.none()
 
@@ -168,7 +166,6 @@ class ApprovalViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET',])
     def filter_list(self, request, *args, **kwargs):
         """ Used by the external dashboard filters """
-        #import ipdb; ipdb.set_trace()
         region_qs =  self.get_queryset().filter(current_proposal__region__isnull=False).values_list('current_proposal__region__name', flat=True).distinct()
         activity_qs =  self.get_queryset().filter(current_proposal__activity__isnull=False).values_list('current_proposal__activity', flat=True).distinct()
         data = dict(
@@ -181,7 +178,6 @@ class ApprovalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['POST'])
     @renderer_classes((JSONRenderer,))
     def process_document(self, request, *args, **kwargs):
-            #import ipdb; ipdb.set_trace()
             instance = self.get_object()
             action = request.POST.get('action')
             section = request.POST.get('input_name')
@@ -228,7 +224,6 @@ class ApprovalViewSet(viewsets.ModelViewSet):
 
                 _file = request.data.get('file-upload-0') if request.data.get('file-upload-0') else raiser('Licence File is required')
                 try:
-                    #import ipdb; ipdb.set_trace()
                     if request.data.get('applicant_type') == 'org':
                         org_applicant = Organisation.objects.get(organisation_id=request.data.get('holder-selected'))
                     else:
