@@ -11,6 +11,7 @@ from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
 from django.conf import settings
+from django.db.models import Q
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from ledger.accounts.models import Organisation as ledger_organisation
@@ -28,6 +29,7 @@ from commercialoperator.components.approvals.email import (
     send_approval_surrender_email_notification
 )
 from commercialoperator.utils import search_keys, search_multiple_keys
+from commercialoperator.helpers import is_customer
 #from commercialoperator.components.approvals.email import send_referral_email_notification
 
 
@@ -102,6 +104,30 @@ class Approval(RevisionedMixin):
         unique_together= ('lodgement_number', 'issue_date')
 
     @property
+    def bpay_allowed(self):
+        if self.org_applicant:
+            return self.org_applicant.bpay_allowed
+        return False
+
+    @property
+    def monthly_invoicing_allowed(self):
+        if self.org_applicant:
+            return self.org_applicant.monthly_invoicing_allowed
+        return False
+
+    @property
+    def monthly_invoicing_period(self):
+        if self.org_applicant:
+            return self.org_applicant.monthly_invoicing_period
+        return None
+
+    @property
+    def monthly_payment_due_period(self):
+        if self.org_applicant:
+            return self.org_applicant.monthly_payment_due_period
+        return None
+
+    @property
     def applicant(self):
         if self.org_applicant:
             return self.org_applicant.organisation.name
@@ -118,21 +144,11 @@ class Approval(RevisionedMixin):
             except:
                 return "Applicant Not Set"
 
-
-#    @property
-#    def applicant(self):
-#        #import ipdb; ipdb.set_trace()
-#        if self.current_proposal.applicant:
-#            return self.current_proposal.applicant
-#        else:
-#            if self.org_applicant:
-#                return self.org_applicant.organisation.name
-#            elif self.proxy_applicant:
-#                return "{} {}".format(
-#                    self.proxy_applicant.first_name,
-#                    self.proxy_applicant.last_name)
-#            else:
-#                return None
+    @property
+    def linked_applications(self):
+        ids = Proposal.objects.filter(approval__lodgement_number=self.lodgement_number).values_list('id', flat=True)
+        all_linked_ids = Proposal.objects.filter(Q(previous_application__in=ids) | Q(id__in=ids)).values_list('lodgement_number', flat=True)
+        return all_linked_ids
 
     @property
     def applicant_type(self):
@@ -143,6 +159,10 @@ class Approval(RevisionedMixin):
         else:
             #return None
             return "submitter"
+
+    @property
+    def is_org_applicant(self):
+        return True if self.org_applicant else False
 
     @property
     def applicant_id(self):
@@ -206,6 +226,15 @@ class Approval(RevisionedMixin):
     def allowed_assessors(self):
         return self.current_proposal.allowed_assessors
 
+
+    def is_assessor(self,user):
+        return self.current_proposal.is_assessor(user)
+
+
+    def is_approver(self,user):
+        return self.current_proposal.is_approver(user)
+
+
     @property
     def is_issued(self):
         return self.licence_number is not None and len(self.licence_number) > 0
@@ -261,12 +290,20 @@ class Approval(RevisionedMixin):
                 return False
 
 
-    def generate_doc(self, user):
-        from commercialoperator.components.approvals.pdf import create_approval_doc
+    def generate_doc(self, user, preview=False):
+        from commercialoperator.components.approvals.pdf import create_approval_doc, create_approval_pdf_bytes
         copied_to_permit = self.copiedToPermit_fields(self.current_proposal) #Get data related to isCopiedToPermit tag
+
+        if preview:
+            return create_approval_pdf_bytes(self,self.current_proposal, copied_to_permit, user)
+
         self.licence_document = create_approval_doc(self,self.current_proposal, copied_to_permit, user)
         self.save(version_comment='Created Approval PDF: {}'.format(self.licence_document.name))
         self.current_proposal.save(version_comment='Created Approval PDF: {}'.format(self.licence_document.name))
+
+#    def generate_preview_doc(self, user):
+#        from commercialoperator.components.approvals.pdf import create_approval_pdf_bytes
+#        copied_to_permit = self.copiedToPermit_fields(self.current_proposal) #Get data related to isCopiedToPermit tag
 
     def generate_renewal_doc(self):
         from commercialoperator.components.approvals.pdf import create_renewal_doc
@@ -323,7 +360,6 @@ class Approval(RevisionedMixin):
                 self.renewal_count += 1
                 self.extend_details = details.get('extend_details')
                 self.expiry_date = datetime.date(self.expiry_date.year + self.current_proposal.application_type.max_renewal_period, self.expiry_date.month, self.expiry_date.day)
-                #import ipdb; ipdb.set_trace()
                 today = timezone.now().date()
                 if self.expiry_date <= today:
                     if not self.status == 'extended':
@@ -436,7 +472,7 @@ class Approval(RevisionedMixin):
         with transaction.atomic():
             try:
                 if not request.user.commercialoperator_organisations.filter(organisation_id = self.applicant_id):
-                    if not request.user in self.allowed_assessors:
+                    if request.user not in self.allowed_assessors and not is_customer(request):
                         raise ValidationError('You do not have access to surrender this approval')
                 if not self.can_reissue and self.can_action:
                     raise ValidationError('You cannot surrender approval if it is not current or suspended')
@@ -462,6 +498,12 @@ class Approval(RevisionedMixin):
                 self.current_proposal.log_user_action(ProposalUserAction.ACTION_SURRENDER_APPROVAL.format(self.current_proposal.id),request)
             except:
                 raise
+
+
+class PreviewTempApproval(Approval):
+    class Meta:
+        app_label = 'commercialoperator'
+        #unique_together= ('lodgement_number', 'issue_date')
 
 
 class ApprovalLogEntry(CommunicationsLogEntry):

@@ -38,6 +38,10 @@ class Organisation(models.Model):
     admin_pin_two = models.CharField(max_length=50,blank=True)
     user_pin_one = models.CharField(max_length=50,blank=True)
     user_pin_two = models.CharField(max_length=50,blank=True)
+    bpay_allowed = models.BooleanField('BPAY Allowed', default=False)
+    monthly_invoicing_allowed = models.BooleanField(default=False)
+    monthly_invoicing_period = models.SmallIntegerField('Monthly Invoicing Period (in #days from beginning of the following month)', default=0)
+    monthly_payment_due_period = models.SmallIntegerField('Monthly Payment Due Period (in #days from Invoicing Date)', default=20)
 
     class Meta:
         app_label = 'commercialoperator'

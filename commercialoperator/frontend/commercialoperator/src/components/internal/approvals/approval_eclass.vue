@@ -1,6 +1,6 @@
 <template lang="html">
     <div id="internal-proposal-eclass">
-        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Add new Commercial Operator E-Class licence" large>
+        <modal transition="modal fade" @ok="ok()" @cancel="cancel()" title="Add new Commercial Operator E Class licence" large>
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="eclassForm">

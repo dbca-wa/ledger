@@ -143,7 +143,6 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def validate_pins(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            #import ipdb; ipdb.set_trace()
             serializer = OrganisationPinCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             ret = instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)
@@ -463,7 +462,6 @@ class OrganisationViewSet(viewsets.ModelViewSet):
                 comms = serializer.save()
                 # Save the files
                 for f in request.FILES:
-                    #import ipdb; ipdb.set_trace()
                     document = comms.documents.create()
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]
@@ -540,7 +538,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             )
             instance.postal_address = address
             instance.save()
-            send_organisation_address_updated_email_notification(request.user, instance, org, request)
+            #send_organisation_address_updated_email_notification(request.user, instance, org, request)
             serializer = self.get_serializer(org)
             return Response(serializer.data);
         except serializers.ValidationError:

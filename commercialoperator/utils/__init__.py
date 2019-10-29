@@ -249,10 +249,8 @@ def search_keys(dictionary, search_list=['help_text', 'label']):
                 for j in result:
                     key_label = j.keys()[0]
                     if key_label and key_label.endswith(search_item2) and key_label == corresponding_label_key: # and result.has_key(key):
-                        #import ipdb; ipdb.set_trace()
                         help_list.append({search_item2: j[key_label], search_item1: i[key]})
         except Exception, e:
-            #import ipdb; ipdb.set_trace()
             print e
 
     return help_list
@@ -320,7 +318,6 @@ def search_multiple_keys(dictionary, primary_search='isRequired', search_list=['
                 #  help_list.append( {primary_search: tmp_dict} )
 
         except Exception, e:
-            #import ipdb; ipdb.set_trace()
             print e
 
     return help_list
@@ -351,7 +348,6 @@ def flatten(old_data, new_data=None, parent_key='', sep='.', width=4):
                 flatten(elem, new_data, new_key, sep, width)
     else:
         if parent_key not in new_data:
-            #import ipdb; ipdb.set_trace()
             new_data[parent_key] = old_data
         else:
             raise AttributeError("key {} is already used".format(parent_key))

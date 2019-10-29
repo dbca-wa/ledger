@@ -136,7 +136,7 @@
                             <div class="col-sm-12">
                                 <div class="panel panel-default">
                                   <div class="panel-heading">
-                                    <h3 class="panel-title">Linked Persons<small> - Manage the user accounts linked to the organisation</small>
+                                    <h3 class="panel-title">Linked User Accounts<small> - Manage the user accounts linked to the organisation</small>
                                         <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                                         </a>

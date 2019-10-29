@@ -27,3 +27,7 @@ def dept_name():
 def dept_support_phone():
     return settings.DEP_PHONE_SUPPORT
 
+@register.simple_tag()
+def can_show_tests():
+    return settings.SHOW_TESTS_URL
+

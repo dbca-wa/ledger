@@ -11,7 +11,7 @@
                                   <label class="control-label">Access</label>
                                   <div class="" v-for="a in allowed_access_types">
                                     <div class="form-check">
-                                      <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="park_access" :value="a.id" data-parsley-required   />
+                                      <input :onclick="isClickable" class="form-check-input" ref="Checkbox" type="checkbox" v-model="park_access" :value="a.id" data-parsley-required :disabled="!canEditActivities" />
                                       {{ a.name }}
                                     </div>
                                   </div>
@@ -23,19 +23,19 @@
                                   <label class="control-label">Activities</label>
                                   <div class="" v-for="a in allowed_activities">
                                     <div class="form-check">
-                                      <input :onclick="isClickable" class="form-check-input" v-model="park_activities" :value="a.id" ref="Checkbox" type="checkbox" data-parsley-required  />
+                                      <input :onclick="isClickable" class="form-check-input" v-model="park_activities" :value="a.id" ref="Checkbox" type="checkbox" data-parsley-required :disabled="!canEditActivities" />
                                       {{ a.name }}
                                     </div>
                                   </div>
                                 </div>
-                            </form>                        
+                            </form>
                         </div>
                     </form>
                 </div>
             </div>
             <div slot="footer">
                 <button type="button" v-if="issuingVehicle" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Processing</button>
-                <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
+                <button type="button" v-else class="btn btn-default" @click="ok" :disabled="!canEditActivities">Ok</button>
                 <button type="button" class="btn btn-default" @click="cancel">Cancel</button>
             </div>
         </modal>
@@ -62,6 +62,10 @@ export default {
         vehicle_action:{
             type: String,
             default: 'edit'
+        },
+        canEditActivities:{
+          type: Boolean,
+          default: true
         }
     },
     data:function () {
