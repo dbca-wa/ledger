@@ -1,0 +1,11 @@
+{%  extends 'disturbance/emails/base_email.txt' %}
+
+{%  block content %}
+        A referral for Proposal {{proposal.lodgement_number}} has been recalled. 
+        
+
+    You can access this referral using the following link:
+
+    {{url}}
+
+{%  endblock %}

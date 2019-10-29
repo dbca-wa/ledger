@@ -342,6 +342,7 @@
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
                                 <Proposal form_width="inherit" :withSectionsSelector="false" v-if="proposal" :proposal="proposal">
+                                    <NewApply v-if="proposal" :proposal="proposal"></NewApply>
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
@@ -367,11 +368,12 @@
         </div>
         <ProposedDecline ref="proposed_decline" :processing_status="proposal.processing_status" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></ProposedDecline>
         <AmendmentRequest ref="amendment_request" :proposal_id="proposal.id" @refreshFromResponse="refreshFromResponse"></AmendmentRequest>
-        <ProposedApproval ref="proposed_approval" :processing_status="proposal.processing_status" :proposal_id="proposal.id" :proposal_type='proposal.proposal_type' :isApprovalLevelDocument="isApprovalLevelDocument" @refreshFromResponse="refreshFromResponse"/>
+        <ProposedApproval ref="proposed_approval" :processing_status="proposal.processing_status" :proposal_id="proposal.id" :proposal_type='proposal.proposal_type' :isApprovalLevelDocument="isApprovalLevelDocument" :submitter_email="proposal.submitter_email" :applicant_email="applicant_email" @refreshFromResponse="refreshFromResponse"/>
     </div>
 </template>
 <script>
 import Proposal from '../../form.vue'
+import NewApply from '../../external/proposal_apply_new.vue'
 import Vue from 'vue'
 import ProposedDecline from './proposal_proposed_decline.vue'
 import AmendmentRequest from './amendment_request.vue'
@@ -408,6 +410,7 @@ export default {
             initialisedSelects: false,
             showingProposal:false,
             showingRequirements:false,
+            hasAmendmentRequest: false,
             state_options: ['requirements','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             contacts_options:{
@@ -464,6 +467,7 @@ export default {
         ApprovalScreen,
         CommsLogs,
         MoreReferrals,
+        NewApply,
     },
     filters: {
         formatDate: function(data){
@@ -520,8 +524,33 @@ export default {
         isApprovalLevelDocument: function(){
             return this.proposal && this.proposal.processing_status == 'With Approver' && this.proposal.approval_level != null && this.proposal.approval_level_document == null ? true : false;
         },
+        applicant_email:function(){
+            return this.proposal && this.proposal.applicant.email ? this.proposal.applicant.email : '';
+        },
     },
     methods: {
+        checkAssessorData: function(){
+            //check assessor boxes and clear value of hidden assessor boxes so it won't get printed on approval pdf.
+
+            //select all fields including hidden fields
+            //console.log("here");
+            var all_fields = $('input[type=text]:required, textarea:required, input[type=checkbox]:required, input[type=radio]:required, input[type=file]:required, select:required')
+
+            all_fields.each(function() {
+                var ele=null;
+                //check the fields which has assessor boxes.
+                ele = $("[name="+this.name+"-Assessor]");
+                if(ele.length>0){
+                    var visiblity=$("[name="+this.name+"-Assessor]").is(':visible')
+                    if(!visiblity){
+                        if(ele[0].value!=''){
+                            //console.log(visiblity, ele[0].name, ele[0].value)
+                            ele[0].value=''
+                        } 
+                    }
+                }
+            });
+        },
         initialiseOrgContactTable: function(){
             let vm = this;
             if (vm.proposal && !vm.contacts_table_initialised){
@@ -540,14 +569,58 @@ export default {
         },
         proposedApproval: function(){
             this.$refs.proposed_approval.approval = this.proposal.proposed_issuance_approval != null ? helpers.copyObject(this.proposal.proposed_issuance_approval) : {};
+            if(this.proposal.proposed_issuance_approval == null){
+                var test_approval={
+                'cc_email': this.proposal.referral_email_list
+            };
+            this.$refs.proposed_approval.approval=helpers.copyObject(test_approval);
+                // this.$refs.proposed_approval.$refs.bcc_email=this.proposal.referral_email_list;
+            }
+            //this.$refs.proposed_approval.submitter_email=helpers.copyObject(this.proposal.submitter_email);
+            // if(this.proposal.applicant.email){
+            //     this.$refs.proposed_approval.applicant_email=helpers.copyObject(this.proposal.applicant.email);
+            // }
             this.$refs.proposed_approval.isModalOpen = true;
         },
         issueProposal:function(){
             //this.$refs.proposed_approval.approval = helpers.copyObject(this.proposal.proposed_issuance_approval);
+            
+            //save approval level comment before opening 'issue approval' modal
+            if(this.proposal && this.proposal.processing_status == 'With Approver' && this.proposal.approval_level != null && this.proposal.approval_level_document == null){
+                if (this.proposal.approval_level_comment!='')
+                {
+                    let vm = this;
+                    let data = new FormData();
+                    data.append('approval_level_comment', vm.proposal.approval_level_comment)
+                    vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/approval_level_comment'),data,{
+                        emulateJSON:true
+                        }).then(res=>{
+                    vm.proposal = res.body;
+                    vm.refreshFromResponse(res);
+                    },err=>{
+                    console.log(err);
+                    });
+                }
+            }
+            if(this.isApprovalLevelDocument && this.proposal.approval_level_comment=='')
+            {
+                swal(
+                    'Error',
+                    'Please add Approval document or comments before final approval',
+                    'error'
+                )
+            }
+            else{
             this.$refs.proposed_approval.approval = this.proposal.proposed_issuance_approval != null ? helpers.copyObject(this.proposal.proposed_issuance_approval) : {};
             this.$refs.proposed_approval.state = 'final_approval';
             this.$refs.proposed_approval.isApprovalLevelDocument = this.isApprovalLevelDocument;
-            this.$refs.proposed_approval.isModalOpen = true;
+            //this.$refs.proposed_approval.submitter_email=helpers.copyObject(this.proposal.submitter_email);
+            // if(this.proposal.applicant.email){
+            //     this.$refs.proposed_approval.applicant_email=helpers.copyObject(this.proposal.applicant.email);
+            // }
+            this.$refs.proposed_approval.isModalOpen = true; 
+            }
+            
         },
         declineProposal:function(){
             this.$refs.proposed_decline.decline = this.proposal.proposaldeclineddetails != null ? helpers.copyObject(this.proposal.proposaldeclineddetails): {};
@@ -559,12 +632,34 @@ export default {
             $('.deficiency').each((i,d) => {
                 values +=  $(d).val() != '' ? `Question - ${$(d).data('question')}\nDeficiency - ${$(d).val()}\n\n`: '';
             }); 
+            //this.deficientFields();
             this.$refs.amendment_request.amendment.text = values;
             
             this.$refs.amendment_request.isModalOpen = true;
         },
+        highlight_deficient_fields: function(deficient_fields){
+            let vm = this;
+            for (var deficient_field of deficient_fields) {
+                $("#" + "id_"+deficient_field).css("color", 'red');
+            }
+        },
+        deficientFields(){
+            let vm=this;
+            let deficient_fields=[]
+            $('.deficiency').each((i,d) => {
+                if($(d).val() != ''){
+                    var name=$(d)[0].name
+                    var tmp=name.replace("-comment-field","")
+                    deficient_fields.push(tmp);
+                    //console.log('data', $("#"+"id_" + tmp))
+                }
+            }); 
+            //console.log('deficient fields', deficient_fields);
+            vm.highlight_deficient_fields(deficient_fields);
+        },
         save: function(e) {
           let vm = this;
+          vm.checkAssessorData();
           let formData = new FormData(vm.form);
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
               swal(
@@ -577,6 +672,7 @@ export default {
         },
         save_wo: function() {
           let vm = this;
+          vm.checkAssessorData();
           let formData = new FormData(vm.form);
           vm.$http.post(vm.proposal_form_url,formData).then(res=>{
 
@@ -686,6 +782,7 @@ export default {
             //vm.save_wo();
             //let vm = this;
             if(vm.proposal.processing_status == 'With Assessor' && status == 'with_assessor_requirements'){
+            vm.checkAssessorData();
             let formData = new FormData(vm.form);
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{ //save Proposal before changing status so that unsaved assessor data is saved.
             
@@ -842,6 +939,7 @@ export default {
         sendReferral: function(){
             let vm = this;
             //vm.save_wo();
+            vm.checkAssessorData();
             let formData = new FormData(vm.form);
             vm.sendingReferral = true;
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{
@@ -991,6 +1089,9 @@ export default {
             vm.initialiseOrgContactTable();
             vm.initialiseSelects();
             vm.form = document.forms.new_proposal;
+            if(vm.hasAmendmentRequest){
+                vm.deficientFields();
+            }
         });
     },
     beforeRouteEnter: function(to, from, next) {
@@ -999,6 +1100,7 @@ export default {
                 vm.proposal = res.body;
                 vm.original_proposal = helpers.copyObject(res.body);
                 vm.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
+                vm.hasAmendmentRequest=vm.proposal.hasAmendmentRequest;
               });
             },
             err => {

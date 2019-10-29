@@ -1,0 +1,19 @@
+{%  extends 'disturbance/emails/base_email.txt' %}
+
+{%  block content %}
+    The Proposal {{ proposal.lodgement_number }} is waiting for assessment.
+
+    Activity: {{proposal.activity}}
+	Region: {{proposal.region}}<br>
+	{% if proposal.district %}
+		District:{{proposal.district}}
+	{% else %}
+		District: -
+	{% endif %}
+   
+    You can access this Proposal using the following link:
+  
+    {{url}}
+
+
+{%  endblock %}

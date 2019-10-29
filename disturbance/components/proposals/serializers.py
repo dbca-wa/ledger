@@ -10,7 +10,8 @@ from disturbance.components.proposals.models import (
                                     ProposalStandardRequirement,
                                     ProposalDeclinedDetails,
                                     AmendmentRequest,
-                                    AmendmentReason
+                                    AmendmentReason,
+                                    AmendmentRequestDocument,
                                 )
 from disturbance.components.organisations.models import (
                                 Organisation
@@ -89,7 +90,10 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'lodgement_sequence',
                 'can_officer_process',
                 'allowed_assessors',
-                'proposal_type'
+                'proposal_type',
+                'sub_activity_level1',
+                'sub_activity_level2',
+                'management_area',
                 )
         read_only_fields=('documents',)
 
@@ -237,12 +241,20 @@ class ProposalSerializer(BaseProposalSerializer):
     customer_status = serializers.SerializerMethodField(read_only=True)
 
     application_type = serializers.CharField(source='application_type.name', read_only=True)
-    region = serializers.CharField(source='region.name', read_only=True)
-    district = serializers.CharField(source='district.name', read_only=True)
+    #region = serializers.CharField(source='region.name', read_only=True)
+    #district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
-
+    comment_data= serializers.SerializerMethodField(read_only=True)
+       
+    class Meta:
+        model=Proposal
+        fields = BaseProposalSerializer.Meta.fields + ('comment_data',)
+           
     def get_readonly(self,obj):
         return obj.can_user_view
+
+    def get_comment_data(self,obj):
+         return obj.comment_data
 
 class SaveProposalSerializer(BaseProposalSerializer):
     assessor_data = serializers.JSONField(required=False)
@@ -281,10 +293,27 @@ class SaveProposalSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 'lodgement_sequence',
                 'can_officer_process',
+                'sub_activity_level1',
+                'sub_activity_level2',
+                'management_area',
                 )
         read_only_fields=('documents','requirements')
 
+class SaveProposalRegionSerializer(BaseProposalSerializer):
 
+    class Meta:
+        model = Proposal
+        fields = (
+                'id',
+                'region',
+                'district',
+                'activity',
+                'sub_activity_level1',
+                'sub_activity_level2',
+                'management_area',
+                'approval_level',
+                )
+        #read_only_fields=('documents','requirements')
 
 class ApplicantSerializer(serializers.ModelSerializer):
     from disturbance.components.organisations.serializers import OrganisationAddressSerializer
@@ -319,6 +348,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
     review_status = serializers.SerializerMethodField(read_only=True)
     customer_status = serializers.SerializerMethodField(read_only=True)
     submitter = serializers.CharField(source='submitter.get_full_name')
+    submitter_email = serializers.CharField(source='submitter.email')
     proposaldeclineddetails = ProposalDeclinedDetailsSerializer()
     #
     assessor_mode = serializers.SerializerMethodField()
@@ -328,8 +358,8 @@ class InternalProposalSerializer(BaseProposalSerializer):
     allowed_assessors = EmailUserSerializer(many=True)
     approval_level_document = serializers.SerializerMethodField()
     application_type = serializers.CharField(source='application_type.name', read_only=True)
-    region = serializers.CharField(source='region.name', read_only=True)
-    district = serializers.CharField(source='district.name', read_only=True)
+    #region = serializers.CharField(source='region.name', read_only=True)
+    #district = serializers.CharField(source='district.name', read_only=True)
     #tenure = serializers.CharField(source='tenure.name', read_only=True)
 
     class Meta:
@@ -340,6 +370,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'activity',
                 'approval_level',
                 'approval_level_document',
+                'approval_level_comment',
                 'region',
                 'district',
                 'tenure',
@@ -353,6 +384,7 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'applicant',
                 'proxy_applicant',
                 'submitter',
+                'submitter_email',
                 'assigned_officer',
                 'assigned_approver',
                 'previous_application',
@@ -379,7 +411,12 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 'lodgement_sequence',
                 'can_officer_process',
-                'proposal_type'
+                'proposal_type',
+                'hasAmendmentRequest',
+                'referral_email_list',
+                'sub_activity_level1',
+                'sub_activity_level2',
+                'management_area',
                 )
         read_only_fields=('documents','requirements')
 
@@ -515,11 +552,17 @@ class ProposedApprovalSerializer(serializers.Serializer):
 
 class PropedDeclineSerializer(serializers.Serializer):
     reason = serializers.CharField()
-    cc_email = serializers.CharField(required=False)
-   
+    cc_email = serializers.CharField(required=False, allow_null=True)
+  
+class AmendmentRequestDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AmendmentRequestDocument
+        fields = ('id', 'name', '_file')
+        #fields = '__all__' 
 
 class AmendmentRequestSerializer(serializers.ModelSerializer):
     #reason = serializers.SerializerMethodField()
+    amendment_request_documents = AmendmentRequestDocumentSerializer(many=True, read_only=True)
 
     class Meta:
         model = AmendmentRequest

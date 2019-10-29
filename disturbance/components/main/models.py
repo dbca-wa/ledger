@@ -127,7 +127,7 @@ class CommunicationsLogEntry(models.Model):
 
 @python_2_unicode_compatible
 class Document(models.Model):
-    name = models.CharField(max_length=100, blank=True,
+    name = models.CharField(max_length=255, blank=True,
                             verbose_name='name', help_text='')
     description = models.TextField(blank=True,
                                    verbose_name='description', help_text='')
