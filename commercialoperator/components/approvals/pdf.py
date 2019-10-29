@@ -183,7 +183,6 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
 
     #Organization details
 
-    #import ipdb; ipdb.set_trace()
     address = proposal.applicant_address
     # address = proposal.applicant_address
     if proposal.org_applicant:
@@ -354,7 +353,6 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
 
     #Organization details
 
-    #import ipdb; ipdb.set_trace()
     address = proposal.applicant_address
     # address = proposal.applicant_address
     if proposal.org_applicant:

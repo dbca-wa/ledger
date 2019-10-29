@@ -33,7 +33,6 @@ def is_model_backend(context):
 
 @register.simple_tag(takes_context=True)
 def is_payment_officer(context):
-    #import ipdb; ipdb.set_trace()
     request = context['request']
     #user= request.user._wrapped if hasattr(request.user,'_wrapped') else request.user
     return is_payment_admin(request.user)

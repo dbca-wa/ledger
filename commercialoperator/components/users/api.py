@@ -25,11 +25,11 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address, Profile, EmailIdentity, EmailUserAction
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
-from commercialoperator.components.organisations.models import  (   
+from commercialoperator.components.organisations.models import  (
                                     Organisation,
                                 )
 
-from commercialoperator.components.users.serializers import   (   
+from commercialoperator.components.users.serializers import   (
                                                 UserSerializer,
                                                 UserFilterSerializer,
                                                 UserAddressSerializer,
@@ -52,7 +52,7 @@ class DepartmentUserList(views.APIView):
             retrieve_department_users()
             data = cache.get('department_users')
         return Response(data)
-        
+
         serializer  = UserSerializer(request.user)
 
 class GetProfile(views.APIView):
@@ -124,7 +124,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 state = serializer.validated_data['state'],
                 country = serializer.validated_data['country'],
                 postcode = serializer.validated_data['postcode'],
-                user = instance 
+                user = instance
             )
             instance.residential_address = address
             instance.save()
@@ -229,7 +229,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 comms = serializer.save()
                 # Save the files
                 for f in request.FILES:
-                    #import ipdb; ipdb.set_trace()
                     document = comms.documents.create()
                     document.name = str(request.FILES[f])
                     document._file = request.FILES[f]

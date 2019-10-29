@@ -36,7 +36,7 @@
                                 <label for="">Status</label>
                                 <select class="form-control" v-model="filterComplianceStatus">
                                     <option value="All">All</option>
-                                    <option v-for="s in status" :value="s">{{s}}</option>
+                                    <option v-for="s in status" :value="s.value">{{s.name}}</option>
                                 </select>
                             </div>
                         </div>
@@ -112,17 +112,16 @@ export default {
                 allowInputToggle:true
             },
             external_status:[
-                'Due',
-                'Future',
-                'Under Review',
-                'Approved',
+                {value: 'due', name: 'Due'},
+                {value: 'future', name: 'Future'},
+                {value: 'with_assessor', name: 'Under Review'},
+                {value: 'approved', name: 'Approved'},
             ],
             internal_status:[
-                'Due',
-                'Future',
-                'With Assessor',
-                'Approved',
-                
+                {value: 'due', name: 'Due'},
+                {value: 'future', name: 'Future'},
+                {value: 'with_assessor', name: 'With Assessor'},
+                {value: 'approved', name: 'Approved'},
             ],
             status: [],
             proposal_submitters: [],

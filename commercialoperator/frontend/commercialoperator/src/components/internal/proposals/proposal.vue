@@ -319,7 +319,7 @@
                     <div class="">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="canEditActivities"  :is_internal="true" :hasAssessorMode="hasAssessorMode"></ProposalTClass>
+                                <ProposalTClass ref="tclass" v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="canEditActivities"  :is_internal="true" :hasAssessorMode="hasAssessorMode"></ProposalTClass>
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
@@ -462,7 +462,6 @@ export default {
         }
     },
     watch: {
-
     },
     computed: {
         history_url: function(){
@@ -608,8 +607,6 @@ export default {
             formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
             formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{
-
-              
                 },err=>{
             });
         },
@@ -633,12 +630,14 @@ export default {
         },
         assignRequestUser: function(){
             let vm = this;
+
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assign_request_user')))
             .then((response) => {
                 vm.proposal = response.body;
                 vm.original_proposal = helpers.copyObject(response.body);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.updateAssignedOfficerSelect();
+
             }, (error) => {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
@@ -664,7 +663,7 @@ export default {
             let vm = this;
             let unassign = true;
             let data = {};
-            if (vm.processing_status == 'With Approver'){
+            if (vm.proposal.processing_status == 'With Approver'){
                 unassign = vm.proposal.assigned_approver != null && vm.proposal.assigned_approver != 'undefined' ? false: true;
                 data = {'assessor_id': vm.proposal.assigned_approver};
             }
@@ -1015,6 +1014,14 @@ export default {
         this.$nextTick(() => {
             //vm.initialiseOrgContactTable();
             vm.initialiseSelects();
+
+            if (typeof vm.$refs.tclass !== 'undefined') {
+                //  hack - after a local update (re-assign assessor or send referral) these are being reset to null, so resetting these to the correct values here
+                vm.proposal.selected_parks_activities = vm.$refs.tclass.$refs.activities_land.selected_parks_activities;
+                vm.proposal.selected_trails_activities = vm.$refs.tclass.$refs.activities_land.selected_trails_activities;
+                vm.proposal.marine_parks_activities = vm.$refs.tclass.$refs.activities_marine.marine_parks_activities;
+            }
+
             vm.form = document.forms.new_proposal;
         });
     },

@@ -48,3 +48,4 @@ def is_internal(request):
 
 def get_all_officers():
     return EmailUser.objects.filter(groups__name='Commercial Operator Admin')
+

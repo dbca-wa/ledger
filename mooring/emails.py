@@ -16,6 +16,9 @@ from django.template.loader import render_to_string, get_template
 from confy import env
 from django.template import Context
 from ledger.accounts.models import Document
+from django.contrib.auth.models import Group
+from ledger.accounts.models import EmailUser
+
 import datetime
 import hashlib
 
@@ -60,6 +63,8 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
     # Main Email Template Style ( body template is populated in the center
     if template_group == 'rottnest':
         main_template = get_template('mooring/email/base_email-rottnest.html').render(Context(context))
+    elif template_group == 'system-oim':
+        main_template = get_template('mooring/email/base_email-oim.html').render(Context(context))
     else:
         main_template = get_template('mooring/email/base_email2.html').render(Context(context))
    
@@ -392,6 +397,10 @@ def send_refund_failure_email_admissions(booking, context_processor):
        to = settings.NON_PROD_EMAIL
        sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
     else:
+       pa = Group.objects.get(name='Payments Officers')
+       ma = Group.objects.get(name="Mooring Admin")
+       user_list = EmailUser.objects.filter(groups__in=[ma,]).distinct()
+
        for u in user_list:
           to = u.email
           sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -434,6 +443,11 @@ def send_refund_failure_email(booking, context_processor):
        to = settings.NON_PROD_EMAIL
        sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
     else:
+
+       pa = Group.objects.get(name='Payments Officers')
+       ma = Group.objects.get(name="Mooring Admin")
+       user_list = EmailUser.objects.filter(groups__in=[ma,]).distinct()
+
        for u in user_list:
           to = u.email
           sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -488,7 +502,7 @@ def send_refund_failure_email_old(booking):
 
     pa = Group.objects.get(name='Payments Officers')
     ma = Group.objects.get(name="Mooring Admin")
-    user_list = EmailUser.objects.filter(groups__in=[pa,ma]).distinct()
+    user_list = EmailUser.objects.filter(groups__in=[ma,]).distinct()
 
     ### REMOVE ###
     for u in user_list:

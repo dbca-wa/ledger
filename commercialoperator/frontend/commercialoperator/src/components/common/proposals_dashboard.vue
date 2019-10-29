@@ -164,7 +164,6 @@ export default {
             proposal_ex_headers:[
                 "Number","Licence Type","Submitter","Applicant","Status","Lodged on","Action"
             ],
-
             proposal_ex_options:{
                 autoWidth: false,
                 language: {
@@ -182,7 +181,6 @@ export default {
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
         		    }
-
                 },
                 dom: 'lBfrtip',
                 buttons:[
@@ -197,7 +195,7 @@ export default {
                     },
                     {
 						data: "application_type",
-						name: "application_type"
+						name: "application_type__name"
 					},
                     {
                         data: "submitter",
@@ -321,7 +319,6 @@ export default {
                         mRender:function(data,type,full){
                             return full.lodgement_number;
                         },
-                        //name: "lodgement_number",
                         data: "id, lodgement_number"
                     },
                     {
@@ -353,9 +350,7 @@ export default {
                         data: "lodgement_date",
                         mRender:function (data,type,full) {
                             return data != '' && data != null ? moment(data).format(vm.dateFormat): '';
-                            //return data != '' && data != null ? moment(data): '';
                         },
-                        //name: "assigned_officer__first_name, assigned_officer__last_name",
                         searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
                     },
                     {

@@ -30,6 +30,15 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="">Payment Method</label>
+                                <select class="form-control" v-model="filterProposalPaymentMethod">
+                                    <option value="All">All</option>
+                                    <option v-for="s in payment_method" :value="s.value">{{s.name}}</option>
+                                </select>
+                            </div>
+                        </div>
                         <div v-if="is_external" class="col-md-3">
                             <div class="form-group">
                                 <router-link  style="margin-top:25px;" class="btn btn-primary pull-right" :to="{ name: 'payment_order'  }">Make Payment</router-link>
@@ -112,6 +121,7 @@ export default {
             // Filters for Proposals
             filterProposalPark: 'All',
             filterProposalStatus: 'All',
+            filterProposalPaymentMethod: 'All',
             filterProposalLodgedFrom: '',
             filterProposalLodgedTo: '',
             filterProposalSubmitter: 'All',
@@ -127,12 +137,19 @@ export default {
                 {name:'Paid', value:'paid'},
                 {name:'Over Paid', value:'over_paid'},
                 {name:'Partially Paid', value:'partially_paid'},
-                {name:'Unpaid', value:'unpaid'}
+                {name:'Unpaid', value:'unpaid'},
+                {name:'Overdue', value:'overdue'}
+            ],
+            payment_method:[
+                {name:'Credit Card', value:'0'},
+                {name:'BPAY', value:'1'},
+                {name:'Monthly Invoicing', value:'2'},
+                {name:'Other', value:'3'}
             ],
             proposal_submitters: [],
             proposal_parks: [],
             proposal_headers:[
-                " Number","Licence","Holder","Status","Arrival","Park","Invoice/Confirmation","Action",
+                " Number","Licence","Holder","Status","Payment Method","Arrival","Park","Invoice/Confirmation","Action",
             ],
             proposal_options:{
                 language: {
@@ -151,6 +168,7 @@ export default {
                     "data": function ( d ) {
                         d.park = vm.filterProposalPark != 'All' && vm.filterProposalPark != null ? vm.filterProposalPark : '';
                         d.payment_status = vm.filterProposalStatus != 'All' && vm.filterProposalStatus != null ? vm.filterProposalStatus : '';
+                        d.payment_method = vm.filterProposalPaymentMethod != 'All' && vm.filterProposalPaymentMethod != null ? vm.filterProposalPaymentMethod : '';
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                     }
@@ -170,11 +188,18 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email, proposal__approval__proxy_applicant__first_name, proposal__approval__proxy_applicant__last_name"
+                        name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email, proposal__approval__proxy_applicant__first_name, proposal__approval__proxy_applicant__last_name",
+                        visible: this.level=='internal' ? true : false,
                     },
                     {
                         data: "payment_status",
                         name: "payment_status",
+                        searchable: false,
+                        orderable: false
+                    },
+                    {
+                        data: "payment_method",
+                        name: "payment_method",
                         searchable: false,
                         orderable: false
                     },
@@ -204,15 +229,17 @@ export default {
                         name: "park_bookings__park__name"
 
                     },
-
                     {
                         data: '',
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (full.payment_status=='paid'){
+                            if (full.payment_status.toLowerCase()=='paid' || full.payment_method.toUpperCase()=='BPAY' || (full.payment_method.toLowerCase()=='monthly invoicing' && full.invoice_reference !== null)){
                                 links +=  `<a href='/cols/payments/invoice-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a> &nbsp`;
                                 links +=  `<a href='/cols/payments/confirmation-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
-                            }
+                            } else if (full.payment_method.toLowerCase()=='monthly invoicing' && full.invoice_reference == null){
+                                // running aggregated monthly booking - not yet invoiced
+                                links +=  `<a href='/cols/payments/monthly-confirmation-pdf/${full.id}' target='_blank' style='padding-left: 52px;'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
+                            } 
                             return links;
                         },
                         name: '',
@@ -223,17 +250,17 @@ export default {
                         data: "",
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (full.payment_status=='paid'){
+                            if (full.payment_status.toLowerCase()=='paid' && vm.is_internal){
                                 if(vm.is_payment_admin){
-
-                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                                    links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
                                 }
                             }
                             return links;
                         },
                         name: '',
                         searchable: false,
-                        orderable: false
+                        orderable: false,
+                        visible: vm.level=='internal' ? true : false
                     }
 
                 ],
@@ -274,9 +301,17 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(3).search('').draw();
             }
         },
+        filterProposalPaymentMethod: function() {
+            let vm = this;
+            if (vm.filterProposalPaymentMethod!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalPaymentMethod).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+            }
+        },
         filterProposalPark: function() {
             let vm = this;
-            vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
+            vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
         },
 
         filterProposalLodgedFrom: function(){
@@ -402,9 +437,9 @@ export default {
                 vm.amendApproval(id);
             });
 
-            if(vm.is_external){
-                vm.$refs.proposal_datatable.vmDataTable.column(7).visible(false);
-            }
+            //if(vm.is_external){
+            //    vm.$refs.proposal_datatable.vmDataTable.column(7).visible(false);
+            //}
 
         },
         initialiseSearch:function(){

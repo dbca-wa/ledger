@@ -21,18 +21,43 @@ class EmailUserSerializer(serializers.ModelSerializer):
 
 class ApprovalPaymentSerializer(serializers.ModelSerializer):
     #proposal = serializers.SerializerMethodField(read_only=True)
+    org_applicant = serializers.SerializerMethodField(read_only=True)
+    bpay_allowed = serializers.SerializerMethodField(read_only=True)
+    monthly_invoicing_allowed = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Approval
         fields = (
             'lodgement_number',
             'current_proposal',
             'expiry_date',
+            'org_applicant',
+            'bpay_allowed',
+            'monthly_invoicing_allowed',
         )
         read_only_fields = (
             'lodgement_number',
             'current_proposal',
             'expiry_date',
+            'org_applicant',
+            'bpay_allowed',
+            'monthly_invoicing_allowed',
         )
+
+    def get_org_applicant(self,obj):
+        return obj.org_applicant.name if obj.org_applicant else None
+
+    def get_bpay_allowed(self,obj):
+        return obj.bpay_allowed
+
+    def get_monthly_invoicing_allowed(self,obj):
+        return obj.monthly_invoicing_allowed
+
+    #def get_monthly_invoicing_period(self,obj):
+    #    return obj.monthly_invoicing_period
+
+    #def get_monthly_payment_due_period(self,obj):
+    #    return obj.monthly_payment_due_period
 
     #def get_proposal_id(self,obj):
     #    return obj.current_proposal_id
@@ -83,7 +108,6 @@ class _ApprovalPaymentSerializer(serializers.ModelSerializer):
     def get_land_parks(self,obj):
         return None #obj.current_proposal.land_parks
         #return AuthorSerializer(obj.author).data
-        #import ipdb; ipdb.set_trace()
         #if obj.current_proposal.land_parks:
         #    return ProposalParkSerializer(obj.current_proposal.land_parks).data
         #return None

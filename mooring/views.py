@@ -358,7 +358,7 @@ class CancelBookingView(TemplateView):
 
         new_order = Order.objects.get(basket=basket)
         new_invoice = Invoice.objects.get(order_number=new_order.number)
-        update_payments(new_invoice.reference)
+        #update_payments(new_invoice.reference)
         book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
 
         #basket.status = 'Submitted'
@@ -397,8 +397,8 @@ class CancelBookingView(TemplateView):
             bpoint_refund = BpointTransaction.objects.get(txn_number=refund)
             bpoint_refund.crn1 = new_invoice.reference
             bpoint_refund.save()
-            update_payments(invoice.reference)
-            update_payments(new_invoice.reference)
+        update_payments(invoice.reference)
+        update_payments(new_invoice.reference)
  
         invoice.voided = True
         invoice.save()
@@ -413,6 +413,9 @@ class CancelBookingView(TemplateView):
             booking_admission.cancelation_time = datetime.now()
             booking_admission.canceled_by = request.user
             booking_admission.save()
+
+        update_payments(invoice.reference)
+        update_payments(new_invoice.reference)
 
         if failed_refund is True:
             # Refund Failed Assign Refund amount to allocation pool.
@@ -443,13 +446,18 @@ class CancelAdmissionsBookingView(TemplateView):
         booking_id = kwargs['pk']
         booking = None
         booking_total = Decimal('0.00')
+        overide_cancel_fees=False
         if request.user.is_staff or request.user.is_superuser or AdmissionsBooking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
              booking = AdmissionsBooking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
                   print ("ADMISSIONS BOOKING HAS BEEN CANCELLED")
                   return HttpResponseRedirect(reverse('home'))
 
-        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking, [])
+
+        if request.user.groups.filter(name__in=['Mooring Admin']).exists():
+              overide_cancel_fees=True
+          
+        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking, [], overide_cancel_fees)
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
         basket = {}
         return render(request, self.template_name, {'booking': booking,'basket': basket, 'booking_fees': booking_cancellation_fees, 'booking_total': booking_total, 'booking_total_positive': booking_total - booking_total - booking_total })
@@ -463,15 +471,19 @@ class CancelAdmissionsBookingView(TemplateView):
         invoice = None
         refund = None
         failed_refund = False
- 
+        overide_cancel_fees=False
+
         if request.user.is_staff or request.user.is_superuser or AdmissionsBooking.objects.filter(customer=request.user,pk=booking_id).count() == 1:
              booking = AdmissionsBooking.objects.get(pk=booking_id)
              if booking.booking_type == 4:
                   print ("ADMISSIONS BOOKING HAS BEEN CANCELLED")
                   return HttpResponseRedirect(reverse('home'))
+
+        if request.user.groups.filter(name__in=['Mooring Admin']).exists():
+              overide_cancel_fees=True
         
         bpoint_id = self.get_booking_info(self, request, *args, **kwargs)
-        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking, [])
+        booking_cancellation_fees = utils.calculate_price_admissions_cancel(booking, [], overide_cancel_fees)
         booking_total = booking_total + sum(Decimal(i['amount']) for i in booking_cancellation_fees)
 #        booking_total =  Decimal('{:.2f}'.format(float(booking_total - booking_total - booking_total)))
 
@@ -1272,11 +1284,11 @@ class MakeBookingsView(TemplateView):
         to_dt = local_dt.replace(microsecond=booking.departure.microsecond)
         to_date_converted = to_dt.date()
         # generate invoice
-        reservation = u"Reservation for {} from {} to {} at {}".format(
+        reservation = u"Reservation for {} from {} to {} ".format(
                u'{} {}'.format(booking.customer.first_name, booking.customer.last_name),
                 from_date_converted,
                 to_date_converted,
-                booking.mooringarea.name
+                #booking.mooringarea.name
         )
         
         logger.info('{} built booking {} and handing over to payment gateway'.format('User {} with id {}'.format(booking.customer.get_full_name(),booking.customer.id) if booking.customer else 'An anonymous user',booking.id))

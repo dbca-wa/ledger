@@ -29,6 +29,7 @@ from commercialoperator.components.approvals.email import (
     send_approval_surrender_email_notification
 )
 from commercialoperator.utils import search_keys, search_multiple_keys
+from commercialoperator.helpers import is_customer
 #from commercialoperator.components.approvals.email import send_referral_email_notification
 
 
@@ -103,6 +104,30 @@ class Approval(RevisionedMixin):
         unique_together= ('lodgement_number', 'issue_date')
 
     @property
+    def bpay_allowed(self):
+        if self.org_applicant:
+            return self.org_applicant.bpay_allowed
+        return False
+
+    @property
+    def monthly_invoicing_allowed(self):
+        if self.org_applicant:
+            return self.org_applicant.monthly_invoicing_allowed
+        return False
+
+    @property
+    def monthly_invoicing_period(self):
+        if self.org_applicant:
+            return self.org_applicant.monthly_invoicing_period
+        return None
+
+    @property
+    def monthly_payment_due_period(self):
+        if self.org_applicant:
+            return self.org_applicant.monthly_payment_due_period
+        return None
+
+    @property
     def applicant(self):
         if self.org_applicant:
             return self.org_applicant.organisation.name
@@ -134,6 +159,10 @@ class Approval(RevisionedMixin):
         else:
             #return None
             return "submitter"
+
+    @property
+    def is_org_applicant(self):
+        return True if self.org_applicant else False
 
     @property
     def applicant_id(self):
@@ -197,11 +226,11 @@ class Approval(RevisionedMixin):
     def allowed_assessors(self):
         return self.current_proposal.allowed_assessors
 
-    
+
     def is_assessor(self,user):
         return self.current_proposal.is_assessor(user)
 
-    
+
     def is_approver(self,user):
         return self.current_proposal.is_approver(user)
 
@@ -331,7 +360,6 @@ class Approval(RevisionedMixin):
                 self.renewal_count += 1
                 self.extend_details = details.get('extend_details')
                 self.expiry_date = datetime.date(self.expiry_date.year + self.current_proposal.application_type.max_renewal_period, self.expiry_date.month, self.expiry_date.day)
-                #import ipdb; ipdb.set_trace()
                 today = timezone.now().date()
                 if self.expiry_date <= today:
                     if not self.status == 'extended':
@@ -444,7 +472,7 @@ class Approval(RevisionedMixin):
         with transaction.atomic():
             try:
                 if not request.user.commercialoperator_organisations.filter(organisation_id = self.applicant_id):
-                    if not request.user in self.allowed_assessors:
+                    if request.user not in self.allowed_assessors and not is_customer(request):
                         raise ValidationError('You do not have access to surrender this approval')
                 if not self.can_reissue and self.can_action:
                     raise ValidationError('You cannot surrender approval if it is not current or suspended')

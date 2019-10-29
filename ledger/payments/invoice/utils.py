@@ -8,12 +8,13 @@ from oscar.apps.checkout.calculators import OrderTotalCalculator
 from ledger.payments.invoice import facade as invoice_facade
 from ledger.payments.utils import systemid_check, update_payments
 from decimal import Decimal
-import datetime 
- 
+import datetime
+
 Order = get_model('order', 'Order')
 Line = get_model('order', 'Line')
 OrderDiscount = get_model('order', 'OrderDiscount')
 order_placed = get_class('order.signals', 'order_placed')
+
 
 class ShippingCharge():
     incl_tax = Decimal('0.00')
@@ -30,9 +31,14 @@ class CreateInvoiceBasket(CoreOrderCreator):
     """
     This will create and invoice and order from a basket bypassing the session
     and payment bpoint code constraints.
+
     """
 
-    def create_invoice_and_order(self,basket, total,  
+    def __init__(self, system=None, payment_method=None):
+        self.system = system
+        self.payment_method = payment_method
+
+    def create_invoice_and_order(self,basket, total,
                     shipping_method, shipping_charge, user=None,
                     shipping_address=None, billing_address=None,
                     order_number=None, status=None, invoice_text='', **kwargs):
@@ -42,7 +48,7 @@ class CreateInvoiceBasket(CoreOrderCreator):
         """
 
         basket = models.Basket.objects.get(id=basket.id)
-        shipping_charge = ShippingCharge() 
+        shipping_charge = ShippingCharge()
         shipping_method = ShippingMethod()
         total = self.get_order_totals(basket, shipping_charge, **kwargs)
         if basket.is_empty:
@@ -173,19 +179,23 @@ class CreateInvoiceBasket(CoreOrderCreator):
         """
         return OrderTotalCalculator(self).calculate(
             basket, shipping_charge, **kwargs)
-    
+
     def create_invoice(self,order_number,total,invoice_text,**kwargs):
         """
         Create  and invoice for matching order.
         """
-        method = 'crn'  
-        system = settings.PS_PAYMENT_SYSTEM_ID 
+        method = 'crn'
+        if self.system is None:
+            self.system = settings.PS_PAYMENT_SYSTEM_ID
+
         # Generate the string to be used to generate the icrn
-        crn_string = '{0}{1}'.format(systemid_check(system),order_number)
+        crn_string = '{0}{1}'.format(systemid_check(self.system),order_number)
         return invoice_facade.create_invoice_crn(
              order_number,
              total.incl_tax,
              crn_string,
-             system,
-             invoice_text)
+             self.system,
+             invoice_text,
+             self.payment_method,
+        )
 

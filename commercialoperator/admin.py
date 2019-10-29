@@ -6,7 +6,7 @@ from django.conf import settings
 
 from ledger.accounts import admin as ledger_admin
 #from ledger.accounts.models import EmailUser, Document, Address, Profile
-from ledger.accounts.models import EmailUser 
+from ledger.accounts.models import EmailUser
 from copy import deepcopy
 
 
@@ -43,3 +43,5 @@ class EmailUserAdmin(ledger_admin.EmailUserAdmin):
                 break
 
         return fieldsets
+
+

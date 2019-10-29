@@ -43,7 +43,6 @@ class ActivitySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'last_leaf', 'node_id')
 
     #def get_node_id(self, obj):
-    #    #import ipdb; ipdb.set_trace()
     #    return '{}_{}_id-{}'.format(obj.activity_category.name.replace(' ',''), obj.name.replace(' ',''), obj.id)
 
     def get_last_leaf(self, obj):
@@ -52,7 +51,6 @@ class ActivitySerializer(serializers.ModelSerializer):
     def get_node_id(self, obj):
         """ Pulled from parent (out serializer) --> ZoneSerializer
         """
-        #import ipdb; ipdb.set_trace()
         return '{}_{}'.format(self.context.get('parent_id'), obj.id) if self.context.get('parent_id') else obj.id
 
 

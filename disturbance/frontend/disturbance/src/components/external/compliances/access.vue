@@ -93,7 +93,7 @@
                                             <div :class="'row top-buffer file-row-'+i">
                                                 <div class="col-sm-4">
                                                     <span v-if="f.file == null" class="btn btn-info btn-file pull-left" style="margin-bottom: 5px">
-                                                        Atttach File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
+                                                        Attach File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>
                                                     </span>
                                                     <span v-else class="btn btn-info btn-file pull-left" style="margin-bottom: 5px">
                                                         Update File <input type="file" :name="'file-upload-'+i" :class="'file-upload-'+i" @change="uploadFile('file-upload-'+i,f)"/>

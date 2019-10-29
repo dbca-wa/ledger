@@ -47,13 +47,6 @@
 
                 <div class="row" style="margin-bottom: 50px">
                         <div  class="container">
-                          <!-- <p class="pull-right" style="margin-top:5px;">
-                            <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
-                            <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                            <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>
-
-                            <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
-                          </p> -->
                           <div class="row" style="margin-bottom: 50px">
                               <div class="navbar navbar-fixed-bottom"  style="background-color: #f5f5f5;">
                                   <div class="navbar-inner">
@@ -61,7 +54,8 @@
                                       <p class="pull-right" style="margin-top:5px">
                                         <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
                                         <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                        <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>
+                                        <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()"/>
+                                        <!--<input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>-->
                                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                                       </p>
                                     </div>
@@ -373,15 +367,30 @@ export default {
     can_submit: function(){
       let vm=this;
       let blank_fields=[]
+      this.proposal.other_details.accreditation_type
+
+      if (vm.$refs.proposal_tclass.$refs.other_details.selected_accreditations.length==0 ){
+        blank_fields.push(' Level of Accreditation is required')
+      }
+
       if (vm.proposal.other_details.preferred_licence_period=='' || vm.proposal.other_details.preferred_licence_period==null ){
         blank_fields.push(' Preferred Licence Period is required')
       }
+      if (vm.proposal.other_details.nominated_start_date=='' || vm.proposal.other_details.nominated_start_date==null ){
+        blank_fields.push(' Licence Nominated Start Date is required')
+      }
+
       if(vm.$refs.proposal_tclass.$refs.other_details.$refs.deed_poll_doc.documents.length==0){
         blank_fields.push(' Deed poll document is missing')
       }
+
       if(vm.$refs.proposal_tclass.$refs.other_details.$refs.currency_doc.documents.length==0){
         blank_fields.push(' Certificate of currency document is missing')
       }
+      if(vm.proposal.other_details.insurance_expiry=='' || vm.proposal.other_details.insurance_expiry==null){
+        blank_fields.push(' Certificate of currency expiry date is missing')
+      }
+
       if(blank_fields.length==0){
         return true;
       }

@@ -80,7 +80,6 @@ def send_qaofficer_email_notification(proposal, recipients, request, reminder=Fa
     else:
         comments = request.data['text']
 
-    #import ipdb; ipdb.set_trace()
     context = {
         'proposal': proposal,
         'url': url,
@@ -136,7 +135,6 @@ def send_referral_email_notification(referral,recipients,request,reminder=False)
         'comments': referral.text
     }
 
-    #import ipdb; ipdb.set_trace()
     #msg = email.send(referral.referral.email, context=context)
     #recipients = list(ReferralRecipientGroup.objects.get(name=referral.email_group).members.all().values_list('email', flat=True))
     msg = email.send(recipients, context=context)

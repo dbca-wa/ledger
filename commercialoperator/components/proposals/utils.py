@@ -13,6 +13,10 @@ from commercialoperator.components.main.models import Activity, Park, AccessType
 import traceback
 import os
 from copy import deepcopy
+from datetime import datetime
+
+import logging
+logger = logging.getLogger(__name__)
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
     data = {}
@@ -25,7 +29,6 @@ def create_data_from_form(schema, post_data, file_data, post_data_index=None,spe
         comment_fields_search = CommentDataSearch()
     try:
         for item in schema:
-            #import ipdb; ipdb.set_trace()
             data.update(_create_data_from_item(item, post_data, file_data, 0, ''))
             #_create_data_from_item(item, post_data, file_data, 0, '')
             special_fields_search.extract_special_fields(item, post_data, file_data, 0, '')
@@ -55,11 +58,9 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
     else:
         raise Exception('Missing name in item %s' % item['label'])
 
-    #import ipdb; ipdb.set_trace()
     if 'children' not in item:
         if item['type'] in ['checkbox' 'declaration']:
             #item_data[item['name']] = post_data[item['name']]
-            #import ipdb; ipdb.set_trace()
             item_data[item['name']] = extended_item_name in post_data
         elif item['type'] == 'file':
             if extended_item_name in file_data:
@@ -79,7 +80,6 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
         if 'repetition' in item:
             item_data = generate_item_data(extended_item_name,item,item_data,post_data,file_data,len(post_data[item['name']]),suffix)
         else:
-            #import ipdb; ipdb.set_trace()
             item_data = generate_item_data(extended_item_name, item, item_data, post_data, file_data,1,suffix)
 
 
@@ -88,13 +88,11 @@ def _create_data_from_item(item, post_data, file_data, repetition, suffix):
             for child in item['conditions'][condition]:
                 item_data.update(_create_data_from_item(child, post_data, file_data, repetition, suffix))
 
-    #import ipdb; ipdb.set_trace()
     return item_data
 
 def generate_item_data(item_name,item,item_data,post_data,file_data,repetition,suffix):
     item_data_list = []
     for rep in xrange(0, repetition):
-        #import ipdb; ipdb.set_trace()
         child_data = {}
         for child_item in item.get('children'):
             child_data.update(_create_data_from_item(child_item, post_data, file_data, 0,
@@ -662,7 +660,6 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
 #            lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
 #            extracted_fields,special_fields = create_data_from_form(instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
 #            instance.data = extracted_fields
-#            #import ipdb; ipdb.set_trace()
 #            data = {
 #                #'region': special_fields.get('isRegionColumnForDashboard',None),
 #                'title': special_fields.get('isTitleColumnForDashboard',None),
@@ -681,7 +678,6 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
                 schema=request.POST.get('schema')
             import json
             sc=json.loads(schema)
-            #import ipdb; ipdb.set_trace()
             other_details_data=sc['other_details']
             #print other_details_data
             if instance.is_amendment_proposal or instance.pending_amendment_request:
@@ -707,21 +703,43 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
             if 'accreditations' in other_details_data:
+                accreditation_types = instance.other_details.accreditations.values_list('accreditation_type', flat=True)
                 for acc in other_details_data['accreditations']:
                     #print acc
                     if 'id' in acc:
-                        acc_instance=ProposalAccreditation.objects.get(id=acc['id'])
-                        if acc['is_deleted']==True:
-                            acc_instance.delete()
+                        #acc_qs = ProposalAccreditation.objects.filter(id=acc['id'])
+                        acc_qs = instance.other_details.accreditations.filter(id=acc['id'])
+
+                        if acc_qs and 'is_deleted' in acc and acc['is_deleted']==True:
+                            acc_qs[0].delete()
+
+                        elif acc['accreditation_type'] in accreditation_types:
+                            try:
+                                instance.other_details.accreditations.filter(id=acc['id']).update(
+                                    accreditation_type = acc['accreditation_type'],
+                                    comments = acc['comments'],
+                                    accreditation_expiry = datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date() if acc['accreditation_expiry'] else None, # TODO later this may be mandatory
+                                )
+                            except Exception, e:
+                                logger.error('An error occurred while updating Accreditations {}'.format(e))
                         else:
-                            serializer=ProposalAccreditationSerializer(acc_instance,data=acc)
+                            serializer=ProposalAccreditationSerializer(data=acc)
                             serializer.is_valid(raise_exception=True)
                             serializer.save()
-                    else:
+                            #ProposalAccreditation.objects.create(
+                            #    id=acc['id'],
+                            #    accreditation_type=acc['accreditation_type'],
+                            #    comments = acc['comments'],
+                            #    accreditation_expiry = datetime.strptime(acc['accreditation_expiry'], "%d/%m/%Y").date(),
+                            #)
+
+                    elif acc['accreditation_type'] not in accreditation_types:
                         serializer=ProposalAccreditationSerializer(data=acc)
                         serializer.is_valid(raise_exception=True)
                         serializer.save()
-            #import ipdb; ipdb.set_trace()
+                    else:
+                        logger.warn('Possible duplicate Accreditation Type for Application {}'.format(instance.lodgement_number))
+
             if select_parks_activities or len(select_parks_activities)==0:
                 try:
 
@@ -768,7 +786,6 @@ def save_assessor_data(instance,request,viewset):
             sc=json.loads(schema)
             #select_parks_activities=sc['selected_parks_activities']
             #select_trails_activities=sc['selected_trails_activities']
-            #import ipdb; ipdb.set_trace()
             try:
                 select_parks_activities=json.loads(request.data.get('selected_parks_activities'))
                 select_trails_activities=json.loads(request.data.get('selected_trails_activities'))
@@ -817,7 +834,6 @@ def save_assessor_data(instance,request,viewset):
 
 def proposal_submit(proposal,request):
         with transaction.atomic():
-            #import ipdb; ipdb.set_trace()
             if proposal.can_user_edit:
                 proposal.submitter = request.user
                 #proposal.lodgement_date = datetime.datetime.strptime(timezone.now().strftime('%Y-%m-%d'),'%Y-%m-%d').date()
@@ -837,11 +853,9 @@ def proposal_submit(proposal,request):
                 applicant_field=getattr(proposal, proposal.applicant_field)
                 applicant_field.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(proposal.id),request)
 
-                #import ipdb; ipdb.set_trace()
                 ret1 = send_submit_email_notification(request, proposal)
                 ret2 = send_external_submit_email_notification(request, proposal)
 
-                #import ipdb; ipdb.set_trace()
                 #proposal.save_form_tabs(request)
                 if ret1 and ret2:
                     proposal.processing_status = 'with_assessor'

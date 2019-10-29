@@ -22,7 +22,7 @@ from disturbance.components.main.models import CommunicationsLogEntry, UserActio
 from disturbance.components.main.utils import get_department_user
 from disturbance.components.proposals.email import send_referral_email_notification, send_proposal_decline_email_notification,send_proposal_approval_email_notification, send_amendment_email_notification
 from disturbance.ordered_model import OrderedModel
-from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification
+from disturbance.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification, send_approver_decline_email_notification, send_approver_approve_email_notification, send_referral_complete_email_notification, send_proposal_approver_sendback_email_notification, send_referral_recall_email_notification
 import copy
 import subprocess
 
@@ -35,6 +35,10 @@ def update_proposal_doc_filename(instance, filename):
 
 def update_proposal_comms_log_filename(instance, filename):
     return 'proposals/{}/communications/{}/{}'.format(instance.log_entry.proposal.id,instance.id,filename)
+
+def update_amendment_request_doc_filename(instance, filename):
+    return 'proposals/{}/amendment_request_documents/{}'.format(instance.amendment_request.proposal.id,filename)
+
 
 def application_type_choicelist():
     try:
@@ -181,9 +185,11 @@ class ProposalApproverGroup(models.Model):
 
 class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
-    _file = models.FileField(upload_to=update_proposal_doc_filename)
+    _file = models.FileField(upload_to=update_proposal_doc_filename, max_length=500)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    can_hide= models.BooleanField(default=False) # after initial submit, document cannot be deleted but can be hidden
+    hidden=models.BooleanField(default=False) # after initial submit prevent document from being deleted
 
     def delete(self):
         if self.can_delete:
@@ -329,7 +335,12 @@ class Proposal(RevisionedMixin):
     application_type = models.ForeignKey(ApplicationType)
     approval_level = models.CharField('Activity matrix approval level', max_length=255,null=True,blank=True)
     approval_level_document = models.ForeignKey(ProposalDocument, blank=True, null=True, related_name='approval_level_document')
+    approval_level_comment = models.TextField(blank=True)
     approval_comment = models.TextField(blank=True)
+    assessment_reminder_sent = models.BooleanField(default=False)
+    sub_activity_level1 = models.CharField(max_length=255,null=True,blank=True)
+    sub_activity_level2 = models.CharField(max_length=255,null=True,blank=True)
+    management_area = models.CharField(max_length=255,null=True,blank=True)
 
     class Meta:
         app_label = 'disturbance'
@@ -535,6 +546,30 @@ class Proposal(RevisionedMixin):
         #    recipients.append(self.submitter.email)
         return recipients
 
+    @property
+    def hasAmendmentRequest(self):
+        qs = self.amendment_requests
+        qs = qs.filter(status = 'requested')
+        if qs:
+            return True
+        return False
+    
+    
+    def referral_email_list(self,user):
+        qs=self.referrals.all()
+        email_list=[]
+        if self.assigned_officer:
+            email_list.append(self.assigned_officer.email)
+        else: 
+            email_list.append(user.email)
+        if qs:
+            for r in qs:
+                email_list.append(r.referral.email)
+        separator=', '
+        email_list_string=separator.join(email_list)
+        return email_list_string
+    
+
 
     def can_assess(self,user):
         if self.processing_status == 'with_assessor' or self.processing_status == 'with_referral' or self.processing_status == 'with_assessor_requirements':
@@ -731,6 +766,19 @@ class Proposal(RevisionedMixin):
             except:
                 raise
 
+    def save_approval_level_comment(self, request):
+        with transaction.atomic():
+            try:
+                approval_level_comment = request.data['approval_level_comment']
+                self.approval_level_comment=approval_level_comment
+                self.save()
+                self.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_COMMENT.format(self.id),request)
+                # Create a log entry for the organisation
+                self.applicant.log_user_action(ProposalUserAction.ACTION_APPROVAL_LEVEL_COMMENT.format(self.id),request)
+                return self
+            except:
+                raise
+
     def unassign(self,request):
         with transaction.atomic():
             try:
@@ -786,6 +834,8 @@ class Proposal(RevisionedMixin):
             if self.__approver_group() in request.user.proposalapprovergroup_set.all():
                 self.processing_status = status
                 self.save()
+                self.approval.reissued=True
+                self.approval.save()
                 # Create a log entry for the proposal
                 self.log_user_action(ProposalUserAction.ACTION_REISSUE_APPROVAL.format(self.id),request)
             else:
@@ -840,6 +890,40 @@ class Proposal(RevisionedMixin):
                 # Log entry for organisation
                 self.applicant.log_user_action(ProposalUserAction.ACTION_DECLINE.format(self.id),request)
                 send_proposal_decline_email_notification(self,request, proposal_decline)
+            except:
+                raise
+
+    def preview_approval(self,request,details):
+        from disturbance.components.approvals.models import PreviewTempApproval
+        with transaction.atomic():
+            try:
+                if self.processing_status != 'with_approver':
+                    raise ValidationError('Licence preview only available when processing status is with_approver. Current status {}'.format(self.processing_status))
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                if not self.applicant.organisation.postal_address:
+                #if not self.applicant_address:
+                    raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
+
+                preview_approval = PreviewTempApproval.objects.create(
+                    current_proposal = self,
+                    issue_date = timezone.now(),
+                    expiry_date = datetime.datetime.strptime(details.get('due_date'), '%d/%m/%Y').date(),
+                    start_date = datetime.datetime.strptime(details.get('start_date'), '%d/%m/%Y').date(),
+                    #submitter = self.submitter,
+                    #org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
+                    #proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                    applicant = self.applicant,
+                    #proxy_applicant = self.proxy_applicant,
+                )
+
+                # Generate the preview document - get the value of the BytesIO buffer
+                licence_buffer = preview_approval.generate_doc(request.user, preview=True)
+
+                # clean temp preview licence object
+                transaction.set_rollback(True)
+
+                return licence_buffer
             except:
                 raise
 
@@ -957,6 +1041,7 @@ class Proposal(RevisionedMixin):
                                 #'extracted_fields' = JSONField(blank=True, null=True)
                             }
                         )
+                        #print approval,approval.id, created
                     # Generate compliances
                     #self.generate_compliances(approval, request)
                     from disturbance.components.compliances.models import Compliance, ComplianceUserAction
@@ -1176,6 +1261,10 @@ class Proposal(RevisionedMixin):
                 #proposal.save()
             return proposal
 
+    def internal_view_log(self,request):
+        self.log_user_action(ProposalUserAction.ACTION_VIEW_PROPOSAL.format(self.id),request)
+        return self
+
 
 class ProposalLogDocument(Document):
     log_entry = models.ForeignKey('ProposalLogEntry',related_name='documents')
@@ -1195,6 +1284,17 @@ class ProposalLogEntry(CommunicationsLogEntry):
         if not self.reference:
             self.reference = self.proposal.reference
         super(ProposalLogEntry, self).save(**kwargs)
+
+class AmendmentRequestDocument(Document):
+    amendment_request = models.ForeignKey('AmendmentRequest',related_name='amendment_request_documents')
+    _file = models.FileField(upload_to=update_amendment_request_doc_filename, max_length=500)
+    input_name = models.CharField(max_length=255,null=True,blank=True)
+    can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
+
+    def delete(self):
+        if self.can_delete:
+            return super(AmendmentRequestDocument, self).delete()
 
 class ProposalRequest(models.Model):
     proposal = models.ForeignKey(Proposal)
@@ -1224,6 +1324,7 @@ class AmendmentReason(models.Model):
 
     def __str__(self):
         return self.reason
+
 
 
 class AmendmentRequest(ProposalRequest):
@@ -1263,6 +1364,7 @@ class AmendmentRequest(ProposalRequest):
                         proposal.processing_status = 'draft'
                         proposal.customer_status = 'draft'
                         proposal.save()
+                        proposal.documents.all().update(can_hide=True)
 
                     # Create a log entry for the proposal
                     proposal.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
@@ -1276,6 +1378,26 @@ class AmendmentRequest(ProposalRequest):
                 self.save()
             except:
                 raise
+
+    def add_documents(self, request):
+        with transaction.atomic():
+            try:
+                # save the files
+                data = json.loads(request.data.get('data'))
+                if not data.get('update'):
+                    documents_qs = self.amendment_request_documents.filter(input_name='amendment_request_doc', visible=True)
+                    documents_qs.delete()
+                for idx in range(data['num_files']):
+                    _file = request.data.get('file-'+str(idx))
+                    document = self.amendment_request_documents.create(_file=_file, name=_file.name)
+                    document.input_name = data['input_name']
+                    document.can_delete = True
+                    document.save()
+                # end save documents
+                self.save()
+            except:
+                raise
+        return
 
 class Assessment(ProposalRequest):
     STATUS_CHOICES = (('awaiting_assessment', 'Awaiting Assessment'), ('assessed', 'Assessed'),
@@ -1338,6 +1460,7 @@ class ProposalUserAction(UserAction):
     ACTION_CREATE_CUSTOMER_ = "Create customer {}"
     ACTION_CREATE_PROFILE_ = "Create profile {}"
     ACTION_LODGE_APPLICATION = "Lodge proposal {}"
+    ACTION_SAVE_APPLICATION = "Save proposal {}"
     ACTION_ASSIGN_TO_ASSESSOR = "Assign proposal {} to {} as the assessor"
     ACTION_UNASSIGN_ASSESSOR = "Unassign assessor from proposal {}"
     ACTION_ASSIGN_TO_APPROVER = "Assign proposal {} to {} as the approver"
@@ -1360,6 +1483,8 @@ class ProposalUserAction(UserAction):
     ACTION_EXPIRED_APPROVAL_ = "Expire Approval for proposal {}"
     ACTION_DISCARD_PROPOSAL = "Discard proposal {}"
     ACTION_APPROVAL_LEVEL_DOCUMENT = "Assign Approval level document {}"
+    ACTION_APPROVAL_LEVEL_COMMENT = "Save Approval level comment {}"
+    ACTION_VIEW_PROPOSAL = "View Proposal {}"
     # Assessors
     ACTION_SAVE_ASSESSMENT_ = "Save assessment {}"
     ACTION_CONCLUDE_ASSESSMENT_ = "Conclude assessment {}"
@@ -1448,6 +1573,7 @@ class Referral(models.Model):
                 raise exceptions.ProposalNotAuthorized()
             self.processing_status = 'recalled'
             self.save()
+            send_referral_recall_email_notification(self, request)
             # TODO Log proposal action
             self.proposal.log_user_action(ProposalUserAction.RECALL_REFERRAL.format(self.id,self.proposal.id),request)
             # TODO log organisation action

@@ -318,7 +318,6 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     trail_section_activities = serializers.SerializerMethodField()
 
 #    def __init__(self, *args, **kwargs):
-#        import ipdb; ipdb.set_trace()
 #        user = kwargs['context']['request'].user
 #
 #        super(BaseProposalSerializer, self).__init__(*args, **kwargs)
@@ -729,9 +728,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
     assessor_assessment=ProposalAssessmentSerializer(read_only=True)
     referral_assessments=ProposalAssessmentSerializer(read_only=True, many=True)
     fee_invoice_url = serializers.SerializerMethodField()
-    selected_trails_activities=serializers.SerializerMethodField()
-    selected_parks_activities=serializers.SerializerMethodField()
-    marine_parks_activities=serializers.SerializerMethodField()
+    #selected_trails_activities=serializers.SerializerMethodField()
+    #selected_parks_activities=serializers.SerializerMethodField()
+    #marine_parks_activities=serializers.SerializerMethodField()
 
     class Meta:
         model = Proposal
@@ -799,9 +798,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'training_completed',
                 'can_edit_activities',
                 #Following 3 are variable to store selected parks and activities at frontend
-                'selected_parks_activities',
-                'selected_trails_activities',
-                'marine_parks_activities',
+                #'selected_parks_activities',
+                #'selected_trails_activities',
+                #'marine_parks_activities',
                 'reversion_ids',
                 'assessor_assessment',
                 'referral_assessments',

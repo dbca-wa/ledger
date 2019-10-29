@@ -37,7 +37,8 @@ from django.db.models import Count
 from mooring import utils
 from mooring.helpers import can_view_campground, is_inventory, is_admin, is_payment_officer
 from datetime import datetime,timedelta, date
-from decimal import Decimal 
+from decimal import Decimal
+from ledger.payments.utils import systemid_check, update_payments
 from mooring.context_processors import mooring_url, template_context
 from mooring.models import (MooringArea,
                                 District,
@@ -1920,6 +1921,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                  # compare old and new booking for changes
                  if hashlib.md5(str(current_booking_obj)).hexdigest() == hashlib.md5(str(old_booking_obj)).hexdigest():
                        booking_changed = False
+                 if utils.check_mooring_admin_access(request) is True:
+                       booking_changed = True
                       
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date, ongoing_booking, request)
 
@@ -2884,8 +2887,13 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
 #                    inv = AdmissionsBookingInvoice.objects.filter(admissions_booking=ad)
 #                    inv = [adi.invoice_reference,]
 
-
-                r.update({'invoice_ref': inv, 'in_future': ad.in_future, 'part_booking': ad.part_booking})
+                future_or_admin = False
+                if request.user.groups.filter(name__in=['Mooring Admin']).exists():
+                    future_or_admin = True
+                else:
+                    future_or_admin = ad.in_future
+                
+                r.update({'invoice_ref': inv, 'in_future': future_or_admin, 'part_booking': ad.part_booking})
                 if(r['customer']):
                     name = ad.customer.first_name + " " + ad.customer.last_name
                     email = ad.customer.email
@@ -4402,36 +4410,85 @@ class RefundOracleView(views.APIView):
                 money_from_json = json.loads(money_from)
                 money_to_json = json.loads(money_to)
                 bpoint_trans_split_json = json.loads(bpoint_trans_split)
-                lines = []
                 failed_refund = False
      
                 json_obj = {'found': False, 'code': money_from, 'money_to': money_to, 'failed_refund': failed_refund}
-     
-                for mf in money_from_json:
-                    if Decimal(mf['line-amount']) > 0: 
-                        money_from_total = (Decimal(mf['line-amount']) - Decimal(mf['line-amount']) - Decimal(mf['line-amount']))
-                        lines.append({'ledger_description':str(mf['line-text']),"quantity":1,"price_incl_tax":money_from_total,"oracle_code":str(mf['oracle-code']), 'line_status': 3})
-     
+    
+                lines = []
                 if int(refund_method) == 1:
+                    lines = []
+                    for mf in money_from_json:
+                        if Decimal(mf['line-amount']) > 0: 
+                            money_from_total = (Decimal(mf['line-amount']) - Decimal(mf['line-amount']) - Decimal(mf['line-amount']))
+                            lines.append({'ledger_description':str(mf['line-text']),"quantity":1,"price_incl_tax":money_from_total,"oracle_code":str(mf['oracle-code']), 'line_status': 3})
+
                     for bp_txn in bpoint_trans_split_json:
                         bpoint_id = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
                         info = {'amount': Decimal('{:.2f}'.format(float(bp_txn['line-amount']))), 'details' : 'Refund via system'}
-                        refund = None
                         if info['amount'] > 0:
+                             lines.append({'ledger_description':str("Temp fund transfer "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":Decimal('{:.2f}'.format(float(bp_txn['line-amount']))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
+
+
+                    order = utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                    new_invoice = Invoice.objects.get(order_number=order.number)
+                    update_payments(new_invoice.reference) 
+                    #order = utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                    #new_order = Order.objects.get(basket=basket)
+                    #new_invoice = Invoice.objects.get(order_number=order.number)
+                
+                    for bp_txn in bpoint_trans_split_json:
+                        bpoint_id = None
+                        try:
+                             bpoint_id = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
+                             info = {'amount': Decimal('{:.2f}'.format(float(bp_txn['line-amount']))), 'details' : 'Refund via system'}
+                        except Exception as e:
+                             print (e)
+                             info = {'amount': Decimal('{:.2f}'.format('0.00')), 'details' : 'Refund via system'}
+
+                        refund = None
+                        lines = []
+                        if info['amount'] > 0:
+                            lines = []
+                            #lines.append({'ledger_description':str("Temp fund transfer "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":Decimal('{:.2f}'.format(float(bp_txn['line-amount']))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1}) 
+
+
                             try:
+
+                                bpoint_money_to = (Decimal('{:.2f}'.format(float(bp_txn['line-amount']))) - Decimal('{:.2f}'.format(float(bp_txn['line-amount']))) - Decimal('{:.2f}'.format(float(bp_txn['line-amount']))))
+                                lines.append({'ledger_description':str("Payment Gateway Refund to "+bp_txn['txn_number']),"quantity":1,"price_incl_tax": bpoint_money_to,"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 3})
                                 bpoint = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
                                 refund = bpoint.refund(info,request.user)
-                            except:
+                            except Exception as e:
+                                print (e)
                                 failed_refund = True
                                 bpoint_failed_amount = Decimal(bp_txn['line-amount'])
+                                lines = []
                                 lines.append({'ledger_description':str("Refund failed for txn "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":bpoint_failed_amount,"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
-         
+                            order = utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                            new_invoice = Invoice.objects.get(order_number=order.number)
+
+                            if refund:
+                               bpoint_refund = BpointTransaction.objects.get(txn_number=refund.txn_number)
+                               bpoint_refund.crn1 = new_invoice.reference
+                               bpoint_refund.save()
+                               new_invoice.settlement_date = None
+                               new_invoice.save()
+                               update_payments(new_invoice.reference)
      
                 else:
+                    lines = []
+                    for mf in money_from_json:
+                        if Decimal(mf['line-amount']) > 0:
+                            money_from_total = (Decimal(mf['line-amount']) - Decimal(mf['line-amount']) - Decimal(mf['line-amount']))
+                            lines.append({'ledger_description':str(mf['line-text']),"quantity":1,"price_incl_tax":money_from_total,"oracle_code":str(mf['oracle-code']), 'line_status': 3})
+    
+
                     for mt in money_to_json:
                         lines.append({'ledger_description':mt['line-text'],"quantity":1,"price_incl_tax":mt['line-amount'],"oracle_code":mt['oracle-code'], 'line_status': 1})
-     
-                utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                    order = utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                    new_invoice = Invoice.objects.get(order_number=order.number)
+                    update_payments(new_invoice.reference)
+
                 json_obj['failed_refund'] = failed_refund
             
                 return Response(json_obj)
