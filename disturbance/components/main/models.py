@@ -170,3 +170,20 @@ class SystemMaintenance(models.Model):
     def __str__(self):
         return 'System Maintenance: {} ({}) - starting {}, ending {}'.format(self.name, self.description, self.start_date, self.end_date)
 
+@python_2_unicode_compatible
+class GlobalSettings(models.Model):
+    keys = (
+        ('assessment_reminder_days', 'Assessment reminder days'),
+        
+    )
+    key = models.CharField(max_length=255, choices=keys, blank=False, null=False, unique=True)
+    value = models.CharField(max_length=255)
+
+    class Meta:
+        app_label = 'disturbance'
+        verbose_name_plural = "Global Settings"
+        #unique_together = ('id', 'key')
+
+    def __str__(self):
+        return self.key
+

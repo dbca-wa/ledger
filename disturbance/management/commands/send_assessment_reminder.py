@@ -3,6 +3,7 @@ from django.utils import timezone
 from datetime import date, timedelta
 from django.conf import settings
 from disturbance.components.proposals.models import Proposal
+from disturbance.components.main.models import GlobalSettings
 from disturbance.components.proposals.email import send_assessment_reminder_email_notification
 from ledger.accounts.models import EmailUser
 import datetime
@@ -27,7 +28,13 @@ class Command(BaseCommand):
             'processing_status': 'with_assessor',
             'assessment_reminder_sent': False,
         }
-        assessment_reminder_days= settings.ASSESSMENT_REMINDER_DAYS
+        assessment_days_record= GlobalSettings.objects.filter(key='assessment_reminder_days')
+        if assessment_days_record:
+            assessment_days_record=assessment_days_record[0]
+            assessment_reminder_days=assessment_days_record.value.encode('UTF-8')
+            assessment_reminder_days=int(assessment_reminder_days)
+        else:
+            assessment_reminder_days= settings.ASSESSMENT_REMINDER_DAYS
         qs=Proposal.objects.filter(**reminder_conditions)
         for proposal in qs:
             compare_date=None

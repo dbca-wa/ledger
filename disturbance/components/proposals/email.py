@@ -150,7 +150,7 @@ def send_amendment_email_notification(amendment_request, request, proposal):
         if cc_list:
             all_ccs = [cc_list]
 
-    msg = email.send(proposal.submitter.email, bcc=all_ccs, context=context,  attachments=attachments)
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context,  attachments=attachments)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
@@ -193,7 +193,7 @@ def send_external_submit_email_notification(request, proposal):
         if cc_list:
             all_ccs = [cc_list]
 
-    msg = email.send(proposal.submitter.email, bcc= all_ccs, context=context)
+    msg = email.send(proposal.submitter.email, cc= all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     _log_org_email(msg, proposal.applicant, proposal.submitter, sender=sender)
@@ -267,6 +267,8 @@ def send_proposal_approver_sendback_email_notification(request, proposal):
 
 def send_proposal_approval_email_notification(proposal,request):
     email = ProposalApprovalSendNotificationEmail()
+    if proposal.approval.reissued:
+        email.subject= 'Your Approval has been reissued.'
 
     context = {
         'proposal': proposal,
