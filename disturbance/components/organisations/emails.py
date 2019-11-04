@@ -22,8 +22,8 @@ class OrganisationAccessGroupRequestAcceptNotificationEmail(TemplateEmailBase):
 
 class OrganisationRequestNotificationEmail(TemplateEmailBase):
     subject = 'An organisation request has been submitted for approval'
-    html_template = 'commercialoperator/emails/organisation_request_notification.html'
-    txt_template = 'commercialoperator/emails/organisation_request_notification.txt'
+    html_template = 'disturbance/emails/organisation_request_notification.html'
+    txt_template = 'disturbance/emails/organisation_request_notification.txt'
 
 
 class OrganisationRequestDeclineNotificationEmail(TemplateEmailBase):
@@ -43,43 +43,43 @@ class OrganisationUnlinkNotificationEmail(TemplateEmailBase):
 
 class OrganisationContactAdminUserNotificationEmail(TemplateEmailBase):
     subject = 'You have been linked as Company Admin Role.'
-    html_template = 'commercialoperator/emails/organisation_contact_admin_notification.html'
-    txt_template = 'commercialoperator/emails/organisation_contact_admin_notification.txt'
+    html_template = 'disturbance/emails/organisation_contact_admin_notification.html'
+    txt_template = 'disturbance/emails/organisation_contact_admin_notification.txt'
 
 class OrganisationContactUserNotificationEmail(TemplateEmailBase):
     subject = 'You have been linked as Company User Role.'
-    html_template = 'commercialoperator/emails/organisation_contact_user_notification.html'
-    txt_template = 'commercialoperator/emails/organisation_contact_user_notification.txt'
+    html_template = 'disturbance/emails/organisation_contact_user_notification.html'
+    txt_template = 'disturbance/emails/organisation_contact_user_notification.txt'
 
 class OrganisationContactSuspendNotificationEmail(TemplateEmailBase):
     subject = 'You have been suspended as Company User.'
-    html_template = 'commercialoperator/emails/organisation_contact_suspend_notification.html'
-    txt_template = 'commercialoperator/emails/organisation_contact_suspend_notification.txt'
+    html_template = 'disturbance/emails/organisation_contact_suspend_notification.html'
+    txt_template = 'disturbance/emails/organisation_contact_suspend_notification.txt'
 
 class OrganisationContactReinstateNotificationEmail(TemplateEmailBase):
     subject = 'You have been Reinstated as Company User.'
-    html_template = 'commercialoperator/emails/organisation_contact_reinstate_notification.html'
-    txt_template = 'commercialoperator/emails/organisation_contact_reinstate_notification.txt'
+    html_template = 'disturbance/emails/organisation_contact_reinstate_notification.html'
+    txt_template = 'disturbance/emails/organisation_contact_reinstate_notification.txt'
 
 class OrganisationContactDeclineNotificationEmail(TemplateEmailBase):
     subject = 'Your organisation link request has been declined.'
-    html_template = 'commercialoperator/emails/organisation_contact_decline_notification.html'
-    txt_template = 'commercialoperator/emails/organisation_contact_decline_notification.txt'
+    html_template = 'disturbance/emails/organisation_contact_decline_notification.html'
+    txt_template = 'disturbance/emails/organisation_contact_decline_notification.txt'
 
 class OrganisationAddressUpdatedNotificationEmail(TemplateEmailBase):
     subject = 'An organisation''s address has been updated'
-    html_template = 'commercialoperator/emails/organisation_address_updated_notification.html'
-    txt_template = 'commercialoperator/emails/organisation_address_updated_notification.txt'
+    html_template = 'disturbance/emails/organisation_address_updated_notification.html'
+    txt_template = 'disturbance/emails/organisation_address_updated_notification.txt'
 
 class OrganisationIdUploadNotificationEmail(TemplateEmailBase):
     subject = 'An organisation''s identification has been uploaded'
-    html_template = 'commercialoperator/emails/organisation_id_upload_notification.html'
-    txt_template = 'commercialoperator/emails/organisation_id_upload_notification.txt'
+    html_template = 'disturbance/emails/organisation_id_upload_notification.html'
+    txt_template = 'disturbance/emails/organisation_id_upload_notification.txt'
 
 class OrganisationRequestLinkNotificationEmail(TemplateEmailBase):
     subject = 'An organisation request to be linked has been sent for approval'
-    html_template = 'commercialoperator/emails/organisation_request_link_notification.html'
-    txt_template = 'commercialoperator/emails/organisation_request_link_notification.txt'    
+    html_template = 'disturbance/emails/organisation_request_link_notification.html'
+    txt_template = 'disturbance/emails/organisation_request_link_notification.txt'    
 
 
 def send_organisation_id_upload_email_notification(emails, organisation, org_contact, request):
@@ -280,7 +280,7 @@ def send_organisation_request_decline_email_notification(org_request,request):
     #_log_org_email(msg, organisation, org_request.requester, sender=sender)
 
 def send_organisation_address_updated_email_notification(address_updated_by,ledger_organisation,wc_organisation,request):
-    from commercialoperator.components.organisations.models import OrganisationContact
+    from disturbance.components.organisations.models import OrganisationContact
 
     email = OrganisationAddressUpdatedNotificationEmail()
 
