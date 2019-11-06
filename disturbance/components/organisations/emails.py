@@ -117,8 +117,13 @@ def send_organisation_reinstate_email_notification(linked_user,linked_by,organis
         'linked_by': linked_by,
         'organisation': organisation
     }
+    all_ccs=[]
+    if organisation.email:
+        cc_list = organisation.email
+        if cc_list:
+            all_ccs = [cc_list]
 
-    msg = email.send(linked_user.email, context=context)
+    msg = email.send(linked_user.email,cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, linked_user, sender=sender)
 
@@ -131,8 +136,13 @@ def send_organisation_contact_suspend_email_notification(linked_user,linked_by,o
         'linked_by': linked_by,
         'organisation': organisation
     }
+    all_ccs=[]
+    if organisation.email:
+        cc_list = organisation.email
+        if cc_list:
+            all_ccs = [cc_list]
 
-    msg = email.send(linked_user.email, context=context)
+    msg = email.send(linked_user.email, cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, linked_user, sender=sender)
 
@@ -144,8 +154,13 @@ def send_organisation_contact_decline_email_notification(user_contact,deleted_by
         'linked_by': deleted_by,
         'organisation': organisation
     }
+    all_ccs=[]
+    if organisation.email:
+        cc_list = organisation.email
+        if cc_list:
+            all_ccs = [cc_list]
 
-    msg = email.send(user_contact.email, context=context)
+    msg = email.send(user_contact.email, cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, user_contact, sender=sender)
 
@@ -159,8 +174,13 @@ def send_organisation_contact_user_email_notification(linked_user,linked_by,orga
         'linked_by': linked_by,
         'organisation': organisation
     }
+    all_ccs=[]
+    if organisation.email:
+        cc_list = organisation.email
+        if cc_list:
+            all_ccs = [cc_list]
 
-    msg = email.send(linked_user.email, context=context)
+    msg = email.send(linked_user.email,cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, linked_user, sender=sender)
 
@@ -174,7 +194,12 @@ def send_organisation_contact_adminuser_email_notification(linked_user,linked_by
         'organisation': organisation
     }
 
-    msg = email.send(linked_user.email, context=context)
+    all_ccs=[]
+    if organisation.email:
+        cc_list = organisation.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(linked_user.email, cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, linked_user, sender=sender)
 

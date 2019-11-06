@@ -91,3 +91,45 @@ def is_consultant(organisation,user):
 
 def random_generator(size=12, chars=string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
+
+
+def generate_new_pins():
+    from disturbance.components.organisations.models import Organisation
+    all_orgs=Organisation.objects.all()
+    for org in all_orgs:
+        org.generate_pins()
+
+def activate_org_contacts():
+    from disturbance.components.organisations.models import OrganisationContact
+    try:
+        all_contacts=OrganisationContact.objects.all()
+        for contact in all_contacts:
+            if contact.user_status=='draft':
+                contact.user_status='active'
+                contact.save()
+                print contact
+    except:
+        pass
+
+def add_admin_user():
+    from disturbance.components.organisations.models import Organisation
+    from disturbance.components.organisations.models import OrganisationContact
+    all_orgs=Organisation.objects.all()
+    for org in all_orgs:
+        all_delegates=[]
+        all_delegates=org.delegates.all()
+        if all_delegates:
+            first_delegate=org.delegates.first()
+            try:
+                all_admin_user= OrganisationContact.objects.filter(organisation = org,user_role='organisation_admin', is_admin=True, user_status='active')
+                print all_admin_user.count()
+                if all_admin_user.count<1:
+                    org_contact = OrganisationContact.objects.get(organisation = org,email = first_delegate.email)
+                    if org_contact.user_status=='draft':
+                        org_contact.user_status='active'
+                    org_contact.user_role ='organisation_admin'
+                    org_contact.is_admin = True
+                    org_contact.save()
+                    print org_contact
+            except OrganisationContact.DoesNotExist:
+                pass    
