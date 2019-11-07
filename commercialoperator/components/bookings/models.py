@@ -255,10 +255,12 @@ class BookingInvoice(RevisionedMixin):
     PAYMENT_METHOD_CC = 0
     PAYMENT_METHOD_BPAY = 1
     PAYMENT_METHOD_MONTHLY_INVOICING = 2
+    PAYMENT_METHOD_OTHER = 3
     PAYMENT_METHOD_CHOICES = (
         (PAYMENT_METHOD_CC, 'Credit Card'),
         (PAYMENT_METHOD_BPAY, 'BPAY'),
         (PAYMENT_METHOD_MONTHLY_INVOICING, 'Monthly Invoicing'),
+        (PAYMENT_METHOD_OTHER, 'Other (Cash/Cheque)'),
     )
 
     booking = models.ForeignKey(Booking, related_name='invoices')

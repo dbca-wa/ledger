@@ -41,6 +41,9 @@
                                 <!--<button  class="dropdown-item" @click="submit_monthly_invoicing">Monthly Invoicing</button>-->
                                 <button type="submit" class="dropdown-item" @click="payment_method='monthly_invoicing'">Monthly Invoicing</button>
                             </span>
+                            <span v-if="selected_licence.other_allowed">
+                                <button type="submit" class="dropdown-item" @click="payment_method='other'">Record Payment</button>
+                            </span>
                           </div>
                         </div>
 
@@ -218,7 +221,7 @@ from '@/utils/hooks'
                 vm.errors = vm.check_form_valid();
 
                 var form = document.forms.new_payment;
-                if (vm.payment_method == 'monthly_invoicing' || vm.payment_method == 'bpay') {
+                if (vm.payment_method == 'monthly_invoicing' || vm.payment_method == 'bpay' || vm.payment_method == 'other') {
                     //form.action = '/payment_monthly/' + vm.selected_licence.value  + '/';
                     form.action = '/preview_deferred/' + vm.selected_licence.value  + '/?method=' + vm.payment_method;
                 } else {
@@ -243,6 +246,7 @@ from '@/utils/hooks'
                             org_applicant:licences[i].org_applicant,
                             bpay_allowed:licences[i].bpay_allowed,
                             monthly_invoicing_allowed:licences[i].monthly_invoicing_allowed,
+                            other_allowed:licences[i].other_allowed,
                         });
                     }
                     console.log(vm.licences);

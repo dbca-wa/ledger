@@ -39,7 +39,9 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
         )
         lines = ast.literal_eval(request.POST['line_details'])['tbody']
 
-    elif booking_type == Booking.BOOKING_TYPE_INTERNET and proposal.org_applicant and proposal.org_applicant.bpay_allowed:
+    elif (booking_type == Booking.BOOKING_TYPE_INTERNET and proposal.org_applicant and proposal.org_applicant.bpay_allowed) or \
+         (booking_type == Booking.BOOKING_TYPE_RECEPTION):
+         #(booking_type == Booking.BOOKING_TYPE_RECEPTION and proposal.org_applicant.other_allowed):
         booking = Booking.objects.create(proposal_id=proposal.id, created_by=request.user, booking_type=booking_type)
         lines = ast.literal_eval(request.POST['line_details'])['tbody']
 
@@ -166,6 +168,30 @@ def create_bpay_invoice(user, booking):
 
     return failed_bookings
 
+def create_other_invoice(user, booking):
+
+    failed_bookings = []
+    with transaction.atomic():
+        #if booking.booking_type == Booking.BOOKING_TYPE_RECEPTION and booking.proposal.org_applicant.other_allowed:
+        if booking.booking_type == Booking.BOOKING_TYPE_RECEPTION:
+            try:
+                now = timezone.now().date()
+                dt = date(now.year, now.month, 1) + relativedelta(months=1)
+                logger.info('Creating OTHER (CASH/CHEQUE) invoice for booking {}'.format(booking.admission_number))
+                order = create_invoice(booking, payment_method='other')
+                invoice = Invoice.objects.get(order_number=order.number)
+
+                deferred_payment_date = calc_payment_due_date(booking, dt) - relativedelta(days=1)
+                book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method, deferred_payment_date=deferred_payment_date)
+
+                #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
+                #ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
+            except Exception, e:
+                logger.error('Failed to create OTHER invoice for booking_id {}'.format(booking.id))
+                logger.error('{}'.format(e))
+                failed_bookings.append(booking.id)
+
+    return failed_bookings
 
 def calc_payment_due_date(booking, _date):
     org_applicant = booking.proposal.org_applicant
