@@ -202,10 +202,10 @@ class Approval(RevisionedMixin):
         return max(ids) + 1 if ids else 1
 
     def save(self, *args, **kwargs):
-        super(Approval, self).save(*args,**kwargs)
-        if self.lodgement_number == '':
+        if self.lodgement_number in ['', None]:
             self.lodgement_number = 'L{0:06d}'.format(self.next_id)
-            self.save()
+            #self.save()
+        super(Approval, self).save(*args,**kwargs)
 
     def __str__(self):
         return self.lodgement_number

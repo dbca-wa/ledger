@@ -129,9 +129,9 @@ class GetEmptyList(views.APIView):
 
 #class DatatablesFilterBackend(BaseFilterBackend):
 #
-#	def filter_queryset(self, request, queryset, view):
-#		queryset = super(DatatablesFilterBackend, self).filter_queryset(request, queryset, view)
-#		return queryset
+#   def filter_queryset(self, request, queryset, view):
+#       queryset = super(DatatablesFilterBackend, self).filter_queryset(request, queryset, view)
+#       return queryset
 
 '''
 1. internal_proposal.json
@@ -467,6 +467,42 @@ class ProposalSubmitViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+class ProposalParkViewSet(viewsets.ModelViewSet):
+    """
+    Similar to ProposalViewSet, except get_queryset include migrated_licences
+    """
+    queryset = Proposal.objects.none()
+    serializer_class = ProposalSerializer
+    lookup_field = 'id'
+
+    @property
+    def excluded_type(self):
+        try:
+            return ApplicationType.objects.get(name='E Class')
+        except:
+            return ApplicationType.objects.none()
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request): #user.is_authenticated():
+            qs= Proposal.objects.all().exclude(application_type=self.excluded_type)
+            return qs #.exclude(migrated=True)
+            #return Proposal.objects.filter(region__isnull=False)
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
+            queryset =  Proposal.objects.filter( Q(org_applicant_id__in = user_orgs) | Q(submitter = user) ) #.exclude(migrated=True)
+            return queryset.exclude(application_type=self.excluded_type)
+        logger.warn("User is neither customer nor internal user: {} <{}>".format(user.get_full_name(), user.email))
+        return Proposal.objects.none()
+
+    @detail_route(methods=['GET',])
+    def proposal_parks(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = ProposalParkSerializer(instance,context={'request':request})
+        return Response(serializer.data)
+
+
 
 
 class ProposalViewSet(viewsets.ModelViewSet):
@@ -939,11 +975,11 @@ class ProposalViewSet(viewsets.ModelViewSet):
         serializer = InternalProposalSerializer(instance,context={'request':request})
         return Response(serializer.data)
 
-    @detail_route(methods=['GET',])
-    def proposal_parks(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = ProposalParkSerializer(instance,context={'request':request})
-        return Response(serializer.data)
+#    @detail_route(methods=['GET',])
+#    def proposal_parks(self, request, *args, **kwargs):
+#        instance = self.get_object()
+#        serializer = ProposalParkSerializer(instance,context={'request':request})
+#        return Response(serializer.data)
 
 
 #    @detail_route(methods=['post'])

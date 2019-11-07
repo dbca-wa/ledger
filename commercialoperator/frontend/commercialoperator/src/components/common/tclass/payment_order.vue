@@ -251,7 +251,7 @@ from '@/utils/hooks'
             },
             proposal_parks: function(e) {
                 let vm = this;
-                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,vm.selected_licence.value+'/proposal_parks')).then((res)=>{
+                vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposal_park,vm.selected_licence.value+'/proposal_parks')).then((res)=>{
                     vm.resetTable();
                     vm.land_parks = res.body.land_parks;
                     vm.parks = [];

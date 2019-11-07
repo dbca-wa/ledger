@@ -2,8 +2,8 @@ from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import OrganisationAddress
 from ledger.accounts.models import EmailUser
 from commercialoperator.components.organisations.models import Organisation, OrganisationContact, UserDelegation
-from commercialoperator.components.main.models import ApplicationType
-from commercialoperator.components.proposals.models import Proposal, ProposalType, ProposalOtherDetails
+from commercialoperator.components.main.models import ApplicationType, Park
+from commercialoperator.components.proposals.models import Proposal, ProposalType, ProposalOtherDetails, ProposalPark
 from commercialoperator.components.approvals.models import Approval
 
 import csv
@@ -128,7 +128,6 @@ class OrganisationReader():
             try:
                 delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
             except Exception, e:
-                import ipdb; ipdb.set_trace()
                 print 'Delegate Creation Failed: {}'.format(user)
                 raise
 
@@ -246,11 +245,11 @@ class OrganisationReader():
                     data.update({'eco_cert_expiry': row[27].strip()})
                     data.update({'vessels': row[28].strip()})
                     data.update({'vehicles': row[29].strip()})
-                    #data.update({'land_parks': row[30].strip()})
+                    #data.update({'land_parks': row[30].translate(None, b' -()').split})
+                    data.update({'land_parks': 'Geikie Gorge National Park,Lawley River National Park,Purnululu National Park'.split(',')})
                     #print data
 
                     lines.append(data)
-
 
         except:
             logger.info('Main {}'.format(data))
@@ -315,7 +314,7 @@ class OrganisationReader():
                         expiry_date=data['expiry_date'],
                         start_date=data['start_date'],
                         org_applicant=org_applicant,
-                        submitter= submitter,
+                        submitter=submitter,
                         current_proposal=proposal
                     )
 
@@ -326,9 +325,13 @@ class OrganisationReader():
         proposal.migrated=True
         approval.migrated=True
         other_details = ProposalOtherDetails.objects.create(proposal=proposal)
+
+        for park_name in data['land_parks']:
+            park = Park.objects.get(name=park_name)
+            ProposalPark.objects.create(proposal=proposal, park=park)
+
         proposal.save()
         approval.save()
-        #import ipdb; ipdb.set_trace()
         return approval
 
     def create_organisation_data(self):
@@ -349,8 +352,14 @@ class OrganisationReader():
         approval_error = []
         approval_new = []
         for data in self.org_lines:
-            approval = self._migrate_approval(data)
-            approval_new.append(approval) if approval else approval_error(data)
+            try:
+                approval = self._migrate_approval(data)
+                approval_new.append(approval) if approval else approval_error(data)
+                print 'Added: {}'.format(approval)
+            except Exception, e:
+                print 'Exception {}'.format(e)
+                print 'Data: {}'.format(data)
+                approval_error.append([e, data])
 
         print 'Approvals: {}'.format(approval_new)
         print 'Approval Errors: {}'.format(approval_error)
