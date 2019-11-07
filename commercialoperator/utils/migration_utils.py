@@ -21,15 +21,15 @@ class OrganisationReader():
     Usage:
         from commercialoperator.utils.migration_utils import OrganisationReader
         reader = OrganisationReader('/tmp/General_Compliance_Report_1.csv')
-        reader.create_organisation_data()
-        reader.migrate_approval()
+        reader._create_organisation_data()
+        reader.create_licences()
     """
 
     def __init__(self, filename):
         self.not_found = []
-        self.org_lines = self.read_organisation_data(filename)
+        self.org_lines = self._read_organisation_data(filename)
 
-    def create_organisation(self, data, count, debug=False):
+    def _create_organisation(self, data, count, debug=False):
 
         #print 'Data: {}'.format(data)
         #user = None
@@ -160,7 +160,7 @@ class OrganisationReader():
 
         return abn_new, abn_existing
 
-    def read_organisation_data(self, filename, verify=False):
+    def _read_organisation_data(self, filename, verify=False):
         def get_start_date(data, row):
             try:
                 expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date() # '05-Feb-89'
@@ -187,7 +187,6 @@ class OrganisationReader():
             data.update({'expiry_date': expiry_date})
 
         lines=[]
-        data={}
         try:
             '''
             Example csv
@@ -204,6 +203,7 @@ class OrganisationReader():
                 reader = csv.reader(csvfile, delimiter=str(':'))
                 header = next(reader) # skip header
                 for row in reader:
+                    data={}
                     data.update({'file_no': row[0].translate(None, string.whitespace)})
                     data.update({'licence_no': row[1].translate(None, string.whitespace)})
                     data.update({'expiry_date': row[2].strip()})
@@ -259,7 +259,7 @@ class OrganisationReader():
         return lines
 
 
-    def migrate_approval(self, data):
+    def _migrate_approval(self, data):
         from commercialoperator.components.approvals.models import Approval
         org_applicant = None
         proxy_applicant = None
@@ -336,7 +336,7 @@ class OrganisationReader():
         abn_new = []
         count = 1
         for data in self.org_lines:
-            new, existing = self.create_organisation(data, count)
+            new, existing = self._create_organisation(data, count)
             count += 1
             abn_new = new + abn_new
             abn_existing = existing + abn_existing
@@ -349,7 +349,7 @@ class OrganisationReader():
         approval_error = []
         approval_new = []
         for data in self.org_lines:
-            approval = self.migrate_approval(data)
+            approval = self._migrate_approval(data)
             approval_new.append(approval) if approval else approval_error(data)
 
         print 'Approvals: {}'.format(approval_new)
