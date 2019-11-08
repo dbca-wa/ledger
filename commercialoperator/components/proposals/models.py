@@ -757,6 +757,11 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         return self.parks.filter(park__park_type='land')
 
     @property
+    def land_parks_exclude_free(self):
+        """ exlude parks with free admission """
+        return self.parks.filter(park__park_type='land').exclude(park__adult_price=D(0.0), park__child_price=D(0.0))
+
+    @property
     def marine_parks(self):
         return self.parks.filter(park__park_type='marine')
 

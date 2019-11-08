@@ -483,6 +483,9 @@ class ProposalParkViewSet(viewsets.ModelViewSet):
             return ApplicationType.objects.none()
 
     def get_queryset(self):
+        """
+        Now excludes parks with free admission
+        """
         user = self.request.user
         if is_internal(self.request): #user.is_authenticated():
             qs= Proposal.objects.all().exclude(application_type=self.excluded_type)

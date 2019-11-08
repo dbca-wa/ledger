@@ -669,6 +669,7 @@ class ProposalParkSerializer(BaseProposalSerializer):
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     licence_number = serializers.SerializerMethodField(read_only=True)
     licence_number_id = serializers.SerializerMethodField(read_only=True)
+    land_parks=ProposalParkSerializer(source='land_parks_exclude_free', many=True)
 
     class Meta:
         model = Proposal
@@ -687,6 +688,7 @@ class ProposalParkSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 #'activities_land',
                 #'activities_marine',
+                #'land_parks_exclude_free',
                 'land_parks',
                 #'marine_parks',
                 #'trails',
@@ -700,6 +702,9 @@ class ProposalParkSerializer(BaseProposalSerializer):
     def get_licence_number_id(self,obj):
         return obj.approval.id
 
+    def get_land_parks(self,obj):
+        """ exlude parks with free admission """
+        return obj.land_parks_exclude_free
 
 class InternalProposalSerializer(BaseProposalSerializer):
     #applicant = ApplicantSerializer()
