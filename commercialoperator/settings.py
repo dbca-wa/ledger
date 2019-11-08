@@ -115,6 +115,7 @@ COLS_HANDBOOK_URL = env('COLS_HANDBOOK_URL', 'https://parks.dpaw.wa.gov.au/know/
 CRON_RUN_AT_TIMES = env('CRON_RUN_AT_TIMES', '04:05')
 # for ORACLE Job Notification - override settings_base.py
 EMAIL_FROM = DEFAULT_FROM_EMAIL
+OTHER_PAYMENT_ALLOWED = env('OTHER_PAYMENT_ALLOWED', False) # Cash/Cheque
 
 OSCAR_BASKET_COOKIE_OPEN = 'cols_basket'
 PAYMENT_SYSTEM_ID = env('PAYMENT_SYSTEM_ID', 'S557')

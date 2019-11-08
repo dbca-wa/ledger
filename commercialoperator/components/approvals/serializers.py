@@ -57,8 +57,7 @@ class ApprovalPaymentSerializer(serializers.ModelSerializer):
         return obj.monthly_invoicing_allowed
 
     def get_other_allowed(self,obj):
-        #return obj.other_allowed
-        return True
+        return settings.OTHER_PAYMENT_ALLOWED
 
     #def get_monthly_invoicing_period(self,obj):
     #    return obj.monthly_invoicing_period
