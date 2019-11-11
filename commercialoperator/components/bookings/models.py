@@ -220,7 +220,7 @@ class ParkBooking(RevisionedMixin):
     def visitors(self):
         return {
             "adults" : self.no_adults,
-            "children" : self.no_childrenn,
+            "children" : self.no_children,
             "free_of_charge" : self.no_free_of_charge
         }
 
