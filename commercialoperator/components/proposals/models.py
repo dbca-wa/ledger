@@ -1731,7 +1731,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         # send the doc and log in approval and org
                     else:
                         #approval.replaced_by = request.user
-                        approval.replaced_by = self.approval
+                        #approval.replaced_by = self.approval
                         # Generate the document
                         approval.generate_doc(request.user)
                         #Delete the future compliances if Approval is reissued and generate the compliances again.
