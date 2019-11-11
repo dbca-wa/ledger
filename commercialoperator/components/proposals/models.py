@@ -939,6 +939,18 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
         return selected_parks_activities
 
+    @property
+    def selected_parks_access_types_pdf(self):
+        #list of selected parks and access_types (to print on licence pdf)
+        selected_park_access_types=[]
+        for p in self.parks.all():
+            park_access_types=[]
+            if p.park.park_type=='land':
+                for a in p.access_types.all():
+                    park_access_types.append(a.access_type.name)
+                selected_park_access_types.append({'park': p.park.name, 'access_types': park_access_types})
+        return selected_park_access_types
+
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
