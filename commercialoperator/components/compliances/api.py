@@ -82,7 +82,6 @@ class CompliancePaginatedViewSet(viewsets.ModelViewSet):
             http://localhost:8000/api/compliance_paginated/compliances_external/?format=datatables&draw=1&length=2
         """
 
-        #import ipdb; ipdb.set_trace()
         qs = self.get_queryset().exclude(processing_status='future')
         #qs = ProposalFilterBackend().filter_queryset(self.request, qs, self)
         qs = self.filter_queryset(qs)
@@ -130,7 +129,6 @@ class ComplianceViewSet(viewsets.ModelViewSet):
     @list_route(methods=['GET',])
     def filter_list(self, request, *args, **kwargs):
         """ Used by the external dashboard filters """
-        #import ipdb; ipdb.set_trace()
         region_qs =  self.get_queryset().filter(proposal__region__isnull=False).values_list('proposal__region__name', flat=True).distinct()
         activity_qs =  self.get_queryset().filter(proposal__activity__isnull=False).values_list('proposal__activity', flat=True).distinct()
         data = dict(
@@ -178,7 +176,6 @@ class ComplianceViewSet(viewsets.ModelViewSet):
 #
 #        https://stackoverflow.com/questions/29128225/django-rest-framework-3-1-breaks-pagination-paginationserializer
 #        """
-#        #import ipdb; ipdb.set_trace()
 #        queryset = self.get_queryset().exclude(processing_status='future')
 #        paginator = DatatablesPageNumberPagination()
 #        paginator.page_size = queryset.count()

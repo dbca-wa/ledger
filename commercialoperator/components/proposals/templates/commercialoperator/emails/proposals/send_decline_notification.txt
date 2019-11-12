@@ -2,6 +2,9 @@
 
 {%  block content %}
    
-        An Application {{proposal.lodgement_number}} has been declined.
+    Your application for a commercial operations licence {{proposal.lodgement_number}} has been declined
+    For further information please login to your account.
+   
+   	If you have any queries regarding this decision please contact a licensing officer on {{settings.DEP_PHONE}}, or email {{settings.SUPPORT_EMAIL}}
 
 {%  endblock %}

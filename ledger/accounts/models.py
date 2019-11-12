@@ -26,6 +26,12 @@ from ledger.accounts.utils import get_department_user_compact, in_dbca_domain
 from ledger.address.models import UserAddress, Country
 
 
+def unicode_compatible(value):
+    try: 
+        return unicode(value)
+    except:
+        return str(value)
+
 
 class EmailUserManager(BaseUserManager):
     """A custom Manager for the EmailUser model.
@@ -199,7 +205,7 @@ class BaseAddress(models.Model):
         #for f in fields:
         #    print unicode(f).encode('utf-8').decode('unicode-escape').strip()
         #fields = [str(f).strip() for f in fields if f]
-        fields = [unicode(f).encode('utf-8').decode('unicode-escape').strip() for f in fields if f]
+        fields = [unicode_compatible(f).encode('utf-8').decode('unicode-escape').strip() for f in fields if f]
         
         return fields
 
@@ -680,6 +686,7 @@ class Organisation(models.Model):
     identification = models.FileField(upload_to='%Y/%m/%d', null=True, blank=True)
     postal_address = models.ForeignKey('OrganisationAddress', related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
     billing_address = models.ForeignKey('OrganisationAddress', related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+    email = models.EmailField(blank=True, null=True,)
     trading_name = models.CharField(max_length=256, null=True, blank=True)
 
     def upload_identification(self, request):

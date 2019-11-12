@@ -14,7 +14,7 @@
                             
                             <div class="col-sm-12 top-buffer-s">
                                 <strong>Issued on</strong><br/>
-                                {{ approval.issued_date | formatDate}}
+                                {{ approval.issue_date | formatDate}}
                             </div>
                             <div class="col-sm-12 top-buffer-s">
                                 <table class="table small-table">
@@ -163,7 +163,8 @@
                           <div class="form-group">
                             <label for="" class="col-sm-3 control-label" >Document</label>
                             <div class="col-sm-4">
-                                <p><a target="_blank" :href="approval.licence_document" class="control-label pull-left">Approval.pdf</a></p>
+                                <!-- <p><a target="_blank" :href="approval.licence_document" class="control-label pull-left">Approval.pdf</a></p> -->
+                                <p><a :href="'#'+approval.id" class="control-label pull-left" @click="viewApprovalPDF(approval.id, approval.licence_document)">Approval.pdf</a></p>
                             </div>
                           </div>
                        </form>
@@ -252,6 +253,18 @@ export default {
         console.log(error);
     })
 
+    },
+    viewApprovalPDF: function(id,media_link){
+            let vm=this;
+            //console.log(approval);
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.approvals,(id+'/approval_pdf_view_log')),{
+                })
+                .then((response) => {  
+                    //console.log(response)  
+                }, (error) => {
+                    console.log(error);
+                });
+            window.open(media_link, '_blank');
     },
   
   

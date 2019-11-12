@@ -12,5 +12,5 @@ class OrderAdmin(OrderAdmin):
     readonly_fields = ('number', 'total_incl_tax', 'total_excl_tax',
                        'shipping_incl_tax', 'shipping_excl_tax',)
     inlines = [LineInline]
-
+    search_fields = ('number','user__email',)
 admin.site.register(Order, OrderAdmin)

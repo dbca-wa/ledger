@@ -27,10 +27,12 @@ class Command(BaseCommand):
         renewal_conditions = {
             'expiry_date__lte': expiry_notification_date,
             'renewal_sent': False,
-            'replaced_by__isnull': True
+            'replaced_by__isnull': True,
         }
         logger.info('Running command {}'.format(__name__))
-        qs=Approval.objects.filter(**renewal_conditions)
+
+        # 2 month licences cannot be renewed
+        qs=Approval.objects.filter(**renewal_conditions).exclude(current_proposal__other_details__preferred_licence_period='2_months')
         print qs
         for a in Approval.objects.filter(**renewal_conditions):
             if a.status == 'current' or a.status == 'suspended':

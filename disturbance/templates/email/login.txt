@@ -1,6 +1,8 @@
 Dear Sir/Madam,
 
+{% autoescape off %}
 Click this link to sign in: {{ login_url }}
+{% endautoescape %}
 
 Best regards,
 

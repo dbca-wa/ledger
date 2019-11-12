@@ -87,6 +87,7 @@ class Approval(RevisionedMixin):
     set_to_cancel = models.BooleanField(default=False)
     set_to_suspend = models.BooleanField(default=False)
     set_to_surrender = models.BooleanField(default=False)
+    reissued= models.BooleanField(default=False)
 
     class Meta:
         app_label = 'disturbance'
@@ -188,9 +189,11 @@ class Approval(RevisionedMixin):
                 return False
 
 
-    def generate_doc(self, user):
-        from disturbance.components.approvals.pdf import create_approval_doc
+    def generate_doc(self, user, preview=False):
+        from disturbance.components.approvals.pdf import create_approval_doc, create_approval_pdf_bytes
         copied_to_permit = self.copiedToPermit_fields(self.current_proposal) #Get data related to isCopiedToPermit tag
+        if preview:
+            return create_approval_pdf_bytes(self,self.current_proposal, copied_to_permit, user)
         self.licence_document = create_approval_doc(self,self.current_proposal, copied_to_permit, user)
         self.save(version_comment='Created Approval PDF: {}'.format(self.licence_document.name))
         self.current_proposal.save(version_comment='Created Approval PDF: {}'.format(self.licence_document.name))
@@ -260,6 +263,7 @@ class Approval(RevisionedMixin):
                         send_approval_cancel_email_notification(self)
                 else:
                     self.set_to_cancel = True
+                    send_approval_cancel_email_notification(self, future_cancel=True)
                 #import ipdb; ipdb.set_trace()
                 self.save()
                 # Log proposal action
@@ -296,6 +300,7 @@ class Approval(RevisionedMixin):
                         send_approval_suspend_email_notification(self)
                 else:
                     self.set_to_suspend = True
+                    send_approval_suspend_email_notification(self, future_suspend=True)
                 self.save()
                 # Log approval action
                 self.log_user_action(ApprovalUserAction.ACTION_SUSPEND_APPROVAL.format(self.id),request)
@@ -358,6 +363,7 @@ class Approval(RevisionedMixin):
                         send_approval_surrender_email_notification(self)
                 else:
                     self.set_to_surrender = True
+                    send_approval_surrender_email_notification(self, future_surrender=True)
                 self.save()
                 # Log approval action
                 self.log_user_action(ApprovalUserAction.ACTION_SURRENDER_APPROVAL.format(self.id),request)
@@ -366,6 +372,14 @@ class Approval(RevisionedMixin):
             except:
                 raise
 
+    def pdf_view_log(self,request):
+        self.log_user_action(ApprovalUserAction.ACTION_APPROVAL_PDF_VIEW.format(self.id),request)
+        return self
+
+class PreviewTempApproval(Approval):
+    class Meta:
+        app_label = 'disturbance'
+        #unique_together= ('lodgement_number', 'issue_date')
 
 class ApprovalLogEntry(CommunicationsLogEntry):
     approval = models.ForeignKey(Approval, related_name='comms_logs')
@@ -398,7 +412,7 @@ class ApprovalUserAction(UserAction):
     ACTION_SURRENDER_APPROVAL = "Surrender approval {}"
     ACTION_RENEW_APPROVAL = "Create renewal Proposal for approval {}"
     ACTION_AMEND_APPROVAL = "Create amendment Proposal for approval {}"
-
+    ACTION_APPROVAL_PDF_VIEW ="View approval PDF for approval {}"
 
     class Meta:
         app_label = 'disturbance'
