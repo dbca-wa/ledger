@@ -24,6 +24,7 @@ class ApprovalPaymentSerializer(serializers.ModelSerializer):
     org_applicant = serializers.SerializerMethodField(read_only=True)
     bpay_allowed = serializers.SerializerMethodField(read_only=True)
     monthly_invoicing_allowed = serializers.SerializerMethodField(read_only=True)
+    other_allowed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Approval
@@ -34,6 +35,7 @@ class ApprovalPaymentSerializer(serializers.ModelSerializer):
             'org_applicant',
             'bpay_allowed',
             'monthly_invoicing_allowed',
+            'other_allowed',
         )
         read_only_fields = (
             'lodgement_number',
@@ -42,6 +44,7 @@ class ApprovalPaymentSerializer(serializers.ModelSerializer):
             'org_applicant',
             'bpay_allowed',
             'monthly_invoicing_allowed',
+            'other_allowed',
         )
 
     def get_org_applicant(self,obj):
@@ -52,6 +55,9 @@ class ApprovalPaymentSerializer(serializers.ModelSerializer):
 
     def get_monthly_invoicing_allowed(self,obj):
         return obj.monthly_invoicing_allowed
+
+    def get_other_allowed(self,obj):
+        return settings.OTHER_PAYMENT_ALLOWED
 
     #def get_monthly_invoicing_period(self,obj):
     #    return obj.monthly_invoicing_period

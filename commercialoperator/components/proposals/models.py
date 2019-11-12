@@ -9,7 +9,7 @@ from django.db import models,transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
 from django.utils.encoding import python_2_unicode_compatible
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, MultipleObjectsReturned
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
@@ -757,6 +757,11 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         return self.parks.filter(park__park_type='land')
 
     @property
+    def land_parks_exclude_free(self):
+        """ exlude parks with free admission """
+        return self.parks.filter(park__park_type='land').exclude(park__adult_price=D(0.0), park__child_price=D(0.0))
+
+    @property
     def marine_parks(self):
         return self.parks.filter(park__park_type='marine')
 
@@ -933,6 +938,18 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                   trail_activities.append(ts.activity_name)
                 selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
         return selected_parks_activities
+
+    @property
+    def selected_parks_access_types_pdf(self):
+        #list of selected parks and access_types (to print on licence pdf)
+        selected_park_access_types=[]
+        for p in self.parks.all():
+            park_access_types=[]
+            if p.park.park_type=='land':
+                for a in p.access_types.all():
+                    park_access_types.append(a.access_type.name)
+                selected_park_access_types.append({'park': p.park.name, 'access_types': park_access_types})
+        return selected_park_access_types
 
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
@@ -1726,7 +1743,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         # send the doc and log in approval and org
                     else:
                         #approval.replaced_by = request.user
-                        approval.replaced_by = self.approval
+                        #approval.replaced_by = self.approval
                         # Generate the document
                         approval.generate_doc(request.user)
                         #Delete the future compliances if Approval is reissued and generate the compliances again.
@@ -3517,396 +3534,6 @@ class HelpPage(models.Model):
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('application_type', 'help_type', 'version')
-
-def check_migrate_approval(data):
-    '''
-    check if all submitters/org_applicants exist
-    '''
-    from commercialoperator.components.approvals.models import Approval
-    org_applicant = None
-    proxy_applicant = None
-    submitter=None
-    try:
-
-        if data['submitter']:
-            submitter = EmailUser.objects.get(email__icontains=data['submitter'])
-            if data['org_applicant']:
-                #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
-                org_applicant = Organisation.objects.get(organisation__abn=data['org_applicant'])
-        else:
-            ValidationError('Licence holder is required')
-    except:
-        raise ValidationError('Licence holder is required')
-
-def migrate_approval(data, not_found):
-    from commercialoperator.components.approvals.models import Approval
-    org_applicant = None
-    proxy_applicant = None
-    submitter=None
-    try:
-
-        if data['submitter']:
-            try:
-                submitter = EmailUser.objects.get(email__icontains=data['submitter'])
-            except:
-                submitter = EmailUser.objects.create(email=data['submitter'], password = '')
-            if data['abn']:
-                #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
-                org_applicant = Organisation.objects.get(organisation__abn=data['abn'])
-        else:
-            #ValidationError('Licence holder is required')
-            logger.error('Licence holder is required: submitter {}, abn {}'.format(data['submitter'], data['abn']))
-            not_found.append({'submitter': data['submitter'], 'abn': data['abn']})
-            return None
-    except Exception, e:
-        #raise ValidationError('Licence holder is required: \n{}'.format(e))
-        logger.error('Licence holder is required: submitter {}, abn {}'.format(data['submitter'], data['abn']))
-        not_found.append({'submitter': data['submitter'], 'abn': data['abn']})
-        return None
-
-    application_type=ApplicationType.objects.get(name=data['application_type'])
-    application_name = application_type.name
-    # Get most recent versions of the Proposal Types
-    qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
-    proposal_type = qs_proposal_type.get(name=application_name)
-    proposal= Proposal.objects.create( # Dummy 'T Class' proposal
-                    application_type=application_type,
-                    submitter=submitter,
-                    org_applicant=org_applicant,
-                    schema=proposal_type.schema
-                )
-    approval = Approval.objects.create(
-                    issue_date=data['issue_date'],
-                    expiry_date=data['expiry_date'],
-                    start_date=data['start_date'],
-                    org_applicant=org_applicant,
-                    submitter= submitter,
-                    current_proposal=proposal
-                )
-    proposal.approval= approval
-    proposal.processing_status='approved'
-    proposal.customer_status='approved'
-    proposal.migrated=True
-    approval.migrated=True
-    other_details = ProposalOtherDetails.objects.create(proposal=proposal)
-    proposal.save()
-    approval.save()
-    return approval
-
-def create_migration_data(filename, verify=False, app_type='T Class'):
-    def get_dates(data, row):
-        try:
-            if data['start_date']:
-                start_date = datetime.datetime.strptime(data['start_date'], '%d-%b-%y').date() # '05-Feb-89'
-            else:
-                start_date = None
-
-            if data['issue_date']:
-                issue_date = datetime.datetime.strptime(data['issue_date'], '%d-%b-%y').date()
-            else:
-                issue_date = None
-
-            if data['expiry_date']:
-                expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date()
-
-            if not (start_date and issue_date):
-                start_date = datetime.date.today()
-                issue_date = datetime.date.today()
-            elif not start_date:
-                start_date = issue_date
-            elif not issue_date:
-                issue_date = start_date
-
-        except Exception, e:
-            logger.error('Error in Dates: {}'.format(data))
-            raise
-
-        data.update({'start_date': start_date})
-        data.update({'issue_date': start_date})
-        data.update({'expiry_date': expiry_date})
-
-        return data
-
-
-    try:
-        '''
-        Example csv
-        org_applicant, submitter, start_date, issue_date, expiry_date, application_type
-        'Test Org1', 'prerana.andure@dbca.wa.gov.au', '4/07/2019', '4/07/2019', '10/07/2019', 'T Class'
-
-        To test:
-            from commercialoperator.components.proposals.models import create_migration_data
-            create_migration_data('commercialoperator/utils/csv/approvals.csv')
-        '''
-        data={}
-        not_found=[]
-        no_expiry=[]
-        with open(filename) as csvfile:
-            reader = csv.reader(csvfile, delimiter=str(','))
-            header = next(reader) # skip header
-            for row in reader:
-                data.update({'abn': row[0].translate(None, string.whitespace)})
-                data.update({'submitter': row[1].strip()})
-                data.update({'start_date': row[2].strip()})
-                data.update({'issue_date': row[3].strip()})
-                data.update({'expiry_date': row[4].strip()})
-                data.update({'application_type': row[5].strip()})
-                data.update({'submitter2': row[6].strip()})
-                data.update({'submitter3': row[7].strip()})
-                data.update({'submitter4': row[8].strip()})
-                data.update({'submitter_full_str': row[9].strip()})
-
-                if data['expiry_date']:
-                    get_dates(data, row)
-                    if row[5].strip()[0] == 'T':
-                        application_type = 'T Class'
-                    elif row[5].strip()[0] == 'E':
-                        application_type = 'E Class'
-                    else:
-                        logger.error('Unknown Application Type: {}'.format(row[5].strip()))
-
-                    data.update({'application_type': application_type})
-                    #print data
-
-                    if application_type == app_type:
-                        if verify:
-                            approval=check_migrate_approval(data)
-                        else:
-                            approval=migrate_approval(data, not_found)
-                        #print data
-                        print '{} - {}'.format(approval, data['submitter'])
-                        print
-                else:
-                    no_expiry.append(data['submitter'])
-
-        print 'Not Found: {}'.format(not_found)
-        print 'No Expiry: {}'.format(no_expiry)
-    except Exception, e:
-        print data
-        print e
-
-
-def create_organisation(data, count, debug=False):
-
-    #print 'Data: {}'.format(data)
-    #user = None
-    try:
-        user, created = EmailUser.objects.get_or_create(
-            email__icontains=data['email1'],
-            defaults={
-                'first_name': data['first_name'],
-                'last_name': data['last_name'],
-                'phone_number': data['phone_number1'],
-                'mobile_number': data['mobile_number'],
-            },
-        )
-    except Exception, e:
-        print data['email1']
-
-    if debug:
-        print 'User: {}'.format(user)
-
-
-    abn_existing = []
-    abn_new = []
-    process = True
-    try:
-        ledger_organisation.objects.get(abn=data['abn'])
-        abn_existing.append(data['abn'])
-        print '{}, Existing ABN: {}'.format(count, data['abn'])
-        process = False
-    except Exception, e:
-        print '{}, Add ABN: {}'.format(count, data['abn'])
-
-    if process:
-        try:
-            #print 'Country: {}'.format(data['country'])
-            country=Country.objects.get(printable_name__icontains=data['country'])
-            oa, created = OrganisationAddress.objects.get_or_create(
-                line1=data['address_line1'],
-                locality=data['suburb'],
-                postcode=data['postcode'] if data['postcode'] else '0000',
-                defaults={
-                    'line2': data['address_line2'],
-                    'line3': data['address_line3'],
-                    'state': data['state'],
-                    'country': country.code,
-                }
-            )
-        except:
-            print 'Country 2: {}'.format(data['country'])
-            raise
-        if debug:
-            print 'Org Address: {}'.format(oa)
-
-        try:
-            lo, created = ledger_organisation.objects.get_or_create(
-                abn=data['abn'],
-                defaults={
-                    'name': data['licencee'],
-                    'postal_address': oa,
-                    'billing_address': oa,
-                    'trading_name': data['trading_name']
-                }
-            )
-            if created:
-                abn_new.append(data['abn'])
-            else:
-                print '******** ERROR ********* abn already exists {}'.format(data['abn'])
-
-        except Exception, e:
-            print 'ABN: {}'.format(data['abn'])
-            raise
-
-        if debug:
-            print 'Ledger Org: {}'.format(lo)
-
-        try:
-            org, created = Organisation.objects.get_or_create(organisation=lo)
-        except Exception, e:
-            print 'Org: {}'.format(org)
-            raise
-
-        if debug:
-            print 'Organisation: {}'.format(org)
-
-        try:
-            delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
-        except Exception, e:
-            print 'Delegate Creation Failed: {}'.format(user)
-            raise
-
-        if debug:
-            print 'Delegate: {}'.format(delegate)
-
-        try:
-            oc, created = OrganisationContact.objects.get_or_create(
-                organisation=org,
-                email=user.email,
-                defaults={
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'phone_number': user.phone_number,
-                    'mobile_number': user.mobile_number if data['mobile_number'] else '',
-                    'user_status': 'active',
-                    'user_role': 'organisation_admin',
-                    'is_admin': True
-                }
-            )
-        except Exception, e:
-            print 'Org Contact: {}'.format(user)
-            raise
-
-        if debug:
-            print 'Org Contact: {}'.format(oc)
-
-        #return abn_new, abn_existing
-
-    return abn_new, abn_existing
-
-def create_organisation_data(filename, verify=False):
-    def get_start_date(data, row):
-        try:
-            expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date() # '05-Feb-89'
-        except Exception, e:
-            data.update({'start_date': None})
-            data.update({'issue_date': None})
-            data.update({'expiry_date': None})
-            #logger.error('Expiry Date: {}'.format(data['expiry_date']))
-            #logger.error('Data: {}'.format(data))
-            #raise
-            return
-
-        term = data['term'].split() # '3 YEAR'
-
-        if 'YEAR' in term[1]:
-            start_date = expiry_date - relativedelta(years=int(term[0]))
-        if 'MONTH' in term[1]:
-            start_date = expiry_date - relativedelta(months=int(term[0]))
-        else:
-            start_date = datetime.date.today()
-
-        data.update({'start_date': start_date})
-        data.update({'issue_date': start_date})
-        data.update({'expiry_date': expiry_date})
-
-    data={}
-    abn_existing = []
-    abn_new = []
-    count = 1
-    try:
-        '''
-        Example csv
-            address, town/city, state (WA), postcode, org_name, abn, trading_name, first_name, last_name, email, phone_number
-            123 Something Road, Perth, WA, 6100, Import Test Org 3, 615503, DDD_03, john, Doe_1, john.doe_1@dbca.wa.gov.au, 08 555 5555
-
-            File No:Licence No:Expiry Date:Term:Trading Name:Licensee:ABN:Title:First Name:Surname:Other Contact:Address 1:Address 2:Address 3:Suburb:State:Country:Post:Telephone1:Telephone2:Mobile:Insurance Expiry:Survey Cert:Name:SPV:ATAP Expiry:Eco Cert Expiry:Vessels:Vehicles:Email1:Email2:Email3:Email4
-            2018/001899-1:HQ70324:28-Feb-21:3 YEAR:4 U We Do:4 U We Do Pty Ltd::MR:Petrus:Grobler::Po Box 2483:::ESPERANCE:WA:AUSTRALIA:6450:458021841:::23-Jun-18::::30-Jun-18::0:7:groblerp@gmail.com:::
-        To test:
-            from commercialoperator.components.proposals.models import create_organisation_data
-            create_migration_data('commercialoperator/utils/csv/orgs.csv')
-        '''
-        with open(filename) as csvfile:
-            reader = csv.reader(csvfile, delimiter=str(':'))
-            header = next(reader) # skip header
-            for row in reader:
-                data.update({'file_no': row[0].translate(None, string.whitespace)})
-                data.update({'licence_no': row[1].translate(None, string.whitespace)})
-                data.update({'expiry_date': row[2].strip()})
-                data.update({'term': row[3].strip()})
-
-                get_start_date(data, row)
-
-                data.update({'trading_name': row[4].strip()})
-                data.update({'licencee': row[5].strip()})
-                data.update({'abn': row[6].translate(None, string.whitespace)})
-                data.update({'title': row[7].strip()})
-                data.update({'first_name': row[8].strip().capitalize()})
-                data.update({'last_name': row[9].strip().capitalize()})
-                data.update({'other_contact': row[10].strip()})
-                data.update({'address_line1': row[11].strip()})
-                data.update({'address_line2': row[12].strip()})
-                data.update({'address_line3': row[13].strip()})
-                data.update({'suburb': row[14].strip().capitalize()})
-                data.update({'state': row[15].strip()})
-
-                country = ' '.join([i.lower().capitalize() for i in row[16].strip().split()])
-                if country == 'A':
-                    country = 'Australia'
-                data.update({'country': country})
-
-                data.update({'postcode': row[17].translate(None, string.whitespace)})
-                data.update({'phone_number1': row[18].translate(None, b' -()')})
-                data.update({'phone_number2': row[19].translate(None, b' -()')})
-                data.update({'mobile_number': row[20].translate(None, b' -()')})
-
-                data.update({'email1': row[29].strip()})
-                data.update({'email2': row[30].strip()})
-                data.update({'email3': row[31].strip()})
-                data.update({'email4': row[32].strip()})
-
-                #print data
-
-                new, existing = create_organisation(data, count)
-                count += 1
-                abn_new = new + abn_new
-                abn_existing = existing + abn_existing
-                #if data['expiry_date']:
-                #    organisation=create_organisation(data)
-                #else:
-                #    logger.warn('No Expiry Date: {}'.format(data))
-                #print organisation
-
-        print 'New: {}, Existing: {}'.format(len(abn_new), len(abn_existing))
-        print 'New: {}'.format(abn_new)
-        print 'Existing: {}'.format(abn_existing)
-
-
-    except:
-        logger.info('Main {}'.format(data))
-        raise
-
-
 
 
 import reversion
