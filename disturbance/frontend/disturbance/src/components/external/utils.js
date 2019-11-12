@@ -35,6 +35,16 @@ export default {
         });
 
     },
+    fetchOrganisationPermissions: function(id){
+        return new Promise ((resolve,reject) => {
+            Vue.http.get(helpers.add_endpoint_json(api.my_organisations,id)).then((response) => {
+                resolve(response.body);
+            },
+            (error) => {
+                reject(error);
+            });
+        });
+    },
     fetchOrganisation: function(id){
         return new Promise ((resolve,reject) => {
             Vue.http.get(helpers.add_endpoint_json(api.organisations,id)).then((response) => {
