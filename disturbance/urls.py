@@ -30,6 +30,7 @@ router.register(r'proposal_requirements',proposal_api.ProposalRequirementViewSet
 router.register(r'proposal_standard_requirements',proposal_api.ProposalStandardRequirementViewSet)
 router.register(r'organisation_requests',org_api.OrganisationRequestsViewSet)
 router.register(r'organisation_contacts',org_api.OrganisationContactViewSet)
+router.register(r'my_organisations',org_api.MyOrganisationsViewSet)
 router.register(r'users',users_api.UserViewSet)
 router.register(r'amendment_request',proposal_api.AmendmentRequestViewSet)
 router.register(r'compliance_amendment_request',compliances_api.ComplianceAmendmentRequestViewSet)

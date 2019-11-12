@@ -83,7 +83,7 @@
                     </form>
                 </div>
             </div>
-            <p v-if="can_preview">Click <a href="#" @click.prevent="preview">here</a> to preview the licence document.</p>
+            <p v-if="can_preview">Click <a href="#" @click.prevent="preview">here</a> to preview the approval letter.</p>
 
             <div slot="footer">
                 <button type="button" v-if="issuingApproval" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Processing</button>

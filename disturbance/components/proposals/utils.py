@@ -192,12 +192,15 @@ class CommentDataSearch(object):
             if re.match(item,k):
                 values.append({k:post_data[k]})
         if values:
+            #import ipdb; ipdb.set_trace()
             for v in values:
                 for k,v in v.items():
                     parts = k.split('{}'.format(item))
                     if len(parts) > 1:
                         ref_parts = parts[1].split('-comment-field')
                         if len(ref_parts) > 1:
+                            #if('{}'.format(item)=="Section0-1"):
+                            #print(item,v, parts, ref_parts)
                             res = {'{}'.format(item):v}
         return res
 
@@ -209,6 +212,7 @@ class CommentDataSearch(object):
             raise Exception('Missing name in item %s' % item['label'])
 
         if 'children' not in item:
+            #print(item, extended_item_name)
             self.comment_data.update(self.extract_comment_data(extended_item_name,post_data))
 
         else:

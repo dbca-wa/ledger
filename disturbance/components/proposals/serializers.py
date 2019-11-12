@@ -582,6 +582,7 @@ class AmendmentRequestSerializer(serializers.ModelSerializer):
 
 class AmendmentRequestDisplaySerializer(serializers.ModelSerializer):
     reason = serializers.SerializerMethodField()
+    amendment_request_documents = AmendmentRequestDocumentSerializer(many=True, read_only=True)
 
     class Meta:
         model = AmendmentRequest
