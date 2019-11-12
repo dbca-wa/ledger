@@ -451,6 +451,8 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     t=Table(table_data, colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=box_table_style)
     elements.append(t)
+
+    # Schedule 1
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('SCHEDULE 1', styles['BoldCenter']))
     elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE ACTIVITIES', styles['BoldCenter']))
@@ -471,9 +473,29 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
                             style=box_table_style)
     elements.append(t)
 
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    # Schedule 2
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('SCHEDULE 2', styles['BoldCenter']))
+    elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE LAND ACCESS TYPES', styles['BoldCenter']))
+
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    park_data=[]
+    for p in approval.current_proposal.selected_parks_access_types_pdf:
+        access_types_str=[]
+        for ac in p['access_types']:
+            access_types_str.append(ac.encode('UTF-8'))
+        access_types_str = ', '.join(access_types_str).replace('\'', '')
+        park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
+                              Paragraph(access_types_str, styles['Left'])])
+    if park_data:
+        t=Table(park_data, colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
+                            style=box_table_style)
+    elements.append(t)
+
+    # Schedule 3
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Paragraph('SCHEDULE 3', styles['BoldCenter']))
     elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE CONDITIONS', styles['BoldCenter']))
     requirements = proposal.requirements.all().exclude(is_deleted=True)
     if requirements.exists():
