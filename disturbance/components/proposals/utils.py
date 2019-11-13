@@ -185,6 +185,27 @@ class CommentDataSearch(object):
         self.lookup_field = lookup_field
         self.comment_data = {}
 
+    def extract_comment_data_original(self,item,post_data):
+        res = {}
+        values = []
+        for k in post_data:
+            if re.match(item,k):
+                values.append({k:post_data[k]})
+        if values:
+            #import ipdb; ipdb.set_trace()
+            for v in values:
+                for k,v in v.items():
+                    parts = k.split('{}'.format(item))
+                    if len(parts) > 1:
+                        ref_parts = parts[1].split('-comment-field')
+                        if len(ref_parts) > 1:
+                            if len(ref_parts)==2 and ref_parts[0]=='' and ref_parts[1]=='':
+                                print(v)
+                                #if('{}'.format(item)=="Section0-1"):
+                                #print(item,v, parts, ref_parts)
+                            res = {'{}'.format(item):v}
+        return res
+
     def extract_comment_data(self,item,post_data):
         res = {}
         values = []
@@ -199,9 +220,8 @@ class CommentDataSearch(object):
                     if len(parts) > 1:
                         ref_parts = parts[1].split('-comment-field')
                         if len(ref_parts) > 1:
-                            #if('{}'.format(item)=="Section0-1"):
-                            #print(item,v, parts, ref_parts)
-                            res = {'{}'.format(item):v}
+                            if len(ref_parts)==2 and ref_parts[0]=='' and ref_parts[1]=='':
+                                res = {'{}'.format(item):v}
         return res
 
     def extract_special_fields(self,item, post_data, file_data, repetition, suffix):
