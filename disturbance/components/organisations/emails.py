@@ -44,7 +44,13 @@ def send_organisation_link_email_notification(linked_user,linked_by,organisation
         'organisation': organisation
     }
 
-    msg = email.send(linked_user.email, context=context)
+    all_ccs=[]
+    if organisation.email:
+        cc_list = organisation.email
+        if cc_list:
+            all_ccs = [cc_list]
+
+    msg = email.send(linked_user.email,cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, linked_user, sender=sender)
 
@@ -56,8 +62,13 @@ def send_organisation_unlink_email_notification(unlinked_user,unlinked_by,organi
         'unlinked_by': unlinked_by,
         'organisation': organisation
     }
+    all_ccs=[]
+    if organisation.email:
+        cc_list = organisation.email
+        if cc_list:
+            all_ccs = [cc_list]
 
-    msg = email.send(unlinked_user.email, context=context)
+    msg = email.send(unlinked_user.email, cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_org_email(msg, organisation, unlinked_user, sender=sender)
 

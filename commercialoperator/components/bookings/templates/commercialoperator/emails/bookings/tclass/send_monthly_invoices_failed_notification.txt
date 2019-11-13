@@ -1,0 +1,13 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+ 
+        The following monthly invoices failed: 
+
+        {% for booking in bookings %}
+            Booking: {{booking.1}}, Proposal: {{booking.2}}, Organisation: {{booking.3}} 
+        {% endfor %}
+
+        Please investigate and resend invoices.
+
+{%  endblock %}

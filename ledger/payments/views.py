@@ -13,7 +13,7 @@ from ledger.payments.utils import checkURL
 from ledger.payments.cash.models import REGION_CHOICES
 #
 from ledger.payments.models import Invoice
-from ledger.payments.mixins import InvoiceOwnerMixin 
+from ledger.payments.mixins import InvoiceOwnerMixin
 #
 from confy import env
 #
@@ -38,7 +38,7 @@ class InvoiceDetailView(InvoiceOwnerMixin,generic.DetailView):
     def get_context_data(self, **kwargs):
         ctx = super(InvoiceDetailView,self).get_context_data(**kwargs)
         ctx['bpay_allowed'] = settings.BPAY_ALLOWED
-        return ctx 
+        return ctx
 
     def get_object(self):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])

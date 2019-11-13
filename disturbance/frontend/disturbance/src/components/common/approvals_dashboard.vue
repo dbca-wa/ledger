@@ -238,7 +238,16 @@ export default {
                     {
                         data: "licence_document",
                         mRender:function(data,type,full){
-                            return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            //let link='';
+                            //return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            // link=`<a href='#${full.id}'<i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            if(vm.is_external){
+                                return `<a href="${data}" target="_blank"><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            }
+                            else{
+                                return `<a href="#${full.id}" data-pdf-approval='${full.id}' media-link='${data}'><i style="color:red" class="fa fa-file-pdf-o"></i></a>`;
+                            }
+                            //return link;
                         },
                         name: 'licence_document__name'
                     },
@@ -494,6 +503,14 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-amend-approval');
                 vm.amendApproval(id);
+            });
+
+            // Internal view pdf listener
+            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-pdf-approval]', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-pdf-approval');
+                var media_link = $(this).attr('media-link');
+                vm.viewApprovalPDF(id, media_link);
             });
 
         },
@@ -762,6 +779,18 @@ export default {
             this.$refs.proposal_datatable.vmDataTable.ajax.reload();
         },
 
+        viewApprovalPDF: function(id,media_link){
+            let vm=this;
+            //console.log(approval);
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.approvals,(id+'/approval_pdf_view_log')),{
+                })
+                .then((response) => {  
+                    //console.log(response)  
+                }, (error) => {
+                    console.log(error);
+                });
+            window.open(media_link, '_blank');
+        },
 
     },
     mounted: function(){
