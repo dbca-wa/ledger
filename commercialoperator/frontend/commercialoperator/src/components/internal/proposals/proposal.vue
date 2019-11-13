@@ -3,7 +3,7 @@
       <div class="row" style="padding-bottom: 50px;">
         <h3>Application: {{ proposal.lodgement_number }}</h3>
         <h4>Application Type: {{proposal.proposal_type }}</h4>
-        <div class="col-md-3">
+        <div v-if="!comparing" class="col-md-3">
             <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <div class="row" v-if="canSeeSubmission">
                 <div class="panel panel-default">
@@ -33,27 +33,6 @@
                     </div>
                 </div>
             </div>
-
-
-            <!--
-            <div class="row" v-if="canSeeSubmission">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                       History
-                    </div>
-                                    <table class="table small-table">
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Last Modified</th>
-                                        </tr>
-                                        <tr v-for="p in proposal.get_history">
-                                            <td>{{ p.id }}</td>
-                                            <td>{{ p.modified | formatDate}}</td>
-                                        </tr>
-                                    </table>
-                </div>
-            </div>
-            -->
 
             <div class="row" v-if="canSeeSubmission">
                 <div class="panel panel-default">
@@ -326,8 +305,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-1"></div>
-        <div class="col-md-8">
+        <div v-if="!comparing" class="col-md-1"></div>
+        <!--<div class="col-md-8">-->
+        <div :class="class_ncols">
             <div class="row">
                 <template v-if="proposal.processing_status == 'With Approver' || isFinalised">
                     <ApprovalScreen :proposal="proposal" @refreshFromResponse="refreshFromResponse"/>
@@ -336,103 +316,10 @@
                     <Requirements :proposal="proposal"/>
                 </template>
                 <template v-if="canSeeSubmission || (!canSeeSubmission && showingProposal)">
-                    <!---
-                    <div class="col-md-12">
-                        <div class="row">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <h3 class="panel-title">Applicant
-                                        <a class="panelClicker" :href="'#'+detailsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="detailsBody">
-                                            <span class="glyphicon glyphicon-chevron-up pull-right "></span>
-                                        </a>
-                                    </h3> 
-                                </div>
-                                <div class="panel-body panel-collapse collapse in" :id="detailsBody">
-                                      <form class="form-horizontal">
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">Name</label>
-                                            <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="applicantName" placeholder="" v-model="proposal.applicant.name">
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >ABN/ACN</label>
-                                            <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="applicantABN" placeholder="" v-model="proposal.applicant.abn">
-                                            </div>
-                                          </div>
-                                      </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="row">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <h3 class="panel-title">Address Details
-                                        <a class="panelClicker" :href="'#'+addressBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="addressBody">
-                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                        </a>
-                                    </h3> 
-                                </div>
-                                <div class="panel-body panel-collapse collapse" :id="addressBody">
-                                      <form class="form-horizontal">
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">Street</label>
-                                            <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="street" placeholder="" v-model="proposal.applicant.address.line1">
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >Town/Suburb</label>
-                                            <div class="col-sm-6">
-                                                <input disabled type="text" class="form-control" name="surburb" placeholder="" v-model="proposal.applicant.address.locality">
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label">State</label>
-                                            <div class="col-sm-2">
-                                                <input disabled type="text" class="form-control" name="country" placeholder="" v-model="proposal.applicant.address.state">
-                                            </div>
-                                            <label for="" class="col-sm-2 control-label">Postcode</label>
-                                            <div class="col-sm-2">
-                                                <input disabled type="text" class="form-control" name="postcode" placeholder="" v-model="proposal.applicant.address.postcode">
-                                            </div>
-                                          </div>
-                                          <div class="form-group">
-                                            <label for="" class="col-sm-3 control-label" >Country</label>
-                                            <div class="col-sm-4">
-                                                <input disabled type="text" class="form-control" name="country" v-model="proposal.applicant.address.country"/>
-                                            </div>
-                                          </div>
-                                       </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="row">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <h3 class="panel-title">Contact Details
-                                        <a class="panelClicker" :href="'#'+contactsBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="contactsBody">
-                                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
-                                        </a>
-                                    </h3>
-                                </div>
-                                <div class="panel-body panel-collapse collapse" :id="contactsBody">
-                                    <table ref="contacts_datatable" :id="contacts_table_id" class="hover table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    -->
                     <div class="">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="canEditActivities"  :is_internal="true" :hasAssessorMode="hasAssessorMode"></ProposalTClass>
+                                <ProposalTClass ref="tclass" v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="canEditActivities"  :is_internal="true" :hasAssessorMode="hasAssessorMode"></ProposalTClass>
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
@@ -549,6 +436,7 @@ export default {
             logs_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/action_log'),
             panelClickersInitialised: false,
             sendingReferral: false,
+            comparing: false,
         }
     },
     components: {
@@ -574,7 +462,6 @@ export default {
         }
     },
     watch: {
-
     },
     computed: {
         history_url: function(){
@@ -634,6 +521,9 @@ export default {
         },
         QAOfficerAssessmentCompletedBy: function(){
             return this.isQAOfficerAssessmentCompleted ? this.proposal.qaofficer_referrals[0].qaofficer : '';
+        },
+        class_ncols: function(){
+            return this.comparing ? 'col-md-12' : 'col-md-8';
         },
     },
     methods: {
@@ -717,8 +607,6 @@ export default {
             formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
             formData.append('marine_parks_activities', JSON.stringify(vm.proposal.marine_parks_activities))
             vm.$http.post(vm.proposal_form_url,formData).then(res=>{
-
-              
                 },err=>{
             });
         },
@@ -742,12 +630,14 @@ export default {
         },
         assignRequestUser: function(){
             let vm = this;
+
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assign_request_user')))
             .then((response) => {
                 vm.proposal = response.body;
                 vm.original_proposal = helpers.copyObject(response.body);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.updateAssignedOfficerSelect();
+
             }, (error) => {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
@@ -773,7 +663,7 @@ export default {
             let vm = this;
             let unassign = true;
             let data = {};
-            if (vm.processing_status == 'With Approver'){
+            if (vm.proposal.processing_status == 'With Approver'){
                 unassign = vm.proposal.assigned_approver != null && vm.proposal.assigned_approver != 'undefined' ? false: true;
                 data = {'assessor_id': vm.proposal.assigned_approver};
             }
@@ -1124,6 +1014,14 @@ export default {
         this.$nextTick(() => {
             //vm.initialiseOrgContactTable();
             vm.initialiseSelects();
+
+            if (typeof vm.$refs.tclass !== 'undefined') {
+                //  hack - after a local update (re-assign assessor or send referral) these are being reset to null, so resetting these to the correct values here
+                vm.proposal.selected_parks_activities = vm.$refs.tclass.$refs.activities_land.selected_parks_activities;
+                vm.proposal.selected_trails_activities = vm.$refs.tclass.$refs.activities_land.selected_trails_activities;
+                vm.proposal.marine_parks_activities = vm.$refs.tclass.$refs.activities_marine.marine_parks_activities;
+            }
+
             vm.form = document.forms.new_proposal;
         });
     },

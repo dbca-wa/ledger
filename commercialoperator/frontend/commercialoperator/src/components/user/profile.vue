@@ -8,7 +8,7 @@
                         <div class="col-sm-12">
                             <p>
                                 We have detected that this is the first time you have logged into the system.Please take a moment to provide us with your details
-                                (personal details, address details, contact details, and weather you are managing licences for an organisation).
+                                (personal details, address details, contact details, and whether you are managing licences for an organisation).
                                 Once completed, click Continue to start using the system.
                             </p>
                             <a :disabled="!completedProfile" href="/" class="btn btn-primary pull-right">Continue</a>
@@ -55,7 +55,7 @@
                 </div>
             </div>
         </div>
-
+<!-- 
         <div class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
@@ -76,8 +76,8 @@
                           </div>
                           <div class="form-group">
                             <div class="col-sm-12">
-                                <!-- output order in reverse due to pull-right at runtime -->
-                                <button v-if="!uploadingID" class="pull-right btn btn-primary" @click.prevent="uploadID()">Upload</button>
+                                output order in reverse due to pull-right at runtime -->
+                                <!---<button v-if="!uploadingID" class="pull-right btn btn-primary" @click.prevent="uploadID()">Upload</button>
                                 <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Uploading</button>
                                 <span class="pull-right" style="margin-left:10px;margin-top:10px;margin-right:10px">{{uploadedIDFileName}}</span>
                                 <span class="btn btn-primary btn-file pull-right">
@@ -89,7 +89,7 @@
                   </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <div class="row">
             <div class="col-sm-12">
@@ -201,7 +201,7 @@
             <div class="col-sm-12">
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    <h3 class="panel-title">Organisation <small>Link to the Organisations you are an employee of and for which you are managing licences</small>
+                    <h3 class="panel-title">Organisation <small>Link to the organisations you are an employee of and for which you are managing licences</small>
                         <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                             <span class="glyphicon glyphicon-chevron-down pull-right "></span>
                         </a>
@@ -210,7 +210,7 @@
                   <div class="panel-body collapse" :id="oBody">
                       <form class="form-horizontal" name="orgForm" method="post">
                           <div class="form-group">
-                            <label for="" class="col-sm-5 control-label">Do you manage licences on behalf of an organisation?</label>
+                            <label for="" class="col-sm-5 control-label">Do you manage licences on behalf of an organisation? <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="bottom" style="color:blue" title="Answer with Yes if you are applying for a licence in an organisation or incorporated body name.">&nbsp;</i></label>
                             <div class="col-sm-4">
                                 <label class="radio-inline">
                                   <input type="radio" name="behalf_of_org" v-model="managesOrg" value="Yes"> Yes
@@ -307,9 +307,9 @@
                                 </div>
                               </div>
                               <div class="form-group">
-                                <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
+                                <label for="" class="col-sm-2 control-label" >ABN/ACN <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="bottom" style="color:blue" title="If you are applying as a sole trader please supply your ABN.">&nbsp;</i></label>
                                 <div class="col-sm-6">
-                                    <input type="number" class="form-control" name="abn" v-model.number="newOrg.abn" placeholder="" style="width: 40%">
+                                    <input type="text" class="form-control" name="abn" v-model.number="newOrg.abn" placeholder="" style="width: 40%">
                                 </div>
                                 <div class="col-sm-2">
                                     <button :disabled="!isNewOrgDetails" @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
@@ -329,7 +329,9 @@
                                     <input type="text" class="form-control" name="abn" v-model="newOrg.pin2" placeholder="">
                                   </div>
                                   <div class="col-sm-2">
-                                    <button v-if="!validatingPins" @click.prevent="validatePins()" class="btn btn-primary pull-left">Validate</button>
+                                    <button v-if="!completedProfile && !validatingPins" disabled title="Please complete all the personal details." class="btn btn-primary pull-left">Validate</button>
+
+                                    <button v-else-if="!validatingPins && completedProfile" @click.prevent="validatePins()" class="btn btn-primary pull-left">Validate</button>
                                     <button v-else class="btn btn-primary pull-left"><i class="fa fa-spin fa-spinner"></i>&nbsp;Validating Pins</button>
                                   </div>
                               </div>

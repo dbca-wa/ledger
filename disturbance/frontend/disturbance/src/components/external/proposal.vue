@@ -15,6 +15,7 @@
                       <div class="panel-body collapse in" :id="pBody">
                         <div v-for="a in amendment_request">
                           <p>Reason: {{a.reason}}</p>
+                          <p v-if="a.amendment_request_documents">Documents:<p v-for="d in a.amendment_request_documents"><a :href="d._file" target="_blank" class="control-label pull-left">{{d.name   }}</a><br></p></p>
                           <p>Details: <p v-for="t in splitText(a.text)">{{t}}</p></p>  
                       </div>
                     </div>
@@ -36,8 +37,10 @@
                 </ul>
             </div>
 
-            
-            <Proposal v-if="proposal" :proposal="proposal" id="proposalStart" :showSections="sectionShow">
+<!--             <NewApply v-if="proposal" :proposal="proposal"></NewApply>
+ -->            <Proposal v-if="proposal" :proposal="proposal" id="proposalStart" :showSections="sectionShow">
+                  <NewApply v-if="proposal" :proposal="proposal"></NewApply>
+
                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                 <input type='hidden' name="proposal_id" :value="1" />
@@ -76,6 +79,7 @@
 </template>
 <script>
 import Proposal from '../form.vue'
+import NewApply from './proposal_apply_new.vue'
 import Vue from 'vue' 
 import {
   api_endpoints,
@@ -101,7 +105,8 @@ export default {
     }
   },
   components: {
-      Proposal
+      Proposal,
+      NewApply,
   },
   computed: {
     isLoading: function() {
@@ -226,13 +231,12 @@ export default {
             }
 
             if (this.type == 'checkbox') {
-                //if (this.type == 'radio' && !$("input[name="+this.name+"]").is(':checked')) {
-                var id = 'id_' + this.classList['value']
-                if ($("[class="+this.classList['value']+"]:checked").length == 0) {
-                    var text = $('#'+id).text()
+                var id = 'id_' + this.className
+                if ($("[class="+this.className+"]:checked").length == 0) {
+                    try { var text = $('#'+id).text() } catch(error) { var text = $('#'+id).textContent }
                     console.log('checkbox not checked: ' + this.type + ' ' + text)
                     vm.missing_fields.push({id: id, label: text});
-                }
+                }   
             }
 
             if (this.type == 'select-one') {
@@ -302,6 +306,28 @@ export default {
         }
         */
     },
+    highlight_deficient_fields: function(deficient_fields){
+      let vm = this;
+      for (var deficient_field of deficient_fields) {
+        $("#" + "id_"+deficient_field).css("color", 'red');
+      }
+    },
+    deficientFields(){
+      let vm=this;
+      //console.log("I am here");
+      let deficient_fields=[]
+      $('.deficiency').each((i,d) => {
+        if($(d).val() != ''){
+          var name=$(d)[0].name
+          var tmp=name.replace("-comment-field","")
+          deficient_fields.push(tmp);
+          //console.log('data', $("#"+"id_" + tmp))
+        }
+      }); 
+      //console.log('deficient fields', deficient_fields);
+      vm.highlight_deficient_fields(deficient_fields);
+    },
+
 
 
     submit: function(){
@@ -407,13 +433,28 @@ export default {
 
   },
 
+  
   mounted: function() {
     let vm = this;
     vm.form = document.forms.new_proposal;
     window.addEventListener('beforeunload', vm.leaving);
     window.addEventListener('onblur', vm.leaving);
+    // this.$nextTick(() => {
+    //   console.log("I am here1");
+    //         if(vm.hasAmendmentRequest){
+    //           console.log("I am here2");
+    //             vm.deficientFields();
+    //         }
+    //     });
   },
-  
+  updated: function(){
+    let vm=this;
+      this.$nextTick(() => {
+            if(vm.hasAmendmentRequest){
+                vm.deficientFields();
+            }
+        });
+  },
 
   beforeRouteEnter: function(to, from, next) {
     if (to.params.proposal_id) {

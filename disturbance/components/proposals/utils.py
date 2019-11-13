@@ -2,10 +2,15 @@ import re
 from django.db import transaction
 from preserialize.serialize import serialize
 from ledger.accounts.models import EmailUser, Document
-from disturbance.components.proposals.models import ProposalDocument
+from disturbance.components.proposals.models import ProposalDocument, ProposalUserAction
 from disturbance.components.proposals.serializers import SaveProposalSerializer
 import traceback
 import os
+
+import json
+
+import logging
+logger = logging.getLogger(__name__)
 
 def create_data_from_form(schema, post_data, file_data, post_data_index=None,special_fields=[],assessor_data=False):
     data = {}
@@ -187,12 +192,15 @@ class CommentDataSearch(object):
             if re.match(item,k):
                 values.append({k:post_data[k]})
         if values:
+            #import ipdb; ipdb.set_trace()
             for v in values:
                 for k,v in v.items():
                     parts = k.split('{}'.format(item))
                     if len(parts) > 1:
                         ref_parts = parts[1].split('-comment-field')
                         if len(ref_parts) > 1:
+                            #if('{}'.format(item)=="Section0-1"):
+                            #print(item,v, parts, ref_parts)
                             res = {'{}'.format(item):v}
         return res
 
@@ -204,6 +212,7 @@ class CommentDataSearch(object):
             raise Exception('Missing name in item %s' % item['label'])
 
         if 'children' not in item:
+            #print(item, extended_item_name)
             self.comment_data.update(self.extract_comment_data(extended_item_name,post_data))
 
         else:
@@ -294,10 +303,18 @@ def save_proponent_data(instance,request,viewset):
     with transaction.atomic():
         try:
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
+
             extracted_fields,special_fields = create_data_from_form(instance.schema, request.POST, request.FILES, special_fields=lookable_fields)
             instance.data = extracted_fields
             #import ipdb; ipdb.set_trace()
-            data = {
+
+            form_data=json.loads(request.POST['schema'])
+            sub_activity_level1=form_data.get('sub_activity_level1')
+            print(sub_activity_level1)
+
+            logger.info("Region: {}, Activity: {}".format(special_fields.get('isRegionColumnForDashboard',None), special_fields.get('isActivityColumnForDashboard',None)))
+
+            data1 = {
                 #'region': special_fields.get('isRegionColumnForDashboard',None),
                 'title': special_fields.get('isTitleColumnForDashboard',None),
                 'activity': special_fields.get('isActivityColumnForDashboard',None),
@@ -308,9 +325,29 @@ def save_proponent_data(instance,request,viewset):
                # 'lodgement_sequence': 1 if instance.lodgement_sequence == 0 else instance.lodgement_sequence,
 
             }
+            data = {
+                #'region': special_fields.get('isRegionColumnForDashboard',None),
+                'title': special_fields.get('isTitleColumnForDashboard',None),
+
+                'data': extracted_fields,
+                'processing_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.processing_status,
+                'customer_status': instance.PROCESSING_STATUS_CHOICES[1][0] if instance.processing_status == 'temp' else instance.customer_status,
+               # 'lodgement_sequence': 1 if instance.lodgement_sequence == 0 else instance.lodgement_sequence,
+                'activity': form_data.get('activity',None),
+                'region': form_data.get('region',None),
+                'district': form_data.get('district',None),
+                'sub_activity_level1': form_data.get('sub_activity_level1',None),
+                'sub_activity_level2': form_data.get('sub_activity_level2',None),
+                'management_area': form_data.get('management_area',None),
+                'approval_level': form_data.get('approval_level',None),
+
+            }
+
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
             viewset.perform_update(serializer)
+            instance.log_user_action(ProposalUserAction.ACTION_SAVE_APPLICATION.format(instance.id),request)
+
             # Save Documents
 #            for f in request.FILES:
 #                try:
@@ -343,6 +380,9 @@ def save_assessor_data(instance,request,viewset):
             lookable_fields = ['isTitleColumnForDashboard','isActivityColumnForDashboard','isRegionColumnForDashboard']
             extracted_fields,special_fields,assessor_data,comment_data = create_data_from_form(
                 instance.schema, request.POST, request.FILES,special_fields=lookable_fields,assessor_data=True)
+
+            logger.info("ASSESSOR DATA - Region: {}, Activity: {}".format(special_fields.get('isRegionColumnForDashboard',None), special_fields.get('isActivityColumnForDashboard',None)))
+
             data = {
                 'data': extracted_fields,
                 'assessor_data': assessor_data,
@@ -364,6 +404,7 @@ def save_assessor_data(instance,request,viewset):
                 document._file = request.FILES[f]
                 document.save()
             # End Save Documents
+            instance.log_user_action(ProposalUserAction.ACTION_SAVE_APPLICATION.format(instance.id),request)
         except:
             raise
 

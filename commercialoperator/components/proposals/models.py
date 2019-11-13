@@ -9,7 +9,7 @@ from django.db import models,transaction
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
 from django.utils.encoding import python_2_unicode_compatible
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, MultipleObjectsReturned
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.utils import timezone
 from django.contrib.sites.models import Site
@@ -571,7 +571,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         orig_processing_status = self._original_state['processing_status']
         super(Proposal, self).save(*args,**kwargs)
         if self.processing_status != orig_processing_status:
-            #import ipdb; ipdb.set_trace()
             self.save(version_comment='processing_status: {}'.format(self.processing_status))
 
         if self.lodgement_number == '' and self.application_type.name != 'E Class':
@@ -586,6 +585,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     @property
     def fee_amount(self):
         return Invoice.objects.get(reference=self.fee_invoice_reference).amount if self.fee_paid else None
+
+    @property
+    def licence_fee_amount(self):
+        period = self.other_details.preferred_licence_period
+        if period.split('_')[1].endswith('months'):
+            return self.application_type.licence_fee_2mth
+        else:
+            return int(period.split('_')[0]) * self.application_type.licence_fee_1yr
 
     @property
     def reference(self):
@@ -610,6 +617,15 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             return "{} {}".format(
                 self.submitter.first_name,
                 self.submitter.last_name)
+
+    @property
+    def applicant_email(self):
+        if self.org_applicant and hasattr(self.org_applicant.organisation, 'email') and self.org_applicant.organisation.email:
+            return self.org_applicant.organisation.email
+        elif self.proxy_applicant:
+            return self.proxy_applicant.email
+        else:
+            return self.submitter.email
 
     @property
     def applicant_details(self):
@@ -741,6 +757,11 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         return self.parks.filter(park__park_type='land')
 
     @property
+    def land_parks_exclude_free(self):
+        """ exlude parks with free admission """
+        return self.parks.filter(park__park_type='land').exclude(park__adult_price=D(0.0), park__child_price=D(0.0))
+
+    @property
     def marine_parks(self):
         return self.parks.filter(park__park_type='marine')
 
@@ -801,6 +822,20 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     def amendment_requests(self):
         qs =AmendmentRequest.objects.filter(proposal = self)
         return qs
+
+    #Check if there is an pending amendment request exist for the proposal
+    @property
+    def pending_amendment_request(self):
+        qs =AmendmentRequest.objects.filter(proposal = self, status = "requested")
+        if qs:
+            return True
+        return False
+
+    @property
+    def is_amendment_proposal(self):
+        if self.proposal_type=='amendment':
+            return True
+        return False
 
     @property
     def search_data(self):
@@ -875,6 +910,47 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
         return selected_parks_activities
 
+    @property
+    def selected_parks_activities_pdf(self):
+        """ duplicated selected_parks_activities to quickly fix the pdf licence generation of marine zonal activities
+            which was not previously displayed correctly. This function is called by pdf.py only. """
+        #list of selected parks and activities (to print on licence pdf)
+        selected_parks_activities=[]
+        for p in self.parks.all():
+            park_activities=[]
+            #parks.append(p.park.name)
+            if p.park.park_type=='land':
+                for a in p.activities.all():
+                    park_activities.append(a.activity_name)
+                selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
+            if p.park.park_type=='marine':
+                for z in p.zones.all():
+                    zone_activities = []
+                    for a in z.park_activities.all():
+                        zone_activities.append(a.activity_name)
+                    selected_parks_activities.append({'park': '{} - {}'.format(p.park.name, z.zone.name), 'activities': zone_activities})
+        for t in self.trails.all():
+            #trails.append(t.trail.name)
+            #trail_activities=[]
+            for s in t.sections.all():
+                trail_activities=[]
+                for ts in s.trail_activities.all():
+                  trail_activities.append(ts.activity_name)
+                selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
+        return selected_parks_activities
+
+    @property
+    def selected_parks_access_types_pdf(self):
+        #list of selected parks and access_types (to print on licence pdf)
+        selected_park_access_types=[]
+        for p in self.parks.all():
+            park_access_types=[]
+            if p.park.park_type=='land':
+                for a in p.access_types.all():
+                    park_access_types.append(a.access_type.name)
+                selected_park_access_types.append({'park': p.park.name, 'access_types': park_access_types})
+        return selected_park_access_types
+
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
         if self.region and self.activity:
@@ -917,7 +993,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         #    'title': 'Title',
         #    'activity': 'Activity'
         }
-        #import ipdb; ipdb.set_trace()
         for k,v in required_fields.items():
             val = getattr(self,k)
             if not val:
@@ -927,7 +1002,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     @property
     def assessor_recipients(self):
         recipients = []
-        #import ipdb; ipdb.set_trace()
         try:
             recipients = ProposalAssessorGroup.objects.get(region=self.region).members_email
         except:
@@ -948,6 +1022,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         #if self.submitter.email not in recipients:
         #    recipients.append(self.submitter.email)
         return recipients
+
+    #Check if the user is member of assessor group for the Proposal
+    def is_assessor(self,user):
+            return self.__assessor_group() in user.proposalassessorgroup_set.all()
+
+    #Check if the user is member of assessor group for the Proposal
+    def is_approver(self,user):
+            return self.__approver_group() in user.proposalapprovergroup_set.all()
 
 
     def can_assess(self,user):
@@ -1006,7 +1088,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     def submit(self,request,viewset):
         from commercialoperator.components.proposals.utils import save_proponent_data
         with transaction.atomic():
-            #import ipdb; ipdb.set_trace()
             if self.can_user_edit:
                 # Save the data first
                 save_proponent_data(self,request,viewset)
@@ -1032,11 +1113,9 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 applicant_field=getattr(self, self.applicant_field)
                 applicant_field.log_user_action(ProposalUserAction.ACTION_LODGE_APPLICATION.format(self.id),request)
 
-                #import ipdb; ipdb.set_trace()
                 ret1 = send_submit_email_notification(request, self)
                 ret2 = send_external_submit_email_notification(request, self)
 
-                #import ipdb; ipdb.set_trace()
                 #self.save_form_tabs(request)
                 if ret1 and ret2:
                     self.processing_status = 'with_assessor'
@@ -1091,7 +1170,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
     def update(self,request,viewset):
         from commercialoperator.components.proposals.utils import save_proponent_data
         with transaction.atomic():
-            #import ipdb; ipdb.set_trace()
             if self.can_user_edit:
                 # Save the data first
                 save_proponent_data(self,request,viewset)
@@ -1120,7 +1198,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 #                        if not department_user:
 #                            raise ValidationError('The user you want to send the referral to is not a member of the department')
 #                        # Check if the user is in ledger or create
-#                        #import ipdb; ipdb.set_trace()
 #                        email = department_user['email'].lower()
 #                        user,created = EmailUser.objects.get_or_create(email=department_user['email'].lower())
 #                        if created:
@@ -1281,7 +1358,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             raise ValidationError('You cannot change the current status at this time')
         elif self.approval and self.approval.can_reissue:
             if self.__approver_group() in request.user.proposalapprovergroup_set.all():
-                #import ipdb; ipdb.set_trace()
                 self.processing_status = status
                 self.save()
                 # Create a log entry for the proposal
@@ -1531,6 +1607,40 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             except:
                 raise
 
+    def preview_approval(self,request,details):
+        from commercialoperator.components.approvals.models import PreviewTempApproval
+        with transaction.atomic():
+            try:
+                if self.processing_status != 'with_approver':
+                    raise ValidationError('Licence preview only available when processing status is with_approver. Current status {}'.format(self.processing_status))
+                if not self.can_assess(request.user):
+                    raise exceptions.ProposalNotAuthorized()
+                #if not self.applicant.organisation.postal_address:
+                if not self.applicant_address:
+                    raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
+
+                preview_approval = PreviewTempApproval.objects.create(
+                    current_proposal = self,
+                    issue_date = timezone.now(),
+                    expiry_date = datetime.datetime.strptime(details.get('due_date'), '%d/%m/%Y').date(),
+                    start_date = datetime.datetime.strptime(details.get('start_date'), '%d/%m/%Y').date(),
+                    submitter = self.submitter,
+                    #org_applicant = self.applicant if isinstance(self.applicant, Organisation) else None,
+                    #proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
+                    org_applicant = self.org_applicant,
+                    proxy_applicant = self.proxy_applicant,
+                )
+
+                # Generate the preview document - get the value of the BytesIO buffer
+                licence_buffer = preview_approval.generate_doc(request.user, preview=True)
+
+                # clean temp preview licence object
+                transaction.set_rollback(True)
+
+                return licence_buffer
+            except:
+                raise
+
 
     def final_approval(self,request,details):
         from commercialoperator.components.approvals.models import Approval
@@ -1561,7 +1671,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
                 if self.processing_status == 'approved':
                     # TODO if it is an ammendment proposal then check appropriately
-                    #import ipdb; ipdb.set_trace()
                     checking_proposal = self
                     if self.proposal_type == 'renewal':
                         if self.previous_application:
@@ -1569,19 +1678,15 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    #'activity' : self.activity,
-                                    #'region' : self.region,
-                                    #'tenure' : self.tenure,
-                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    #'applicant' : self.applicant,
                                     'submitter': self.submitter,
-                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    'org_applicant' : self.org_applicant,
+                                    'proxy_applicant' : self.proxy_applicant,
                                     'lodgement_number': previous_approval.lodgement_number
-                                    #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
                             )
                             if created:
@@ -1594,44 +1699,36 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                             approval,created = Approval.objects.update_or_create(
                                 current_proposal = checking_proposal,
                                 defaults = {
-                                    #'activity' : self.activity,
-                                    #'region' : self.region,
-                                    #'tenure' : self.tenure,
-                                    #'title' : self.title,
                                     'issue_date' : timezone.now(),
                                     'expiry_date' : details.get('expiry_date'),
                                     'start_date' : details.get('start_date'),
-                                    #'applicant' : self.applicant,
                                     'submitter': self.submitter,
-                                    'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                    'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                    #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                    'org_applicant' : self.org_applicant,
+                                    'proxy_applicant' : self.proxy_applicant,
                                     'lodgement_number': previous_approval.lodgement_number
-                                    #'extracted_fields' = JSONField(blank=True, null=True)
                                 }
                             )
                             if created:
                                 previous_approval.replaced_by = approval
                                 previous_approval.save()
                     else:
-                        #import ipdb; ipdb.set_trace()
                         approval,created = Approval.objects.update_or_create(
                             current_proposal = checking_proposal,
                             defaults = {
-                                #'activity' : self.activity,
-                                #'region' : self.region.name,
-                                #'tenure' : self.tenure.name,
-                                #'title' : self.title,
                                 'issue_date' : timezone.now(),
                                 'expiry_date' : details.get('expiry_date'),
                                 'start_date' : details.get('start_date'),
                                 'submitter': self.submitter,
-                                'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
-                                'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                #'org_applicant' : self.applicant if isinstance(self.applicant, Organisation) else None,
+                                #'proxy_applicant' : self.applicant if isinstance(self.applicant, EmailUser) else None,
+                                'org_applicant' : self.org_applicant,
+                                'proxy_applicant' : self.proxy_applicant,
                                 #'extracted_fields' = JSONField(blank=True, null=True)
                             }
                         )
                     # Generate compliances
-                    #self.generate_compliances(approval, request)
                     from commercialoperator.components.compliances.models import Compliance, ComplianceUserAction
                     if created:
                         if self.proposal_type == 'amendment':
@@ -1646,7 +1743,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                         # send the doc and log in approval and org
                     else:
                         #approval.replaced_by = request.user
-                        approval.replaced_by = self.approval
+                        #approval.replaced_by = self.approval
                         # Generate the document
                         approval.generate_doc(request.user)
                         #Delete the future compliances if Approval is reissued and generate the compliances again.
@@ -1668,40 +1765,6 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
             except:
                 raise
-
-
-
-    '''def generate_compliances(self,approval):
-        from commercialoperator.components.compliances.models import Compliance
-        today = timezone.now().date()
-        timedelta = datetime.timedelta
-
-        for req in self.requirements.all():
-            if req.recurrence and req.due_date > today:
-                current_date = req.due_date
-                while current_date < approval.expiry_date:
-                    for x in range(req.recurrence_schedule):
-                    #Weekly
-                        if req.recurrence_pattern == 1:
-                            current_date += timedelta(weeks=1)
-                    #Monthly
-                        elif req.recurrence_pattern == 2:
-                            current_date += timedelta(weeks=4)
-                            pass
-                    #Yearly
-                        elif req.recurrence_pattern == 3:
-                            current_date += timedelta(days=365)
-                    # Create the compliance
-                    if current_date <= approval.expiry_date:
-                        Compliance.objects.create(
-                            proposal=self,
-                            due_date=current_date,
-                            processing_status='future',
-                            approval=approval,
-                            requirement=req.requirement,
-                        )
-                        #TODO add logging for compliance'''
-
 
     def generate_compliances(self,approval, request):
         today = timezone.now().date()
@@ -2079,12 +2142,6 @@ class ProposalTrail(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('trail', 'proposal')
 
-    # @property
-    # def sections(self):
-    #     qs=self.activities.all()
-    #     categories=ActivityCategory.objects.filter(activity_type='land')
-    #     activities=qs.filter(Q(activity__activity_category__in = categories)& Q(activity__visible=True))
-    #     return activities
 
 class ProposalTrailSection(models.Model):
     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='sections')
@@ -2097,15 +2154,6 @@ class ProposalTrailSection(models.Model):
         app_label = 'commercialoperator'
         unique_together = ('section', 'proposal_trail')
 
-#TODO: Need to remove this model
-# class ProposalTrailActivity(models.Model):
-#     proposal_trail = models.ForeignKey(ProposalTrail, blank=True, null=True, related_name='trail_activities')
-#     activity = models.ForeignKey(Activity, blank=True, null=True)
-#     section=models.ForeignKey(Section, blank=True, null= True)
-
-#     class Meta:
-#         app_label = 'commercialoperator'
-#         unique_together = ('proposal_trail', 'activity')
 
 class ProposalTrailSectionActivity(models.Model):
     trail_section = models.ForeignKey(ProposalTrailSection, blank=True, null=True, related_name='trail_activities')
@@ -2374,6 +2422,9 @@ class ProposalUserAction(UserAction):
     ACTION_WITH_QA_OFFICER = "Send Application QA Officer {}"
     ACTION_QA_OFFICER_COMPLETED = "QA Officer Assessment Completed {}"
 
+    # monthly invoicing by cron
+    ACTION_SEND_MONTHLY_INVOICE = "Send monthly invoice {} for application {} to {}"
+    ACTION_SEND_PAYMENT_DUE_NOTIFICATION = "Send monthly invoice/BPAY payment due notification {} for application {} to {}"
 
     class Meta:
         app_label = 'commercialoperator'
@@ -2464,7 +2515,6 @@ class QAOfficerGroup(models.Model):
     def current_proposals(self):
         assessable_states = ['with_qa_officer']
         return Proposal.objects.filter(processing_status__in=assessable_states)
-
 
 #
 #class ReferralRequestUserAction(UserAction):
@@ -2612,7 +2662,6 @@ class Referral(RevisionedMixin):
                 user=request.user
                 if group and group[0] not in user.referralrecipientgroup_set.all():
                     raise exceptions.ReferralNotAuthorized()
-                #import ipdb; ipdb.set_trace()
                 self.processing_status = 'completed'
                 self.referral = request.user
                 self.referral_text = request.user.get_full_name() + ': ' + request.data.get('referral_comment')
@@ -2634,7 +2683,6 @@ class Referral(RevisionedMixin):
             try:
                 if request.data.has_key('referral_document'):
                     referral_document = request.data['referral_document']
-                    #import ipdb; ipdb.set_trace()
                     if referral_document != 'null':
                         try:
                             document = self.referral_documents.get(input_name=str(referral_document))
@@ -2667,7 +2715,6 @@ class Referral(RevisionedMixin):
     def send_referral(self,request,referral_email,referral_text):
         with transaction.atomic():
             try:
-                #import ipdb; ipdb.set_trace()
                 if self.proposal.processing_status == 'with_referral':
                     if request.user != self.referral:
                         raise exceptions.ReferralNotAuthorized()
@@ -2823,9 +2870,15 @@ class ChecklistQuestion(RevisionedMixin):
         ('assessor_list','Assessor Checklist'),
         ('referral_list','Referral Checklist')
     )
+    ANSWER_TYPE_CHOICES = (
+        ('yes_no','Yes/No type'),
+        ('free_text','Free text type')
+    )
     text = models.TextField()
     list_type = models.CharField('Checklist type', max_length=30, choices=TYPE_CHOICES,
                                          default=TYPE_CHOICES[0][0])
+    answer_type = models.CharField('Answer type', max_length=30, choices=ANSWER_TYPE_CHOICES,
+                                         default=ANSWER_TYPE_CHOICES[0][0])
     #correct_answer= models.BooleanField(default=False)
     obsolete = models.BooleanField(default=False)
 
@@ -2866,6 +2919,7 @@ class ProposalAssessmentAnswer(RevisionedMixin):
     question=models.ForeignKey(ChecklistQuestion, related_name='answers')
     answer = models.NullBooleanField()
     assessment=models.ForeignKey(ProposalAssessment, related_name='answers', null=True, blank=True)
+    text_answer= models.CharField(max_length=256, blank=True, null=True)
 
     def __str__(self):
         return self.question.text
@@ -2990,7 +3044,6 @@ class QAOfficerReferral(RevisionedMixin):
 #        with transaction.atomic():
 #            try:
 #                referral_document = request.data['referral_document']
-#                #import ipdb; ipdb.set_trace()
 #                if referral_document != 'null':
 #                    try:
 #                        document = self.referral_documents.get(input_name=str(referral_document))
@@ -3021,7 +3074,6 @@ class QAOfficerReferral(RevisionedMixin):
 #    def send_referral(self,request,referral_email,referral_text):
 #        with transaction.atomic():
 #            try:
-#                #import ipdb; ipdb.set_trace()
 #                if self.proposal.processing_status == 'with_referral':
 #                    if request.user != self.referral:
 #                        raise exceptions.ReferralNotAuthorized()
@@ -3284,7 +3336,6 @@ def duplicate_object(self):
                     related_object.save()
                 except Exception, e:
                     logger.warn(e)
-                    #import ipdb; ipdb.set_trace()
 
                 text = str(related_object)
                 text = (text[:40] + '..') if len(text) > 40 else text
@@ -3483,413 +3534,6 @@ class HelpPage(models.Model):
     class Meta:
         app_label = 'commercialoperator'
         unique_together = ('application_type', 'help_type', 'version')
-
-def check_migrate_approval(data):
-    '''
-    check if all submitters/org_applicants exist
-    '''
-    from commercialoperator.components.approvals.models import Approval
-    org_applicant = None
-    proxy_applicant = None
-    submitter=None
-    try:
-        #import ipdb; ipdb.set_trace()
-
-        if data['submitter']:
-            submitter = EmailUser.objects.get(email__icontains=data['submitter'])
-            if data['org_applicant']:
-                #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
-                org_applicant = Organisation.objects.get(organisation__abn=data['org_applicant'])
-        else:
-            ValidationError('Licence holder is required')
-    except:
-        raise ValidationError('Licence holder is required')
-
-def migrate_approval(data, not_found):
-    from commercialoperator.components.approvals.models import Approval
-    org_applicant = None
-    proxy_applicant = None
-    submitter=None
-    try:
-        #import ipdb; ipdb.set_trace()
-
-        if data['submitter']:
-            try:
-                submitter = EmailUser.objects.get(email__icontains=data['submitter'])
-            except:
-                submitter = EmailUser.objects.create(email=data['submitter'], password = '')
-            if data['abn']:
-                #org_applicant = Organisation.objects.get(organisation__name=data['org_applicant'])
-                org_applicant = Organisation.objects.get(organisation__abn=data['abn'])
-        else:
-            #ValidationError('Licence holder is required')
-            logger.error('Licence holder is required: submitter {}, abn {}'.format(data['submitter'], data['abn']))
-            not_found.append({'submitter': data['submitter'], 'abn': data['abn']})
-            return None
-    except Exception, e:
-        #raise ValidationError('Licence holder is required: \n{}'.format(e))
-        logger.error('Licence holder is required: submitter {}, abn {}'.format(data['submitter'], data['abn']))
-        not_found.append({'submitter': data['submitter'], 'abn': data['abn']})
-        return None
-
-    application_type=ApplicationType.objects.get(name=data['application_type'])
-    application_name = application_type.name
-    # Get most recent versions of the Proposal Types
-    qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
-    proposal_type = qs_proposal_type.get(name=application_name)
-    proposal= Proposal.objects.create( # Dummy 'T Class' proposal
-                    application_type=application_type,
-                    submitter=submitter,
-                    org_applicant=org_applicant,
-                    schema=proposal_type.schema
-                )
-    approval = Approval.objects.create(
-                    issue_date=data['issue_date'],
-                    expiry_date=data['expiry_date'],
-                    start_date=data['start_date'],
-                    org_applicant=org_applicant,
-                    submitter= submitter,
-                    current_proposal=proposal
-                )
-    proposal.approval= approval
-    proposal.processing_status='approved'
-    proposal.customer_status='approved'
-    proposal.migrated=True
-    approval.migrated=True
-    other_details = ProposalOtherDetails.objects.create(proposal=proposal)
-    proposal.save()
-    approval.save()
-    return approval
-
-def create_migration_data(filename, verify=False, app_type='T Class'):
-    def get_dates(data, row):
-        try:
-            #import ipdb; ipdb.set_trace()
-            if data['start_date']:
-                start_date = datetime.datetime.strptime(data['start_date'], '%d-%b-%y').date() # '05-Feb-89'
-            else:
-                start_date = None
-
-            if data['issue_date']:
-                issue_date = datetime.datetime.strptime(data['issue_date'], '%d-%b-%y').date()
-            else:
-                issue_date = None
-
-            if data['expiry_date']:
-                expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date()
-
-            if not (start_date and issue_date):
-                start_date = datetime.date.today()
-                issue_date = datetime.date.today()
-            elif not start_date:
-                start_date = issue_date
-            elif not issue_date:
-                issue_date = start_date
-
-        except Exception, e:
-            logger.error('Error in Dates: {}'.format(data))
-            raise
-
-        data.update({'start_date': start_date})
-        data.update({'issue_date': start_date})
-        data.update({'expiry_date': expiry_date})
-
-        return data
-
-
-    try:
-        '''
-        Example csv
-        org_applicant, submitter, start_date, issue_date, expiry_date, application_type
-        'Test Org1', 'prerana.andure@dbca.wa.gov.au', '4/07/2019', '4/07/2019', '10/07/2019', 'T Class'
-
-        To test:
-            from commercialoperator.components.proposals.models import create_migration_data
-            create_migration_data('commercialoperator/utils/csv/approvals.csv')
-        '''
-        data={}
-        not_found=[]
-        no_expiry=[]
-        with open(filename) as csvfile:
-            reader = csv.reader(csvfile, delimiter=str(','))
-            header = next(reader) # skip header
-            for row in reader:
-                #import ipdb; ipdb.set_trace()
-                data.update({'abn': row[0].translate(None, string.whitespace)})
-                data.update({'submitter': row[1].strip()})
-                data.update({'start_date': row[2].strip()})
-                data.update({'issue_date': row[3].strip()})
-                data.update({'expiry_date': row[4].strip()})
-                data.update({'application_type': row[5].strip()})
-                data.update({'submitter2': row[6].strip()})
-                data.update({'submitter3': row[7].strip()})
-                data.update({'submitter4': row[8].strip()})
-                data.update({'submitter_full_str': row[9].strip()})
-
-                if data['expiry_date']:
-                    get_dates(data, row)
-                    if row[5].strip()[0] == 'T':
-                        application_type = 'T Class'
-                    elif row[5].strip()[0] == 'E':
-                        application_type = 'E Class'
-                    else:
-                        logger.error('Unknown Application Type: {}'.format(row[5].strip()))
-
-                    data.update({'application_type': application_type})
-                    #print data
-
-                    if application_type == app_type:
-                        if verify:
-                            approval=check_migrate_approval(data)
-                        else:
-                            approval=migrate_approval(data, not_found)
-                        #print data
-                        print '{} - {}'.format(approval, data['submitter'])
-                        print
-                else:
-                    no_expiry.append(data['submitter'])
-
-        print 'Not Found: {}'.format(not_found)
-        print 'No Expiry: {}'.format(no_expiry)
-    except Exception, e:
-        print data
-        print e
-
-
-def create_organisation(data, count, debug=False):
-
-    #import ipdb; ipdb.set_trace()
-    #print 'Data: {}'.format(data)
-    #user = None
-    try:
-        user, created = EmailUser.objects.get_or_create(
-            email__icontains=data['email1'],
-            defaults={
-                'first_name': data['first_name'],
-                'last_name': data['last_name'],
-                'phone_number': data['phone_number1'],
-                'mobile_number': data['mobile_number'],
-            },
-        )
-    except Exception, e:
-        print data['email1']
-        import ipdb; ipdb.set_trace()
-
-    if debug:
-        print 'User: {}'.format(user)
-
-
-    abn_existing = []
-    abn_new = []
-    process = True
-    try:
-        ledger_organisation.objects.get(abn=data['abn'])
-        abn_existing.append(data['abn'])
-        print '{}, Existing ABN: {}'.format(count, data['abn'])
-        process = False
-    except Exception, e:
-        print '{}, Add ABN: {}'.format(count, data['abn'])
-        #import ipdb; ipdb.set_trace()
-
-    if process:
-        try:
-            #print 'Country: {}'.format(data['country'])
-            country=Country.objects.get(printable_name__icontains=data['country'])
-            oa, created = OrganisationAddress.objects.get_or_create(
-                line1=data['address_line1'],
-                locality=data['suburb'],
-                postcode=data['postcode'] if data['postcode'] else '0000',
-                defaults={
-                    'line2': data['address_line2'],
-                    'line3': data['address_line3'],
-                    'state': data['state'],
-                    'country': country.code,
-                }
-            )
-        except:
-            print 'Country 2: {}'.format(data['country'])
-            import ipdb; ipdb.set_trace()
-            raise
-        if debug:
-            print 'Org Address: {}'.format(oa)
-
-        try:
-            lo, created = ledger_organisation.objects.get_or_create(
-                abn=data['abn'],
-                defaults={
-                    'name': data['licencee'],
-                    'postal_address': oa,
-                    'billing_address': oa,
-                    'trading_name': data['trading_name']
-                }
-            )
-            if created:
-                abn_new.append(data['abn'])
-            else:
-                print '******** ERROR ********* abn already exists {}'.format(data['abn'])
-
-        except Exception, e:
-            print 'ABN: {}'.format(data['abn'])
-            import ipdb; ipdb.set_trace()
-            raise
-
-        if debug:
-            print 'Ledger Org: {}'.format(lo)
-
-        #import ipdb; ipdb.set_trace()
-        try:
-            org, created = Organisation.objects.get_or_create(organisation=lo)
-        except Exception, e:
-            print 'Org: {}'.format(org)
-            import ipdb; ipdb.set_trace()
-            raise
-
-        if debug:
-            print 'Organisation: {}'.format(org)
-
-        try:
-            delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
-        except Exception, e:
-            print 'Delegate Creation Failed: {}'.format(user)
-            import ipdb; ipdb.set_trace()
-            raise
-
-        if debug:
-            print 'Delegate: {}'.format(delegate)
-
-        try:
-            oc, created = OrganisationContact.objects.get_or_create(
-                organisation=org,
-                email=user.email,
-                defaults={
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'phone_number': user.phone_number,
-                    'mobile_number': user.mobile_number if data['mobile_number'] else '',
-                    'user_status': 'active',
-                    'user_role': 'organisation_admin',
-                    'is_admin': True
-                }
-            )
-        except Exception, e:
-            print 'Org Contact: {}'.format(user)
-            import ipdb; ipdb.set_trace()
-            raise
-
-        if debug:
-            print 'Org Contact: {}'.format(oc)
-
-        #return abn_new, abn_existing
-
-    return abn_new, abn_existing
-
-def create_organisation_data(filename, verify=False):
-    #import ipdb; ipdb.set_trace()
-    def get_start_date(data, row):
-        try:
-            expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date() # '05-Feb-89'
-        except Exception, e:
-            data.update({'start_date': None})
-            data.update({'issue_date': None})
-            data.update({'expiry_date': None})
-            #logger.error('Expiry Date: {}'.format(data['expiry_date']))
-            #logger.error('Data: {}'.format(data))
-            #raise
-            return
-
-        term = data['term'].split() # '3 YEAR'
-
-        #import ipdb; ipdb.set_trace()
-        if 'YEAR' in term[1]:
-            start_date = expiry_date - relativedelta(years=int(term[0]))
-        if 'MONTH' in term[1]:
-            start_date = expiry_date - relativedelta(months=int(term[0]))
-        else:
-            start_date = datetime.date.today()
-
-        data.update({'start_date': start_date})
-        data.update({'issue_date': start_date})
-        data.update({'expiry_date': expiry_date})
-
-    data={}
-    abn_existing = []
-    abn_new = []
-    count = 1
-    try:
-        '''
-        Example csv
-            address, town/city, state (WA), postcode, org_name, abn, trading_name, first_name, last_name, email, phone_number
-            123 Something Road, Perth, WA, 6100, Import Test Org 3, 615503, DDD_03, john, Doe_1, john.doe_1@dbca.wa.gov.au, 08 555 5555
-
-            File No:Licence No:Expiry Date:Term:Trading Name:Licensee:ABN:Title:First Name:Surname:Other Contact:Address 1:Address 2:Address 3:Suburb:State:Country:Post:Telephone1:Telephone2:Mobile:Insurance Expiry:Survey Cert:Name:SPV:ATAP Expiry:Eco Cert Expiry:Vessels:Vehicles:Email1:Email2:Email3:Email4
-            2018/001899-1:HQ70324:28-Feb-21:3 YEAR:4 U We Do:4 U We Do Pty Ltd::MR:Petrus:Grobler::Po Box 2483:::ESPERANCE:WA:AUSTRALIA:6450:458021841:::23-Jun-18::::30-Jun-18::0:7:groblerp@gmail.com:::
-        To test:
-            from commercialoperator.components.proposals.models import create_organisation_data
-            create_migration_data('commercialoperator/utils/csv/orgs.csv')
-        '''
-        with open(filename) as csvfile:
-            reader = csv.reader(csvfile, delimiter=str(':'))
-            header = next(reader) # skip header
-            for row in reader:
-                #import ipdb; ipdb.set_trace()
-                data.update({'file_no': row[0].translate(None, string.whitespace)})
-                data.update({'licence_no': row[1].translate(None, string.whitespace)})
-                data.update({'expiry_date': row[2].strip()})
-                data.update({'term': row[3].strip()})
-
-                get_start_date(data, row)
-
-                data.update({'trading_name': row[4].strip()})
-                data.update({'licencee': row[5].strip()})
-                data.update({'abn': row[6].translate(None, string.whitespace)})
-                data.update({'title': row[7].strip()})
-                data.update({'first_name': row[8].strip().capitalize()})
-                data.update({'last_name': row[9].strip().capitalize()})
-                data.update({'other_contact': row[10].strip()})
-                data.update({'address_line1': row[11].strip()})
-                data.update({'address_line2': row[12].strip()})
-                data.update({'address_line3': row[13].strip()})
-                data.update({'suburb': row[14].strip().capitalize()})
-                data.update({'state': row[15].strip()})
-
-                country = ' '.join([i.lower().capitalize() for i in row[16].strip().split()])
-                if country == 'A':
-                    country = 'Australia'
-                data.update({'country': country})
-
-                data.update({'postcode': row[17].translate(None, string.whitespace)})
-                data.update({'phone_number1': row[18].translate(None, b' -()')})
-                data.update({'phone_number2': row[19].translate(None, b' -()')})
-                data.update({'mobile_number': row[20].translate(None, b' -()')})
-
-                data.update({'email1': row[29].strip()})
-                data.update({'email2': row[30].strip()})
-                data.update({'email3': row[31].strip()})
-                data.update({'email4': row[32].strip()})
-                #import ipdb; ipdb.set_trace()
-
-                #print data
-
-                new, existing = create_organisation(data, count)
-                count += 1
-                abn_new = new + abn_new
-                abn_existing = existing + abn_existing
-                #if data['expiry_date']:
-                #    organisation=create_organisation(data)
-                #else:
-                #    logger.warn('No Expiry Date: {}'.format(data))
-                #print organisation
-
-        print 'New: {}, Existing: {}'.format(len(abn_new), len(abn_existing))
-        print 'New: {}'.format(abn_new)
-        print 'Existing: {}'.format(abn_existing)
-
-
-    except:
-        logger.info('Main {}'.format(data))
-        raise
-
-
 
 
 import reversion

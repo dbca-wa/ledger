@@ -22,6 +22,7 @@ from ledger.urls import urlpatterns as ledger_patterns
 router = routers.DefaultRouter()
 router.register(r'organisations',org_api.OrganisationViewSet)
 router.register(r'proposal',proposal_api.ProposalViewSet)
+router.register(r'proposal_park',proposal_api.ProposalParkViewSet)
 router.register(r'proposal_submit',proposal_api.ProposalSubmitViewSet)
 router.register(r'proposal_paginated',proposal_api.ProposalPaginatedViewSet)
 router.register(r'approval_paginated',approval_api.ApprovalPaginatedViewSet)
@@ -53,6 +54,9 @@ router.register(r'vessels', proposal_api.VesselViewSet)
 #router.register(r'assessor_checklist', proposal_api.AssessorChecklistViewSet)
 router.register(r'assessments', proposal_api.ProposalAssessmentViewSet)
 router.register(r'parks', main_api.ParkViewSet)
+#router.register(r'park_treeview', main_api.RegionViewSet2)
+router.register(r'tclass_container_land', main_api.LandActivityTabViewSet, base_name='tclass_container_land')
+router.register(r'tclass_container_marine', main_api.MarineActivityTabViewSet, base_name='tclass_container_marine')
 router.register(r'trails', main_api.TrailViewSet)
 router.register(r'vehicles', proposal_api.VehicleViewSet)
 router.register(r'land_activities', main_api.LandActivitiesViewSet)
@@ -101,17 +105,22 @@ urlpatterns = [
     url(r'^profiles/', views.ExternalView.as_view(), name='manage-profiles'),
     url(r'^help/(?P<application_type>[^/]+)/(?P<help_type>[^/]+)/$', views.HelpView.as_view(), name='help'),
     url(r'^mgt-commands/$', views.ManagementCommandsView.as_view(), name='mgt-commands'),
+    url(r'test-emails/$', proposal_views.TestEmailView.as_view(), name='test-emails'),
     #url(r'^external/organisations/manage/$', views.ExternalView.as_view(), name='manage-org'),
     #following url is used to include url path when sending Proposal amendment request to user.
     url(r'^proposal/$', proposal_views.ProposalView.as_view(), name='proposal'),
+    url(r'^preview/licence-pdf/(?P<proposal_pk>\d+)',proposal_views.PreviewLicencePDFView.as_view(), name='preview_licence_pdf'),
 
     # payment related urls
     url(r'^application_fee/(?P<proposal_pk>\d+)/$', booking_views.ApplicationFeeView.as_view(), name='application_fee'),
     url(r'^payment/(?P<proposal_pk>\d+)/$', booking_views.MakePaymentView.as_view(), name='make_payment'),
+    url(r'^payment_deferred/(?P<proposal_pk>\d+)/$', booking_views.DeferredInvoicingView.as_view(), name='deferred_invoicing'),
+    url(r'^preview_deferred/(?P<proposal_pk>\d+)/$', booking_views.DeferredInvoicingPreviewView.as_view(), name='preview_deferred_invoicing'),
     url(r'^success/booking/$', booking_views.BookingSuccessView.as_view(), name='public_booking_success'),
     url(r'^success/fee/$', booking_views.ApplicationFeeSuccessView.as_view(), name='fee_success'),
     url(r'cols/payments/invoice-pdf/(?P<reference>\d+)',booking_views.InvoicePDFView.as_view(), name='cols-invoice-pdf'),
     url(r'cols/payments/confirmation-pdf/(?P<reference>\d+)',booking_views.ConfirmationPDFView.as_view(), name='cols-confirmation-pdf'),
+    url(r'cols/payments/monthly-confirmation-pdf/(?P<id>\d+)',booking_views.MonthlyConfirmationPDFView.as_view(), name='cols-monthly-confirmation-pdf'),
 
     #following url is defined so that to include url path when sending Proposal amendment request to user.
     url(r'^external/proposal/(?P<proposal_pk>\d+)/$', views.ExternalProposalView.as_view(), name='external-proposal-detail'),

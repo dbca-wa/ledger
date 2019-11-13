@@ -37,7 +37,7 @@
               </li>
               <li v-if="is_external" class="nav-item" id="li-training">
                 <a class="nav-link" id="pills-online-training-tab" data-toggle="pill" href="#pills-online-training" role="tab" aria-controls="pills-online-training" aria-selected="false">
-                  5. Online Training
+                  5. Questionnaire
                 </a>
               </li>
               <li v-if="is_external" class="nav-item" id="li-payment">
@@ -55,9 +55,9 @@
               <!-- <div class="tab-pane fade show active" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">  -->
               <div class="tab-pane fade" id="pills-applicant" role="tabpanel" aria-labelledby="pills-applicant-tab">
                   <div v-if="is_external">
-                    <Profile :isApplication="true" v-if="applicantType == 'SUB'"></Profile>
+                    <Profile :isApplication="true" v-if="applicantType == 'SUB'" ref="profile"></Profile>
               
-                    <Organisation :org_id="proposal.org_applicant" :isApplication="true" v-if="applicantType == 'ORG'"></Organisation> 
+                    <Organisation :org_id="proposal.org_applicant" :isApplication="true" v-if="applicantType == 'ORG'" ref="organisation"></Organisation> 
                   </div>
                   <div v-else>
                     <Applicant :proposal="proposal" id="proposalStartApplicant"></Applicant>
@@ -129,6 +129,7 @@
     import Organisation from '@/components/external/organisations/manage.vue'
     import Applicant from '@/components/common/tclass/applicant.vue'
     import Assessment from '@/components/common/tclass/assessment.vue'
+    //import ActivitiesLand from '@/components/common/tclass/treeview.vue'
     import ActivitiesLand from '@/components/common/tclass/activities_land.vue'
     import ActivitiesMarine from '@/components/common/tclass/activities_marine.vue'
     import OtherDetails from '@/components/common/tclass/other_details.vue'

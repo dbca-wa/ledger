@@ -20,10 +20,21 @@
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <label class="control-label pull-left"  for="Name">Details</label>
-                                        <textarea class="form-control" name="name" v-model="amendment.text"></textarea>
+                                        <textarea class="form-control" name="name" v-model="amendment.text" readonly="true"></textarea>
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="row">
+                                <div class="col-sm-offset-2 col-sm-8">
+                                    <div class="form-group">
+                                        <div class="input-group date" ref="add_attachments" style="width: 70%;">
+                                            <FileField ref="filefield" :uploaded_documents="amendment.amendment_request_documents" :delete_url="delete_url" :proposal_id="proposal_id" isRepeatable="true" name="amendment_request_file" @refreshFromResponse="refreshFromResponse"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </form>
                 </div>
@@ -37,13 +48,15 @@
 import Vue from 'vue'
 import modal from '@vue-utils/bootstrap-modal.vue'
 import alert from '@vue-utils/alert.vue'
+import FileField from '@/components/forms/filefield.vue'
 
 import {helpers, api_endpoints} from "@/utils/hooks.js"
 export default {
     name:'amendment-request',
     components:{
         modal,
-        alert
+        alert, 
+        FileField,
     },
     props:{
             proposal_id:{
@@ -59,7 +72,10 @@ export default {
             reason:'',
             reason_id: null,
             amendingProposal: false,
-            proposal: vm.proposal_id 
+            proposal: vm.proposal_id,
+            num_files: 0,
+            input_name: 'amendment_request_doc',
+            requirement_documents: [],
             },
             reason_choices: {},
             errors: false,
@@ -71,6 +87,9 @@ export default {
         showError: function() {
             var vm = this;
             return vm.errors;
+        },
+        delete_url: function() {
+            return (this.amendment.id) ? '/api/amendment_request/'+this.amendment.id+'/delete_document/' : '';
         }
     },
     methods:{
@@ -111,13 +130,29 @@ export default {
             let vm = this;
             vm.errors = false;
             let amendment = JSON.parse(JSON.stringify(vm.amendment));
-            vm.$http.post('/api/amendment_request.json',JSON.stringify(amendment),{
+            let formData = new FormData()
+            var files = vm.$refs.filefield.files;
+            $.each(files, function (idx, v) {
+                var file = v['file'];
+                var filename = v['name'];
+                var name = 'file-' + idx;
+                formData.append(name, file, filename);
+            });
+            amendment.num_files = files.length;
+            amendment.input_name = 'requirement_doc';
+            amendment.proposal = vm.proposal_id;
+            amendment.update = true;
+
+            formData.append('data', JSON.stringify(amendment));
+
+            // vm.$http.post('/api/amendment_request.json',JSON.stringify(amendment),{
+                vm.$http.post('/api/amendment_request.json', formData,{
                         emulateJSON:true,
                     }).then((response)=>{
                         //vm.$parent.loading.splice('processing contact',1);
                         swal(
                              'Sent',
-                             'An email has been sent to applicant with the request to amend this Proposal',
+                             'An email has been sent to proponent with the request to amend this Proposal',
                              'success'
                         );
                         vm.amendingProposal = true;

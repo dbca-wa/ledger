@@ -4,7 +4,7 @@
             <div class="col-sm-12">
                 <div class="row">
                     <div v-if="isProposal" class="col-sm-offset-3 col-sm-6 borderDecoration">
-                        <strong>Your application has been successfully submitted.</strong>
+                        <strong>Your application for a commercial operations licence has been successfully submitted.</strong>
                         <br/>
                         <table>
                             <tr>
@@ -17,12 +17,12 @@
                             </tr>
                         </table>
                         <br/>
-                        <label>Please note that it may take up to 21 business days to process your application.<br/>If there is any missing information, the Department may assign this application back to you to complete. In that case you will be notified by email.</label>
-                        <router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
+                        <label>You will receive a notification email if there is any incomplete information or documents missing from the application.</label>
+                        <router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to home</router-link>
                     </div>
                     <div v-else class="col-sm-offset-3 col-sm-6 borderDecoration">
                         <strong>Sorry it looks like there isn't any application currently in your session.</strong>
-                        <br /><router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to dashboard</router-link>
+                        <br /><router-link :to="{name:'external-proposals-dash'}" style="margin-top:15px;" class="btn btn-primary">Back to home</router-link>
                     </div>
                 </div>
             </div>

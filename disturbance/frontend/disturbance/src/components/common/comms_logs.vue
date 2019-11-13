@@ -71,7 +71,7 @@ export default {
                 responsive: true,
                 deferRender: true, 
                 autowidth: true,
-                order: [[2, 'desc']],
+                order: [[3, 'desc']], // order the non-formatted date as a hidden column
                 dom:
                     "<'row'<'col-sm-5'l><'col-sm-6'f>>" +
                     "<'row'<'col-sm-12'tr>>" +
@@ -95,9 +95,15 @@ export default {
                         data:"when",
                         orderable: false,
                         mRender:function(data,type,full){
-                            return moment(data).format(vm.DATE_TIME_FORMAT)
+                            //return moment(data).format(vm.DATE_TIME_FORMAT)
+                            return moment(data).format(vm.dateFormat);
                         }
                     },
+                    {
+                        title: 'Created',
+                        data: 'when',
+                        visible: false
+                    }
                 ]
             },
             commsDtOptions:{
@@ -107,7 +113,7 @@ export default {
                 responsive: true,
                 deferRender: true, 
                 autowidth: true,
-                order: [[0, 'desc']],
+                order: [[8, 'desc']], // order the non-formatted date as a hidden column
                 processing:true,
                 ajax: {
                     "url": vm.comms_url, 
@@ -118,6 +124,7 @@ export default {
                         title: 'Date',
                         data: 'created',
                         render: function (date) {
+                            //return moment(date).format("DD-MMM-YYYY HH:mm:ss");
                             //return moment(date).format(vm.DATE_TIME_FORMAT);
                             return moment(date).format(vm.dateFormat);
                         }
@@ -297,6 +304,11 @@ export default {
                             });
                             return result;
                         }
+                    },
+                    {
+                        title: 'Created',
+                        data: 'created',
+                        visible: false
                     }
                 ]
             },

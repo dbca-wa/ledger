@@ -19,15 +19,15 @@ class InvoiceDetailView(generic.DetailView):
     model = Invoice
     template_name = 'dpaw_payments/invoice/invoice.html'
     context_object_name = 'invoice'
-    
+
     def get_object(self):
         order = get_object_or_404(Order, number=self.kwargs['order'])
         return self.model.objects.get(order_number=order.number)
-    
+
     def get_context_data(self, **kwargs):
         ctx = super(InvoiceDetailView, self).get_context_data(**kwargs)
         ctx['bpay_allowed'] = settings.BPAY_ALLOWED
         ctx['invoice_unpaid_warning'] = settings.INVOICE_UNPAID_WARNING
         return ctx
-    
+
 
