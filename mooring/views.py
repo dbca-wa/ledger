@@ -358,7 +358,7 @@ class CancelBookingView(TemplateView):
 
         new_order = Order.objects.get(basket=basket)
         new_invoice = Invoice.objects.get(order_number=new_order.number)
-        update_payments(new_invoice.reference)
+        #update_payments(new_invoice.reference)
         book_inv, created = BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
 
         #basket.status = 'Submitted'
@@ -394,11 +394,11 @@ class CancelBookingView(TemplateView):
             RefundFailed.objects.create(booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0, basket_json=None)
 
         if refund:
-            bpoint_refund = BpointTransaction.objects.get(txn_number=refund)
+            bpoint_refund = BpointTransaction.objects.get(txn_number=refund.txn_number)
             bpoint_refund.crn1 = new_invoice.reference
             bpoint_refund.save()
-            update_payments(invoice.reference)
-            update_payments(new_invoice.reference)
+        update_payments(invoice.reference)
+        update_payments(new_invoice.reference)
  
         invoice.voided = True
         invoice.save()
@@ -413,6 +413,9 @@ class CancelBookingView(TemplateView):
             booking_admission.cancelation_time = datetime.now()
             booking_admission.canceled_by = request.user
             booking_admission.save()
+
+        update_payments(invoice.reference)
+        update_payments(new_invoice.reference)
 
         if failed_refund is True:
             # Refund Failed Assign Refund amount to allocation pool.
@@ -537,7 +540,7 @@ class CancelAdmissionsBookingView(TemplateView):
             RefundFailed.objects.create(admission_booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0,basket_json=booking_cancellation_fees)
 
         if refund:
-            bpoint_refund = BpointTransaction.objects.get(txn_number=refund)
+            bpoint_refund = BpointTransaction.objects.get(txn_number=refund.txn_number)
             bpoint_refund.crn1 = new_invoice.reference
             bpoint_refund.save()
             update_payments(invoice.reference)
@@ -629,6 +632,10 @@ class RefundPaymentView(TemplateView):
              order_response = place_order_submission(request)
              new_order = Order.objects.get(basket=basket)
              new_invoice = Invoice.objects.get(order_number=new_order.number)
+             new_invoice.settlement_date = None
+             new_invoice.save()
+
+
 #             book_inv, created = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference)
 
              BookingInvoice.objects.get_or_create(booking=booking, invoice_reference=new_invoice.reference)
@@ -636,11 +643,11 @@ class RefundPaymentView(TemplateView):
                  invoice.voided = True
                  invoice.save()
 
-                 bpoint_refund = BpointTransaction.objects.get(txn_number=refund)
+                 bpoint_refund = BpointTransaction.objects.get(txn_number=refund.txn_number)
                  bpoint_refund.crn1 = new_invoice.reference
                  bpoint_refund.save()
                  update_payments(invoice.reference)
-                 update_payments(new_invoice.reference)
+             update_payments(new_invoice.reference)
 
 
              ## Send booking confirmation and invoice

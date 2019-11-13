@@ -28,7 +28,7 @@
 
                 <div class="row">
                     <div class="small-12 columns">
-                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for mooring's..."/></label>
+                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for a mooring..."/></label>
                     </div>
                 </div>
                 <div class="row">
