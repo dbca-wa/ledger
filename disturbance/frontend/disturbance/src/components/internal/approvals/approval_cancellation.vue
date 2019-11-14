@@ -137,7 +137,7 @@ export default {
                         vm.close();
                         swal(
                              'Cancelled',
-                             'An email has been sent to applicant about cancellation of this approval',
+                             'An email has been sent to proponent about cancellation of this approval',
                              'success'
                         );
                         vm.$emit('refreshFromResponse',response);

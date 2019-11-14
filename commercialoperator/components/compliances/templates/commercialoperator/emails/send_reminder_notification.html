@@ -1,0 +1,20 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+
+	<!-- Your Compliance with requirements {{ compliance.reference }} has passed the due date and has not been lodged yet.   
+    <p>
+    You can access this Compliance using the following link:
+    </p>
+    <a href="{{url}}">Access Compliance</a> -->
+
+    <p>Please be aware that the following is overdue:</p>
+    <p>{{ compliance.reference }} - {{compliance.requirement.requirement}}</p>
+
+    <p>To complete the licence requirement please login to your account <a href="{{url}}">here</a>.</p>
+
+    <p>It is a condition of your licence that you complete all requirements. Failure to do so may result in cancellation or suspension of the commercial operations licence.</p>
+
+    <p>If you have any queries please contact a licensing officer on {{settings.DEP_PHONE}}, or email {{settings.SUPPORT_EMAIL}}</p>
+
+{%  endblock %}

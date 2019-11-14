@@ -522,13 +522,13 @@ export default {
                     mRender: function(data, type, full) {
                         var id = full.id;
                         if (full.active) {
-                            var column ="<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
+                            var column ="<td ><a href='__ID__' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
                                 column += "<a href='#' class='statusCS' data-status='close' data-campsite=\"__ID__\" >Close</a></td>";
                             }
                         }
                         else {
-                            var column = "<td ><a href='#' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
+                            var column = "<td ><a href='__ID__' class='detailRoute' data-campsite=\"__ID__\" >Edit</a><br/>";
                             if ( full.campground_open ){
                                 column += "<a href='#' class='statusCS' data-status='open' data-campsite=\"__ID__\" data-current_closure='"+ full.current_closure +"'>Open</a></td>";
                             }
@@ -999,7 +999,7 @@ export default {
             }
 
             if (isValid){
-                console.log("Page has found to be valid up until form checks")
+                // console.log("Page has found to be valid up until form checks")
                 $('form').each(function(){
                     if (!$(this).valid()){
                         isValid = false;
@@ -1066,8 +1066,8 @@ export default {
                         console.log("There was an error sending data.");
                         console.log(resp);
                         var message = {
-                            title: "Failure",
-                            text: "Mooring not updated, there was an error.\nPlease check all mandatory fields are complete.",
+                            title: "Failure: There was and error updating the mooring",
+                            text: resp.responseText,
                             type: "error"
                         }
                         vm.swalMessage(message);

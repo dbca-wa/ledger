@@ -1,0 +1,11 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your document to complete a requirement {{ compliance.reference }} of your licence has been submitted..
+
+	You will receive a confirmation email, and it will show up on your account if the document meets the requirement.
+    
+    You will receive a notification email if there is any incomplete information or documents missing.
+    
+
+{%  endblock %}

@@ -239,10 +239,12 @@ $(function(){
         var balance = '$'+formatMoney(invoice_obj.balance);
         var amount_paid = '$'+formatMoney(invoice_obj.payment_amount);
         var refundable_amount = '$'+formatMoney(invoice_obj.refundable_amount);
+        var invoice_date = invoice_obj.created;
         // Top banner
         $('#invoice_status').html(formatStatus(status));
         $('#invoice_balance').html(balance);
         $('#invoice_paid').html(amount_paid);
+        $('#invoice_date').html(invoice_date);
         $('.refundable_amount').html(refundable_amount);
         // Individual Invoice
         $("strong.invoice_status[data-reference='"+invoice+"']").html(formatStatus(status));

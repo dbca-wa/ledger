@@ -4,7 +4,7 @@
             <div class="container-fluid">
                 <div class="row">
                     <form class="form-horizontal" name="approvalForm">
-                        <alert v-if="isApprovalLevelDocument" type="warning"><strong>{{warningString}}</strong></alert>
+                        <!-- <alert v-if="isApprovalLevelDocument" type="warning"><strong>{{warningString}}</strong></alert> -->
                         <alert :show.sync="showError" type="danger"><strong>{{errorString}}</strong></alert>
                         <div class="col-sm-12">
                             <div class="form-group">
@@ -62,18 +62,29 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-sm-3">
-                                        <label v-if="processing_status == 'With Approver'" class="control-label pull-left"  for="Name">CC email</label>
-                                        <label v-else class="control-label pull-left"  for="Name">Proposed CC email</label>
+                                        <label v-if="processing_status == 'With Approver'" class="control-label pull-left"  for="Name">BCC email</label>
+                                        <label v-else class="control-label pull-left"  for="Name">Proposed BCC email</label>
                                     </div>
                                     <div class="col-sm-9">
-                                            <input type="text" class="form-control" name="approval_cc" style="width:70%;" v-model="approval.cc_email">
+                                            <input type="text" class="form-control" name="approval_cc" style="width:70%;" ref="bcc_email" v-model="approval.cc_email">
                                     </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <label v-if="submitter_email && applicant_email" class="control-label pull-left"  for="Name">After approving this proposal, approval will be emailed to {{submitter_email}} and {{applicant_email}}.</label>
+                                        <label v-else class="control-label pull-left"  for="Name">After approving this proposal, approval will be emailed to {{submitter_email}}.</label>
+                                    </div>
+                                    
                                 </div>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
+            <p v-if="can_preview">Click <a href="#" @click.prevent="preview">here</a> to preview the approval letter.</p>
+
             <div slot="footer">
                 <button type="button" v-if="issuingApproval" disabled class="btn btn-default" @click="ok"><i class="fa fa-spinner fa-spin"></i> Processing</button>
                 <button type="button" v-else class="btn btn-default" @click="ok">Ok</button>
@@ -110,7 +121,15 @@ export default {
         isApprovalLevelDocument: {
             type: Boolean,
             required: true
-        }
+        },
+        submitter_email: {
+            type: String,
+            required: true
+        },
+        applicant_email: {
+            type: String,
+            //default: ''
+        },
     },
     data:function () {
         let vm = this;
@@ -158,10 +177,44 @@ export default {
         is_amendment: function(){
             return this.proposal_type == 'Amendment' ? true : false;
         },
-        
+        csrf_token: function() {
+          return helpers.getCookie('csrftoken')
+        },
+        can_preview: function(){
+            return this.processing_status == 'With Approver' ? true : false;
+        },
+        preview_licence_url: function() {
+          return (this.proposal_id) ? `/preview/licence-pdf/${this.proposal_id}` : '';
+        },
 
     },
     methods:{
+        preview:function () {
+            let vm =this;
+            let formData = new FormData(vm.form)
+            // convert formData to json
+            let jsonObject = {};
+            for (const [key, value] of formData.entries()) {
+                jsonObject[key] = value;
+            }
+            vm.post_and_redirect(vm.preview_licence_url, {'csrfmiddlewaretoken' : vm.csrf_token, 'formData': JSON.stringify(jsonObject)});
+        },
+        post_and_redirect: function(url, postData) {
+            /* http.post and ajax do not allow redirect from Django View (post method),
+               this function allows redirect by mimicking a form submit.
+               usage:  vm.post_and_redirect(vm.application_fee_url, {'csrfmiddlewaretoken' : vm.csrf_token});
+            */
+            var postFormStr = "<form method='POST' target='_blank' name='Preview Licence' action='" + url + "'>";
+            for (var key in postData) {
+                if (postData.hasOwnProperty(key)) {
+                    postFormStr += "<input type='hidden' name='" + key + "' value='" + postData[key] + "'>";
+                }
+            }
+            postFormStr += "</form>";
+            var formElement = $(postFormStr);
+            $('body').append(formElement);
+            $(formElement).submit();
+        },
         ok:function () {
             let vm =this;
             if($(vm.form).valid()){

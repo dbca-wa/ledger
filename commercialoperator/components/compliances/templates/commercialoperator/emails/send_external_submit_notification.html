@@ -1,0 +1,19 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+	Your document to complete a requirement {{ compliance.reference }} of your licence has been submitted.<br>
+
+	<!-- Submitter: {{ compliance.submitter.get_full_name }}<br>
+	Lodgement date: {{ compliance.lodgement_date }} -->
+
+	<p>You will receive a confirmation email, and it will show up on your account if the document meets the requirement.</p>
+
+	<p>You will receive a notification email if there is any incomplete information or documents missing.</p>
+
+    <!-- <p>
+    You can access this Compliance using the following link:
+    </p>
+    <a href="{{url}}">Access Compliance</a> -->
+
+
+{%  endblock %}

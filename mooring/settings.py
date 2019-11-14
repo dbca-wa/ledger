@@ -4,8 +4,6 @@ import os
 
 ROOT_URLCONF = 'mooring.urls'
 SITE_ID = 1
-print ("BASE DIR")
-print (os.path.join(BASE_DIR, 'staticfiles_mo'))
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_mo')
 
 # number of seconds before expiring a temporary booking
@@ -115,16 +113,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Use git commit hash for purging cache in browser for deployment changes
 GIT_COMMIT_HASH = ''
 GIT_COMMIT_DATE = ''
-if  os.path.isdir('.git') is True:
+if  os.path.isdir(BASE_DIR+'/.git/') is True:
     GIT_COMMIT_DATE = os.popen('cd '+BASE_DIR+' ; git log -1 --format=%cd').read()
     GIT_COMMIT_HASH = os.popen('cd  '+BASE_DIR+' ; git log -1 --format=%H').read()
 if len(GIT_COMMIT_HASH) == 0: 
     GIT_COMMIT_HASH = os.popen('cat /app/git_hash').read()
     if len(GIT_COMMIT_HASH) == 0:
        print ("ERROR: No git hash provided")
-VERSION_NO = '2.03'
+VERSION_NO = '2.04'
 os.environ['UPDATE_PAYMENT_ALLOCATION'] = 'True'
-UNALLOCATED_ORACLE_CODE = 'UN2019 GST' 
+UNALLOCATED_ORACLE_CODE = 'NNP449 GST' 
 
- 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240  
 #os.environ.setdefault("UPDATE_PAYMENT_ALLOCATION", True)

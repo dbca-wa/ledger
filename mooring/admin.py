@@ -91,6 +91,11 @@ class MooringAreaAdmin(admin.GeoModelAdmin):
 class MooringAreaGroupAdmin(admin.ModelAdmin):
     filter_horizontal = ('members','moorings')
 
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "members":
+            kwargs["queryset"] = EmailUser.objects.filter(is_staff=True)
+        return super(MooringAreaGroupAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
     def get_queryset(self, request):
         """ Filter based on the mooring group of the user. """
         qs = super(MooringAreaGroupAdmin, self).get_queryset(request)
@@ -148,10 +153,12 @@ class CancelPricePeriodAdmin(admin.ModelAdmin):
 
 @admin.register(models.Booking)
 class BookingAdmin(admin.ModelAdmin):
+    raw_id_fields = ('customer','created_by','overridden_by','canceled_by','old_booking','admission_payment',)
     list_display = ('id','arrival','departure','booking_type','mooringarea','legacy_id','legacy_name','status','cost_total')
     ordering = ('-id',)
     search_fileds = ('arrival','departure')
     list_filter = ('id','arrival','departure','mooringarea')
+    readonly_fields=('created',)
     inlines = [BookingInvoiceInline,MooringsiteBookingInline]
 
     def has_add_permission(self, request, obj=None):
@@ -393,7 +400,9 @@ class AdmissionLineInline(admin.TabularInline):
 
 @admin.register(models.AdmissionsBooking)
 class AdmissionBooking(admin.ModelAdmin):
+    raw_id_fields = ('customer',)
     list_display = ('confirmation_number', 'customer', 'totalCost')
+    readonly_fields=('created_by','canceled_by',)
     inlines = [AdmissionLineInline]
 
 
@@ -535,6 +544,6 @@ class AdmissionsLocation(admin.ModelAdmin):
 class RefundFailed(admin.ModelAdmin):
     list_display = ('booking', 'invoice_reference','refund_amount','status','created','completed_date','completed_by')
     search_fields = ('booking','invoice_reference','refund_amount')
-    list_filter = ('status','completed_by')
+    list_filter = ('status',)
     ordering = ('id',)
 

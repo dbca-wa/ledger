@@ -12,11 +12,6 @@ from wildlifecompliance.components.emails.emails import TemplateEmailBase
 logger = logging.getLogger(__name__)
 
 SYSTEM_NAME = 'Wildlife Licensing Automated Message'
-class ReferralSendNotificationEmail(TemplateEmailBase):
-    subject = 'A referral for a application has been sent to you'
-    html_template = 'wildlifecompliance/emails/applications/send_referral_notification.html'
-    txt_template = 'wildlifecompliance/emails/applications/send_referral_notification.txt'
-
 class ApplicationSubmitterNotificationEmail(TemplateEmailBase):
     subject = 'Your application has been submitted'
     html_template = 'wildlifecompliance/emails/send_application_submitter_notification.html'
@@ -33,7 +28,7 @@ class ApplicationSubmitNotificationEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/send_application_submit_notification.txt'
 
 class AmendmentSubmitNotificationEmail(TemplateEmailBase):
-    subject = 'A amendment has been submitted'
+    subject = 'An amendment has been submitted'
     html_template = 'wildlifecompliance/emails/send_amendment_submit_notification.html'
     txt_template = 'wildlifecompliance/emails/send_amendment_submit_notification.txt'
 
@@ -53,12 +48,12 @@ class ApplicationDeclineNotificationEmail(TemplateEmailBase):
     txt_template = 'wildlifecompliance/emails/send_application_decline_notification.txt'
 
 class ApplicationAssessmentRequestedEmail(TemplateEmailBase):
-    subject = 'Wildlife licensing assessment required'
+    subject = 'An application has been sent to you for assessment'
     html_template = 'wildlifecompliance/emails/send_application_assessment_request_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_assessment_request_notification.txt'
 
 class ApplicationAssessmentReminderEmail(TemplateEmailBase):
-    subject = 'Wildlife licensing assessment reminder'
+    subject = 'An application is currently awaiting your assessment'
     html_template = 'wildlifecompliance/emails/send_application_assessment_remind_notification.html'
     txt_template = 'wildlifecompliance/emails/send_application_assessment_remind_notification.txt'
 
@@ -96,22 +91,6 @@ def send_assessment_email_notification(select_group,assessment, request):
     _log_application_email(msg, application, sender=sender)
 
 
-
-
-def send_referral_email_notification(emails,application,request,reminder=False):
-    email = ReferralSendNotificationEmail()
-    url = request.build_absolute_uri(reverse('internal-referral-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
-
-    context = {
-        'application': application
-    }
-
-    msg = email.send(emails, context=context)
-    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
-    _log_application_email(msg, referral, sender=sender)
-    _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
-
-
 def send_application_invoice_email_notification(application,invoice_ref,request):
     # An email with application invoice to submitter
     email = ApplicationInvoiceNotificationEmail()
@@ -136,7 +115,6 @@ def send_application_invoice_email_notification(application,invoice_ref,request)
 def send_application_submitter_email_notification(application,request):
     # An email to submitter notifying about new application is submitted
     email = ApplicationSubmitterNotificationEmail()
-    # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
     url = request.build_absolute_uri(reverse('external-application-detail',kwargs={'application_pk': application.id}))
 
     context = {
@@ -152,7 +130,6 @@ def send_application_submitter_email_notification(application,request):
 def send_application_submit_email_notification(group_email,application,request):
     # An email to internal users notifying about new application is submitted
     email = ApplicationSubmitNotificationEmail()
-    # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
     url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk': application.id}))
 
     context = {
@@ -163,12 +140,10 @@ def send_application_submit_email_notification(group_email,application,request):
     msg = email.send(email_group, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
-    # _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
 
 def send_amendment_submit_email_notification(group_email,application,request):
     # An email to internal users notifying about new application is submitted
     email = AmendmentSubmitNotificationEmail()
-    # url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk':referral.application.id,'referral_pk':referral.id}))
     url = request.build_absolute_uri(reverse('internal-application-detail',kwargs={'application_pk': application.id}))
 
     context = {
@@ -179,7 +154,6 @@ def send_amendment_submit_email_notification(group_email,application,request):
     msg = email.send(email_group, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_application_email(msg, application, sender=sender)
-    # _log_org_email(msg, referral.application.applicant, referral.referral, sender=sender)
 
 
 def send_application_amendment_notification(amendment,application,request):

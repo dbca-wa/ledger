@@ -1,9 +1,8 @@
 {%  extends 'wildlifecompliance/emails/base_email.html' %}
 
 {%  block content %}
-    <p>Your organisation has requested a new letter for your access request.
-        Please review the reason below and upload a new letter for your access request.</p>
-    <p><strong>Organisation : {{ request.name }}</strong></p>
-    <p><strong>ABN : {{ request.abn }}</strong></p>
-    <p><strong>Reason : {{ reason }}</strong></p>
+    <p>A new letter has been requested for your access request to the following organisation. Please review the reason below and upload a new letter for your access request.</p>
+    <p><strong>Organisation: {{ request.name }}</strong></p>
+    <p><strong>ABN: {{ request.abn }}</strong></p>
+    <p><strong>Reason: {{ reason }}</strong></p>
 {%  endblock %}

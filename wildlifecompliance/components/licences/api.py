@@ -29,6 +29,7 @@ from ledger.address.models import Country
 from datetime import datetime, timedelta, date
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
+from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.licences.models import (
     WildlifeLicence,
     WildlifeLicenceClass
@@ -42,6 +43,15 @@ from wildlifecompliance.components.licences.serializers import (
 class LicenceViewSet(viewsets.ModelViewSet):
     queryset = WildlifeLicence.objects.all()
     serializer_class = WildlifeLicenceSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return WildlifeLicence.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            return WildlifeLicence.objects.filter(Q(org_applicant_id__in = user_orgs) | Q(proxy_applicant = user) | Q(submitter = user) )
+        return WildlifeLicence.objects.none()
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()

@@ -168,13 +168,15 @@ module.exports = {
                         var id = full.id;
 //                        var addBooking = "<br/><a href='#' class='addBooking' data-campground=\"__ID__\" >Add Booking</a>";
                         var addBooking = "";
+                        var today = vm.date_today(0);
+                        var today_week_later = vm.date_today(7);
                         // var availability_admin = "<br/><a target='_blank' href='/availability_admin/?site_id=__ID__' >Availability</a>";
-                        var availability_admin = "<a target='_blank' href='/availability2/?site_id=__ID__&vessel_size=0' >Availability</a>";
+                        var availability_admin = "<a target='_blank' href='/availability2/?site_id=__ID__&arrival="+today+"&departure="+today_week_later+"&gear_type=all&num_adult=2&num_child=0&num_concession=0&num_infant=0&vessel_size=0.1&vessel_draft=0.1&vessel_beam=0.1&vessel_weight=0.1' >Availability</a>";
                         var column = "";
                         if(full.noinvent){
                             column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >View</a><br/>";
                         } else {
-                            column = "<td ><a href='#' class='detailRoute' data-campground=\"__ID__\" >Edit</a><br/>";
+                            column = "<td ><a href='__ID__' class='detailRoute' data-campground=\"__ID__\" >Edit</a><br/>";
                             if (full.active) {
                                 column += "<a href='#' class='statusCG' data-status='close' data-campground=\"__ID__\" > Close </a><br/>";
                             } else {
@@ -220,33 +222,33 @@ module.exports = {
         selected_region: function() {
             let vm = this;
             if (vm.selected_region != 'All') {
-                vm.$refs.dtGrounds.vmDataTable.columns(2).search(vm.selected_region).draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(3).search(vm.selected_region).draw();
             } else {
-                vm.$refs.dtGrounds.vmDataTable.columns(2).search('').draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(3).search('').draw();
             }
         },
         selected_status: function() {
             let vm = this;
             if (vm.selected_status != 'All') {
-                vm.$refs.dtGrounds.vmDataTable.columns(1).search(vm.selected_status).draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(2).search(vm.selected_status).draw();
             } else {
-                vm.$refs.dtGrounds.vmDataTable.columns(1).search('').draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(2).search('').draw();
             }
         },
         selected_district: function() {
             let vm = this;
             if (vm.selected_district != 'All') {
-                vm.$refs.dtGrounds.vmDataTable.columns(3).search(vm.selected_district).draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(4).search(vm.selected_district).draw();
             } else {
-                vm.$refs.dtGrounds.vmDataTable.columns(3).search('').draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(4).search('').draw();
             }
         },
         selected_park: function() {
             let vm = this;
             if (vm.selected_park != 'All') {
-                vm.$refs.dtGrounds.vmDataTable.columns(4).search(vm.selected_park).draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(5).search(vm.selected_park).draw();
             } else {
-                vm.$refs.dtGrounds.vmDataTable.columns(4).search('').draw();
+                vm.$refs.dtGrounds.vmDataTable.columns(5).search('').draw();
             }
         }
     },
@@ -264,6 +266,24 @@ module.exports = {
                     vm.regions = data;
                 }
             });
+        },
+        date_today(days) {
+           var today = new Date();
+           var res = today.setTime(today.getTime() + (days * 24 * 60 * 60 * 1000));
+        
+           var today = new Date(res);
+           var dd = today.getDate();
+           var mm = today.getMonth() + 1; //January is 0!
+           
+           var yyyy = today.getFullYear();
+           if (dd < 10) {
+             dd = '0' + dd;
+           } 
+           if (mm < 10) {
+             mm = '0' + mm;
+           } 
+           var today = yyyy + '/' + mm + '/'+ dd; 
+           return today
         },
         updateTable: function() {
             var vm = this;

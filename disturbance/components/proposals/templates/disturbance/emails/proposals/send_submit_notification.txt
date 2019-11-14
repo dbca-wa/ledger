@@ -3,11 +3,13 @@
 {%  block content %}
     The Proposal {{ proposal.lodgement_number }} has been submitted and can be assessed.
 
-    
-	Region: {{proposal.region}}
-	Activity: {{proposal.activity}}
-	
-
+    Activity: {{proposal.activity}}
+	Region: {{proposal.region}}<br>
+	{% if proposal.district %}
+		District:{{proposal.district}}
+	{% else %}
+		District: -
+	{% endif %}
    
     You can access this Proposal using the following link:
   

@@ -32,12 +32,13 @@ from collections import OrderedDict
 from django.core.cache import cache
 from ledger.accounts.models import EmailUser,Address
 from ledger.address.models import Country
-from ledger.payments.models import Invoice
+from ledger.payments.models import Invoice, OracleAccountCode
 from django.db.models import Count
 from mooring import utils
 from mooring.helpers import can_view_campground, is_inventory, is_admin, is_payment_officer
 from datetime import datetime,timedelta, date
-from decimal import Decimal 
+from decimal import Decimal
+from ledger.payments.utils import systemid_check, update_payments
 from mooring.context_processors import mooring_url, template_context
 from mooring.models import (MooringArea,
                                 District,
@@ -149,6 +150,7 @@ from mooring import emails
 from mooring import exceptions
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import Distance  
+from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 
 # API Views
 class MooringsiteBookingViewSet(viewsets.ModelViewSet):
@@ -584,7 +586,7 @@ def current_booking(request, *args, **kwargs):
     response_data['result'] = 'success'
     response_data['message'] = ''
     ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
-    response_data['current_booking'] = get_current_booking(ongoing_booking)
+    response_data['current_booking'] = get_current_booking(ongoing_booking, request)
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
 
@@ -606,6 +608,7 @@ def delete_booking(request, *args, **kwargs):
     response_data = {}
     response_data['result'] = 'success'
     response_data['message'] = ''
+    payments_officer_group = request.user.groups.filter(name__in=['Payments Officers']).exists()
     nowtime = datetime.strptime(str(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
     booking = None
     booking_item = request.POST['booking_item']
@@ -616,6 +619,8 @@ def delete_booking(request, *args, **kwargs):
             ms_booking = MooringsiteBooking.objects.get(id=booking_item,booking=booking)
             msb = datetime.strptime(str(ms_booking.from_dt.strftime('%Y-%m-%d %H:%M:%S')), '%Y-%m-%d %H:%M:%S')+timedelta(hours=8)
             if msb > nowtime:
+                  ms_booking.delete()
+            elif payments_officer_group is True:
                   ms_booking.delete()
             else:
                  if msb.date() == nowtime.date():
@@ -837,6 +842,11 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                     for image_serializer in image_serializers:
                         image_serializer.save()
 
+            if "oracle_code" in request.data:
+                  oracle_code = request.data.pop("oracle_code")
+                  if OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() == 0:
+                      raise serializers.ValidationError("Oracle Code does not exist")
+
             if "mooring_group" in request.data:
                 mooring_group = request.data.pop("mooring_group")
                 mg = MooringAreaGroup.objects.all()
@@ -901,7 +911,11 @@ class MooringAreaViewSet(viewsets.ModelViewSet):
                            if instance.id == b.id:
                               i.moorings.remove(b)
 
-                 
+                
+            if "oracle_code" in request.data:
+                  oracle_code = request.data.pop("oracle_code")
+                  if OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() == 0:
+                      raise serializers.ValidationError("Oracle Code does not exist") 
             if "images" in request.data:
                 images_data = request.data.pop("images")
             serializer = self.get_serializer(instance,data=request.data,partial=True)
@@ -1879,7 +1893,7 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
         #for siteid, dates in utils.get_visit_rates(sites_qs, start_date, end_date).items():
         # fetch availability map
 
-        cb = get_current_booking(ongoing_booking)
+        cb = get_current_booking(ongoing_booking, request)
         current_booking = cb['current_booking']
         total_price = cb['total_price']
 
@@ -1907,6 +1921,8 @@ class BaseAvailabilityViewSet2(viewsets.ReadOnlyModelViewSet):
                  # compare old and new booking for changes
                  if hashlib.md5(str(current_booking_obj)).hexdigest() == hashlib.md5(str(old_booking_obj)).hexdigest():
                        booking_changed = False
+                 if utils.check_mooring_admin_access(request) is True:
+                       booking_changed = True
                       
         availability = utils.get_campsite_availability(sites_qs, start_date, end_date, ongoing_booking, request)
 
@@ -2786,7 +2802,8 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
             
 #            recordsTotal = len(data)
 #            recordsTotal = AdmissionsBooking.objects.filter(booking_type__in=[0,1,4],`
-            search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
+            #search = request.GET.get('search[value]') if request.GET.get('search[value]') else None
+            search = request.GET.get('search_keyword') if request.GET.get('search_keyword') else None
             start = request.GET.get('start') if request.GET.get('start') else 0
             length = request.GET.get('length') if request.GET.get('length') else len(data)
             date_from = datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y').date() if request.GET.get('arrival') else None
@@ -2801,7 +2818,7 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
                 #    except:
                 #        pass
                 for row in data:
-                     if row.warningReferenceNo.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.vesselRegNo.lower().find(search.lower()) >= 0 or str(row.id) == search:
+                     if row.warningReferenceNo.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.customer.first_name.lower().find(search.lower()) >= 0 or row.vesselRegNo.lower().find(search.lower()) >= 0 or str(row.id) == search or str(row.customer.first_name.lower()+' '+row.customer.last_name.lower()).find(search.lower()) >= 0 or 'AD'+str(row.id) == search:
                           data_temp.append(row)
                      data = data_temp
                 #data = data.filter(Q(warningReferenceNo__icontains=search) | Q(vesselRegNo__icontains=search) | Q(customer__first_name__icontains=search) | Q(customer__last_name__icontains=search) | Q(id__icontains=search))
@@ -2870,8 +2887,13 @@ class AdmissionsBookingViewSet(viewsets.ModelViewSet):
 #                    inv = AdmissionsBookingInvoice.objects.filter(admissions_booking=ad)
 #                    inv = [adi.invoice_reference,]
 
-
-                r.update({'invoice_ref': inv, 'in_future': ad.in_future, 'part_booking': ad.part_booking})
+                future_or_admin = False
+                if request.user.groups.filter(name__in=['Mooring Admin']).exists():
+                    future_or_admin = True
+                else:
+                    future_or_admin = ad.in_future
+                
+                r.update({'invoice_ref': inv, 'in_future': future_or_admin, 'part_booking': ad.part_booking})
                 if(r['customer']):
                     name = ad.customer.first_name + " " + ad.customer.last_name
                     email = ad.customer.email
@@ -2899,227 +2921,244 @@ class BookingViewSet(viewsets.ModelViewSet):
         from django.db import connection, transaction
         try:
 
-            user_groups = MooringAreaGroup.objects.filter(members__in=[request.user])
-            sql_group = ""
-            for ug in user_groups:
-                 if sql_group == "":
-                     sql_group = "mooring_mooringareagroup_moorings.mooringareagroup_id ="+str(ug.id)
-                 else:
-                     sql_group = sql_group+" OR mooring_mooringareagroup_moorings.mooringareagroup_id ="+str(ug.id)
-
-            search = request.GET.get('search[value]')
-            draw = request.GET.get('draw') if request.GET.get('draw') else 1
+            #search = request.GET.get('search[value]')
+            search = request.GET.get('search_keyword')
+            draw = request.GET.get('draw') if request.GET.get('draw') else None
             start = request.GET.get('start') if request.GET.get('draw') else 1
             length = request.GET.get('length') if request.GET.get('draw') else 'all'
-            arrival = str(datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y')) if request.GET.get('arrival') else ''
-            departure = str(datetime.strptime(request.GET.get('departure'),'%d/%m/%Y')) if request.GET.get('departure') else ''
+            arrival = datetime.strptime(request.GET.get('arrival'),'%d/%m/%Y') if request.GET.get('arrival') else None 
+            departure = datetime.strptime(request.GET.get('departure'),'%d/%m/%Y') if request.GET.get('departure') else None 
             campground = request.GET.get('campground')
-            region = request.GET.get('region')
+            region = request.GET.get('region') if request.GET.get('region') else None
             canceled = request.GET.get('canceled',None)
             refund_status = request.GET.get('refund_status',None)
             if canceled:
                 canceled = True if canceled.lower() in ['yes','true','t','1'] else False
-
             canceled = 't' if canceled else 'f'
 
-            sql = ''
-            http_status = status.HTTP_200_OK
-            sqlSelect = 'select distinct mooring_booking.id as id,mooring_booking.created,mooring_booking.customer_id, mooring_mooringarea.name as campground_name,mooring_region.name as campground_region,mooring_booking.legacy_name,\
-                mooring_booking.legacy_id,mooring_mooringarea.site_type as campground_site_type,\
-                mooring_booking.arrival as arrival, mooring_booking.departure as departure, mooring_mooringarea.id as campground_id,coalesce(accounts_emailuser.first_name || \' \' || accounts_emailuser.last_name) as full_name'
-            sqlCount = 'select count(distinct mooring_booking.id)'
 
-            sqlFrom = ' from mooring_booking\
-                join mooring_mooringarea on mooring_mooringarea.id = mooring_booking.mooringarea_id\
-                join mooring_marinepark on mooring_mooringarea.park_id = mooring_marinepark.id\
-                join mooring_district on mooring_marinepark.district_id = mooring_district.id\
-                full outer join accounts_emailuser on mooring_booking.customer_id = accounts_emailuser.id\
-                join mooring_region on mooring_district.region_id = mooring_region.id\
-                left outer join mooring_mooringareagroup_moorings cg on cg.mooringarea_id = mooring_booking.mooringarea_id\
-                full outer join mooring_mooringareagroup_members cm on cm.mooringareagroup_id = cg.mooringareagroup_id\
-                join mooring_bookingvehiclerego rg on rg.booking_id = mooring_booking.id'
-
-            #sql = sqlSelect + sqlFrom + " where " if arrival or campground or region else sqlSelect + sqlFrom
-            #sqlCount = sqlCount + sqlFrom + " where " if arrival or campground or region else sqlCount + sqlFrom
-
-            sql = sqlSelect + sqlFrom + " where "
-            sqlCount = sqlCount + sqlFrom + " where "
-            sqlParams = {}
-
-            # Filter the camgrounds that the current user is allowed to view
-            sqlFilterUser = ' cm.emailuser_id = %(user)s'
-            sql += sqlFilterUser
-            sqlCount += sqlFilterUser
-            sqlParams['user'] = request.user.id
-
-            if campground :
-                sqlMooringArea = ' mooring_mooringarea.id = %(campground)s'
-                sql = sql + " and "+ sqlMooringArea
-                sqlCount = sqlCount + " and " +sqlMooringArea
-                sqlParams['campground'] = campground
-            if region:
-                sqlRegion = " mooring_region.id = %(region)s"
-                sql = sql+" and "+ sqlRegion
-                sqlCount = sqlCount +" and "+ sqlRegion
-                sqlParams['region'] = region
-            if arrival:
-                sqlArrival= ' mooring_booking.departure > %(arrival)s'
-                sqlCount = sqlCount + " and "+ sqlArrival
-                sql = sql + " and "+ sqlArrival
-                sqlParams['arrival'] = arrival
-            if departure: 
-                sqlDeparture = ' mooring_booking.arrival <= %(departure)s'
-                sqlCount =  sqlCount + ' and ' + sqlDeparture
-                sql = sql + ' and ' + sqlDeparture
-                sqlParams['departure'] = departure
-            # Search for cancelled bookings
+            moorings_user_groups = MooringAreaGroup.objects.filter(members__in=[request.user]).values('id','moorings')
+            filter_query = Q()
             if canceled == 't':
-                sql += ' and mooring_booking.booking_type = 4 '
-                sqlCount += ' and mooring_booking.booking_type = 4 '
+                filter_query &= Q(booking_type=4)
             else:
-                sql += ' and (mooring_booking.booking_type =0 or mooring_booking.booking_type =1 or mooring_booking.booking_type =2)'
-                sqlCount += ' and (mooring_booking.booking_type =0 or mooring_booking.booking_type =1 or mooring_booking.booking_type =2) '
+                filter_query &= Q(booking_type=1) 
+            if departure:
+                 filter_query &= Q(arrival__lte=departure)
+            if arrival:
+                 filter_query &= Q(departure__gt=arrival)
+
+            booking_query = Booking.objects.filter(filter_query).order_by('-id')
+            recordsTotal = Booking.objects.filter(Q(Q(booking_type=1) | Q(booking_type=4))).count()
+            recordsFiltered = booking_query.count()
+            # build predata
+            booking_items = {}
+            booking_item_query = Q()
+            mooring_name_list = {}
+            for booking in booking_query: 
+                  booking_item_query |= Q(booking_id=booking.id)
+                  booking_items[booking.id] = []
 
 
-
-      #         sql += ' and mooring_booking.is_canceled = %(canceled)s'
-#               sqlCount += ' and mooring_booking.is_canceled = %(canceled)s'
-            sqlParams['canceled'] = canceled
-            # Remove temporary bookings
-#            sql += ' and mooring_booking.booking_type <> 3'
-#            sqlCount += ' and mooring_booking.booking_type <> 3'
-            if search:
-                sqlsearch = ' lower(mooring_mooringarea.name) LIKE lower(%(wildSearch)s)\
-                or lower(mooring_region.name) LIKE lower(%(wildSearch)s)\
-                or lower(mooring_booking.details->>\'first_name\') LIKE lower(%(wildSearch)s)\
-                or lower(mooring_booking.details->>\'last_name\') LIKE lower(%(wildSearch)s)\
-                or lower(mooring_booking.legacy_name) LIKE lower(%(wildSearch)s)\
-                or lower(mooring_booking.legacy_name) LIKE lower(%(wildSearch)s)\
-                or lower(rg.rego) LIKE lower(%(wildSearch)s)'
-                sqlParams['wildSearch'] = '%{}%'.format(search)
-                if search.isdigit:
-                    sqlsearch += ' or CAST (mooring_booking.id as TEXT) like %(upperSearch)s'
-                    sqlParams['upperSearch'] = '{}%'.format(search)
-
-                sql += " and ( "+ sqlsearch +" )"
-                sqlCount +=  " and  ( "+ sqlsearch +" )"
-
-            sql += ' ORDER BY id DESC'
-
-            if length != 'all':
-                sql = sql + ' limit %(length)s offset %(start)s'
-                sqlParams['length'] = length
-                sqlParams['start'] = start
-
-            sql += ';'
-            #print ("SQL")
-            #print(sql)
-
-            cursor = connection.cursor()
-            #cursor.execute("Select count(*) from mooring_booking ")
-            cursor.execute("select count(distinct(mooring_booking.id))  from mooring_booking left join mooring_mooringsitebooking on mooring_booking.id = mooring_mooringsitebooking.booking_id left join mooring_mooringsite on  mooring_mooringsitebooking.campsite_id = mooring_mooringsite.id left join mooring_mooringareagroup_moorings on mooring_mooringsite.mooringarea_id = mooring_mooringareagroup_moorings.mooringarea_id where ("+sql_group+") and (mooring_booking.booking_type =0 or mooring_booking.booking_type =1 or mooring_booking.booking_type =2 or mooring_booking.booking_type =4)")
-            recordsTotal = cursor.fetchone()[0]
-            cursor.execute(sqlCount, sqlParams)
-            recordsFiltered = cursor.fetchone()[0]
-           
-            cursor.execute(sql, sqlParams)
-            columns = [col[0] for col in cursor.description]
-            data = [
-                dict(zip(columns, row))
-                for row in cursor.fetchall()
-            ]
-
-
-            bookings_qs = Booking.objects.filter(id__in=[b['id'] for b in data]).prefetch_related('mooringarea', 'campsites', 'campsites__campsite', 'customer', 'regos', 'history', 'invoices', 'canceled_by')
-            
-            booking_map = {b.id: b for b in bookings_qs}
-            clean_data = []
-            for bk in data:
-                cg = None
-                booking = booking_map[bk['id']]
-
-                cg = booking.mooringarea
-                bk['editable'] = booking.editable
-                if booking.booking_type == 4:
-                    bk['status'] = 'Cancelled'
-                else:
-                    bk['status'] = booking.status
-
-                bk['booking_type'] = booking.booking_type
-                bk['has_history'] = booking.has_history
-                bk['cost_total'] = booking.cost_total
-                bk['amount_paid'] = booking.amount_paid
-                bk['invoice_status'] = booking.invoice_status
-                bk['vehicle_payment_status'] = booking.vehicle_payment_status
-                bk['refund_status'] = booking.refund_status
-                bk['is_canceled'] = 'Yes' if booking.is_canceled else 'No'
-                bk['cancelation_reason'] = booking.cancellation_reason
-                bk['canceled_by'] = booking.canceled_by.get_full_name() if booking.canceled_by else ''
-                bk['cancelation_time'] = booking.cancelation_time if booking.cancelation_time else ''
-                bk['paid'] = booking.paid
-                bk['invoices'] = [i.invoice_reference for i in booking.invoices.all()]
-                bk['active_invoices'] = [ i.invoice_reference for i in booking.invoices.all() if i.active]
-                bk['guests'] = booking.guests
-                bk['campsite_names'] = booking.campsite_name_list
-                bk['regos'] = [{r.type: r.rego} for r in booking.regos.all()]
-                bk['firstname'] = booking.details.get('first_name','')
-                bk['lastname'] = booking.details.get('last_name','')
-                bk['admissions'] = { 'id' :booking.admission_payment.id, 'amount': booking.admission_payment.totalCost } if booking.admission_payment else None
-
-                bk['booking_phone_number'] = ''
-                if "phone" in booking.details: 
-                    bk['booking_phone_number'] = booking.details['phone'] 
+            if len(booking_items) > 0:
+                booking_items_object = MooringsiteBooking.objects.filter(booking_item_query).values('campsite__mooringarea__name','campsite__mooringarea__id','campsite_id','id','to_dt','from_dt','amount','booking_type','booking_period_option','booking_id','booking','date','campsite__mooringarea__park__district__region__name','campsite__mooringarea__park__district__region__id','campsite__name')
                 
-                msb = MooringsiteBooking.objects.filter(booking=booking.id)
+                for bi in booking_items_object: 
+                      booking_items[bi['booking_id']].append({'id':bi['id'], 'campsite_id': bi['campsite_id'] , 'date' : bi['date'], 'from_dt': bi['from_dt'], 'to_dt': bi['to_dt'], 'amount': bi['amount'], 'booking_type' : bi['booking_type'], 'booking_period_option' :bi['booking_period_option'], 'campsite_name': bi['campsite__name'], 'region_name': bi['campsite__mooringarea__park__district__region__name'],'mooring_name': bi['campsite__mooringarea__name'], 'region_id': bi['campsite__mooringarea__park__district__region__id'], 'mooringarea_id': bi['campsite__mooringarea__id'] })
+                       
+            clean_data = []
+            booking_data = []
+            recordFilteredCount = 0
+            rowcount = 0
+            rowcountend = 0
+            if length != 'all': 
+                rowcountend = int(start) + int(length)
+            for booking in booking_query:
                 msb_list = []
                 in_mg = False
-                for book in msb:
-                    mooring_area_groups =  MooringAreaGroup.objects.filter(moorings__in=[book.campsite.mooringarea])
-                    for ug in user_groups:
-                        for mag in mooring_area_groups:
-                            if ug.id == mag.id:
-                                 in_mg = True
-                    msb_list.append([book.campsite.name, book.campsite.mooringarea.park.district.region.name, book.from_dt, book.to_dt])
-                msb_list.sort(key=lambda item: item[2])
-                bk['mooringsite_bookings'] = msb_list
-                if not booking.paid:
-                    bk['payment_callback_url'] = '/api/booking/{}/payment_callback.json'.format(booking.id)
+                skip_row = False
+                if region or campground:
+                    skip_row = True
+                else:
+                    skip_row = False
+
+                for bitem in booking_items[booking.id]:
+
+                   msb_list.append([bitem['mooring_name'], bitem['region_name'], bitem['from_dt'], bitem['to_dt']])
+                   if region:
+                       if int(region) == int(bitem['region_id']):
+                          skip_row = False
+                   if campground:
+                       if region:
+                          if skip_row is False:
+                            if int(campground) == int(bitem['mooringarea_id']):
+                                skip_row = False
+                            else:
+                                skip_row = True
+                       else:
+                            if int(campground) == int(bitem['mooringarea_id']):
+                                skip_row = False 
+                            pass
+
+                   # If user not in mooring group than skip
+                   for mug in moorings_user_groups:
+                        if mug['moorings'] == None:
+                            pass
+                        else:
+                            if int(mug['moorings']) == int(bitem['mooringarea_id']):
+                                in_mg = True 
+
+
+                # If user not in mooring group than skip
+                if in_mg is False:
+                   continue
+
+                # Search Keyword in data results
+                if search:
+                     if skip_row is False:
+                          string_found = False
+                          if search == str(booking.id):
+                               string_found = True
+                          if search == 'PS'+str(booking.id):
+                               string_found = True
+                          if booking.customer:
+                                customer_email = booking.customer.email if booking.customer and booking.customer.email else ""
+                                if search.lower() in customer_email.lower():
+                                     string_found = True
+ 
+                          customer_name = booking.details.get('first_name','')+' '+booking.details.get('last_name','')
+                          if search.lower() in customer_name.lower():
+                                string_found = True
+                          phone_number = booking.details.get('phone','')
+                          if search.lower() in phone_number.lower():
+                                 string_found = True
+
+                          for r in booking.regos.all():
+                             if r.type == 'vessel':
+                                 if search.lower() in r.rego.lower():
+                                     string_found = True
+ 
+                          for m_items in msb_list:
+                              if search.lower() in m_items[0].lower():
+                                      string_found = True
+                              if search.lower() in m_items[1].lower():
+                                      string_found = True
+
+                          if string_found is True:
+                               pass
+                          else:
+                               skip_row = True
+
                 
-                if booking.customer:
-                    bk['email'] = booking.customer.email if booking.customer and booking.customer.email else ""
-                    if booking.customer.phone_number:
-                        bk['phone'] = booking.customer.phone_number
-                    elif booking.customer.mobile_number:
-                        bk['phone'] = booking.customer.mobile_number
+                if skip_row is True:
+                    continue
+                recordFilteredCount = recordFilteredCount + 1
+
+                show_row = False
+                if length == 'all':
+                    show_row = True
+                else:
+                    if rowcount >= int(start):
+                        show_row = True
+                    if rowcount > rowcountend:
+                        show_row = False
+ 
+                if show_row is True:
+                    bk_list={}
+
+                    booking_editable = False
+                    if request.user.is_staff is True:
+                        booking_editable = True
+                    if request.user.is_superuser is True:
+                        booking_editable = True
+
+
+                    bk_list['editable'] = booking_editable
+                    bk_list['id'] = booking.id
+
+                    if booking.booking_type == 4:
+                        bk_list['status'] = 'Cancelled'
                     else:
-                        bk['phone'] = '' 
-                    if booking.is_canceled:
+                        bk_list['status'] = booking.status
+                    booking_invoices= booking.invoices.all()
+                    bk_list['booking_type'] = booking.booking_type
+                    bk_list['has_history'] = 0 #booking.has_history
+                    bk_list['cost_total'] = booking.cost_total
+                    bk_list['amount_paid'] = booking.amount_paid
+                    bk_list['invoice_status'] = booking.invoice_status
+                    bk_list['vehicle_payment_status'] = booking.vehicle_payment_status
+                    bk_list['refund_status'] = booking.refund_status
+                    bk_list['is_canceled'] = 'Yes' if booking.is_canceled else 'No'
+                    bk_list['cancelation_reason'] = booking.cancellation_reason
+                    bk_list['canceled_by'] = booking.canceled_by.get_full_name() if booking.canceled_by else ''
+                    bk_list['cancelation_time'] = booking.cancelation_time if booking.cancelation_time else ''
+                    bk_list['paid'] = booking.paid
+                    bk_list['invoices'] = [i.invoice_reference for i in booking_invoices]
+                    bk_list['active_invoices'] = [ i.invoice_reference for i in booking_invoices if i.active]
+                    bk_list['guests'] = booking.guests
+                    bk_list['admissions'] = { 'id' :booking.admission_payment.id, 'amount': booking.admission_payment.totalCost } if booking.admission_payment else None
+
+                    vessel_beam = 0
+                    vessel_weight = 0
+                    vessel_size = 0
+                    vessel_draft = 0
+
+                    if 'vessel_beam' in booking.details:
+                         vessel_beam = booking.details['vessel_beam']
+                    if 'vessel_weight' in booking.details:
+                         vessel_weight = booking.details['vessel_weight']
+                    if 'vessel_size' in booking.details:
+                         vessel_size = booking.details['vessel_size']
+                    if 'vessel_draft' in booking.details:
+                         vessel_draft = booking.details['vessel_draft']
+
+
+
+ 
+                    bk_list['vessel_details'] = { 'vessel_beam': vessel_beam, 'vessel_weight': vessel_weight, 'vessel_size': vessel_size, 'vessel_draft': vessel_draft, } 
+
+                    #bk_list['campsite_names'] = booking.campsite_name_list
+                    bk_list['regos'] = [{'vessel':''}] 
+                    for r in booking.regos.all():
+                          if r.type == 'vessel':
+                             bk_list['regos']=  [{r.type: r.rego}]
+                    bk_list['booking_phone_number'] = ''
+                    if booking.details: 
+                         bk_list['firstname'] = booking.details.get('first_name','')
+                         bk_list['lastname'] = booking.details.get('last_name','')
+                         if "phone" in booking.details:
+                             bk_list['booking_phone_number'] = booking.details['phone']
+
+                    if booking.customer:
+                        bk_list['email'] = booking.customer.email if booking.customer and booking.customer.email else ""
+                        if booking.customer.phone_number:
+                           bk_list['phone'] = booking.customer.phone_number
+                        elif booking.customer.mobile_number:
+                            bk_list['phone'] = booking.customer.mobile_number
+                        else:
+                            bk_list['phone'] = ''
+                        if booking.is_canceled:
+                            bk_list['campground_site_type'] = ""
+                        else:
+                            first_campsite = booking.first_campsite
+                            bk_list['campground_site_type'] = first_campsite.type if first_campsite else ""
+                            if booking.mooringarea.site_type != 2:
+                                bk_list['campground_site_type'] = '{}{}'.format('{} - '.format(first_campsite.name if first_campsite else ""),'({})'.format(bk_list['campground_site_type'] if bk_list['campground_site_type'] else ""))
+                    else:
                         bk['campground_site_type'] = ""
-                    else:
-                        first_campsite = booking.first_campsite
-                        bk['campground_site_type'] = first_campsite.type if first_campsite else ""
-                        if booking.mooringarea.site_type != 2:
-                            bk['campground_site_type'] = '{}{}'.format('{} - '.format(first_campsite.name if first_campsite else ""),'({})'.format(bk['campground_site_type'] if bk['campground_site_type'] else ""))
-                else:
-                    bk['campground_site_type'] = ""
-                if refund_status and canceled == 't':
-                    refund_statuses = ['All','Partially Refunded','Not Refunded','Refunded']
-                    if refund_status in refund_statuses:
-                        if refund_status == 'All':
-                            if in_mg is True:
-                                clean_data.append(bk)
-                        else:       
-                            if refund_status == booking.refund_status:
-                                if in_mg is True:
-                                    clean_data.append(bk)
-                else:
-                    if in_mg is True:
-                        clean_data.append(bk)
-            
+
+
+                    #msb_list.sort(key=lambda item: item[2])
+                    bk_list['mooringsite_bookings'] = msb_list
+
+                    booking_data.append(bk_list)
+                rowcount = rowcount + 1
+            recordsFiltered = recordFilteredCount 
+
             return Response(OrderedDict([
                 ('recordsTotal', recordsTotal),
                 ('recordsFiltered',recordsFiltered),
-                ('results',clean_data)
+                ('results',booking_data)
             ]),status=status.HTTP_200_OK)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -4279,7 +4318,7 @@ class AdmissionsKeyFromURLView(views.APIView):
 
 
 
-def get_current_booking(ongoing_booking): 
+def get_current_booking(ongoing_booking, request): 
      #ongoing_booking = Booking.objects.get(pk=request.session['ps_booking']) if 'ps_booking' in request.session else None
      timer = None
      expiry = None
@@ -4287,8 +4326,9 @@ def get_current_booking(ongoing_booking):
          #expiry_time = ongoing_booking.expiry_time
          timer = (ongoing_booking.expiry_time-timezone.now()).seconds if ongoing_booking else -1
          expiry = ongoing_booking.expiry_time.isoformat() if ongoing_booking else ''
+     payments_officer_group = request.user.groups.filter(name__in=['Payments Officers']).exists()
 
-     ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking)
+     ms_booking = MooringsiteBooking.objects.filter(booking=ongoing_booking).order_by('from_dt')
      cb = {'current_booking':[], 'total_price': '0.00'}
      current_booking = []
 #     total_price = Decimal('0.00')
@@ -4315,7 +4355,9 @@ def get_current_booking(ongoing_booking):
                  else:
                      row['past_booking'] = True              
               else:
-                  row['past_booking'] = True 
+                  row['past_booking'] = True
+              if payments_officer_group is True: 
+                  row['past_booking'] = False
 #           row['item'] = ms.campsite.name
          total_price = str(Decimal(total_price) +Decimal(ms.amount))
          current_booking.append(row)
@@ -4328,3 +4370,134 @@ def get_current_booking(ongoing_booking):
      cb['timer'] = timer
 
      return cb
+
+
+class CheckOracleCodeView(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, format='json'):
+        try:
+           oracle_code = request.GET.get('oracle_code','')
+           if OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() > 0:
+                 json_obj = {'found': True, 'code': oracle_code}
+           else:
+                 json_obj = {'found': False, 'code': oracle_code}
+           return Response(json_obj)
+        except Exception as e:
+            print(traceback.print_exc())
+            raise
+
+#from rest_framework.decorators import api_view
+class RefundOracleView(views.APIView):
+    renderer_classes = [JSONRenderer,]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self, request, *args, **kwargs):
+
+    #def get(self, request, format='json'):
+        
+        try:
+           if request.user.is_superuser or request.user.groups.filter(name__in=['Payments Officers']).exists():
+ 
+                money_from = request.POST.get('money_from',[])
+                money_to = request.POST.get('money_to',[])
+                bpoint_trans_split= request.POST.get('bpoint_trans_split',[])
+                refund_method = request.POST.get('refund_method', None)
+                booking_id = request.POST.get('booking_id',None)
+                newest_booking_id = request.POST.get('newest_booking_id',None)
+                booking = Booking.objects.get(pk=newest_booking_id)
+                money_from_json = json.loads(money_from)
+                money_to_json = json.loads(money_to)
+                bpoint_trans_split_json = json.loads(bpoint_trans_split)
+                failed_refund = False
+     
+                json_obj = {'found': False, 'code': money_from, 'money_to': money_to, 'failed_refund': failed_refund}
+    
+                lines = []
+                if int(refund_method) == 1:
+                    lines = []
+                    for mf in money_from_json:
+                        if Decimal(mf['line-amount']) > 0: 
+                            money_from_total = (Decimal(mf['line-amount']) - Decimal(mf['line-amount']) - Decimal(mf['line-amount']))
+                            lines.append({'ledger_description':str(mf['line-text']),"quantity":1,"price_incl_tax":money_from_total,"oracle_code":str(mf['oracle-code']), 'line_status': 3})
+
+                    for bp_txn in bpoint_trans_split_json:
+                        bpoint_id = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
+                        info = {'amount': Decimal('{:.2f}'.format(float(bp_txn['line-amount']))), 'details' : 'Refund via system'}
+                        if info['amount'] > 0:
+                             lines.append({'ledger_description':str("Temp fund transfer "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":Decimal('{:.2f}'.format(float(bp_txn['line-amount']))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
+
+
+                    order = utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                    new_invoice = Invoice.objects.get(order_number=order.number)
+                    update_payments(new_invoice.reference) 
+                    #order = utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                    #new_order = Order.objects.get(basket=basket)
+                    #new_invoice = Invoice.objects.get(order_number=order.number)
+                
+                    for bp_txn in bpoint_trans_split_json:
+                        bpoint_id = None
+                        try:
+                             bpoint_id = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
+                             info = {'amount': Decimal('{:.2f}'.format(float(bp_txn['line-amount']))), 'details' : 'Refund via system'}
+                        except Exception as e:
+                             print (e)
+                             info = {'amount': Decimal('{:.2f}'.format('0.00')), 'details' : 'Refund via system'}
+
+                        refund = None
+                        lines = []
+                        if info['amount'] > 0:
+                            lines = []
+                            #lines.append({'ledger_description':str("Temp fund transfer "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":Decimal('{:.2f}'.format(float(bp_txn['line-amount']))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1}) 
+
+
+                            try:
+
+                                bpoint_money_to = (Decimal('{:.2f}'.format(float(bp_txn['line-amount']))) - Decimal('{:.2f}'.format(float(bp_txn['line-amount']))) - Decimal('{:.2f}'.format(float(bp_txn['line-amount']))))
+                                lines.append({'ledger_description':str("Payment Gateway Refund to "+bp_txn['txn_number']),"quantity":1,"price_incl_tax": bpoint_money_to,"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 3})
+                                bpoint = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
+                                refund = bpoint.refund(info,request.user)
+                            except Exception as e:
+                                print (e)
+                                failed_refund = True
+                                bpoint_failed_amount = Decimal(bp_txn['line-amount'])
+                                lines = []
+                                lines.append({'ledger_description':str("Refund failed for txn "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":bpoint_failed_amount,"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
+                            order = utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                            new_invoice = Invoice.objects.get(order_number=order.number)
+
+                            if refund:
+                               bpoint_refund = BpointTransaction.objects.get(txn_number=refund.txn_number)
+                               bpoint_refund.crn1 = new_invoice.reference
+                               bpoint_refund.save()
+                               new_invoice.settlement_date = None
+                               new_invoice.save()
+                               update_payments(new_invoice.reference)
+     
+                else:
+                    lines = []
+                    for mf in money_from_json:
+                        if Decimal(mf['line-amount']) > 0:
+                            money_from_total = (Decimal(mf['line-amount']) - Decimal(mf['line-amount']) - Decimal(mf['line-amount']))
+                            lines.append({'ledger_description':str(mf['line-text']),"quantity":1,"price_incl_tax":money_from_total,"oracle_code":str(mf['oracle-code']), 'line_status': 3})
+    
+
+                    for mt in money_to_json:
+                        lines.append({'ledger_description':mt['line-text'],"quantity":1,"price_incl_tax":mt['line-amount'],"oracle_code":mt['oracle-code'], 'line_status': 1})
+                    order = utils.allocate_refund_to_invoice(request, booking, lines, invoice_text=None, internal=False, order_total='0.00',user=booking.customer)
+                    new_invoice = Invoice.objects.get(order_number=order.number)
+                    update_payments(new_invoice.reference)
+
+                json_obj['failed_refund'] = failed_refund
+            
+                return Response(json_obj)
+           else:
+                raise serializers.ValidationError('Permission Denied.') 
+               
+        except Exception as e:
+           print(traceback.print_exc())
+           raise
+
+
+

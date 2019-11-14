@@ -1,0 +1,22 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your Application {{ proposal.lodgement_number }} has been reviewed and requires an amendment before further assessment.
+
+    {% if reason %}
+        <p>
+            <span>Amendment Reason: {{ reason }}</span>
+        </p>
+    {% endif %}
+
+    {% if amendment_request_text %}
+        <p><span> Amendment details: <br> {{ amendment_request_text }}</span></p>
+    {% endif %}
+
+    Please <a href="{{url}}"> login</a> to your account to complete the application.
+    
+    You will receive a notification email if there is any incomplete information or documents missing from the application.
+    
+
+
+{%  endblock %}

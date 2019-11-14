@@ -1,0 +1,12 @@
+{% extends 'commercialoperator/emails/base_email.html' %}
+
+{% block content %}
+ 
+        <p>Invoices for the following monthly/BPAY bookings are overdue:</p>
+        <br>
+        {% for booking in bookings %}
+            Booking: {{booking.admission_number}}, Proposal: {{booking.proposal.lodgement_number}}, Organisation: {{booking.proposal.applicant}}, Invoice: {{booking.invoice.reference}}, Payment due date: {{booking.invoice.settlement_date}} <br>
+        {% endfor %}
+        <br>
+
+{% endblock %}

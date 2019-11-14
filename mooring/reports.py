@@ -6,7 +6,7 @@ from wsgiref.util import FileWrapper
 from django.utils import timezone
 from django.core.mail import EmailMessage 
 from django.conf import settings
-from mooring.models import Booking, BookingInvoice, OutstandingBookingRecipient, BookingHistory, AdmissionsBooking
+from mooring.models import Booking, BookingInvoice, OutstandingBookingRecipient, BookingHistory, AdmissionsBooking, AdmissionsBookingInvoice
 from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction,Invoice, TrackRefund
 
 
@@ -83,13 +83,24 @@ def booking_refunds(start,end):
                                 writer.writerow([booking.confirmation_number,b_name,'Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,reason,invoice.reference])
                             else:
                                 writer.writerow(['','','Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,invoice.reference])
+
         for b in bpoint:
             booking, invoice = None, None
+            admission_booking = None
             try:
                 invoice = Invoice.objects.get(reference=b.crn1)
                 if invoice.system == '0516':
                     try:
-                        booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
+                        if BookingInvoice.objects.filter(invoice_reference=invoice.reference).count() > 0:
+                            booking_row = BookingInvoice.objects.filter(invoice_reference=invoice.reference)[0]
+                            if booking_row.booking: 
+                                 booking = booking_row.booking
+                        else:
+                            if AdmissionsBookingInvoice.objects.filter(invoice_reference=invoice.reference).count() > 0:
+                                 booking_row = AdmissionsBookingInvoice.objects.filter(invoice_reference=invoice.reference)[0]
+                                 if booking_row.admissions_booking:
+                                     admission_booking = booking_row.admissions_booking
+                              
                     except BookingInvoice.DoesNotExist:
                         pass
                         #raise ValidationError('Couldn\'t find a booking matched to invoice reference {}'.format(e.invoice.reference))
@@ -109,6 +120,9 @@ def booking_refunds(start,end):
                                 if booking:
                                     b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
                                     writer.writerow([booking.confirmation_number,b_name,'Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,reason,invoice.reference])
+                                elif admission_booking:
+                                    b_name = '{}' .format(admission_booking.customer)
+                                    writer.writerow([admission_booking.confirmation_number,b_name,'Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,reason,invoice.reference])
                                 else:
                                     writer.writerow(['','','Card',v,line.oracle_code,b.created.strftime('%d/%m/%Y'),name,invoice.reference])
             except Invoice.DoesNotExist:
@@ -123,8 +137,8 @@ def booking_refunds(start,end):
 def booking_bpoint_settlement_report(_date):
     try:
         bpoint, cash = [], []
-        bpoint.extend([x for x in BpointTransaction.objects.filter(created__date=_date,response_code=0,crn1__startswith='0019').exclude(crn1__endswith='_test')])
-        cash = CashTransaction.objects.filter(created__date=_date,invoice__reference__startswith='0019').exclude(type__in=['move_out','move_in'])
+        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date=_date,response_code=0,crn1__startswith='0516').exclude(crn1__endswith='_test')])
+        cash = CashTransaction.objects.filter(created__date=_date,invoice__reference__startswith='0516').exclude(type__in=['move_out','move_in'])
 
         strIO = StringIO()
         fieldnames = ['Payment Date','Settlement Date','Confirmation Number','Name','Type','Amount','Invoice']
@@ -182,7 +196,7 @@ def bookings_report(_date):
         history_bookings = BookingHistory.objects.filter(created__date=_date).exclude(booking__booking_type=3)
 
         strIO = StringIO()
-        fieldnames = ['Date','Confirmation Number','Name','Amount','Override Price','Override Reason','Override Details','Invoice','Booking Type','Created By']
+        fieldnames = ['Date','Confirmation Number','Name','Invoice Total','Override Price','Override Reason','Override Details','Invoice','Booking Type','Created By']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
 

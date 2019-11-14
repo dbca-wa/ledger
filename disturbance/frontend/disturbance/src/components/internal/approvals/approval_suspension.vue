@@ -158,7 +158,7 @@ export default {
                         vm.close();
                         swal(
                              'Suspend',
-                             'An email has been sent to applicant about suspension of this approval',
+                             'An email has been sent to proponent about suspension of this approval',
                              'success'
                         );
                         vm.$emit('refreshFromResponse',response);
