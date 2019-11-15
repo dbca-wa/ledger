@@ -172,7 +172,7 @@ class Organisation(models.Model):
                 except Organisation.DoesNotExist:
                     exists = False
             if exists:
-                return {'exists': exists, 'id': org.id,'first_five':org.first_five}
+                return {'exists': exists, 'id': org.id,'first_five':org.first_five_admin_names}
             return {'exists': exists }
             
         except:
@@ -441,6 +441,13 @@ class Organisation(models.Model):
     @property
     def first_five(self):
         return ','.join([user.get_full_name() for user in self.delegates.all()[:5]])
+
+    @property
+    def first_five_admin_names(self):
+        qs= OrganisationContact.objects.filter(user_role='organisation_admin', is_admin=True, user_status='active', organisation=self)
+        if qs:
+            return ','.join(['{} {}'.format(user.first_name, user.last_name) for user in qs[:5]])
+        return self.first_five
 
 @python_2_unicode_compatible
 class OrganisationContact(models.Model):
