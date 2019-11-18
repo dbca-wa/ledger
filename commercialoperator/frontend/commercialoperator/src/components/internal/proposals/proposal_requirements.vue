@@ -216,6 +216,7 @@ export default {
     },
     methods:{
         addRequirement(){
+            this.$refs.requirement_detail.requirement.referral_group=this.referral_group
             this.$refs.requirement_detail.isModalOpen = true;
         },
         removeRequirement(_id){
