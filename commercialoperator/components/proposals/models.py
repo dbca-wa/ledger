@@ -1860,6 +1860,16 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 proposal.submitter = request.user
                 proposal.previous_application = self
                 proposal.proposed_issuance_approval= None
+
+                # require user to re-enter mandatory info in 'Other Details' tab, when renewing
+                proposal.other_details.insurance_expiry = None
+                proposal.other_details.preferred_licence_period = None
+                ProposalAccreditation.objects.filter(proposal_other_details__proposal=proposal).delete()
+                proposal.documents.filter(input_name__in=['deed_poll','currency_certificate']).delete()
+
+                # require  user to pay Application and Licence Fee again
+                proposal.fee_invoice_reference = None
+
                 try:
                     ProposalOtherDetails.objects.get(proposal=proposal)
                 except ProposalOtherDetails.DoesNotExist:
