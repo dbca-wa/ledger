@@ -294,7 +294,12 @@ class OrgUserAcceptSerializer(serializers.Serializer):
         '''
         Check for either mobile number or phone number
         '''
-        if not (data['mobile_number'] or data['phone_number']):
-            raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+        if data['email']:
+            domain= data['email'].split('@')[1]
+        if domain in settings.DEPT_DOMAINS:
+            return data
+        else:
+            if not (data['mobile_number'] or data['phone_number']):
+                raise serializers.ValidationError("User must have an associated phone number or mobile number.")
         return data
     

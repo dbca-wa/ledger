@@ -122,8 +122,8 @@ def add_admin_user():
             first_delegate=org.delegates.first()
             try:
                 all_admin_user= OrganisationContact.objects.filter(organisation = org,user_role='organisation_admin', is_admin=True, user_status='active')
-                print all_admin_user.count()
-                if all_admin_user.count<1:
+                #print all_admin_user.count()
+                if all_admin_user.count()<1:
                     org_contact = OrganisationContact.objects.get(organisation = org,email = first_delegate.email)
                     if org_contact.user_status=='draft':
                         org_contact.user_status='active'
@@ -133,3 +133,18 @@ def add_admin_user():
                     print org_contact
             except OrganisationContact.DoesNotExist:
                 pass    
+
+#This script is to make Walter as admin user for DBCA in production:
+def make_walter_admin_user():
+    from disturbance.components.organisations.models import Organisation
+    from disturbance.components.organisations.models import OrganisationContact
+    try:
+        contact_email='walter.genuit@dbca.wa.gov.au'
+        org_contact=OrganisationContact.objects.get(organisation_id=2, email=contact_email)
+        print org_contact
+        if org_contact:
+            org_contact.user_role ='organisation_admin'
+            org_contact.is_admin = True
+            org_contact.save()
+    except:
+        pass
