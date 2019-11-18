@@ -34,7 +34,7 @@ class Command(BaseCommand):
         # 2 month licences cannot be renewed
         qs=Approval.objects.filter(**renewal_conditions).exclude(current_proposal__other_details__preferred_licence_period='2_months')
         print qs
-        for a in Approval.objects.filter(**renewal_conditions):
+        for a in qs:
             if a.status == 'current' or a.status == 'suspended':
                 try:
                     a.generate_renewal_doc()
