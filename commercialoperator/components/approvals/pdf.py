@@ -714,8 +714,11 @@ def _create_renewal(renewal_buffer, approval, proposal):
     #                            , styles['Left']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    delegation.append(Paragraph('As a reminder, the Commercial Operator Handbook (2019) outlines the conditions of your licence.'
+    #delegation.append(Paragraph('As a reminder, the Commercial Operator Handbook (2019) outlines the conditions of your licence.'
+    #    'The handbook is available online at the {} website:'.format(settings.DEP_NAME), styles['Left']))
+    delegation.append(Paragraph('As a reminder, the Commercial Operator Handbook (2019) outlines the conditions of your licence. '
         'The handbook is available online at the {} website:'.format(settings.DEP_NAME), styles['Left']))
+
     #delegation.append(Paragraph('The handbook is available online at the {} website: .'.format(settings.DEP_NAME), styles['Left']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph('{}'.format(settings.COLS_HANDBOOK_URL), styles['WebAddress']))
