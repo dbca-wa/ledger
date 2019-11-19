@@ -918,11 +918,14 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
         selected_parks_activities=[]
         for p in self.parks.all():
             park_activities=[]
+            park_access_types=[]
             #parks.append(p.park.name)
             if p.park.park_type=='land':
+                for a in p.access_types.all():
+                    park_access_types.append(a.access_type.name)
                 for a in p.activities.all():
                     park_activities.append(a.activity_name)
-                selected_parks_activities.append({'park': p.park.name, 'activities': park_activities})
+                selected_parks_activities.append({'park': p.park.name, 'activities': park_activities, 'access_types': park_access_types })
             if p.park.park_type=='marine':
                 for z in p.zones.all():
                     zone_activities = []
@@ -939,17 +942,17 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 selected_parks_activities.append({'park': '{} - {}'.format(t.trail.name, s.section.name), 'activities': trail_activities})
         return selected_parks_activities
 
-    @property
-    def selected_parks_access_types_pdf(self):
-        #list of selected parks and access_types (to print on licence pdf)
-        selected_park_access_types=[]
-        for p in self.parks.all():
-            park_access_types=[]
-            if p.park.park_type=='land':
-                for a in p.access_types.all():
-                    park_access_types.append(a.access_type.name)
-                selected_park_access_types.append({'park': p.park.name, 'access_types': park_access_types})
-        return selected_park_access_types
+#    @property
+#    def selected_parks_access_types_pdf(self):
+#        #list of selected parks and access_types (to print on licence pdf)
+#        selected_park_access_types=[]
+#        for p in self.parks.all():
+#            park_access_types=[]
+#            if p.park.park_type=='land':
+#                for a in p.access_types.all():
+#                    park_access_types.append(a.access_type.name)
+#                selected_park_access_types.append({'park': p.park.name, 'access_types': park_access_types})
+#        return selected_park_access_types
 
     def __assessor_group(self):
         # TODO get list of assessor groups based on region and activity
@@ -1619,6 +1622,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 if not self.applicant_address:
                     raise ValidationError('The applicant needs to have set their postal address before approving this proposal.')
 
+                lodgement_number = self.previous_application.approval.lodgement_number if self.proposal_type == 'renewal' else None # renewals keep same licence number
                 preview_approval = PreviewTempApproval.objects.create(
                     current_proposal = self,
                     issue_date = timezone.now(),
@@ -1629,6 +1633,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                     #proxy_applicant = self.applicant if isinstance(self.applicant, EmailUser) else None,
                     org_applicant = self.org_applicant,
                     proxy_applicant = self.proxy_applicant,
+                    lodgement_number = lodgement_number
                 )
 
                 # Generate the preview document - get the value of the BytesIO buffer
@@ -1864,6 +1869,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 # require user to re-enter mandatory info in 'Other Details' tab, when renewing
                 proposal.other_details.insurance_expiry = None
                 proposal.other_details.preferred_licence_period = None
+                proposal.other_details.nominated_start_date = None
                 ProposalAccreditation.objects.filter(proposal_other_details__proposal=proposal).delete()
                 proposal.documents.filter(input_name__in=['deed_poll','currency_certificate']).delete()
 
