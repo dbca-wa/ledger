@@ -5,6 +5,7 @@ from commercialoperator.components.organisations.models import Organisation, Org
 from commercialoperator.components.main.models import ApplicationType, Park
 from commercialoperator.components.proposals.models import Proposal, ProposalType, ProposalOtherDetails, ProposalPark
 from commercialoperator.components.approvals.models import Approval
+from commercialoperator.components.bookings.models import ApplicationFee, ParkBooking, Booking
 from django.core.exceptions import MultipleObjectsReturned
 from ledger.address.models import Country
 
@@ -16,6 +17,43 @@ from dateutil.relativedelta import relativedelta
 
 import logging
 logger = logging.getLogger(__name__)
+
+def run_deploy(tclass_csv, eclass_csv):
+    """
+    tclass_csv: 'commercialoperator/utils/csv/Commercial-Licences-Migration-20191119.csv'
+    eclass_csv: 'commercialoperator/utils/csv/E-Class-20191119.csv'
+    """
+    clear_applications()
+
+    reader = OrganisationReader(tclass_csv)
+    reader.create_organisation_data()
+    reader.create_licences()
+
+    reader = OrganisationReader(eclass_csv)
+    #reader.create_organisation_data()
+    reader.create_licences()
+
+
+def clear_applications():
+    def reset_sql_idx():
+        from django.db import connection
+        cursor = connection.cursor()
+
+        cursor.execute('''ALTER SEQUENCE commercialoperator_applicationfee_id_seq RESTART WITH 1''')
+        cursor.execute('''ALTER SEQUENCE commercialoperator_parkbooking_id_seq RESTART WITH 1''')
+        cursor.execute('''ALTER SEQUENCE commercialoperator_booking_id_seq RESTART WITH 1''')
+        cursor.execute('''ALTER SEQUENCE commercialoperator_approval_id_seq RESTART WITH 1''')
+        cursor.execute('''ALTER SEQUENCE commercialoperator_proposal_id_seq RESTART WITH 1''')
+
+    print 'ApplicationFee: {}'.format(ApplicationFee.objects.all().delete())
+    print 'ParkBooking: {}'.format(ParkBooking.objects.all().delete())
+    print 'Booking: {}'.format(Booking.objects.all().delete())
+    print 'Approval: {}'.format(Approval.objects.all().delete())
+    print 'Proposal: {}'.format(Proposal.objects.all().delete())
+
+    print 'Reset PK IDX'
+    reset_sql_idx()
+
 
 def check_parks():
     parks_not_found = parks_not_found = ['Lesmurdie Falls National Park', 'Goldfields Woodlands Conservation Park and National Park', 'Helena and Aurora Ranges Conservation Park', 'Midgegooroo National Park', 'Parry La \
@@ -125,6 +163,8 @@ class OrganisationReader():
 
             try:
                 #import ipdb; ipdb.set_trace()
+                data['licencee'] = data['licencee'] + ' ' if ledger_organisation.objects.filter(name=data['licencee']) else data['licencee']
+                
                 lo, created = ledger_organisation.objects.get_or_create(
                     abn=data['abn'],
                     defaults={
@@ -134,14 +174,26 @@ class OrganisationReader():
                         'trading_name': data['trading_name']
                     }
                 )
-                if created:
-                    abn_new.append(data['abn'])
-                else:
-                    print '******** ERROR ********* abn already exists {}'.format(data['abn'])
+
+            except IntegrityError, e:
+                lo, created = ledger_organisation.objects.get_or_create(
+                    abn=data['abn'],
+                    defaults={
+                        'name': data['licencee'] + ' ',
+                        'postal_address': oa,
+                        'billing_address': oa,
+                        'trading_name': data['trading_name']
+                    }
+                )
 
             except Exception, e:
-                print 'ABN: {}'.format(data['abn'])
+                print 'Error creating Organisation: {} - {}'.format(data['name'], data['abn'])
                 raise
+
+            if created:
+                abn_new.append(data['abn'])
+            else:
+                print '******** ERROR ********* abn already exists {}'.format(data['abn'])
 
             if debug:
                 print 'Ledger Org: {}'.format(lo)
@@ -275,7 +327,7 @@ class OrganisationReader():
                     data.update({'phone_number2': row[19].translate(None, b' -()')})
                     data.update({'mobile_number': row[20].translate(None, b' -()')})
 
-                    emails = row[21].translate(None, b' -()').split(',')
+                    emails = row[21].translate(None, b' -()').replace(';', ',').split(',')
                     for num, email in enumerate(emails, 1):
                         data.update({'email{}'.format(num): email})
 
@@ -288,7 +340,6 @@ class OrganisationReader():
                     data.update({'start_date': row[28].strip()})
                     data.update({'issue_date': row[29].strip()})
                     data.update({'licence_class': row[30].strip()})
-                    #import ipdb; ipdb.set_trace()
                     #data.update({'land_parks': row[31].translate(None, b' -()').split()})
                     data.update({'land_parks': [i.strip().replace('`', '') for i in row[31].split(',')]})
                     #data.update({'land_parks': 'Geikie Gorge National Park,Lawley River National Park,Purnululu National Park'.split(',')})
@@ -317,7 +368,8 @@ class OrganisationReader():
                 #except:
                 #    submitter = EmailUser.objects.create(email=data['email1'], password = '')
                 try:
-                    submitter = EmailUser.objects.get(email__icontains=data['email1'])
+                    #submitter = EmailUser.objects.get(email__icontains=data['email1'])
+                    submitter = EmailUser.objects.get(email=data['email1'])
                 except:
                     submitter = EmailUser.objects.create(
                         email=data['email1'],
