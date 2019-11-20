@@ -5,6 +5,8 @@ from commercialoperator.components.organisations.models import Organisation, Org
 from commercialoperator.components.main.models import ApplicationType, Park
 from commercialoperator.components.proposals.models import Proposal, ProposalType, ProposalOtherDetails, ProposalPark
 from commercialoperator.components.approvals.models import Approval
+from django.core.exceptions import MultipleObjectsReturned
+from ledger.address.models import Country
 
 import csv
 import os
@@ -14,6 +16,32 @@ from dateutil.relativedelta import relativedelta
 
 import logging
 logger = logging.getLogger(__name__)
+
+def check_parks():
+    parks_not_found = parks_not_found = ['Lesmurdie Falls National Park', 'Goldfields Woodlands Conservation Park and National Park', 'Helena and Aurora Ranges Conservation Park', 'Midgegooroo National Park', 'Parry La \
+goons Nature Reserve', 'Stockyard Gully Reserve', 'Wiltshire-Butler National Park', 'Blackwood Bibbulmun', 'Collie Bibbulmun', 'Darling Range Bibbulmun', 'Denmark Bibbulmun', 'Dwellingup Bibbulmun\
+', 'Munda Biddi - Collie to Jarrahwood', 'Munda Biddi - Jarrahdale to Nanga', 'Munda Biddi - Mundaring to Jarrahdale', 'Munda Biddi - Nanga to Collie', 'Northcliffe Bibbulmun', 'Pemberton Bibbulmu\
+n', 'Walpole Bibbulmun', '', 'Special Permission', 'Cape to Cape - Cape Naturaliste to Prevelly', 'Cape to Cape - Prevelly to Cape Leeuwin', 'Munda Biddi - Denmark to Albany', 'Munda Biddi - Jarra\
+hwood to Manjimup', 'Munda Biddi - Manjimup to Northcliffe', 'Munda Biddi - Northcliffe to Walpole', 'Munda Biddi - Walpole to Denmark', 'Cape Range National Park', 'Francois Peron National Park',\
+'Leeuwin-Naturaliste National Park', 'Penguin Island Conservation Park', 'Walpole-Nornalup National Park', 'Bruce Rock Nature Reserve', 'Totadgin Nature Reserve', 'Yanneymooning Nature Reserve',\
+'Badgingarra National Park', 'Beedelup National Park', 'Boorabbin National Park', 'Brockman National Park', 'Cape Le Grand National Park', 'Coalseam Conservation Park', 'DEntrecasteaux National Pa\
+rk', 'Fitzgerald River National Park', 'Gloucester National Park', 'Hamelin Pool Marine Nature Reserve', 'Kalbarri National Park', 'Karijini National Park', 'Kennedy Range National Park', 'Leschen\
+ault Peninsula Conservation Park', 'Lesueur National Park', 'Millstream Chichester National Park', 'Mt Frankland National Park', 'Mt Frankland North National Park', 'Mt Frankland South National Pa\
+rk', 'Nambung National Park', 'Porongurup National Park', 'Shannon National Park', 'Shell Beach Conservation Park', 'Stirling Range National Park', 'Stokes National Park', 'Torndirrup National Par\
+k', 'Two Peoples Bay Nature Reserve', 'Warren National Park', 'Wellington National Park', 'William Bay National Park', 'Drysdale River National Park', 'Prince Regent National Park', 'Geikie Gorge\
+National Park', 'Donnelly District State Forest', 'Avon Valley National Park', 'Blackwood River National Park', 'Lane Poole Reserve', 'Walyunga National Park', 'Mitchell River National Park', 'Woo\
+ditjup National Park', 'Dirk Hartog Island National Park']
+
+    for park in parks_not_found:
+        try:
+            p = Park.objects.get(name__icontains=park)
+        except:
+            park_name = park.split()
+            park_obj=None
+            if len(park_name) > 0:
+                park_obj = Park.objects.filter(name__icontains=park_name[0])
+            missing_park_names = list(park_obj.values_list('name', flat=True)) if park_obj else []
+            print '{}, {}'.format(park, missing_park_names)
 
 class OrganisationReader():
     """
@@ -27,6 +55,7 @@ class OrganisationReader():
 
     def __init__(self, filename):
         self.not_found = []
+        self.parks_not_found = []
         self.org_lines = self._read_organisation_data(filename)
 
     def _create_organisation(self, data, count, debug=False):
@@ -95,6 +124,7 @@ class OrganisationReader():
                 print 'Org Address: {}'.format(oa)
 
             try:
+                #import ipdb; ipdb.set_trace()
                 lo, created = ledger_organisation.objects.get_or_create(
                     abn=data['abn'],
                     defaults={
@@ -128,6 +158,7 @@ class OrganisationReader():
             try:
                 delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
             except Exception, e:
+                import ipdb; ipdb.set_trace()
                 print 'Delegate Creation Failed: {}'.format(user)
                 raise
 
@@ -149,6 +180,7 @@ class OrganisationReader():
                     }
                 )
             except Exception, e:
+                import ipdb; ipdb.set_trace()
                 print 'Org Contact: {}'.format(user)
                 raise
 
@@ -161,6 +193,7 @@ class OrganisationReader():
 
     def _read_organisation_data(self, filename, verify=False):
         def get_start_date(data, row):
+            #import ipdb; ipdb.set_trace()
             try:
                 expiry_date = datetime.datetime.strptime(data['expiry_date'], '%d-%b-%y').date() # '05-Feb-89'
             except Exception, e:
@@ -174,6 +207,7 @@ class OrganisationReader():
 
             term = data['term'].split() # '3 YEAR'
 
+            #import ipdb; ipdb.set_trace()
             if 'YEAR' in term[1]:
                 start_date = expiry_date - relativedelta(years=int(term[0]))
             if 'MONTH' in term[1]:
@@ -181,8 +215,17 @@ class OrganisationReader():
             else:
                 start_date = datetime.date.today()
 
-            data.update({'start_date': start_date})
-            data.update({'issue_date': start_date})
+            if data['start_date'] != '':
+                data.update({'start_date': start_date})
+            else:
+                data.update({'start_date': datetime.date.today()})
+
+            if data['issue_date'] != '':
+                issue_date = datetime.datetime.strptime(data['issue_date'], '%d-%b-%y').date() # '05-Feb-89'
+                data.update({'issue_date': start_date})
+            else:
+                data.update({'issue_date': datetime.date.today()})
+
             data.update({'expiry_date': expiry_date})
 
         lines=[]
@@ -208,7 +251,6 @@ class OrganisationReader():
                     data.update({'expiry_date': row[2].strip()})
                     data.update({'term': row[3].strip()})
 
-                    get_start_date(data, row)
 
                     data.update({'trading_name': row[4].strip()})
                     data.update({'licencee': row[5].strip()})
@@ -237,17 +279,21 @@ class OrganisationReader():
                     for num, email in enumerate(emails, 1):
                         data.update({'email{}'.format(num): email})
 
-                    data.update({'insurance_expiry_date': row[22].strip()})
-                    data.update({'survey_cert': row[23].strip()})
-                    data.update({'name': row[24].strip()})
-                    data.update({'spv': row[25].strip()})
+                    data.update({'t_handbooks': row[22].strip()})
+                    data.update({'m_handbooks': row[23].strip()})
+                    data.update({'insurance_expiry_date': row[24].strip()})
+                    data.update({'survey_cert': row[25].strip()})
                     data.update({'atap_expiry': row[26].strip()})
                     data.update({'eco_cert_expiry': row[27].strip()})
-                    data.update({'vessels': row[28].strip()})
-                    data.update({'vehicles': row[29].strip()})
-                    #data.update({'land_parks': row[30].translate(None, b' -()').split})
-                    data.update({'land_parks': 'Geikie Gorge National Park,Lawley River National Park,Purnululu National Park'.split(',')})
+                    data.update({'start_date': row[28].strip()})
+                    data.update({'issue_date': row[29].strip()})
+                    data.update({'licence_class': row[30].strip()})
+                    #import ipdb; ipdb.set_trace()
+                    #data.update({'land_parks': row[31].translate(None, b' -()').split()})
+                    data.update({'land_parks': [i.strip().replace('`', '') for i in row[31].split(',')]})
+                    #data.update({'land_parks': 'Geikie Gorge National Park,Lawley River National Park,Purnululu National Park'.split(',')})
                     #print data
+                    get_start_date(data, row)
 
                     lines.append(data)
 
@@ -297,41 +343,57 @@ class OrganisationReader():
 
         #application_type=ApplicationType.objects.get(name=data['application_type'])
         #application_name = application_type.name
-        application_type=ApplicationType.objects.get(name='T Class')
-        #application_name = 'T Class'
-        # Get most recent versions of the Proposal Types
-        qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
-        proposal_type = qs_proposal_type.get(name=application_type.name)
-        proposal= Proposal.objects.create(
-                        application_type=application_type,
-                        submitter=submitter,
-                        org_applicant=org_applicant,
-                        schema=proposal_type.schema
-                    )
+        try:
+            if data['licence_class'].startswith('T'):
+                application_type=ApplicationType.objects.get(name='T Class')
+            elif data['licence_class'].startswith('E'):
+                application_type=ApplicationType.objects.get(name='E Class')
 
-        approval = Approval.objects.create(
-                        issue_date=data['issue_date'],
-                        expiry_date=data['expiry_date'],
-                        start_date=data['start_date'],
-                        org_applicant=org_applicant,
-                        submitter=submitter,
-                        current_proposal=proposal
-                    )
+            #application_name = 'T Class'
+            # Get most recent versions of the Proposal Types
+            qs_proposal_type = ProposalType.objects.all().order_by('name', '-version').distinct('name')
+            proposal_type = qs_proposal_type.get(name=application_type.name)
+            proposal= Proposal.objects.create(
+                            application_type=application_type,
+                            submitter=submitter,
+                            org_applicant=org_applicant,
+                            schema=proposal_type.schema
+                        )
 
-        proposal.lodgement_number = proposal.lodgement_number.replace('A', 'AM') # Application Migrated
-        proposal.approval= approval
-        proposal.processing_status='approved'
-        proposal.customer_status='approved'
-        proposal.migrated=True
-        approval.migrated=True
-        other_details = ProposalOtherDetails.objects.create(proposal=proposal)
+            approval = Approval.objects.create(
+                            issue_date=data['issue_date'],
+                            expiry_date=data['expiry_date'],
+                            start_date=data['start_date'],
+                            org_applicant=org_applicant,
+                            submitter=submitter,
+                            current_proposal=proposal
+                        )
 
-        for park_name in data['land_parks']:
-            park = Park.objects.get(name=park_name)
-            ProposalPark.objects.create(proposal=proposal, park=park)
+            proposal.lodgement_number = proposal.lodgement_number.replace('A', 'AM') # Application Migrated
+            proposal.approval= approval
+            proposal.processing_status='approved'
+            proposal.customer_status='approved'
+            proposal.migrated=True
+            approval.migrated=True
+            other_details = ProposalOtherDetails.objects.create(proposal=proposal)
 
-        proposal.save()
-        approval.save()
+            for park_name in data['land_parks']:
+                try:
+                    park = Park.objects.get(name__icontains=park_name)
+                    ProposalPark.objects.create(proposal=proposal, park=park)
+                except Exception, e:
+                    if park_name not in self.parks_not_found:
+                        self.parks_not_found.append(park_name)
+                    #logger.error('Park: {}'.format(park_name))
+                    #import ipdb; ipdb.set_trace()
+
+            proposal.save()
+            approval.save()
+        except Exception, e:
+            logger.error('{}'.format(e))
+            import ipdb; ipdb.set_trace()
+            return None
+
         return approval
 
     def create_organisation_data(self):
@@ -364,6 +426,7 @@ class OrganisationReader():
         print 'Approvals: {}'.format(approval_new)
         print 'Approval Errors: {}'.format(approval_error)
         print 'Approvals: {}, Approval_Errors: {}'.format(len(approval_new), len(approval_error))
+        print 'Parks Not Found: {}'.format(self.parks_not_found)
 
 
 

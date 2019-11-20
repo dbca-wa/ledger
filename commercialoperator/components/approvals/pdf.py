@@ -112,31 +112,9 @@ def _create_approval_header(canvas, doc, draw_page_number=True):
     current_x = HEADER_MARGIN + LICENCE_HEADER_IMAGE_WIDTH + 5
 
 
-    # canvas.setFont(DEFAULT_FONTNAME, SMALL_FONTSIZE)
-
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER), 'Enquiries:')
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Telephone:')
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Facsimile:')
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Web Site:')
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Correspondance:')
-
-    # current_x += 80
-
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),
-    #                   '17 DICK PERRY AVE, KENSINGTON, WESTERN AUSTRALIA')
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, '08 9219 9000')
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, '08 9219 8242')
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, doc.site_url)
-
-    # canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Locked Bag 30')
-    # canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6,
-    #                   'Bentley Delivery Centre WA 6983')
-
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     #print current_x, current_y
-
     #current_y -= 36
     current_y -= 2
     #current_x += 10
@@ -241,16 +219,6 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
             bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
         elements.append(conditionList)
 
-    # if copied_to_permit:
-    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    #     elements.append(Paragraph('Assessor Comments', styles['BoldLeft']))
-    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    #     for k,v in copied_to_permit:
-    #         elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
-    #         elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
-    #         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
     elements += _layout_extracted_fields(approval.extracted_fields)
 
     # additional information
@@ -261,38 +229,6 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
 
     # delegation holds the dates, approvale and issuer details.
     delegation = []
-
-    # dates and licensing officer
-    # dates_licensing_officer_table_style = TableStyle([('VALIGN', (0, 0), (-2, -1), 'TOP'),
-    #                                                   ('VALIGN', (0, 0), (-1, -1), 'BOTTOM')])
-
-    # delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    # date_headings = [Paragraph('Date of Issue', styles['BoldLeft']), Paragraph('Valid From', styles['BoldLeft']),
-    #                  Paragraph('Date of Expiry', styles['BoldLeft'])]
-    # date_values = [Paragraph(approval.issue_date.strftime(DATE_FORMAT), styles['Left']),
-    #                Paragraph(approval.start_date.strftime(DATE_FORMAT), styles['Left']),
-    #                Paragraph(approval.expiry_date.strftime(DATE_FORMAT), styles['Left'])]
-
-    # if approval.original_issue_date is not None:
-    #     date_headings.insert(0, Paragraph('Original Date of Issue', styles['BoldLeft']))
-    #     date_values.insert(0, Paragraph(approval.original_issue_date.strftime(DATE_FORMAT), styles['Left']))
-
-    # delegation.append(Table([[date_headings, date_values]],
-    #                         colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
-    #                         style=dates_licensing_officer_table_style))
-
-    # proponent details
-    # delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    # address = proposal.applicant.organisation.postal_address
-    # address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
-    #                       Paragraph(address.line3, styles['Left']),
-    #                       Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
-    #                       Paragraph(address.country.name, styles['Left'])]
-    # delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
-    #                           [Paragraph(_format_name(approval.applicant),
-    #                                      styles['Left'])] + address_paragraphs]],
-    #                         colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
-    #                         style=approval_table_style))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     delegation.append(Paragraph('Should you have any queries about this approval, please contact {} {}, '
@@ -318,10 +254,6 @@ def _create_approval(approval_buffer, approval, proposal, copied_to_permit, user
     elements.append(Paragraph('Appendix 1 - Management Actions', styles['BoldLeft']))
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     if copied_to_permit:
-        # for k,v in copied_to_permit:
-        #     elements.append(Paragraph(v.encode('UTF-8'), styles['Left']))
-        #     elements.append(Paragraph(k.encode('UTF-8'), styles['Left']))
-        #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
         for item in copied_to_permit:
             for key in item:
                elements.append(Paragraph(key.encode('UTF-8'), styles['Left']))
@@ -418,18 +350,6 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
             #bulletFontName=BOLD_FONTNAME
     elements.append(understandingList)
 
-    # proposal requirements
-    # requirements = proposal.requirements.all().exclude(is_deleted=True)
-    # if requirements.exists():
-    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    #     elements.append(Paragraph('The following requirements must be satisfied for the licence not to be withdrawn:', styles['BoldLeft']))
-    #     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    #     conditionList = ListFlowable(
-    #         [Paragraph(a.requirement, styles['Left']) for a in requirements.order_by('order')],
-    #         bulletFontName=BOLD_FONTNAME, bulletFontSize=MEDIUM_FONTSIZE)
-    #     elements.append(conditionList)
-
     elements += _layout_extracted_fields(approval.extracted_fields)
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
@@ -460,14 +380,22 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     park_data=[]
     for p in approval.current_proposal.selected_parks_activities_pdf:
-        #park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
-        #                     [Paragraph(a, styles['Left']) for a in p['activities']]])
         activities_str=[]
         for ac in p['activities']:
             activities_str.append(ac.encode('UTF-8'))
+        access_types_str=[]
+        if 'access_types' in p:
+            for at in p['access_types']:
+                access_types_str.append(at.encode('UTF-8'))
         activities_str=str(activities_str).strip('[]').replace('\'', '')
+        access_types_str=str(access_types_str).strip('[]').replace('\'', '')
+
+        activities_str = activities_str if access_types_str =='' else access_types_str + ', ' + activities_str
+
         park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
-                              Paragraph(activities_str, styles['Left'])])
+                              Paragraph(activities_str, styles['Left'])
+                        ])
+
     if park_data:
         t=Table(park_data, colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
                             style=box_table_style)
@@ -475,27 +403,8 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
 
     # Schedule 2
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
+    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     elements.append(Paragraph('SCHEDULE 2', styles['BoldCenter']))
-    elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE LAND ACCESS TYPES', styles['BoldCenter']))
-
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    park_data=[]
-    for p in approval.current_proposal.selected_parks_access_types_pdf:
-        access_types_str=[]
-        for ac in p['access_types']:
-            access_types_str.append(ac.encode('UTF-8'))
-        access_types_str = ', '.join(access_types_str).replace('\'', '')
-        park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
-                              Paragraph(access_types_str, styles['Left'])])
-    if park_data:
-        t=Table(park_data, colWidths=(120, PAGE_WIDTH - (2 * PAGE_MARGIN) - 120),
-                            style=box_table_style)
-    elements.append(t)
-
-    # Schedule 3
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    elements.append(Paragraph('SCHEDULE 3', styles['BoldCenter']))
     elements.append(Paragraph('COMMERCIAL OPERATIONS LICENCE CONDITIONS', styles['BoldCenter']))
     requirements = proposal.requirements.all().exclude(is_deleted=True)
     if requirements.exists():
@@ -671,16 +580,6 @@ def _create_renewal(renewal_buffer, approval, proposal):
                           Paragraph(address.line3, styles['Left']),
                           Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
                           Paragraph(address.country.name, styles['Left'])]
-    # if proposal.org_applicant:
-    #     address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
-    #                       Paragraph(address.line3, styles['Left']),
-    #                       Paragraph('%s %s %s' % (address.locality, address.state, address.postcode), styles['Left']),
-    #                       Paragraph(address.country.name, styles['Left'])]
-    # else:
-    #     address_paragraphs = [Paragraph(address.line1, styles['Left']), Paragraph(address.line2, styles['Left']),
-    #                       Paragraph(address.line3, styles['Left']),
-    #                       Paragraph('%s %s' % (address.state, address.postcode), styles['Left']),
-    #                       Paragraph(address.country.name, styles['Left'])]
     delegation.append(Table([[[Paragraph('Licensee:', styles['BoldLeft']), Paragraph('Address', styles['BoldLeft'])],
                               [Paragraph(_format_name(approval.applicant),
                                          styles['Left'])] + address_paragraphs]],
@@ -694,16 +593,6 @@ def _create_renewal(renewal_buffer, approval, proposal):
     delegation.append(Paragraph('Dear {} '.format(full_name), styles['Left']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    # delegation.append(Paragraph('This is a reminder that your approval: ', styles['Left']))
-
-    # delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-
-    # title_with_number = '{} - {}'.format(approval.lodgement_number, title)
-
-    # delegation.append(Paragraph(title_with_number, styles['InfoTitleLargeLeft']))
-
-    # delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    # delegation.append(Paragraph('is due to expire on {}'.format(expiry_date), styles['Left']))
 
     delegation.append(Paragraph('This is a reminder that your Commercial Operations licence {} expires on {}. '.format(approval.lodgement_number, expiry_date), styles['BoldLeft']))
 
@@ -716,8 +605,8 @@ def _create_renewal(renewal_buffer, approval, proposal):
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
     #delegation.append(Paragraph('As a reminder, the Commercial Operator Handbook (2019) outlines the conditions of your licence.'
     #    'The handbook is available online at the {} website:'.format(settings.DEP_NAME), styles['Left']))
-    delegation.append(Paragraph('As a reminder, the Commercial Operator Handbook (2019) outlines the conditions of your licence. '
-        'The handbook is available online at the {} website:'.format(settings.DEP_NAME), styles['Left']))
+    delegation.append(Paragraph('As a reminder, the Commercial Operator Handbook outlines the conditions of your licence. '
+        'The current handbook is available online at the {} website:'.format(settings.DEP_NAME), styles['Left']))
 
     #delegation.append(Paragraph('The handbook is available online at the {} website: .'.format(settings.DEP_NAME), styles['Left']))
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))

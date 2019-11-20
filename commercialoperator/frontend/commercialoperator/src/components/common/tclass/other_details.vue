@@ -85,7 +85,7 @@
                                 </div>
                                 <div class="col-sm-9">
                                     <div class="input-group date" ref="nominated_start_date" style="width: 70%;">
-                                        <input type="text" class="form-control" v-model="proposal.other_details.nominated_start_date" name="nominated_start_date" placeholder="DD/MM/YYYY" :disabled="proposal.readonly">
+                                        <input type="text" class="form-control" v-model="proposal.other_details.nominated_start_date" name="nominated_start_date" placeholder="DD/MM/YYYY" :disabled="proposal.readonly || proposal.pending_amendment_request || proposal.is_amendment_proposal">
                                         <span class="input-group-addon">
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
