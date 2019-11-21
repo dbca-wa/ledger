@@ -3,7 +3,7 @@
     <div class="col-sm-12">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Accreditation Details <small>123</small>
+                <h3 class="panel-title">Tourism Accreditation <small></small>
                 <a class="panelClicker" :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                 </a>
@@ -12,7 +12,7 @@
             <div class="panel-body collapse in" :id="pBody">
                 <div class="" >                        
                     <div class="form-horizontal col-sm-12 borderDecoration">
-                        <label class="control-label">Are you currently accredited?</label>
+                        <label class="control-label">Select which level of tourism accreditation you have achieved. <a href="https://parks.dpaw.wa.gov.au/for-business/training-accreditation-insurance-fees" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></label>
                         <ul class="list-inline"  >
                             <li v-for="c in accreditation_choices" class="form-check list-inline-item">
                                 <input  class="form-check-input" ref="Checkbox" type="checkbox" @click="selectAccreditation($event, c)" v-model="selected_accreditations" :value="c.key" data-parsley-required :disabled="proposal.readonly" />
@@ -20,7 +20,7 @@
                             </li>
                         </ul>
                         <div v-for=" accreditation in proposal.other_details.accreditations">
-                            <div v-if="!accreditation.is_deleted" class="col-sm-12">
+                            <div v-if="!accreditation.is_deleted && accreditation.accreditation_type!='no'" class="col-sm-12">
                                 <Accreditation :accreditation="accreditation":proposal_id="proposal.id" :readonly="proposal.readonly" id="accreditation"></Accreditation>
                             </div>
                             <!-- <fieldset class="scheduler-border">
@@ -58,7 +58,7 @@
     <div class="col-sm-12">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">License Period <small></small>
+                <h3 class="panel-title">Licence Term <small></small>
                 <a class="panelClicker" :href="'#'+lBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="lBody">
                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                 </a>
@@ -71,10 +71,10 @@
                         <div class="form-group">
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <label class="control-label pull-left"  for="Name">Preferred licence period</label>
+                                    <label class="control-label pull-left"  for="Name">Preferred licence term</label>
                                 </div>
                                 <div class="col-sm-9" style="margin-bottom: 5px; width:53% !important">
-                                    <select class="form-control" v-model="proposal.other_details.preferred_licence_period" ref="preferred_licence_period" :disabled="proposal.readonly">
+                                    <select class="form-control" v-model="proposal.other_details.preferred_licence_period" ref="preferred_licence_period" :disabled="proposal.readonly || proposal.pending_amendment_request || proposal.is_amendment_proposal ">
                                         <option v-for="l in licence_period_choices" :value="l.key">{{l.value}}</option>
                                     </select>
                                 </div>
@@ -90,6 +90,12 @@
                                             <span class="glyphicon glyphicon-calendar"></span>
                                         </span>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="row">&nbsp;</div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    Application and licence fee information <a href="https://parks.dpaw.wa.gov.au/for-business/training-accreditation-insurance-fees" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a>
                                 </div>
                             </div>
                         </div> 
@@ -113,12 +119,12 @@
                         <div class="form-group">
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <label>Provide the mooring number for any mooring within a marine reseve your operation will use</label>
+                                    <label>Provide the mooring number or GPS coordinates for any mooring within a marine reserve your operation will use.</label>
                                 </div>   
                             </div>
                             <div class="row" v-for="(m, index) in proposal.other_details.mooring">
                                 <div class="col-sm-3">
-                                    <label class="control-label pull-left"  for="Name">Mooring number</label>
+                                    <label class="control-label pull-left"  for="Name">Mooring number or GPS coordinates</label>
                                 </div>
                                 <div class="col-sm-9" style="margin-bottom: 5px">
                                     <input type="text" class="form-control" name="Mooring number" placeholder="" :disabled="proposal.readonly" v-model="proposal.other_details.mooring[index]">
@@ -152,8 +158,8 @@
                                 <div class="col-sm-12">
                                     <label>
                                     <ol type="a">
-                                        <li>The operator shall at all times during the period of the Licence maiantain a policy of public liability insurance, that covers the areas and operations allowed under the licence, in the name of the Operator tot the extent of its rights and interests for a sum of not less than $10 million per event.</li>
-                                        <li>The operator shall provide the Director General proof of the existence and currency of such insurance policy whenever requested by the Director General during the term of the Licence</li>
+                                        <li>Attach your policy for public liability insurance that covers the areas and operations allowed under the licence, and in the name of the applicant to the extent of its rights and interests, for a sum of not less than AU$10 million per event.</li>
+                                        <li>It is a requirement of all licenced operators to maintain appropriate public liability insurance.</li>
                                     </ol></label>
                                 </div>
                             </div>
@@ -188,7 +194,7 @@
     <div class="col-sm-12">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">Other Details <small></small>
+                <h3 class="panel-title">Other <small></small>
                 <a class="panelClicker" :href="'#'+oBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="oBody">
                 <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                 </a>
@@ -200,7 +206,8 @@
                        <div class="form-group">
                            <div class="row">
                                 <div class="col-sm-12">
-                                    <label>Provide any comments and upload any additional documentation like brochures, itineraries etc. that may help with the assessment of this application</label>
+                                    <label>Provide information to support your application. This may include brochures, itineraries or other advertising material.</label>
+                                    <label>If you would like to apply for a park or activity that is not listed in the previous sections, please include details.</label>
                                 </div>   
                             </div>
                             <div class="row">
@@ -291,6 +298,11 @@
                             </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                    <label>Did you know you can use this system to pay park entry fees? Click on the Park Entry Fees page above.</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>                
@@ -311,8 +323,9 @@
                         <div class="form-group">
                            <div class="row">
                                 <div class="col-sm-12">
-                                    <label v-if="deed_poll_url">Print the <a :href="deed_poll_url" target="_blank">deed poll</a>, sign it, have it witnessed and attach it to this application</label>
-                                    <label v-else>Print the deed poll, sign it, have it witnessed and attach it to this application</label>
+                                    <label>It is a requirement of all commercial operations licence holders to sign a deed poll to release and indemnify the department.</label>
+                                    <label v-if="deed_poll_url">Please click <a :href="deed_poll_url" target="_blank">here</a> to download the deed poll. The deed poll must have a witness signature. Once signed please attach the deed poll below.</label>
+                                    <label v-else>Please click here to download the deed poll. The deed poll must have a witness signature. Once signed please attach the deed poll below./label>
                                 </div>   
                             </div>
                             <div class="row">
@@ -616,7 +629,7 @@ export default {
                 $(vm.$refs.preferred_licence_period).select2({
                     "theme": "bootstrap",
                     allowClear: true,
-                    placeholder:"Select preferred licence period"
+                    placeholder:"Select preferred licence term"
                 }).
                 on("select2:select",function (e) {
                     var selected = $(e.currentTarget);

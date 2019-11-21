@@ -1,8 +1,13 @@
 {%  extends 'disturbance/emails/base_email.html' %}
 
 {%  block content %}
- 
-        <p>A Proposal <strong>{{proposal.lodgement_number}}</strong> has been approved</p>
+ 		{% if proposal.approval.reissued %}
+ 			<p>Approval <strong>{{proposal.approval.lodgement_number}} </strong>for Proposal <strong>{{proposal.lodgement_number}}</strong> has been reissued.</p>
+ 		{% else %}
+
+        	<p>Proposal <strong>{{proposal.lodgement_number}}</strong> has been approved</p>
+        	
+        {% endif%}
    
    
 {%  endblock %}

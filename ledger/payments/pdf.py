@@ -87,7 +87,7 @@ class Remittance(Flowable):
 
     def __repr__(self):
         return 'remittance'
-    
+
     def __logo_line(self):
         canvas = self.canv
         current_y, current_x = self.current_y, self.current_x
@@ -96,20 +96,20 @@ class Remittance(Flowable):
 
         dpaw_header_logo_size = dpaw_header_logo.getSize()
         canvas.drawImage(dpaw_header_logo, HEADER_MARGIN, current_y - (dpaw_header_logo_size[1]/1.8),height=dpaw_header_logo_size[1]/1.8, mask='auto', width=dpaw_header_logo_size[0]/1.8)
-        
+
         current_y = -20
         canvas.setFont(BOLD_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawRightString(current_x * 45,current_y,'Remittance Advice')
-        
+
         current_y -= 20
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawString(current_x * 27,current_y,'PLEASE DETACH AND RETURN WITH YOUR PAYMENT')
-        
+
         current_y -= 20
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawString(current_x, current_y, 'ABN: 38 052 249 024')
         self.current_y = current_y
-    
+
     def __payment_line(self):
         canvas = self.canv
         current_y, current_x = self.current_y, self.current_x
@@ -153,9 +153,9 @@ class Remittance(Flowable):
             canvas.drawString(box_pos, info_y - 0.65 * inch, 'Contact your bank or financial institution to make')
             canvas.drawString(box_pos, info_y - 0.75 * inch, 'this payment from your cheque, savings, debit or')
             canvas.drawString(box_pos, info_y - 0.85 * inch, 'transaction account. More info: www.bpay.com.au')
-        
+
         self.current_y = current_y
-    
+
     def __footer_line(self):
         canvas = self.canv
         current_y, current_x = self.current_y, self.current_x
@@ -172,7 +172,7 @@ class Remittance(Flowable):
         canvas.drawString(PAGE_WIDTH/4, current_y, self.invoice.created.strftime(DATE_FORMAT))
         canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(self.invoice.amount - calculate_excl_gst(self.invoice.amount)))
         canvas.drawString((PAGE_WIDTH/4) * 3, current_y, currency(self.invoice.amount))
-    
+
     def draw(self):
         if settings.BPAY_ALLOWED:
             self.__logo_line()
@@ -222,17 +222,17 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, 'Outstanding (AUD)')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, currency(invoice.balance))
     canvas.restoreState()
-    
+
 def _create_invoice(invoice_buffer, invoice):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN + 250, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT -450 , id='EveryPagesFrame',showBoundary=0)
     remit_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 600, id='RemitFrame',showBoundary=0)
     every_page_template = PageTemplate(id='EveryPages', frames=[every_page_frame,remit_frame], onPage=_create_header)
-    
+
 
     doc = BaseDocTemplate(invoice_buffer, pageTemplates=[every_page_template], pagesize=A4)
-    
+
 
     # this is the only way to get data into the onPage callback function
     doc.invoice = invoice
@@ -309,18 +309,18 @@ def _create_invoice(invoice_buffer, invoice):
         elements.append(Paragraph(settings.INVOICE_UNPAID_WARNING, styles['Left']))
 
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 6))
-    
+
     # Remitttance Frame
     elements.append(FrameBreak())
     boundary = BrokenLine(PAGE_WIDTH - 2 * (PAGE_MARGIN *1.1))
     elements.append(boundary)
     elements.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    
+
     remittance = Remittance(HEADER_MARGIN,HEADER_MARGIN - 10,invoice)
     elements.append(remittance)
     #_create_remittance(invoice_buffer,doc)
     doc.build(elements)
-    
+
     return invoice_buffer
 
 def create_invoice_pdf_bytes(filename, invoice):

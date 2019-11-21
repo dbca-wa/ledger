@@ -16,7 +16,11 @@ from django.template.loader import render_to_string, get_template
 from confy import env
 from django.template import Context
 from ledger.accounts.models import Document
+from django.contrib.auth.models import Group
+from ledger.accounts.models import EmailUser
 
+import datetime
+import hashlib
 
 default_from_email = settings.DEFAULT_FROM_EMAIL
 default_campground_email = settings.CAMPGROUNDS_EMAIL
@@ -34,6 +38,7 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
     override_email = env('OVERRIDE_EMAIL', None)
     context['default_url'] = env('DEFAULT_HOST', '')
     context['default_url_internal'] = env('DEFAULT_URL_INTERNAL', '')
+    log_hash = int(hashlib.sha1(str(datetime.datetime.now())).hexdigest(), 16) % (10 ** 8)
 
     if email_delivery != 'on':
         print ("EMAIL DELIVERY IS OFF NO EMAIL SENT -- email.py ")
@@ -58,6 +63,8 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
     # Main Email Template Style ( body template is populated in the center
     if template_group == 'rottnest':
         main_template = get_template('mooring/email/base_email-rottnest.html').render(Context(context))
+    elif template_group == 'system-oim':
+        main_template = get_template('mooring/email/base_email-oim.html').render(Context(context))
     else:
         main_template = get_template('mooring/email/base_email2.html').render(Context(context))
    
@@ -86,16 +93,21 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
             bcc = override_email.split(",")
 
     if len(to) > 1:
-       for to_email in to:
-           msg = EmailMultiAlternatives(subject, "Please open with a compatible html email client.", from_email=from_email, to=to_email, attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
-           msg.attach_alternative(main_template, 'text/html')
+        msg = EmailMultiAlternatives(subject, "Please open with a compatible html email client.", from_email=from_email, to=to, attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
+        msg.attach_alternative(main_template, 'text/html')
 
-          #msg = EmailMessage(subject, main_template, to=[to_email],cc=cc, from_email=from_email)
-          #msg.content_subtype = 'html'
-          #if attachment1:
-          #    for a in attachment1:
-          #        msg.attach(a)
-           msg.send()
+        #msg = EmailMessage(subject, main_template, to=[to_email],cc=cc, from_email=from_email)
+        #msg.content_subtype = 'html'
+        #if attachment1:
+        #    for a in attachment1:
+        #        msg.attach(a)
+        try:
+             email_log(str(log_hash)+' '+subject)
+             msg.send()
+             email_log(str(log_hash)+' Successfully sent to mail gateway')
+        except Exception as e:
+                email_log(str(log_hash)+' Error Sending - '+str(e))
+
     else:
           msg = EmailMultiAlternatives(subject, "Please open with a compatible html email client.", from_email=from_email, to=to, attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
           msg.attach_alternative(main_template, 'text/html')
@@ -105,7 +117,14 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
           #if attachment1:
           #    for a in attachment1:
           #        msg.attach(a)
-          msg.send()
+          try:
+               email_log(str(log_hash)+' '+subject) 
+               msg.send()
+               email_log(str(log_hash)+' Successfully sent to mail gateway')
+          except Exception as e:
+               email_log(str(log_hash)+' Error Sending - '+str(e))
+
+
     return True
 
 
@@ -378,6 +397,10 @@ def send_refund_failure_email_admissions(booking, context_processor):
        to = settings.NON_PROD_EMAIL
        sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
     else:
+       pa = Group.objects.get(name='Payments Officers')
+       ma = Group.objects.get(name="Mooring Admin")
+       user_list = EmailUser.objects.filter(groups__in=[ma,]).distinct()
+
        for u in user_list:
           to = u.email
           sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -420,6 +443,11 @@ def send_refund_failure_email(booking, context_processor):
        to = settings.NON_PROD_EMAIL
        sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
     else:
+
+       pa = Group.objects.get(name='Payments Officers')
+       ma = Group.objects.get(name="Mooring Admin")
+       user_list = EmailUser.objects.filter(groups__in=[ma,]).distinct()
+
        for u in user_list:
           to = u.email
           sendHtmlEmail([to],subject,context,template,cc,bcc,from_email,template_group,attachments=None)
@@ -474,7 +502,7 @@ def send_refund_failure_email_old(booking):
 
     pa = Group.objects.get(name='Payments Officers')
     ma = Group.objects.get(name="Mooring Admin")
-    user_list = EmailUser.objects.filter(groups__in=[pa,ma]).distinct()
+    user_list = EmailUser.objects.filter(groups__in=[ma,]).distinct()
 
     ### REMOVE ###
     for u in user_list:
@@ -523,5 +551,10 @@ def send_registered_vessels_email(content):
     email_obj.send(emails, from_address=default_from_email, context=context)
 
 
+def email_log(line):
+     dt = datetime.datetime.now()
+     f= open(settings.BASE_DIR+"/logs/email.log","a+")
+     f.write(str(dt.strftime('%Y-%m-%d %H:%M:%S'))+': '+line+"\r\n")
+     f.close()  
 
 

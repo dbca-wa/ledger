@@ -8,7 +8,6 @@ from django.core.validators import validate_email
 from django.urls import reverse
 
 def mail_validation(backend, details, is_new=False, *args, **kwargs):
-    #import ipdb; ipdb.set_trace()
     requires_validation = backend.REQUIRES_EMAIL_VALIDATION or \
                           backend.setting('FORCE_EMAIL_VALIDATION', False)
     send_validation = details.get('email') and \
@@ -26,7 +25,7 @@ def mail_validation(backend, details, is_new=False, *args, **kwargs):
         else:       # need to generate a validation email then kick back to the login page
             try:
                 validate_email(details['email'])
-                backend.strategy.send_email_validation(backend, 
+                backend.strategy.send_email_validation(backend,
                                                        details['email'])
                 backend.strategy.session_set('email_validation_address',
                                              details['email'])
@@ -47,7 +46,7 @@ def logout_previous_session(backend,details,user=None, *args, **kwargs):
             #already authenticated with another user, logout before.
             logout(strategy.request)
             return strategy.redirect("{}?verification_code={}&email={}".format(strategy.request_path(),request_data['verification_code'],request_data['email']))
-            
+
 
 
 #convert email address to lower case.

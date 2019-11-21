@@ -20,8 +20,12 @@ class OrganisationListener(object):
         elif hasattr(instance, "_original_instance"):
             delattr(instance, "_original_instance")
         else:
-            instance.pin_one = instance._generate_pin()
-            instance.pin_two = instance._generate_pin() 
+            # instance.pin_one = instance._generate_pin()
+            # instance.pin_two = instance._generate_pin()
+            instance.admin_pin_one = instance._generate_pin()
+            instance.admin_pin_two = instance._generate_pin() 
+            instance.user_pin_one = instance._generate_pin()
+            instance.user_pin_two = instance._generate_pin() 
 
 class EmailUserUpdateContactListener(object):
     @staticmethod

@@ -265,6 +265,7 @@ class ChecklistQuestionSerializer(serializers.ModelSerializer):
         #fields = '__all__'
         fields=('id',
                 'text',
+                'answer_type',
                 )
 class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
     question=ChecklistQuestionSerializer(read_only=True)
@@ -273,6 +274,7 @@ class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
         fields = ('id',
                 'question',
                 'answer',
+                'text_answer',
                 )
 
 class ProposalAssessmentSerializer(serializers.ModelSerializer):
@@ -310,9 +312,12 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     get_history = serializers.ReadOnlyField()
     is_qa_officer = serializers.SerializerMethodField()
     fee_invoice_url = serializers.SerializerMethodField()
+    land_access = serializers.SerializerMethodField()
+    land_activities = serializers.SerializerMethodField()
+    trail_activities = serializers.SerializerMethodField()
+    trail_section_activities = serializers.SerializerMethodField()
 
 #    def __init__(self, *args, **kwargs):
-#        import ipdb; ipdb.set_trace()
 #        user = kwargs['context']['request'].user
 #
 #        super(BaseProposalSerializer, self).__init__(*args, **kwargs)
@@ -360,12 +365,18 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'proposal_type',
                 'is_qa_officer',
                 'qaofficer_referrals',
+                'pending_amendment_request',
+                'is_amendment_proposal',
 
                 # tab field models
                 'applicant_details',
                 'other_details',
                 'activities_land',
                 'activities_marine',
+                'land_access',
+                'land_activities',
+                'trail_activities',
+                'trail_section_activities',
                 'land_parks',
                 'marine_parks',
                 'trails',
@@ -400,6 +411,18 @@ class BaseProposalSerializer(serializers.ModelSerializer):
 
     def get_fee_invoice_url(self,obj):
         return '/cols/payments/invoice-pdf/{}'.format(obj.fee_invoice_reference) if obj.fee_paid else None
+
+    def get_land_access(self,obj):
+        return obj.land_parks.filter(access_types__isnull=False).values_list('access_types__access_type_id', flat=True).distinct()
+
+    def get_land_activities(self,obj):
+        return obj.land_parks.filter(activities__isnull=False).values_list('activities__activity_id', flat=True).distinct()
+
+    def get_trail_activities(self,obj):
+        return ProposalTrailSectionActivity.objects.filter(trail_section__proposal_trail__proposal=obj.id).values_list('activity',flat=True).distinct()
+
+    def get_trail_section_activities(self,obj):
+        return obj.trails.all().values_list('trail_id', flat=True)
 
 #Not used anymore
 class DTProposalSerializer(BaseProposalSerializer):
@@ -646,6 +669,7 @@ class ProposalParkSerializer(BaseProposalSerializer):
     application_type = serializers.CharField(source='application_type.name', read_only=True)
     licence_number = serializers.SerializerMethodField(read_only=True)
     licence_number_id = serializers.SerializerMethodField(read_only=True)
+    land_parks=ProposalParkSerializer(source='land_parks_exclude_free', many=True)
 
     class Meta:
         model = Proposal
@@ -664,6 +688,7 @@ class ProposalParkSerializer(BaseProposalSerializer):
                 'lodgement_number',
                 #'activities_land',
                 #'activities_marine',
+                #'land_parks_exclude_free',
                 'land_parks',
                 #'marine_parks',
                 #'trails',
@@ -677,6 +702,9 @@ class ProposalParkSerializer(BaseProposalSerializer):
     def get_licence_number_id(self,obj):
         return obj.approval.id
 
+    def get_land_parks(self,obj):
+        """ exlude parks with free admission """
+        return obj.land_parks_exclude_free
 
 class InternalProposalSerializer(BaseProposalSerializer):
     #applicant = ApplicantSerializer()
@@ -705,9 +733,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
     assessor_assessment=ProposalAssessmentSerializer(read_only=True)
     referral_assessments=ProposalAssessmentSerializer(read_only=True, many=True)
     fee_invoice_url = serializers.SerializerMethodField()
-    selected_trails_activities=serializers.SerializerMethodField()
-    selected_parks_activities=serializers.SerializerMethodField()
-    marine_parks_activities=serializers.SerializerMethodField()
+    #selected_trails_activities=serializers.SerializerMethodField()
+    #selected_parks_activities=serializers.SerializerMethodField()
+    #marine_parks_activities=serializers.SerializerMethodField()
 
     class Meta:
         model = Proposal
@@ -764,6 +792,10 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'applicant_details',
                 'other_details',
                 'activities_land',
+                'land_access',
+                'land_access',
+                'trail_activities',
+                'trail_section_activities',
                 'activities_marine',
                 'land_parks',
                 'marine_parks',
@@ -771,9 +803,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'training_completed',
                 'can_edit_activities',
                 #Following 3 are variable to store selected parks and activities at frontend
-                'selected_parks_activities',
-                'selected_trails_activities',
-                'marine_parks_activities',
+                #'selected_parks_activities',
+                #'selected_trails_activities',
+                #'marine_parks_activities',
                 'reversion_ids',
                 'assessor_assessment',
                 'referral_assessments',

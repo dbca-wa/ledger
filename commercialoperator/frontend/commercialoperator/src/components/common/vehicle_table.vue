@@ -14,7 +14,7 @@
                 </div>
             </div>
         </div>
-        <editVehicle ref="edit_vehicle" :vehicle_id="vehicle_id" @refreshFromResponse="refreshFromResponse"></editVehicle>
+        <editVehicle ref="edit_vehicle" :vehicle_id="vehicle_id" :access_types="access_types" @refreshFromResponse="refreshFromResponse"></editVehicle>
     </div>
 </template>
 <script>
@@ -42,6 +42,10 @@ export default {
         url:{
             type: String,
             required: true
+        },
+        access_types:{
+            type: Array,
+            required: true
         }
     },
     data() {
@@ -58,7 +62,6 @@ export default {
             pBody: 'pBody' + vm._uid,
             datatable_id: 'vehicle-datatable-'+vm._uid,
             // Filters for Vehicles
-            
             external_status:[
                 'Due',
                 'Future',
@@ -70,7 +73,6 @@ export default {
                 'Future',
                 'With Assessor',
                 'Approved',
-                
             ],
             vehicle_headers:["Number", "Vehicle Type","Seating capacity","Registration no.","Registration Expiry","Transport license no.","Action"],
             vehicle_options:{
@@ -213,7 +215,6 @@ export default {
         editVehicle
     },
     watch:{
-        
     },
     computed: {
        /* status: function(){
@@ -223,7 +224,6 @@ export default {
         is_external: function(){
             return this.level == 'external';
         },
-        
     },
     methods:{
         fetchFilterLists: function(){

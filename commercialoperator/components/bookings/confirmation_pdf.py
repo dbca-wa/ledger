@@ -182,7 +182,7 @@ class Remittance(Flowable):
 
 def _create_header(canvas, doc, draw_page_number=True):
     canvas.saveState()
-    canvas.setTitle('Invoice')
+    canvas.setTitle('Confirmation')
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
@@ -191,18 +191,26 @@ def _create_header(canvas, doc, draw_page_number=True):
     dpaw_header_logo_size = dpaw_header_logo.getSize()
     canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - (dpaw_header_logo_size[1]/2),width=dpaw_header_logo_size[0]/2, height=dpaw_header_logo_size[1]/2, mask='auto')
 
-    current_y -= 100
-    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'BOOKING CONFIRMATION')
+    current_y -= 70
+    invoice = doc.invoice
+    booking = doc.booking
+    licence_number = booking.proposal.approval.lodgement_number if booking.proposal.approval else None  
+
+    if hasattr(booking, 'payment_type'):
+        PAGE_TITLE = 'APPLICATION & LICENCE FEE CONFIRMATION'
+    else:
+        PAGE_TITLE = 'BOOKING CONFIRMATION'
+    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, PAGE_TITLE)
 
     # Invoice address details
     invoice_details_offset = 37
     current_y -= 25
-    invoice = doc.invoice
-    booking = doc.booking
     canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
     current_x = PAGE_MARGIN + 5
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.owner.get_full_name())
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2,invoice.owner.username)
+    if booking.proposal.org_applicant:
+        canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),    booking.proposal.applicant)
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2,invoice.owner.get_full_name())
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3,invoice.owner.email)
     current_x += 452
 
     #write Invoice details
@@ -210,12 +218,20 @@ def _create_header(canvas, doc, draw_page_number=True):
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.created.strftime(DATE_FORMAT))
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Page')
     canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, str(canvas.getPageNumber()))
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Invoice Number')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, invoice.reference)
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Paid (AUD)')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, currency(invoice.payment_amount))
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Booking No.')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, booking.booking_number)
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Licence Number')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, licence_number)
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Invoice Number')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, invoice.reference)
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'Paid (AUD)')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, currency(invoice.payment_amount))
+    if hasattr(booking, 'booking_type'):
+        canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, 'Booking No.')
+        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, booking.booking_number)
+
+    if booking.deferred_payment_date and invoice.payment_method in [invoice.PAYMENT_METHOD_MONTHLY_INVOICING, invoice.PAYMENT_METHOD_BPAY]:
+        canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, 'Payment Due Date')
+        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, booking.deferred_payment_date.strftime(DATE_FORMAT))
+
     canvas.restoreState()
 
 
@@ -252,7 +268,6 @@ def _create_confirmation(confirmation_buffer, invoice, booking):
         ])
     items = invoice.order.lines.all()
     discounts = invoice.order.basket_discounts
-    #import ipdb; ipdb.set_trace()
     #if invoice.text:
     #    elements.append(Paragraph(invoice.text, styles['Left']))
     #    elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))

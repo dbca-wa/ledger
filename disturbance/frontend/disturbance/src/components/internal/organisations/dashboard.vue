@@ -35,6 +35,15 @@
         </div>
         <div class="col-md-3">
             <div class="form-group">
+                <label for="">Role</label>
+                <select class="form-control" v-model="filterRole">
+                    <option value="All">All</option>
+                    <option v-for="r in roleChoices" :value="r">{{r}}</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="form-group">
                 <label for="">Status</label>
                 <select class="form-control" v-model="filterStatus">
                     <option value="All">All</option>
@@ -70,10 +79,12 @@ export default {
         pBody: 'pBody' + vm._uid,
         filterOrganisation: 'All',
         filterApplicant : 'All',
+        filterRole : 'All',
         filterStatus: 'All',
         organisationChoices: [],
         applicantChoices: [],
         statusChoices: [],
+        roleChoices: [],
         members:[],
         profile: {},
         dtOptions:{
@@ -95,6 +106,9 @@ export default {
                     },
                     {
                         data:"requester",
+                    },
+                    {
+                        data:"role",
                     },
                     {
                         data:"status",
@@ -147,8 +161,17 @@ export default {
                         })
                         vm.applicantChoices = applicationChoices;
                     });
+                    // Grab Role from the data in the table
+                    var roleColumn = vm.$refs.org_access_table.vmDataTable.columns(3);
+                    roleColumn.data().unique().sort().each( function ( d, j ) {
+                        let roleChoices = [];
+                        $.each(d,(index,a) => {
+                            a != null && roleChoices.indexOf(a) < 0 ? roleChoices.push(a): '';
+                        })
+                        vm.roleChoices = roleChoices;
+                    });
                     // Grab Status from the data in the table
-                    var statusColumn = vm.$refs.org_access_table.vmDataTable.columns(3);
+                    var statusColumn = vm.$refs.org_access_table.vmDataTable.columns(4);
                     statusColumn.data().unique().sort().each( function ( d, j ) {
                         let statusChoices = [];
                         $.each(d,(index,a) => {
@@ -158,7 +181,7 @@ export default {
                     });
                 }
             },
-            dtHeaders:["Request Number","Organisation","Applicant","Status","Lodged on","Assigned To","Action"],
+            dtHeaders:["Request Number","Organisation","Applicant","Role","Status","Lodged on","Assigned To","Action"],
         }
     },
     watch: {
@@ -178,12 +201,20 @@ export default {
                 vm.$refs.org_access_table.vmDataTable.columns(2).search('').draw();
             }
         },
+        filterRole: function() {
+            let vm = this;
+            if (vm.filterRole != 'All') {
+                vm.$refs.org_access_table.vmDataTable.columns(3).search(vm.filterRole).draw();
+            } else {
+                vm.$refs.org_access_table.vmDataTable.columns(3).search('').draw();
+            }
+        },
         filterStatus: function() {
             let vm = this;
             if (vm.filterStatus!= 'All') {
-                vm.$refs.org_access_table.vmDataTable.columns(3).search(vm.filterStatus).draw();
+                vm.$refs.org_access_table.vmDataTable.columns(4).search(vm.filterStatus).draw();
             } else {
-                vm.$refs.org_access_table.vmDataTable.columns(3).search('').draw();
+                vm.$refs.org_access_table.vmDataTable.columns(4).search('').draw();
             }
         },
     },

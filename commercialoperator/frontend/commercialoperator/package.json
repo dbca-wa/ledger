@@ -14,6 +14,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
+    "@riophae/vue-treeselect": "^0.1.0",
     "babel-polyfill": "^6.26.0",
     "bootstrap": "^3.3.7",
     "datatables.net": "^1.10.15",
@@ -27,6 +28,7 @@
     "jquery-validation": "^1.16.0",
     "jquery.easing": "^1.4.1",
     "jszip": "^3.1.5",
+    "localforage": "^1.7.3",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
     "moment-range": "^3.0.3",

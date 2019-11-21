@@ -55,13 +55,12 @@ class BookingPaginatedViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
 
     def get_queryset(self):
-        #import ipdb; ipdb.set_trace()
         user = self.request.user
         if is_internal(self.request):
-            return Booking.objects.all()
+            return Booking.objects.all().exclude(booking_type=Booking.BOOKING_TYPE_TEMPORARY)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            return  Booking.objects.filter( Q(proposal__org_applicant_id__in = user_orgs) | Q(proposal__submitter = user) )
+            return  Booking.objects.filter( Q(proposal__org_applicant_id__in = user_orgs) | Q(proposal__submitter = user) ).exclude(booking_type=Booking.BOOKING_TYPE_TEMPORARY)
         return Booking.objects.none()
 
     @list_route(methods=['GET',])
@@ -73,7 +72,6 @@ class BookingPaginatedViewSet(viewsets.ModelViewSet):
             http://localhost:8000/api/booking_paginated/bookings_external/?format=datatables&draw=1&length=2
         """
 
-        #import ipdb; ipdb.set_trace()
         qs = self.get_queryset()
         qs = self.filter_queryset(qs)
 
@@ -83,45 +81,6 @@ class BookingPaginatedViewSet(viewsets.ModelViewSet):
         return self.paginator.get_paginated_response(serializer.data)
 
 
-#class ParkBookingPaginatedViewSet(viewsets.ModelViewSet):
-#    filter_backends = (ProposalFilterBackend,)
-#    pagination_class = DatatablesPageNumberPagination
-#    renderer_classes = (ProposalRenderer,)
-#    page_size = 10
-#    queryset = ParkBooking.objects.none()
-#    serializer_class = ParkBookingSerializer2
-#
-#    def get_queryset(self):
-#        #import ipdb; ipdb.set_trace()
-#        user = self.request.user
-#        if is_internal(self.request):
-#            return ParkBooking.objects.all()
-#        elif is_customer(self.request):
-#            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-#            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) )
-#        return ParkBooking.objects.none()
-#
-#
-#    @list_route(methods=['GET',])
-#    def parkbookings_external(self, request, *args, **kwargs):
-#        """
-#        Paginated serializer for datatables - used by the internal and external dashboard (filtered by the get_queryset method)
-#
-#        To test:
-#            http://localhost:8000/api/parkbooking_paginated/parkbookings_external/?format=datatables&draw=1&length=2
-#        """
-#
-#        #import ipdb; ipdb.set_trace()
-#        qs = self.get_queryset()
-#        qs = self.filter_queryset(qs)
-#
-#        self.paginator.page_size = qs.count()
-#        result_page = self.paginator.paginate_queryset(qs, request)
-#        serializer = ParkBookingSerializer2(result_page, context={'request':request}, many=True)
-#        return self.paginator.get_paginated_response(serializer.data)
-
-
-
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.none()
     serializer_class = BookingSerializer
@@ -129,10 +88,10 @@ class BookingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if is_internal(self.request):
-            return Booking.objects.all()
+            return Booking.objects.all().exclude(booking_type=Booking.BOOKING_TYPE_TEMPORARY)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            return  Booking.objects.filter( Q(proposal__org_applicant_id__in = user_orgs) | Q(proposal__submitter = user) )
+            return  Booking.objects.filter( Q(proposal__org_applicant_id__in = user_orgs) | Q(proposal__submitter = user) ).exclude(booking_type=Booking.BOOKING_TYPE_TEMPORARY)
         return Booking.objects.none()
 
 
@@ -141,7 +100,6 @@ class ParkBookingViewSet(viewsets.ModelViewSet):
     serializer_class = ParkBookingSerializer
 
     def get_queryset(self):
-        #import ipdb; ipdb.set_trace()
         user = self.request.user
         if is_internal(self.request):
             return ParkBooking.objects.all()

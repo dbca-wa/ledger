@@ -1,0 +1,13 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+ 
+        <p>The following Payment Due Notifications failed:</p>
+        <br>
+        {% for booking in bookings %}
+            Booking: {{booking.admission_number}}, Proposal: {{booking.proposal.lodgement_number}}, Organisation: {{booking.proposal.applicant}}, Invoice: {{booking.invoice.reference}}, Payment Due: {{booking.invoice.settlement_date}} <br>
+        {% endfor %}
+        <br>
+        <p>Please investigate/resend notifications</p>
+
+{%  endblock %}

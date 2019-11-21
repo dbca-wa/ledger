@@ -1,0 +1,411 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+{% block extra_css %}
+    {{ block.super }}
+    <!--link href="/static/common/css/font-awesome.css" rel="stylesheet"/-->
+    <style>
+        .bold {
+            font-weight: bold;
+        }
+        .table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th{
+            border:none;
+        }
+        .box-green { 
+-webkit-box-shadow: 0.1px 0.1px 0.5px 0.1px rgba(0,0,0,0.75);
+-moz-box-shadow: 0.1px 0.1px 0.5px 0.1px rgba(0,0,0,0.75);
+box-shadow: 0.1px 0.1px 0.5px 0.1px rgba(0,0,0,0.75);
+            background-color: #dfffd4;
+        }
+	.box-green2 {
+            margin: 2px;
+            padding: 10px;
+            font-size: 19px;
+            color: #000000;
+/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#b4e391+0,61c419+50,b4e391+100;Green+3D */
+background: rgb(180,227,145); /* Old browsers */
+background: -moz-linear-gradient(-45deg,  rgba(180,227,145,1) 0%, rgba(97,196,25,1) 50%, rgba(180,227,145,1) 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg,  rgba(180,227,145,1) 0%,rgba(97,196,25,1) 50%,rgba(180,227,145,1) 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg,  rgba(180,227,145,1) 0%,rgba(97,196,25,1) 50%,rgba(180,227,145,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b4e391', endColorstr='#b4e391',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+
+
+	}
+	.box-blue2 {
+            margin: 2px;
+            padding: 10px;
+            font-size: 19px;
+            color: #000000;
+
+/* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#d0e4f7+0,73b1e7+24,0a77d5+50,539fe1+79,87bcea+100;Blue+Pipe+%231 */
+background: rgb(208,228,247); /* Old browsers */
+background: -moz-linear-gradient(-45deg,  rgba(208,228,247,1) 0%, rgba(115,177,231,1) 24%, rgba(10,119,213,1) 50%, rgba(83,159,225,1) 79%, rgba(135,188,234,1) 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(-45deg,  rgba(208,228,247,1) 0%,rgba(115,177,231,1) 24%,rgba(10,119,213,1) 50%,rgba(83,159,225,1) 79%,rgba(135,188,234,1) 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(135deg,  rgba(208,228,247,1) 0%,rgba(115,177,231,1) 24%,rgba(10,119,213,1) 50%,rgba(83,159,225,1) 79%,rgba(135,188,234,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d0e4f7', endColorstr='#87bcea',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+
+     }
+    /* Tooltip */
+    .tooltip2 {
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Tooltip text */
+    .tooltip2 .tooltiptext {
+      width: 185px;
+      background-color: black;
+      color: #fff;
+      text-align: center;
+      padding: 8px;
+      border-radius: 6px;
+      text-align: left;
+
+      /* Position the tooltip text - see examples below! */
+      position: absolute;
+      z-index: 1;
+      visibility: visible;
+      margin-left: 101%;
+      display:none;
+    }
+
+    /* Show the tooltip text when you mouse over the tooltip container */
+    /* .tooltip2:hover .tooltiptext {
+      visibility: visible;
+    }
+    */
+
+    .tooltip2 .tooltiptext::after {
+    content: " ";
+    position: absolute;
+    right: 100%;
+    top: 10px;
+    left: 10%;
+    margin-left: -40px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent black transparent transparent;
+
+    }
+
+    .money_sign { 
+          position: absolute;
+          margin-top: 5px;
+          margin-left: -9px;
+          font-weight: bold;
+
+    }
+
+	
+    </style>
+
+    <div>
+
+
+    </div>
+
+{% endblock %}
+{% block content %}
+    {% csrf_token %}
+    <div class="container">
+        <div class="row">
+        <div class="col-sm-12">
+            <h2>Refund - Allocation Pool</h2>
+	</div>
+        <div class="pull-right">
+                      <a class='btn btn-primary' href="{% url 'view_booking_history' booking_id %}">Booking History</a>
+                      <a class='btn btn-primary' href='/ledger/payments/invoice/payment?{% for bh in booking_history %}{% if bh.booking.booking_type != 3 %}{% for bi in bh.invoices %}invoice={{ bi.invoice_reference }}&{% endfor %}{% endif %}{% endfor %}'>Ledger Group Invoices</a>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+            <br>
+            <h4>Order history collated list</h4>
+        </div>
+
+          
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="bookings-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr> 
+                  <th>Order Number</th>
+                  <th>Line Item (all bookings)</th>
+                  <th>Oracle Code</th>
+                  <th>Price (inc tax)</th>
+                  <th>Order Date</th>
+                </tr>
+        </thead>
+        <tbody>
+
+        {% for line in invoice_line_items.invoice_line_items|dictsort:"order.date_placed" %}
+           <tr>
+                <th>#{{ line.order.number }}</th>
+                <th>{{ line.title }}</th>
+  		<th>{{ line.oracle_code }}</th>
+                <th>{{ line.line_price_incl_tax }}</th>	
+                <th>{{ line.order.date_placed }}</th>
+	   </tr>
+	{% endfor %}
+
+        </tbody>
+        </table>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+            <br>
+            <h4>Payment Gateway Transaction</h4>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="bookings-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th>Invoice No</th>
+                  <th style='width: 100px;'>Action</th>
+                  <th style='width: 100px;'>Amount</th>
+                </tr>
+        </thead>
+        <tbody>
+		{% for transation in invoice_line_items.invoice_bpoint %}
+                <tr>
+                    <th><a href='/ledger/payments/invoice/payment?invoice={{ transation.crn1 }}'>{{ transation.crn1 }}</a></th>
+                    <th>{{ transation.action }}</th>
+                    <th>${{ transation.amount }}</th>
+		</tr>
+		{% endfor %}
+        </tbody>
+        </table>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+        <br>
+
+        <h4>How will the refund be completed?</h4>
+        </div>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+             <div class="col-sm-12 col-md-12 col-lg-12">
+                 <input type='radio' value='1' name='refund_method' > Refund via payment gateway (money will be refunded via credit card) 
+             </div>
+             <div class="col-sm-12 col-md-12 col-lg-12" style='display:none'>
+                <input type='radio' value='2' name='refund_method' > DBCA Manual Refund (cheque, eftpos etc)
+             </div>
+             <div class="col-sm-12 col-md-12 col-lg-12">
+                <input type='radio' value='3' name='refund_method' > Refund via other means (money will be refunded via e.g. cheque and money in unallocated pool will be moved back into e.g. booking fee account)
+             </div>
+        </div>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+		<BR>
+	</div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+		<div class="col-sm-12 col-md-3 col-lg-3 box-green2">
+                   <div class="col-sm-12 col-md-12 col-lg-12">
+                        Payment Gateway
+                   </div>
+                   <div class="col-sm-12 col-md-12 col-lg-12">
+                       ${{ invoice_line_items.total_bpoint_amount_available }}
+                   </div>
+		</div>
+                <div class="col-sm-12 col-md-3 col-lg-3 box-blue2">
+                  <div class="col-sm-12 col-md-12 col-lg-12">
+                      Unallocated Pool
+                  </div>
+                  <div class="col-sm-12 col-md-12 col-lg-12">
+                      ${{ invoice_line_items.total_booking_allocation_pool }}
+                  </div>
+                </div>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+               <br>
+               <h4>From Money Pool</h4>
+        </div>
+ 
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="from-money-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th style='width: 200px;'>Oracle Code</th>
+                  <th>Line Description</th>
+                  <th style='width: 100px;'>Amount</th>
+                  <th style='width: 10px;'><button id='from-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;">+</button></th>
+                </tr>
+        </thead>
+        <tbody>
+
+           <tr>
+                <td>{{ oracle_code_refund_allocation_pool }}</td>
+                <td><input style='width: 100%' type='hidden' id='unallocated-text' value="Mooring Refund - Unallocated Pool" class='form-control input-sm'>Mooring Refund - Unallocated Pool</td>
+                <td><span class='money_sign'>$</span><div class='tooltip2'  align='left'>
+                                          
+                                         <span class="tooltiptext">Cannot be greater than the Unallocated Pool Amount</span>
+                                         <input style='width: 100px;' type='number' id='unallocated_pool_refund' step='0.01' class='form-control input-sm money' value='{{ invoice_line_items.total_booking_allocation_pool }}' onblur='refund_booking.money_update(this);'>
+
+                                                       </div>
+</td>
+                <td>&nbsp;</td> 
+           </tr>
+
+        </tbody>
+        </table>
+               <div class="col-sm-12 col-md-12 col-lg-12">
+                   <span class="pull-right">
+			<h3 id='total_from_money'>$0.00</h3>
+                   </span>
+               </div>
+        </div>
+        <div id='to-money-booking-div'>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+               <h4>To Money Pool</h4>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="to-money-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th style='width: 200px;'>Oracle Code</th>
+                  <th>Line Description</th>
+                  <th style='width: 100px;'>Amount</th>
+                  <th style='width: 10px;'><button id='to-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;">+</button></th>
+                </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+        </tr>
+
+        </tbody>
+
+        </table>
+               <div class="col-sm-12 col-md-12 col-lg-12">
+                   <span class="pull-right">
+                        <h3 id='total_to_money'>$0.00</h3>
+                   </span>
+               </div>
+        </div>
+
+
+        </div>
+        <!-- BPOINT TRANS -->
+        <div id='money-bpoint-div'>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+               <h4>BPOINT Allocation</h4>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="money-bpoint-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th style='width: 150px;'>Txn Number</th>
+                  <th style='width: 100px;'>Amount</th>
+                </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+        </tr>
+
+        </tbody>
+        </table>
+               <div class="col-sm-12 col-md-12 col-lg-12">
+                   <span class="pull-right">
+                        <h3 id='total_bpoint_money'>$0.00</h3>
+                   </span>
+               </div>
+
+
+        </div>
+
+        </div>
+
+
+	<div class="col-sm-12 col-md-12 col-lg-12">
+		<br>
+		<br>
+ 		<span class="pull-right">
+                        <button id="refund-booking-wait" type="button" class="btn btn-warning btn-lg" target="_blank" style='display:none'>Please Wait</button>	
+			<button id="refund-booking" type="button" class="btn btn-primary btn-lg" target="_blank">Refund Booking</button>
+		</span>
+	</div>
+
+
+
+<div class="col-sm-12 col-md-12 col-lg-12">
+<br>
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+
+<br>
+</div>
+
+<div style="">
+    <div id='notification-box' class="modal"> 
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style='background-color: #FFF; border-top-left-radius: 5px; border-top-right-radius: 5px; color: #000;'><a type="button" class="close">x</a>
+                    <h4 class="modal-title"><h4>Error</h4></h4>
+                </div>
+                <div class="modal-body" style='background-color: #FFF;'>
+                    <div class="body">
+			<ul style='color: #f00;' id='notification-body'>
+			</ul>
+                    </div>
+                </div>
+                <div class="modal-footer" style='background-color: #FFF; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;'>
+                    <button id="okBtn" type="button" class="btn btn-danger">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="">
+    <div id='notification-box-success' class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style='background-color: #FFF; border-top-left-radius: 5px; border-top-right-radius: 5px; color: #000;'>
+                    <h4 class="modal-title"><h4>Notification</h4></h4>
+                </div>
+                <div class="modal-body" style='background-color: #FFF;'>
+                    <div class="body">
+                        <ul style='color: #19bd37' id='notification-body-success'>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer" style='background-color: #FFF; border-bottom-left-radius: 5px; border-bottom-right-radius: 5px;'>
+                    <center><button id="success-refund" type="button" class="btn btn-success">Complete</button></center>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop in" style='display:none'></div>
+<script src="/static/common/js/oracle_refund.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script>
+    // Set sciprting variables 
+    refund_booking.var.bpoint_amount_available = parseFloat('{{ invoice_line_items.total_bpoint_amount_available }}');
+    refund_booking.var.booking_allocation_pool = parseFloat('{{ invoice_line_items.total_booking_allocation_pool }}');
+    refund_booking.var.unique_oracle_code_on_booking = {{ invoice_line_items.unique_oracle_code_on_booking|safe }};
+    refund_booking.var.booking_id = {{ booking_id }};
+    refund_booking.var.newest_booking_id = {{ newest_booking }};
+    refund_booking.var.bpoint_trans_totals = {{ invoice_line_items.bpoint_trans_totals|safe }};
+    refund_booking.var.oracle_code_refund_allocation_pool = '{{ oracle_code_refund_allocation_pool }}';
+    window.onload = function() { refund_booking.init(); }
+</script>
+</div>
+{% endblock %}
+
