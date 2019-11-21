@@ -21,6 +21,6 @@ class Command(BaseCommand):
 
         if datetime.now() < dt:
             logger.info('Running command {}'.format(__name__))
-            run_deploy('commercialoperator/utils/csv/Commercial-Licences-Migration-20191119.csv', 'commercialoperator/utils/csv/E-Class-Licences-20191119.csv')
-            #run_deploy('commercialoperator/utils/csv/T-Class-Test.csv', 'commercialoperator/utils/csv/E-Class-Test.csv')
+            #run_deploy('commercialoperator/utils/csv/Commercial-Licences-Migration-20191119.csv', 'commercialoperator/utils/csv/E-Class-Licences-20191119.csv')
+            run_deploy('commercialoperator/utils/csv/T-Class-Test.csv', 'commercialoperator/utils/csv/E-Class-Test.csv')
 

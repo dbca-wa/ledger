@@ -106,8 +106,8 @@ class OrganisationReader():
     def _create_organisation(self, data, count, debug=False):
         try:
             #if data['email1'] == 'hello@ziyarahtours.com.au':
-            #if data['email1'] == 'perthcharlie@hotmail.com':
-            #    import ipdb; ipdb.set_trace()
+            if data['email1'] == 'info@safaris.net.au':
+                import ipdb; ipdb.set_trace()
             user, created = EmailUser.objects.get_or_create(
                 first_name=data['first_name'],
                 last_name=data['last_name'],
