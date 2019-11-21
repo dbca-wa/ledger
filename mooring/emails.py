@@ -93,21 +93,21 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
             bcc = override_email.split(",")
 
     if len(to) > 1:
-       for to_email in to:
-           msg = EmailMultiAlternatives(subject, "Please open with a compatible html email client.", from_email=from_email, to=to_email, attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
-           msg.attach_alternative(main_template, 'text/html')
+        msg = EmailMultiAlternatives(subject, "Please open with a compatible html email client.", from_email=from_email, to=to, attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
+        msg.attach_alternative(main_template, 'text/html')
 
-          #msg = EmailMessage(subject, main_template, to=[to_email],cc=cc, from_email=from_email)
-          #msg.content_subtype = 'html'
-          #if attachment1:
-          #    for a in attachment1:
-          #        msg.attach(a)
-           try:
-                email_log(str(log_hash)+' '+subject) 
-                msg.send()
-                email_log(str(log_hash)+' Successfully sent to mail gateway')
-           except Exception as e:
-                email_log(str(log_hash)+' Error Sending - '+str(e)) 
+        #msg = EmailMessage(subject, main_template, to=[to_email],cc=cc, from_email=from_email)
+        #msg.content_subtype = 'html'
+        #if attachment1:
+        #    for a in attachment1:
+        #        msg.attach(a)
+        try:
+             email_log(str(log_hash)+' '+subject)
+             msg.send()
+             email_log(str(log_hash)+' Successfully sent to mail gateway')
+        except Exception as e:
+                email_log(str(log_hash)+' Error Sending - '+str(e))
+
     else:
           msg = EmailMultiAlternatives(subject, "Please open with a compatible html email client.", from_email=from_email, to=to, attachments=_attachments, cc=cc, bcc=bcc, reply_to=reply_to)
           msg.attach_alternative(main_template, 'text/html')

@@ -137,7 +137,7 @@ export default {
                         vm.close();
                         swal(
                              'Surrender',
-                             'An email has been sent to applicant about surrender of this approval',
+                             'An email has been sent to proponent about surrender of this approval',
                              'success'
                         );
                         vm.$emit('refreshFromResponse',response);
