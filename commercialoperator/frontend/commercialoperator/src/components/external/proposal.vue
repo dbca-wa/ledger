@@ -430,6 +430,7 @@ export default {
 
             } else {
                 /* just save and submit - no payment required (probably application was pushed back by assessor for amendment */
+                vm.save_wo_confirm()
                 vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,vm.proposal.id+'/submit'),formData).then(res=>{
                     vm.proposal = res.body;
                     vm.$router.push({

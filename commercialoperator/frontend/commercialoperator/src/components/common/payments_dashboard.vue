@@ -149,7 +149,7 @@ export default {
             proposal_submitters: [],
             proposal_parks: [],
             proposal_headers:[
-                " Number","Licence","Holder","Status","Payment Method","Arrival","Park","Invoice/Confirmation","Action",
+                " Number","Licence","Holder","Status","Payment Method","Arrival","Park","Visitors", "Invoice/Confirmation","Action",
             ],
             proposal_options:{
                 language: {
@@ -228,6 +228,18 @@ export default {
                         //name: "park__id, park__name"
                         name: "park_bookings__park__name"
 
+                    },
+                    {
+                        data: "park_bookings",
+                        mRender:function (data,type,full) {
+                            let visitors = '';
+                            _.forEach(data, function (item) {
+                                visitors += 'A: ' + item.no_adults + '; C: ' + item.no_children + '; F: ' + item.no_free_of_charge + '<br>';
+                            });
+                            return visitors;
+                        },
+                        searchable: false,
+                        orderable: true
                     },
                     {
                         data: '',

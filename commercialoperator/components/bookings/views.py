@@ -41,6 +41,7 @@ from commercialoperator.components.bookings.utils import (
     delete_session_application_invoice,
     calc_payment_due_date,
     create_bpay_invoice,
+    create_other_invoice,
 )
 
 from commercialoperator.components.proposals.serializers import ProposalSerializer
@@ -113,10 +114,11 @@ class DeferredInvoicingPreviewView(TemplateView):
             recipient = proposal.submitter.email
             submitter = proposal.submitter
 
+        #if isinstance(proposal.org_applicant, Organisation) and (proposal.org_applicant.monthly_invoicing_allowed or proposal.org_applicant.bpay_allowed or proposal.org_applicant.other_allowed):
         if isinstance(proposal.org_applicant, Organisation) and (proposal.org_applicant.monthly_invoicing_allowed or proposal.org_applicant.bpay_allowed):
             try:
                 lines = create_lines(request)
-                logger.info('{} Show Park Bookings Preview for BPAY/monthly invoicing'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
+                logger.info('{} Show Park Bookings Preview for BPAY/Other/monthly invoicing'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
                 context.update({
                     'lines': lines,
                     'line_details': request.POST['payment'],
@@ -158,12 +160,20 @@ class DeferredInvoicingView(TemplateView):
                     booking_type = Booking.BOOKING_TYPE_INTERNET
                 elif proposal.org_applicant.monthly_invoicing_allowed and payment_method=='monthly_invoicing':
                     booking_type = Booking.BOOKING_TYPE_MONTHLY_INVOICING
+                #elif proposal.org_applicant.other_allowed and payment_method=='other':
+                else:
+                    booking_type = Booking.BOOKING_TYPE_RECEPTION
 
                 booking = create_booking(request, proposal, booking_type=booking_type)
                 invoice_reference = None
                 if booking and payment_method=='bpay':
-                    # BPAY invoice are created immediately. Monthly invoices are created later by Cron
+                    # BPAY/OTHER invoice are created immediately. Monthly invoices are created later by Cron
                     ret = create_bpay_invoice(submitter, booking)
+                    invoice_reference = booking.invoice.reference
+
+                if booking and payment_method=='other':
+                    # BPAY/Other invoice are created immediately. Monthly invoices are created later by Cron
+                    ret = create_other_invoice(submitter, booking)
                     invoice_reference = booking.invoice.reference
 
                 logger.info('{} Created Park Bookings with payment method {} for Proposal ID {}'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), payment_method, proposal.id))
@@ -175,7 +185,10 @@ class DeferredInvoicingView(TemplateView):
                     'monthly_invoicing': True if payment_method=='monthly_invoicing' else False,
                     'invoice_reference': invoice_reference
                 })
-                return render(request, self.template_name, context)
+                if payment_method=='other':
+                    return HttpResponseRedirect(reverse('payments:invoice-payment') + '?invoice={}'.format(invoice_reference))
+                else:
+                    return render(request, self.template_name, context)
 
 
             except Exception, e:
