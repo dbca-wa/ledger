@@ -50,7 +50,7 @@ def clear_applications():
     print 'ParkBooking: {}'.format(ParkBooking.objects.all().delete())
     print 'Booking: {}'.format(Booking.objects.all().delete())
 
-    for i in Proposal.objects.all():                                                         
+    for i in Proposal.objects.all():
         i.previous_application = None
         i.save()
         i.delete()
@@ -99,9 +99,107 @@ class OrganisationReader():
     """
 
     def __init__(self, filename):
+        self.filename = filename
         self.not_found = []
         self.parks_not_found = []
-        self.org_lines = self._read_organisation_data(filename)
+        self.org_lines = self._read_organisation_data()
+
+    def remove_duplicate_users(self, data, count, debug=False):
+        """
+        delete duplicate user, and correct existing email
+        """
+        count = 1
+        for data in reader.org_lines:
+            users = EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name'])
+            try:
+                if users.count() == 1:
+                    user_csv = EmailUser.objects.get(first_name=data['first_name'], last_name=data['last_name'])
+                    user = EmailUser.objects.get(email=data['email1'])
+                    if user_csv.id==user.id:
+                        user.email = data['email1']
+                    else:
+                        user.delete()
+                        user_csv.email = data['email1']
+                        user_csv.save()
+                    #print count, data['first_name'], data['last_name'], data['email1']
+                    print count, user_csv
+                    count += 1
+
+            except Exception, e:
+                import ipdb; ipdb.set_trace()
+                print e
+
+    def add_new_users(self, data, count, debug=False):
+        """
+        Add users not currently on CRM
+        """
+        count = 1
+        for data in reader.org_lines:
+            users_csv = EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name'])
+            users = EmailUser.objects.get(email=data['email1'])
+            try:
+                if users_csv.count()==0 and users.count()==0:
+                    user, created = EmailUser.objects.create(
+                            first_name=data['first_name'], last_name=data['last_name'], email=data['emails'], phone_number=data['phone_number'], mobile_number=data['mobile_number']
+                        )
+                    print count, user
+                    count += 1
+
+            except Exception, e:
+                import ipdb; ipdb.set_trace()
+                print e
+
+    def update_users(self, data, count, debug=False):
+        """
+        Add users not currently on CRM
+        """
+        count = 1
+        for data in self.org_lines:
+
+            users_csv = EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name'])
+            users = EmailUser.objects.filter(email=data['email1'])
+            users_ledger = EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name'], email__icontains='@ledger')
+
+            try:
+                if users_csv.count()==0 and users.count()==0:
+                    user = EmailUser.objects.create(
+                           first_name=data['first_name'], last_name=data['last_name'], email=data['email1'], phone_number=data['phone_number1'], mobile_number=data['mobile_number']
+                       )
+                    print count, user
+                    count += 1
+                #elif not EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name'], email=data['email1']) and users_legder.count()==0:
+                #    print data['first_name'], data['last_name'], data['email1']
+                #    print [[i.first_name, i.last_name, i.email] for i in users_csv]
+                #    print [[i.first_name, i.last_name, i.email] for i in users]
+                #    print 'no users_ledger: ', count
+                #    print
+                #    count += 1
+                elif users_ledger.count() > 0:
+                    #import ipdb; ipdb.set_trace()
+                    #if users_csv.count() > 0:
+                    #    users_csv.delete()
+
+                    if users_ledger.count() > 1:
+                        if EmailUser.objects.filter(email=data['email1']).count()==1:
+                            EmailUser.objects.get(email=data['email1']).delete()
+                        user = users_ledger.get(email__icontains='@ledger')
+                        user.email = data['email1']
+                        user.phone_number = data['phone_number1']
+                        user.mobile_number = data['mobile_number']
+                        user.save()
+                        print 'ledger update: ', count, user
+                    else:
+                        user = EmailUser.objects.create(
+                           first_name=data['first_name'], last_name=data['last_name'], email=data['email1'], phone_number=data['phone_number1'], mobile_number=data['mobile_number']
+                        )
+                        print 'ledger: ', count, user
+
+                    count += 1
+
+            except Exception, e:
+                import ipdb; ipdb.set_trace()
+                print e
+
 
     def _create_organisation(self, data, count, debug=False):
         try:
@@ -129,7 +227,7 @@ class OrganisationReader():
                 user.phone_number = data['phone_number1']
                 user.mobile_number = data['mobile_number']
                 user.save()
-                
+
         except MultipleObjectsReturned:
             #import ipdb; ipdb.set_trace()
             #for user in EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name'], email__icontains='ledger.dpaw'):
@@ -181,7 +279,7 @@ class OrganisationReader():
                 user.mobile_number = data['mobile_number']
                 user.save()
 
- 
+
 
             print data['email1']
 
@@ -243,7 +341,7 @@ class OrganisationReader():
             try:
                 #import ipdb; ipdb.set_trace()
                 data['licencee'] = data['licencee'] + ' ' if ledger_organisation.objects.filter(name=data['licencee']) else data['licencee']
-                
+
                 lo, created = ledger_organisation.objects.get_or_create(
                     abn=data['abn'],
                     defaults={
@@ -327,7 +425,7 @@ class OrganisationReader():
 
         return abn_new, abn_existing
 
-    def _read_organisation_data(self, filename, verify=False):
+    def _read_organisation_data(self, verify=False):
         def get_start_date(data, row):
             #import ipdb; ipdb.set_trace()
             try:
@@ -377,7 +475,7 @@ class OrganisationReader():
                 from commercialoperator.components.proposals.models import create_organisation_data
                 create_migration_data('commercialoperator/utils/csv/orgs.csv')
             '''
-            with open(filename) as csvfile:
+            with open(self.filename) as csvfile:
                 reader = csv.reader(csvfile, delimiter=str(':'))
                 header = next(reader) # skip header
                 for row in reader:
@@ -430,7 +528,11 @@ class OrganisationReader():
                     #print data
                     get_start_date(data, row)
 
-                    lines.append(data)
+                    if data['abn'] != '':
+                        lines.append(data) # must be an org
+                    #else:
+                    #   print data['first_name'], data['last_name'], data['email1'], data['abn']
+                    #   print
 
         except Exception, e:
             #logger.info('{}'.format(e))
