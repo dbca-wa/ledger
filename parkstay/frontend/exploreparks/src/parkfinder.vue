@@ -25,7 +25,8 @@
                                    <label> <input type="number" id="numAdults" name="num_adults" v-model.number="numAdults" min="0" max="16"/></label>
                                 </div>
                             </div><div class="row">
-                                <div class="small-6 columns">class="button" v-bind:href="f.info_url" target="_blank">More info</a>
+                                <div class="small-6 columns">
+                                <!-- <a class="button" v-bind:href="f.info_url" target="_blank">More info</a> -->
                                     <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
 - Seniors Card
 - Age Pension
