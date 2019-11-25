@@ -17,42 +17,43 @@ router.register(r'availability_ratis', api.AvailabilityRatisViewSet, 'availabili
 router.register(r'campgrounds', api.CampgroundViewSet)
 router.register(r'campsites', api.CampsiteViewSet)
 router.register(r'campsite_bookings', api.CampsiteBookingViewSet)
-router.register(r'promo_areas',api.PromoAreaViewSet)
-router.register(r'parks',api.ParkViewSet)
-router.register(r'parkentryrate',api.ParkEntryRateViewSet)
-router.register(r'features',api.FeatureViewSet)
-router.register(r'regions',api.RegionViewSet)
-router.register(r'districts',api.DistrictViewSet)
-router.register(r'campsite_classes',api.CampsiteClassViewSet)
-router.register(r'booking',api.BookingViewSet)
-router.register(r'campground_booking_ranges',api.CampgroundBookingRangeViewset)
-router.register(r'campsite_booking_ranges',api.CampsiteBookingRangeViewset)
-router.register(r'campsite_rate',api.CampsiteRateViewSet)
-router.register(r'campsites_stay_history',api.CampsiteStayHistoryViewSet)
-router.register(r'campground_stay_history',api.CampgroundStayHistoryViewSet)
-router.register(r'rates',api.RateViewset)
-router.register(r'closureReasons',api.ClosureReasonViewSet)
-router.register(r'priceReasons',api.PriceReasonViewSet)
-router.register(r'maxStayReasons',api.MaximumStayReasonViewSet)
-router.register(r'users',api.UsersViewSet)
-router.register(r'contacts',api.ContactViewSet)
+router.register(r'promo_areas', api.PromoAreaViewSet)
+router.register(r'parks', api.ParkViewSet)
+router.register(r'parkentryrate', api.ParkEntryRateViewSet)
+router.register(r'features', api.FeatureViewSet)
+router.register(r'regions', api.RegionViewSet)
+router.register(r'districts', api.DistrictViewSet)
+router.register(r'campsite_classes', api.CampsiteClassViewSet)
+router.register(r'booking', api.BookingViewSet)
+router.register(r'campground_booking_ranges', api.CampgroundBookingRangeViewset)
+router.register(r'campsite_booking_ranges', api.CampsiteBookingRangeViewset)
+router.register(r'campsite_rate', api.CampsiteRateViewSet)
+router.register(r'campsites_stay_history', api.CampsiteStayHistoryViewSet)
+router.register(r'campground_stay_history', api.CampgroundStayHistoryViewSet)
+router.register(r'rates', api.RateViewset)
+router.register(r'closureReasons', api.ClosureReasonViewSet)
+router.register(r'priceReasons', api.PriceReasonViewSet)
+router.register(r'maxStayReasons', api.MaximumStayReasonViewSet)
+router.register(r'users', api.UsersViewSet)
+router.register(r'contacts', api.ContactViewSet)
 router.register(r'countries', api.CountryViewSet)
-router.register(r'discountReasons',api.DiscountReasonViewset)
+router.register(r'discountReasons', api.DiscountReasonViewset)
 
 api_patterns = [
-    url(r'^api/profile$',api.GetProfile.as_view(), name='get-profile'),
-    url(r'^api/profile/update_personal$',api.UpdateProfilePersonal.as_view(), name='update-profile-personal'),
-    url(r'^api/profile/update_contact$',api.UpdateProfileContact.as_view(), name='update-profile-contact'),
-    url(r'^api/profile/update_address$',api.UpdateProfileAddress.as_view(), name='update-profile-address'),
-    url(r'^api/oracle_job$',api.OracleJob.as_view(), name='get-oracle'),
-    url(r'^api/bulkPricing', api.BulkPricingView.as_view(),name='bulkpricing-api'),
+    url(r'^api/profile$', api.GetProfile.as_view(), name='get-profile'),
+    url(r'^api/profile/update_personal$', api.UpdateProfilePersonal.as_view(), name='update-profile-personal'),
+    url(r'^api/profile/update_contact$', api.UpdateProfileContact.as_view(), name='update-profile-contact'),
+    url(r'^api/profile/update_address$', api.UpdateProfileAddress.as_view(), name='update-profile-address'),
+    url(r'^api/oracle_job$', api.OracleJob.as_view(), name='get-oracle'),
+    url(r'^api/bulkPricing', api.BulkPricingView.as_view(), name='bulkpricing-api'),
     url(r'^api/search_suggest', api.search_suggest, name='search_suggest'),
     url(r'^api/create_booking', api.create_booking, name='create_booking'),
     url(r'^api/get_confirmation/(?P<booking_id>[0-9]+)/$', api.get_confirmation, name='get_confirmation'),
-    url(r'^api/reports/booking_refunds$', api.BookingRefundsReportView.as_view(),name='booking-refunds-report'),
-    url(r'^api/reports/bookings$', api.BookingReportView.as_view(),name='bookings-report'),
-    url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(),name='booking-settlements-report'),
-    url(r'^api/',include(router.urls))
+    url(r'^api/reports/booking_refunds$', api.BookingRefundsReportView.as_view(), name='booking-refunds-report'),
+    url(r'^api/reports/bookings$', api.BookingReportView.as_view(), name='bookings-report'),
+    url(r'^api/reports/booking_settlements$', api.BookingSettlementReportView.as_view(), name='booking-settlements-report'),
+    url(r'^api/server-date$', api.GetServerDate.as_view(), name='get-server-date'),
+    url(r'^api/', include(router.urls))
 ]
 
 # URL Patterns
