@@ -1,0 +1,6 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    The licence requirement to submit {{ compliance.reference}} has been completed.    
+
+{%  endblock %}

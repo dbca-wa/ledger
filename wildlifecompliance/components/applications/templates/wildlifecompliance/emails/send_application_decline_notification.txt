@@ -1,9 +1,13 @@
-{%  extends 'wildlifecompliance/emails/base_email.html' %}
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {% block content %}
     A Wildlife Licensing application activity type has been declined, with below details.
-    Application : {{ application.id }}
-    Activity Type : {{application.submitter}}
+
+    Application: {{ application.id }}
+
+    Activity Type: {{application.submitter}}
+
     Link: {{url}}
-    <p>Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.</p>
+
+    Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
 {% endblock %}

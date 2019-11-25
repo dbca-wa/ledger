@@ -2348,6 +2348,16 @@ class GetProfile(views.APIView):
         return Response(serializer.data)
 
 
+class GetServerDate(views.APIView):
+    """Returns the server current date in order to restrict dates in frontend calendar components
+    independent of timezone.
+    """
+    renderer_classes = [JSONRenderer, ]
+
+    def get(self, request, format=None):
+        return Response(date.today().isoformat())
+
+
 class UpdateProfilePersonal(views.APIView):
     renderer_classes = [JSONRenderer, ]
     permission_classes = [IsAuthenticated]

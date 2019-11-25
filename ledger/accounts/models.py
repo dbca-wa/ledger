@@ -26,6 +26,12 @@ from ledger.accounts.utils import get_department_user_compact, in_dbca_domain
 from ledger.address.models import UserAddress, Country
 
 
+def unicode_compatible(value):
+    try: 
+        return unicode(value)
+    except:
+        return str(value)
+
 
 class EmailUserManager(BaseUserManager):
     """A custom Manager for the EmailUser model.
@@ -148,6 +154,9 @@ class BaseAddress(models.Model):
     def __str__(self):
         return self.summary
 
+#    def __unicode__(self):
+#        return ''
+
     class Meta:
         abstract = True
 
@@ -177,12 +186,27 @@ class BaseAddress(models.Model):
         return u', '.join(self.active_address_fields())
 
     # Helper methods
+#    def active_address_fields(self):
+#        """Return the non-empty components of the address.
+#        """
+#        fields = [self.line1, self.line2, self.line3,
+#                  self.locality, self.state, self.country, self.postcode]
+#        fields = [str(f).strip() for f in fields if f]
+#        
+#        return fields
+
+
+    # Helper methods
     def active_address_fields(self):
         """Return the non-empty components of the address.
         """
         fields = [self.line1, self.line2, self.line3,
                   self.locality, self.state, self.country, self.postcode]
-        fields = [str(f).strip() for f in fields if f]
+        #for f in fields:
+        #    print unicode(f).encode('utf-8').decode('unicode-escape').strip()
+        #fields = [str(f).strip() for f in fields if f]
+        fields = [unicode_compatible(f).encode('utf-8').decode('unicode-escape').strip() for f in fields if f]
+        
         return fields
 
     def join_fields(self, fields, separator=u', '):
@@ -199,6 +223,7 @@ class BaseAddress(models.Model):
             Returns a hash of the address summary
         """
         return zlib.crc32(self.summary.strip().upper().encode('UTF8'))
+
 
 class Address(BaseAddress):
     user = models.ForeignKey('EmailUser', related_name='profile_addresses')
@@ -251,6 +276,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                            verbose_name="date of birth", help_text='')
     phone_number = models.CharField(max_length=50, null=True, blank=True,
                                     verbose_name="phone number", help_text='')
+    position_title = models.CharField(max_length=50, null=True, blank=True,
+                                    verbose_name="position title", help_text='')
     mobile_number = models.CharField(max_length=50, null=True, blank=True,
                                      verbose_name="mobile number", help_text='')
     fax_number = models.CharField(max_length=50, null=True, blank=True,
@@ -303,6 +330,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                 self.mobile_number = user_details.get('mobile_phone')
                 self.title = user_details.get('title')
                 self.fax_number = user_details.get('org_unit__location__fax')
+                self.is_staff = True
                 
         super(EmailUser, self).save(*args, **kwargs)
 
@@ -378,6 +406,15 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         else:
             return -1
 
+
+    def upload_identification(self, request):
+        with transaction.atomic():
+            document = Document(file=request.data.dict()['identification'])
+            document.save()
+            self.identification = document
+            self.save()
+
+
     def log_user_action(self, action, request=None):
         if request:
             return EmailUserAction.log_action(self, action, request.user)
@@ -432,6 +469,7 @@ def query_emailuser_by_args(**kwargs):
     }
 
 
+
 @python_2_unicode_compatible
 class UserAction(models.Model):
     who = models.ForeignKey(EmailUser, null=False, blank=False)
@@ -469,6 +507,64 @@ class EmailUserAction(UserAction):
             who=user,
             what=str(action)
         )
+
+class CommunicationsLogEntry(models.Model):
+    TYPE_CHOICES = [
+        ('email', 'Email'),
+        ('phone', 'Phone Call'),
+        ('mail', 'Mail'),
+        ('person', 'In Person'),
+        ('onhold', 'On Hold'),
+        ('onhold_remove', 'Remove On Hold'),
+        ('with_qaofficer', 'With QA Officer'),
+        ('with_qaofficer_completed', 'QA Officer Completed'),
+    ]
+    DEFAULT_TYPE = TYPE_CHOICES[0][0]
+
+    #to = models.CharField(max_length=200, blank=True, verbose_name="To")
+    to = models.TextField(blank=True, verbose_name="To")
+    fromm = models.CharField(max_length=200, blank=True, verbose_name="From")
+    #cc = models.CharField(max_length=200, blank=True, verbose_name="cc")
+    cc = models.TextField(blank=True, verbose_name="cc")
+
+    #type = models.CharField(max_length=35, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    log_type = models.CharField(max_length=35, choices=TYPE_CHOICES, default=DEFAULT_TYPE)
+    reference = models.CharField(max_length=100, blank=True)
+    subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
+    text = models.TextField(blank=True)
+
+    customer = models.ForeignKey(EmailUser, null=True, related_name='+')
+    staff = models.ForeignKey(EmailUser, null=True, related_name='+')
+
+    created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+
+    class Meta:
+        app_label = 'accounts'
+
+
+class EmailUserLogEntry(CommunicationsLogEntry):
+    emailuser = models.ForeignKey(EmailUser, related_name='comms_logs')
+
+    def save(self, **kwargs):
+        # save the request id if the reference not provided
+        if not self.reference:
+            self.reference = self.emailuser.id
+        super(EmailUserLogEntry, self).save(**kwargs)
+
+    class Meta:
+        app_label = 'accounts'
+
+
+def update_emailuser_comms_log_filename(instance, filename):
+    return 'emailusers/{}/communications/{}/{}'.format(instance.log_entry.emailuser.id,instance.id,filename)
+
+class EmailUserLogDocument(Document):
+    log_entry = models.ForeignKey('EmailUserLogEntry',related_name='documents')
+    _file = models.FileField(upload_to=update_emailuser_comms_log_filename)
+
+    class Meta:
+        app_label = 'accounts'
+
 
 
 class EmailUserListener(object):
@@ -527,8 +623,10 @@ class RevisionedMixin(models.Model):
             super(RevisionedMixin, self).save(**kwargs)
         else:
             with revisions.create_revision():
-                revisions.set_user(kwargs.pop('version_user', None))
-                revisions.set_comment(kwargs.pop('version_comment', ''))
+                if 'version_user' in kwargs:
+                    revisions.set_user(kwargs.pop('version_user', None))
+                if 'version_comment' in kwargs:
+                    revisions.set_comment(kwargs.pop('version_comment', ''))
                 super(RevisionedMixin, self).save(**kwargs)
 
     @property
@@ -588,6 +686,8 @@ class Organisation(models.Model):
     identification = models.FileField(upload_to='%Y/%m/%d', null=True, blank=True)
     postal_address = models.ForeignKey('OrganisationAddress', related_name='org_postal_address', blank=True, null=True, on_delete=models.SET_NULL)
     billing_address = models.ForeignKey('OrganisationAddress', related_name='org_billing_address', blank=True, null=True, on_delete=models.SET_NULL)
+    email = models.EmailField(blank=True, null=True,)
+    trading_name = models.CharField(max_length=256, null=True, blank=True)
 
     def upload_identification(self, request):
         with transaction.atomic():

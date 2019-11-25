@@ -1,13 +1,10 @@
 from datetime import date, timedelta
-
-from django.db.models import Q
-
 from django_cron import CronJobBase, Schedule
-
 from parkstay.models import Booking
 from parkstay.reports import outstanding_bookings
 from parkstay.emails import send_booking_confirmation
 from parkstay.utils import oracle_integration
+
 
 class UnpaidBookingsReportCronJob(CronJobBase):
     RUN_AT_TIMES = ['01:00']
@@ -16,7 +13,8 @@ class UnpaidBookingsReportCronJob(CronJobBase):
     code = 'parkstay.unpaid_bookings_report'
 
     def do(self):
-        outstanding_bookings() 
+        outstanding_bookings()
+
 
 class OracleIntegrationCronJob(CronJobBase):
     RUN_AT_TIMES = ['01:00']
@@ -25,7 +23,8 @@ class OracleIntegrationCronJob(CronJobBase):
     code = 'parkstay.oracle_integration'
 
     def do(self):
-        oracle_integration(str(date.today()-timedelta(days=1)),False)
+        oracle_integration(str(date.today() - timedelta(days=1)), False)
+
 
 class SendBookingsConfirmationCronJob(CronJobBase):
     RUN_EVERY_MINS = 5
@@ -45,6 +44,6 @@ class SendBookingsConfirmationCronJob(CronJobBase):
             if unconfirmed:
                 for b in unconfirmed:
                     if b.paid:
-                       send_booking_confirmation(b)
+                        send_booking_confirmation(b)
         except:
             raise

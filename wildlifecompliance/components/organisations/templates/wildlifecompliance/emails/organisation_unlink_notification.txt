@@ -2,19 +2,19 @@
 
 {%  block content %}
     {% if unlinked_by.email != user.email %}
-        Your have been unlinked from:
+        You have been unlinked from the following organisation:
 
-        Organisation : {{ organisation.name }}
+        Organisation: {{ organisation.name }}
 
-        ABN : {{ organisation.abn}}
+        ABN: {{ organisation.abn }}
 
-        You were unlinked from this organisation by {{ unlinked_by.get_full_name }}({{unlinked_by.email}}).
+        You were unlinked from this organisation by {{ unlinked_by.get_full_name }} ({{unlinked_by.email}}).
     {% else %}
-        Your have unlinked yourself from:
+        You have unlinked yourself from the following organisation:
 
-        Organisation : {{ organisation.name }}
+        Organisation: {{ organisation.name }}
 
-        ABN : {{ organisation.abn}}
+        ABN: {{ organisation.abn }}
     {% endif %}
     You can no longer make applications on behalf of this organisation.
 

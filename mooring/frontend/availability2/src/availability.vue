@@ -70,7 +70,7 @@
                         </div>
                 </div>
                 <div class="columns small-4 medium-3 large-2">
-                        <div v-if="vesselRego.length < 1 || vesselRego == ' ' || vesselSize < 1 || vesselDraft < 1 ">
+                        <div v-if="vesselRego.length < 0.1 || vesselRego == ' ' || vesselSize < 0.1 || vesselDraft < 0.1 ">
                             
                             <button title="Please enter vessel details" style="border-radius: 4px; border: 1px solid #2e6da4" class="button small-12 medium-12 large-12" @click="validateVessel()">Proceed to Check Out</button>
                         </div>
@@ -161,28 +161,28 @@
                         <div class="small-6 columns">
                             <label for="vesselSize" class="text-left">Vessel Size (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselSize" ref="vesselSize" name="vessel_size" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselSize" step="1" :disabled="current_booking.length > 0"/>
+                            <input type="number" id="vesselSize" ref="vesselSize" name="vessel_size" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselSize" step='0.01' :disabled="current_booking.length > 0"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselDraft" class="text-left">Vessel Draft (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselDraft" ref="vesselDraft" name="vessel_draft" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselDraft" step="1" :disabled="current_booking.length > 0"/>
+                            <input type="number" id="vesselDraft" ref="vesselDraft" name="vessel_draft" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselDraft" step='0.01' :disabled="current_booking.length > 0"/>
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselBeam" class="text-left">Vessel Beams (Meters)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselBeam" ref="vesselBeam" name="vessel_beam" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselBeam" step="1" :disabled="current_booking.length > 0" />
+                            <input type="number" id="vesselBeam" ref="vesselBeam" name="vessel_beam" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselBeam" step='0.01' :disabled="current_booking.length > 0" />
                         </div>
                     </div>
                     <div class="row">
                         <div class="small-6 columns">
                             <label for="vesselWeight" class="text-left">Vessel Weight (Tonnes)</label>
                         </div><div class="small-6 columns">
-                            <input type="number" id="vesselWeight" ref="vesselWeight" name="vessel_weight" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselWeight" step="1" :disabled="current_booking.length > 0"/>
+                            <input type="number" id="vesselWeight" ref="vesselWeight" name="vessel_weight" @change="checkDetails(false)" @blur="checkDetails(false)" v-model="vesselWeight" step='0.01' :disabled="current_booking.length > 0"/>
                         </div>
                     </div>
                 </div>
@@ -191,9 +191,9 @@
             <div class="small-6 medium-6 large-2 columns" >
                 <label>
                     Guests 
-                    <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
+                    <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown" id='guests-button' />
                 </label>
-                <div style='position: relative;'>
+                <div style='iiiiposition: relative;'>
                 <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                     <div class="row">
                         <div class="small-6 columns">
@@ -780,6 +780,9 @@ export default {
                                         //        vm.mooring_book_row[index] = false;
                                         //}
                                         vm.addBooking(vm.sites[site_index_id].id, vm.sites[site_index_id].mooring_id, booking_period[0].id, booking_period[0].date);
+                                        //if (vm.ongoing_booking == false) {
+                                           
+                                        //}
                         }
 
 
@@ -810,7 +813,7 @@ export default {
                   url: vm.parkstayUrl + '/api/booking/create', 
                   dataType: 'json',
                   method: 'POST',
-                  // async: false,
+                  //async: false,
                   data: submitData, 
                   success: function(data, stat, xhr) {
                      if (this.loadID == vm.loadingID) { 
@@ -929,10 +932,10 @@ export default {
                     success: function(data, stat, xhr) {
                         vm.searchedRego = reg;
                         if(data[0]){
-                            vm.vesselSize = Math.ceil(data[0].vessel_size);
-                            vm.vesselWeight = Math.ceil(data[0].vessel_weight);
-                            vm.vesselDraft = Math.ceil(data[0].vessel_draft);
-                            vm.vesselBeam = Math.ceil(data[0].vessel_beam);  
+                            vm.vesselSize = parseFloat(data[0].vessel_size);
+                            vm.vesselWeight = parseFloat(data[0].vessel_weight);
+                            vm.vesselDraft = parseFloat(data[0].vessel_draft);
+                            vm.vesselBeam = parseFloat(data[0].vessel_beam);  
                         } else {
                             console.log("Registration was not found.");
                         }
@@ -994,7 +997,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselSize < 1){
+            if (vm.vesselSize < 0.1){
                 swal({
                   title: 'Invalid Vessel Size',
                   text: "Please enter a valid vessel size",
@@ -1005,7 +1008,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselDraft < 1){
+            if (vm.vesselDraft < 0.1){
                 swal({
                   title: 'Invalid Vessel Draft',
                   text: "Please enter a valid vessel draft",
@@ -1016,7 +1019,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselBeam < 1){
+            if (vm.vesselBeam < 0.1){
                 swal({
                   title: 'Invalid Vessel Beam',
                   text: "Please enter a valid vessel beam",
@@ -1027,7 +1030,7 @@ export default {
                   allowOutsideClick: false
                 });
             }
-            if (vm.vesselWeight < 1){
+            if (vm.vesselWeight < 0.1){
                 swal({
                   title: 'Invalid Vessel Weight',
                   text: "Please enter a valid vessel weight",
@@ -1196,7 +1199,7 @@ export default {
                                             if (booking_period.length > 1) {
                                                     vm.mooring_book_row[index] = false;
                                             } else {      
-                                                if (booking_period[0].status == 'closed' || booking_period[0].status == 'selected' || booking_period[0].status == 'perday' || booking_period[0].status == 'maxstay') {
+                                                if (booking_period[0].status == 'closed' || booking_period[0].status == 'selected' || booking_period[0].status == 'perday' || booking_period[0].status == 'maxstay' || booking_period[0].status == 'toofar' || booking_period[0].status == 'maxstay') {
                                                     // vm.mooring_book_row[index] = 'disabled';
                                                     vm.mooring_book_row_disabled[index] = true;	
                                                 }
@@ -1346,6 +1349,12 @@ export default {
 //                    window.location = loc.protocol + '//' + loc.host + loc.pathname;
                }
             }, 1000);
+        // Fix white space which appears on the right of the availablity screen START
+        $('#guests-button').click();
+        $('#guests-button').click();
+        // Fix white space which appears on the right of the availablity screen END
+
+
 
     }
 }

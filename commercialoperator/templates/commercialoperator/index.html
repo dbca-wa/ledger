@@ -1,0 +1,56 @@
+{% extends 'commercialoperator/base.html' %}
+
+{% load bootstrap3 %}
+
+{% load static %}
+
+{% block extra_css %}
+    <link type="text/css" href="{% static 'wl/css/index.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block left_menu_items %}
+    <li><a  href="{% url 'ds_contact' %}">Contact Us</a></li>
+    <li><a  href="{% url 'ds_further_info' %}">Further Information</a></li>
+{% endblock %}
+
+{% block messages %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <h2>
+                    Welcome to the {{system_name}} System
+                </h2>
+            </div>
+            <div class="col-md-4">
+                {% if not request.user.is_authenticated %}
+                    <div id="ps-login-container">
+                        <h3>
+                            Access to {{system_name}}
+                        </h3>
+                        {% bootstrap_messages %}
+                        <form method="post" action="{% url "social:complete" backend="email" %}">
+                            {% csrf_token %}
+                            {% bootstrap_form form %}
+                            <div id="submit-container">
+                                {% bootstrap_button 'Submit' button_class='btn-primary' %}
+                            </div>
+                        </form>
+                        <p>Submit your email to login or start the new-user registration process.</p>
+                        <hr>
+                        <h4>
+                            {{system_name}} Password-less Logins
+                        </h4>
+                        <p>
+                            At the {{ department_name }}, we employ a password-less authentication system, meaning you never need to remember
+                            a password. When you need to login to a site, such as {{ system_name }}, simply enter your email and an 
+                            authentication link will be sent to your registered email address. From there, simply follow the link to complete the login process.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

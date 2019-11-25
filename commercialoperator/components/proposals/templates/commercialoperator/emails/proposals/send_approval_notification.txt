@@ -1,0 +1,18 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+   
+       Your licence to conduct commercial operations on Conservation and Land Management Act 1984 has been approved and expires on {{proposal.approval.expiry_date}}. A copy of your licence is attached to this email and can be accessed in the Commercial Operator Licensing System (COLS) under your account, click <a href="{{url}}">here</a> to login.
+
+        Parks and Activities
+        The activities and parks you are permitted to operate within are listed in Schedule 1 of your licence.
+
+        Commercial Operator Handbook - Licence Conditions
+        All operators are required to adhere to the licence conditions listed in the Commercial Operator Handbook (2019). A copy of the handbook can be downloaded from the DBCA website <a href="{{handbook_url}}">here</a>. Please ensure you have a copy of this handbook on hand either in hardcopy or an electronic version.
+
+        Additional Licence Conditions
+        Additional licence conditions are listed in schedule 2 of the licence, and are listed under the “Licence Requirements” section in COLS. You will need to login to your account and ensure you have completed all additional licence conditions by the due date by uploading the requested documents.
+
+        If you have any enquiries or need assistance with the online system please contact a licensing office on {{settings.DEP_PHONE}} or email {{settings.SUPPORT_EMAIL}}
+
+{%  endblock %}

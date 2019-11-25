@@ -1,0 +1,75 @@
+{% extends 'oscar/checkout/preview.html' %}
+{% load currency_filters %}
+{% load i18n %}
+{% load thumbnail %}
+{% load purchase_info_tags %}
+{% load staticfiles %}
+
+<!-- remove shipping content -->
+{% block shipping_address %}
+{% endblock shipping_address %}
+
+<!-- remove nav/breadcrumbs content -->
+{% block checkout_nav %}
+{% endblock %}
+
+{% block order_contents %}
+    <div class="sub-header">
+        {% block order_contents_actions %}
+        {% endblock %}
+
+        <h2>{% trans "Order contents" %}</h2>
+    </div>
+    <div class="basket-title">
+        <div class="row">
+            <p class="col-sm-9 h4">{% trans "Item" %}</p>
+            <p class="col-sm-1 h4 align-center">{% trans "Quantity" %}</p>
+            <p class="col-sm-2 h4 align-right">{% trans "Total" %}</p>
+        </div>
+    </div>
+        {% for line in lines %}
+            <div class="basket-items">
+                <div class="row">
+                    <div class="col-sm-2">
+                        {{ forloop.counter  }}
+                    </div>
+                    <div class="col-sm-7">
+                        <h3>{{ line.ledger_description }}</h3>
+                    </div>
+                    <div class="col-sm-1 align-center">
+                        {{ line.quantity }}
+                    </div>
+                    <div class="col-sm-2 align-right">
+                        <p class="price_color">
+                            {% widthratio line.price_incl_tax 1 line.quantity %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+{% endblock order_contents %}
+
+{% block payment_method %}
+
+{% endblock %}
+
+{% block place_order %}
+    <form method="post" action="{% url 'deferred_invoicing' proposal_id %}" id="place_order_form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="place_order" />
+        <input type="hidden" name='line_details' value='{{ line_details }}' />
+        <input type="hidden" name='method' value='{{ payment_method }}' />
+
+        <div class="form-group clearfix">
+            <div class="row">
+                <div class="col-sm-3 col-sm-offset-9">
+                     <input type="button" class="btn btn-primary btn-lg" value="Cancel" onclick="window.history.back()" />
+                     <button id="place-order" formnovalidate type="submit" class="btn btn-primary btn-lg" data-loading-text="{% trans 'Submitting...' %}">
+                        {% trans "Continue" %}
+                     </button>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock place_order %}

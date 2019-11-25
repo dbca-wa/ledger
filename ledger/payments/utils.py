@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
 from six.moves.urllib.parse import urlparse
 #
-from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction 
+from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction
 from oscar.core.loading import get_class
 from confy import env
 from decimal import Decimal
@@ -116,7 +116,7 @@ def addToInterface(date,oracle_codes,system,override):
                 records[k] = OracleInterface.objects.create(
                     receipt_date = trans_date,
                     activity_name = k,
-                    amount = D(v), 
+                    amount = D(v),
                     customer_name = system.system_name,
                     description = k,
                     source = system.source,
@@ -130,7 +130,7 @@ def addToInterface(date,oracle_codes,system,override):
 
         # add empty stubs for deductions
         for k, v in oracle_codes.items():
-            deduction_qs = OracleInterfaceDeduction.objects.filter(oisystem=system, percentage_account_code=k)        
+            deduction_qs = OracleInterfaceDeduction.objects.filter(oisystem=system, percentage_account_code=k)
             if deduction_qs and system.deduct_percentage:
                 for deduction in deduction_qs:
                     if (not deduction.percentage or not deduction.destination_account_code):
@@ -145,7 +145,7 @@ def addToInterface(date,oracle_codes,system,override):
                         records[deduction.destination_account_code] = OracleInterface.objects.create(
                             receipt_date = trans_date,
                             activity_name = deduction.destination_account_code,
-                            amount = D(0), 
+                            amount = D(0),
                             customer_name = system.system_name,
                             description = deduction.destination_account_code,
                             source = system.source,
@@ -155,18 +155,18 @@ def addToInterface(date,oracle_codes,system,override):
                             status_date = today
                         )
                         deductions_only.add(deduction.destination_account_code)
-                    
+
         for k,v in oracle_codes.items():
             if v != 0:
                 found = OracleAccountCode.objects.filter(active_receivables_activities=k)
                 if not found:
-                    raise ValidationError('{} is not a valid account code'.format(k)) 
+                    raise ValidationError('{} is not a valid account code'.format(k))
 
                 # Check if there is a deduction for that system/account code, and sends to another oracle account code
                 deduction_qs = OracleInterfaceDeduction.objects.filter(oisystem=system, percentage_account_code=k)
 
                 if deduction_qs and system.deduct_percentage:
-                    
+
                     # sanity check: deductions should not transfer money to an account code that shows up as a line item
                     if k in deductions_only:
                         raise ValidationError('A deduction cannot transfer money to a line item that is also being deducted from')
@@ -178,7 +178,7 @@ def addToInterface(date,oracle_codes,system,override):
 
                         # Add the deducted amount to the oracle code specified in the system table
                         deduction_amount = deduction.percentage * initial_amount / D(100)
-                        records[deduction.destination_account_code].amount += deduction_amount 
+                        records[deduction.destination_account_code].amount += deduction_amount
                         remainder_amount -= deduction_amount
 
                     records[k].amount = remainder_amount
@@ -345,7 +345,7 @@ def oracle_parser_on_invoice(date,system,system_name,override=False):
             #Build a list of invoices already in the oracle parse for parse date query
             for opi in op_invoices:
                oracle_parser_invoices.append(opi.reference)
-            invoices = Invoice.objects.filter(created__date=date, system=system)
+            invoices = Invoice.objects.filter(settlement_date=date, system=system)
 
             #Loop through invoices
             for invoice in invoices:
@@ -511,7 +511,7 @@ def update_payments(invoice_reference):
                                                 new_amount = D(line.payment_details['card'][str(bpoint.id)]) + unallocated
                                             if unallocated > 0:
                                                 line.payment_details['card'][str(bpoint.id)] = str(new_amount)
-                                                paid_amount += new_amount 
+                                                paid_amount += new_amount
                                                 paid += new_amount
                                         else:
                                             if remaining_amount <= unallocated:
@@ -519,7 +519,7 @@ def update_payments(invoice_reference):
                                             else:
                                                 new_amount = D(0.0) + unallocated
                                             line.payment_details['card'][bpoint.id] = str(new_amount)
-                                            paid_amount += new_amount 
+                                            paid_amount += new_amount
                                             paid += new_amount
                                 if refunded_amount < amount and refunded < total_refund:
                                     if bpoint.action == 'refund':
@@ -533,7 +533,7 @@ def update_payments(invoice_reference):
                                                 new_amount = D(line.refund_details['card'][str(bpoint.id)]) + unallocated
                                             if unallocated > 0:
                                                 line.refund_details['card'][str(bpoint.id)] = str(new_amount)
-                                                refunded_amount += new_amount 
+                                                refunded_amount += new_amount
                                                 refunded += new_amount
                                         else:
                                             if remaining_amount <= unallocated:
@@ -541,7 +541,7 @@ def update_payments(invoice_reference):
                                             else:
                                                 new_amount = D(0.0) + unallocated
                                             line.refund_details['card'][bpoint.id] = str(new_amount)
-                                            refunded_amount += new_amount 
+                                            refunded_amount += new_amount
                                             refunded += new_amount
                         # Bpay Transactions
                         for bpay in i.bpay_transactions:
@@ -558,7 +558,7 @@ def update_payments(invoice_reference):
                                                 new_amount = D(line.payment_details['bpay'][str(bpay.id)]) + unallocated
                                             if unallocated > 0:
                                                 line.payment_details['bpay'][str(bpay.id)] = str(new_amount)
-                                                paid_amount += new_amount 
+                                                paid_amount += new_amount
                                                 paid += new_amount
                                         else:
                                             if remaining_amount <= unallocated:
@@ -566,7 +566,7 @@ def update_payments(invoice_reference):
                                             else:
                                                 new_amount = D(0.0) + unallocated
                                             line.payment_details['bpay'][bpay.id] = str(new_amount)
-                                            paid_amount += new_amount 
+                                            paid_amount += new_amount
                                             paid += new_amount
                                 if refunded_amount < amount and refunded < total_refund:
                                     if bpay.p_instruction_code == '25' and bpay.type == '699':
@@ -580,7 +580,7 @@ def update_payments(invoice_reference):
                                                 new_amount = D(line.refund_details['bpay'][str(bpay.id)]) + unallocated
                                             if unallocated > 0:
                                                 line.refund_details['bpay'][str(bpay.id)] = str(new_amount)
-                                                refunded_amount += new_amount 
+                                                refunded_amount += new_amount
                                                 refunded += new_amount
                                         else:
                                             if remaining_amount <= unallocated:
@@ -588,7 +588,7 @@ def update_payments(invoice_reference):
                                             else:
                                                 new_amount = D(0.0) + unallocated
                                             line.refund_details['bpay'][bpay.id] = str(new_amount)
-                                            refunded_amount += new_amount 
+                                            refunded_amount += new_amount
                                             refunded += new_amount
                         # Cash Transactions
                         for c in i.cash_transactions.all():
@@ -604,7 +604,7 @@ def update_payments(invoice_reference):
                                             new_amount = D(line.payment_details['cash'][str(c.id)]) + unallocated
                                         if unallocated > 0:
                                             line.payment_details['cash'][str(c.id)] = str(new_amount)
-                                            paid_amount += new_amount 
+                                            paid_amount += new_amount
                                             paid += new_amount
                                     else:
                                         if remaining_amount <= unallocated:
@@ -612,7 +612,7 @@ def update_payments(invoice_reference):
                                         else:
                                             new_amount = D(0.0) + unallocated
                                         line.payment_details['cash'][c.id] = str(new_amount)
-                                        paid_amount += new_amount 
+                                        paid_amount += new_amount
                                         paid += new_amount
                             if deducted_amount < amount and deductions < total_deductions:
                                 if c.type == 'move_out':
@@ -626,7 +626,7 @@ def update_payments(invoice_reference):
                                             new_amount = D(line.deduction_details['cash'][str(c.id)]) + unallocated
                                         if unallocated > 0:
                                             line.deduction_details['cash'][str(c.id)] = str(new_amount)
-                                            deducted_amount += new_amount 
+                                            deducted_amount += new_amount
                                             deductions += new_amount
                                     else:
                                         if remaining_amount <= unallocated:
@@ -634,7 +634,7 @@ def update_payments(invoice_reference):
                                         else:
                                             new_amount = D(0.0) + unallocated
                                         line.deduction_details['cash'][c.id] = str(new_amount)
-                                        deducted_amount += new_amount 
+                                        deducted_amount += new_amount
                                         deductions += new_amount
                             if refunded_amount < amount and refunded < total_refund:
                                 if c.type == 'refund':
@@ -648,7 +648,7 @@ def update_payments(invoice_reference):
                                             new_amount = D(line.refund_details['cash'][str(c.id)]) + unallocated
                                         if unallocated > 0:
                                             line.refund_details['cash'][str(c.id)] = str(new_amount)
-                                            refunded_amount += new_amount 
+                                            refunded_amount += new_amount
                                             refunded += new_amount
                                     else:
                                         if remaining_amount <= unallocated:
@@ -656,7 +656,7 @@ def update_payments(invoice_reference):
                                         else:
                                             new_amount = D(0.0) + unallocated
                                         line.refund_details['cash'][c.id] = str(new_amount)
-                                        refunded_amount += new_amount 
+                                        refunded_amount += new_amount
                                         refunded += new_amount
                         line.save()
                 # Check if the whole amount paid on the invoice has been allocated otherwise add to the first line item
@@ -727,6 +727,13 @@ def update_payments_allocation(invoice_reference):
             deductions = D(0.0)
             oracle_code_totals = {}
 
+            invoice_settlement_date = None
+            if BpointTransaction.objects.filter(crn1=i.reference).count() > 0:
+                bp = BpointTransaction.objects.filter(crn1=i.reference)[0]
+                invoice_settlement_date = bp.settlement_date
+            else:
+                invoice_settlement_date = datetime.datetime.now().date()
+
             # Get Order Information
             if i.order:
                 # total amount based on oracle code to get a negiative / positive value.
@@ -758,20 +765,23 @@ def update_payments_allocation(invoice_reference):
                               line.payment_details['order']  = {}
                               line.deduction_details['order']  = {}
 
-                              
+
                               if line is not None:
-                                 # look for lines under invoice --> order that are new line  
+                                 # look for lines under invoice --> order that are new line
                                  if line.line_price_incl_tax > 0 and line.line_status == 1:
                                          if oracle_code_totals[line.oracle_code] >= line.line_price_incl_tax:
                                              line.payment_details['order'][str(line.id)] = str(line.line_price_incl_tax)
                                              oracle_code_totals[line.oracle_code] = oracle_code_totals[line.oracle_code] - line.line_price_incl_tax
-                                 # look for lines under invoice --> order that are have been removed 
+                                 # look for lines under invoice --> order that are have been removed
                                  if line.line_price_incl_tax < 0 and line.line_status == 3:
                                          line.payment_details['order'][str(line.id)] = str(oracle_code_totals[line.oracle_code])
                                          oracle_code_totals[line.oracle_code] =  oracle_code_totals[line.oracle_code] - oracle_code_totals[line.oracle_code]
 
 
                     line.save()
+                if i.settlement_date is None:
+                   i.settlement_date = invoice_settlement_date
+                   i.save()
         except:
             print(traceback.print_exc())
             raise

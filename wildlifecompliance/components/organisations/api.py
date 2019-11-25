@@ -25,6 +25,7 @@ from django.core.cache import cache
 from ledger.accounts.models import EmailUser,OrganisationAddress
 from ledger.address.models import Country
 from datetime import datetime,timedelta, date
+from wildlifecompliance.helpers import is_customer, is_internal
 from wildlifecompliance.components.organisations.models import  (   
                                     Organisation,
                                     OrganisationContact,
@@ -61,6 +62,7 @@ from wildlifecompliance.components.applications.serializers import (
 from wildlifecompliance.components.organisations.emails import (
                         send_organisation_address_updated_email_notification,
                         send_organisation_id_upload_email_notification,
+                        send_organisation_request_email_notification,
                     )
 
 
@@ -75,6 +77,14 @@ from wildlifecompliance.components.applications.models import (
 class OrganisationViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
     serializer_class = OrganisationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Organisation.objects.all()
+        elif is_customer(self.request):
+            return user.wildlifecompliance_organisations.all()
+        return Organisation.objects.none()
 
     @detail_route(methods=['GET',])
     def contacts(self, request, *args, **kwargs):
@@ -132,8 +142,11 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = OrganisationPinCheckSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)} 
-            return Response(data);
+            data = {'valid': instance.validate_pins(serializer.validated_data['pin1'],serializer.validated_data['pin2'],request)}
+            if data['valid']:
+                # Notify each Admin member of request.
+                instance.send_organisation_request_link_notification(request)
+            return Response(data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -433,6 +446,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             data = Organisation.existance(serializer.validated_data['abn'])
             # Check request user cannot be relinked to org.
             data.update([('user', request.user.id)])
+            data.update([('abn', request.data['abn'])])
             serializer = OrganisationCheckExistSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             return Response(serializer.data)
@@ -548,6 +562,14 @@ class OrganisationViewSet(viewsets.ModelViewSet):
 class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     queryset = OrganisationRequest.objects.all()
     serializer_class = OrganisationRequestSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return OrganisationRequest.objects.all()
+        elif is_customer(self.request):
+            return user.organisationrequest_set.all()
+        return OrganisationRequest.objects.none()
 
     @list_route(methods=['GET',])
     def datatable_list(self, request, *args, **kwargs):
@@ -786,11 +808,13 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
                 # Check if consultant can be relinked to org.
                 data = Organisation.existance(request.data['abn'])
                 data.update([('user', request.user.id)])
+                data.update([('abn', request.data['abn'])])
                 existing_org = OrganisationCheckExistSerializer(data=data)
                 existing_org.is_valid(raise_exception=True)
             with transaction.atomic():
                 instance = serializer.save()
                 instance.log_user_action(OrganisationRequestUserAction.ACTION_LODGE_REQUEST.format(instance.id),request)
+                instance.send_organisation_request_email_notification(request)
             return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -807,13 +831,14 @@ class OrganisationAccessGroupMembers(views.APIView):
     renderer_classes = [JSONRenderer,]
     def get(self,request, format=None):
         members = []
-        group = OrganisationAccessGroup.objects.first()
-        if group:
-            for m in group.all_members:
-                members.append({'name': m.get_full_name(),'id': m.id})
-        else:
-            for m in EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True):
-                members.append({'name': m.get_full_name(),'id': m.id})
+        if is_internal(request):
+            group = OrganisationAccessGroup.objects.first()
+            if group:
+                for m in group.all_members:
+                    members.append({'name': m.get_full_name(),'id': m.id})
+            else:
+                for m in EmailUser.objects.filter(is_superuser=True,is_staff=True,is_active=True):
+                    members.append({'name': m.get_full_name(),'id': m.id})
         return Response(members)
 
 
@@ -821,8 +846,23 @@ class OrganisationContactViewSet(viewsets.ModelViewSet):
     serializer_class = OrganisationContactSerializer
     queryset = OrganisationContact.objects.all()
 
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return OrganisationContact.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.wildlifecompliance_organisations.all()]
+            return OrganisationContact.objects.filter( Q(organisation_id__in = user_orgs) )
+        return OrganisationContact.objects.none()
 
 class MyOrganisationsViewSet(viewsets.ModelViewSet):
     queryset = Organisation.objects.all()
     serializer_class = MyOrganisationsSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return Organisation.objects.all()
+        elif is_customer(self.request):
+            return user.wildlifecompliance_organisations.all()
+        return Organisation.objects.none()

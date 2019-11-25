@@ -1,0 +1,6 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+        Please find attached the invoice for park entry {{ booking_number }}
+        A copy of all invoices is saved in the online system, to view them please login to your account.
+{%  endblock %}

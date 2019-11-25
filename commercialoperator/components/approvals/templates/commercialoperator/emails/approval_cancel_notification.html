@@ -1,0 +1,10 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+    <p>Your licence to conduct commercial operations on <em>Conservation and Land Management Act 1984 (CALM Act)</em> land has been cancelled.</p>
+    <p><strong>Licence : {{ approval.lodgement_number}}</strong></p>
+    <p><strong>Cancellation Details : {{ approval.cancellation_details}}</strong></p>
+    <p><strong>Cancellation Date : {{ approval.cancellation_date}}</strong></p>
+    <p>If you have any enquiries or need assistance with the online system please contact a licensing officer on {{settings.DEP_PHONE}}, or email {{settings.SUPPORT_EMAIL}}</p>
+    
+{%  endblock %}

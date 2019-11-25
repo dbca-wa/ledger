@@ -1,0 +1,10 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Please be aware that the following is due for submission:<br>
+ 	{{ compliance.reference }} {{compliance.requirement.requirement}}
+
+    To complete the licence requirement please login to your account <a href="{{url}}">here</a>.
+
+
+{%  endblock %}

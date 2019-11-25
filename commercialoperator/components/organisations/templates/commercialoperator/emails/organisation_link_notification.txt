@@ -1,0 +1,10 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    
+    Your request to link your account to a company has been approved. Details are as follows:
+    Company : {{ organisation.name }}
+    ABN/ ACN : {{ organisation.abn}}
+    Now that your account has been linked you can proceed with an application for a Commercial Operations licence.
+
+{%  endblock %}

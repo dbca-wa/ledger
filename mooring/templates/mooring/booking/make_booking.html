@@ -19,6 +19,14 @@
         [v-cloak] {
             display: none;
         }
+        .money_sign {
+              position: absolute;
+              margin-top: 5px;
+              margin-left: -9px;
+              font-weight: bold;
+        }
+    
+
     </style>
 {% endblock %}
 {% block content %}
@@ -46,6 +54,15 @@
                             {% endverbatim %}
                                 <a class="btn btn-info" href="{% url 'public_abort_booking' %}?change=True">Change in-progress booking</a>
                                 <a class="btn btn-warning" href="{% url 'public_abort_booking' %}">Cancel in-progress booking</a>
+                                {% if booking.old_booking %}
+                                     {% if payments_officer_group %}
+                                     {% if occ == 'true' %}
+                                         <a class="btn btn-danger" href="{% url 'public_make_booking' %}?occ=false">Remove override</a>
+                                     {% else %}
+                                         <a class="btn btn-danger" href="{% url 'public_make_booking' %}?occ=true">Override change fees</a>
+                                     {% endif %}
+                                     {% endif %}
+                                {% endif %}
                             </p>
                             {% if show_errors %}
                             <div class="alert alert-danger">
@@ -68,37 +85,41 @@
                             {% endif %}
                         </div>
                         <div class="col-md-12">
-                            <div>
-                                <div class="row">
+                            <div id='mooring_pricing_table'>
+                                <div class="row" >
                                     <div class="col-md-12">
-                                        <h3 class="text-primary">Booking for</h3>
+                                        <h3 class="text-primary">Mooring Fees</h3>
                                     </div>
                                     <div class="col-md-3">
                                         <strong>Mooring</strong>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-1">
                                         <strong>Vessel</strong>
                                     </div>
                                     <div class="col-md-2">
                                         <strong>From</strong>
                                     </div>
                                     <div class="col-md-1">
-                                        &nbsp; 
+                                        &nbsp;
                                     </div>
                                     <div class="col-md-2">
                                         <strong>To</strong>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-1">
                                         <strong>Price</strong>
                                     </div>
+                                    <div class="col-md-2 over_ride_price_mooring_header" style='display:none'>
+                                        <strong>Price Override</strong>
+                                    </div>
+
                                 </div>
 
                                 {% for bm in booking_mooring %}
-                                <div class="row">
+                                <div class="row" >
                                     <div class="col-md-3">
                                         {{ bm.campsite.mooringarea.name }} 
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-1">
                                         {% verbatim %}
                                             <small v-cloak>{{ rego.toUpperCase() }}</small>
                                         {% endverbatim %}
@@ -112,27 +133,21 @@
                                     <div class="col-md-2">
                                         {{ bm.to_dt }}
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-1">
                                         ${{ bm.amount }}
                                     </div>
+                                    <div class="col-md-2 over_ride_price_mooring_body form-group" style='display:none; margin-bottom: 0px;'>
+						<span class='money_sign'>$</span>
+                                         	<input style='width: 100px;' type='number' id='over_ride_mooring_price{{ bm.id }}' step='0.01' class='form-control input-sm money' value='{{ bm.amount }}' v-on:change="money_update($event)">
+                                    </div>
+
                                 </div>
                                 {% endfor %}
 				</div>
  
                                 <BR> 
-				<div class="row">
-
-                                {% for bc in booking_change_fees %}
-                                  <div class="col-md-10">
-                                        {{ bc.description }}
-                                  </div>
-			          <div class="col-md-2"> 	
-					{{ bc.amount }}
-				  </div>
-				{% endfor %}
-                                </div>
-                            <div v-if="payingAdmissions && linesAdmissions.length > 0" v-cloak>
-                                <div class="row">
+                            <div id='admissions_pricing_table' v-if="payingAdmissions && linesAdmissions.length > 0" v-cloak>
+                                <div class="row" >
                                     <div class="col-md-12">
                                         <h3 class="text-primary">Admission Fees</h3>
                                     </div>
@@ -145,7 +160,7 @@
                                     <div class="col-md-1">
                                         <strong>Infants</strong>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-1">
                                         &nbsp;
                                     </div>
                                     <div class="col-md-2">
@@ -157,9 +172,13 @@
                                     <div class="col-md-2">
                                         <strong>To</strong>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-1">
                                         <strong>Price</strong>
                                     </div>
+                                    <div class="col-md-2 over_ride_price_mooring_header" style='display:none'>
+                                        <strong>Price Override</strong>
+                                    </div>
+
                                 </div>
                                 {% verbatim %}
                                 <div class="row" v-for="index in linesAdmissions.length" v-cloak>
@@ -172,7 +191,7 @@
                                     <div class="col-md-1">
                                         {{ numInfants }}
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-1">
                                         &nbsp;
                                     </div>
                                     <div class="col-md-2">
@@ -184,18 +203,42 @@
                                     <div class="col-md-2">
                                             {{ linesAdmissions[index-1].to }}
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-1">
                                         ${{ linesAdmissions[index-1].admissionFee }}
                                     </div>
+                                    <div class="col-md-2 over_ride_price_mooring_body form-group" style='display:none; margin-bottom: 0px'>
+                                                <span class='money_sign'>$</span>
+                                                <input style='width: 100px;' type='number' :id='linesAdmissions[index-1].rowid' step='0.01' class='form-control input-sm' @blur="admission_money_update($event,index)" v-model.text="linesAdmissions[index-1].override_price">
+                                    </div>
+
                                 </div>
                                 {% endverbatim %}
                             </div>
+                                        <h3 class="text-primary">Adjustments</h3>
+                                <div class="row">
+
+                                {% for bc in booking_change_fees %}
+                                  <div class="col-md-9">
+                                        {{ bc.description }}
+                                  </div>
+                                  <div class="col-md-2">
+                                        ${{ bc.amount }}
+                                  </div>
+                                {% endfor %}
+                                </div>
+
+                        </div>
+                        <div class="hiddenBookings" style="display:none;">
+                            <input type="hidden" id="bookingLines" v-model="bookingLines" name="bookingLines"/>
                         </div>
 
                         <div class="hiddenAdmissions" style="display:none;">
                             <input type="hidden" id="admissionsLines" v-model="admissionsLines" name="admissionsLines"/>
                         </div>
-            
+                        <div class="hiddenocc" style="display:none;">
+                            <input type="hidden" id="occ" v-model="occ" name="occ"/>
+                        </div>
+ 
                         <div class="col-md-2" style='display:none'>
                               <img alt="campground"  class="img-thumbnail img-responsive" src="{{ booking.campground.first_image.image.url }}" style='display:none'>
                               <p class="pricing" v-cloak >
@@ -278,8 +321,10 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12" style="display:flex;">
-                <div class="well col-lg-6" style="flex:1;margin-right:1%;">
+            
+            <div class="col-lg-12"> 
+                <div class='col-lg-6 col-xs-12 col-sm-12' style='padding:0px; padding-left: 1px;' >
+                <div class="well col-lg-12 col-xs-12 col-sm-12 ml-1" style='min-height: 450px;' >
                     <div class="row">
                         <div class="col-lg-12">
                             <h3 class="text-primary">Personal Details</h3>
@@ -342,7 +387,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="well col-lg-6" style="flex:1; margin-left:1%;">
+                </div>
+                <div class='col-lg-6 col-xs-12 col-sm-12' style='padding:0px; padding-left: 1px;'>
+                <div class="well col-lg-12 col-xs-12 col-sm-12 " style='min-height: 450px;'>
                     <div class="row">
                         <div class="col-lg-12">
                             <h3 class="text-primary">Vessels</h3>
@@ -466,6 +513,7 @@
                                 </div>
                             </div>
                         </div>
+                     </div>
                     </div>
                     <template v-if="pricing.vehicle">
                         <div class="row" v-cloak>
@@ -524,7 +572,7 @@
                                 </div>
                             </div>
                                 <div v-if="override">
-                                    <div class="form-group">
+                                    <div class="form-group" style='display:none'>
                                         <label>Override Amount:</label>
                                         <div class="input-group">
                                             <span class="input-group-addon">AUD $</span>
@@ -533,17 +581,22 @@
                                     </div>
                                     <div class="form-group" id="override-container">
                                         <label>Reason:</label>
-                                        <select class="overrideReason" name="overrideReason" id="overrideReason" style="width:100%;">
+                                        <select class="overrideReason form-control" name="overrideReason" id="overrideReason" style="width:100%;">
+                                            <option value=''>None</option>
                                             <option v-for="res in override_reasons" :value="res.id">{% verbatim %}{{res.text}}{% endverbatim %}</option>
                                         </select>
                                     </div>
                                     <div class="form-group" >
                                         <label>Details:</label>
-                                        <textarea v-model="overrideDetail" name="overrideDetail" style="width:100%;resize:none;"></textarea>
+                                        <textarea v-model="overrideDetail" name="overrideDetail" id='overrideDetail' style="width:100%;resize:none;" class='form-control'></textarea>
                                     </div>
+                                    <p class="text-muted" style='color: red; font-weight:bold;'>
+                                        Note, these details will show on the customer invoice.
+                                    </p>
+
                                 </div>
                             {% endif %}
-                            <p class="text-muted">
+                            <p class="text-muted" >
                                 Payments will be recorded against the booking once the booking is completed and the payment is received.
                             </p>
                         </div>
@@ -599,6 +652,8 @@
             numChildren: {% if details.num_children > 0 %}{{ details.num_children }}{% else %}0{% endif %},
             numInfants: {% if details.num_infant > 0 %}{{ details.num_infant }}{% else %}0{% endif %},
             linesAdmissions: {{ lines|safe }},
+            linesBooking: {},
+            bookingLines: "",
             admissionsLines: [],
             numConcessions: 0,
             numMooring: 0,
@@ -621,7 +676,9 @@
             isFirst: true,
             toc: false,
             booking_id: {{ booking.id }},
-            booking_change_fees: {{ booking_change_fees|safe }}
+            booking_change_fees: {{ booking_change_fees|safe }},
+            occ: '{{ occ }}'
+    
             }
         },
         filters:{
@@ -638,7 +695,10 @@
         watch: {
             override: function (val){
                 console.log("Something changed");
-                if (val){
+                if (val) {
+                     $('.over_ride_price_mooring_header').show();
+                     $('.over_ride_price_mooring_body').show();
+     
 //                    this.$nextTick(() => {
                        this.$nextTick(function() {
                         $('.overrideReason').select2({
@@ -653,7 +713,10 @@
                             this.overrideReason = selected.val();
                         }); 
                     })
-                }
+                } else {
+                     $('.over_ride_price_mooring_header').hide();
+                     $('.over_ride_price_mooring_body').hide();
+		}
                 
             }
         },
@@ -810,19 +873,88 @@
                 });
                 vm.calculateTotal();
             },
+            format_money: function(total, comma) {
+               if (comma == null) {
+                        comma = true;
+               }
+               if (total == null) {
+                  total = '0.00';
+               }
+               var neg = false;
+               if(total < 0) {
+                   neg = true;
+                   total = Math.abs(total);
+               }
+               if (comma == true) {
+                   return (neg ? "-" : '') + parseFloat(total, 10).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, "$1,").toString();
+               } else {
+                   return (neg ? "-" : '') + parseFloat(total, 10).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, "$1").toString();
+               }
+            },
+            admission_money_update: function(e,index) {
+                  var vm = this;
+                  
+
+                  this.linesAdmissions[index-1].override_price = this.format_money(event.target.value, false);
+	          vm.calculateTotal();
+	
+	    },
+            money_update: function() {
+                var vm = this;
+                event.target.value = this.format_money(event.target.value, false);
+                $("#mooring_pricing_table").find('input').each(function() {
+                          field = $('#'+this.id);
+                          if (this.type == 'number') {
+                               console.log(this.id);
+                               console.log(this.value.length);
+                               var booking_row_id = this.id.replace("over_ride_mooring_price","");
+                               vm.linesBooking[booking_row_id] = $('#'+this.id).val();
+                          }
+                });
+                vm.calculateTotal(); 
+                console.log("MONEY UPDATE")
+                console.log(vm.bookingLines) 
+            },
             calculateTotal: function () {
                 var vm = this;
                 var form = document.forms.addBookingForm;
-
+                var override_checked = $('#override').prop("checked");
                 vm.entryFee = 0;
                 vm.total = 0;
                 vm.total = '{{ booking_total }}';
                 vm.total = parseFloat(vm.total);
                 vm.admissionFee = 0;
+                console.log("BOOKING CHANGE FES");
+                console.log(vm.booking_change_fees)
+                console.log(override_checked);
+                console.log("BOOKING TOTAL");
+                console.log("{{ booking_total }}");
+                // admissions_pricing_table
+                if (override_checked == true ) {
+                    vm.total = parseFloat('0.00');
+                    for (var i = 0; i < vm.booking_change_fees.length; i++) {
+                           console.log(vm.booking_change_fees[i].amount);
+                           vm.total = vm.total + parseFloat(vm.booking_change_fees[i].amount);
 
+                    }
+
+                    $("#mooring_pricing_table").find('input').each(function() {
+                             console.log(this.value);
+                             console.log(this.id);
+                             if (this.type == 'number') {
+                                  if (this.value > 0 ) {
+                                  } else {
+                                      this.value = '0.00';
+                                  }
+                                  vm.total = vm.total + parseFloat(this.value);
+                                  console.log(this.value);
+                             }
+                    });
+                }
                 if (vm.nononline){
                     vm.total += (vm.nonOnlineFee/100);
                 }
+
                 
 
                 if (vm.payingAdmissions){
@@ -868,11 +1000,12 @@
                                 adults = 1;
                             }
                         }
-                    } 
+                    }
+ 
                     // Then calculate per line, adding as we go.
                     for (var i = 0; i < vm.linesAdmissions.length; i++){
                         var thisAdmission = 0;
-                        if (vm.linesAdmissions[i].from != vm.linesAdmissions[i].to){
+                        if (vm.linesAdmissions[i].from != vm.linesAdmissions[i].to) {
                             thisAdmission += (vm.numInfants * parseFloat(vm.linesAdmissions[i].infant_on));
                             thisAdmission += (adults * parseFloat(vm.linesAdmissions[i].adult_on));
                             thisAdmission += (children * parseFloat(vm.linesAdmissions[i].child_on));
@@ -885,48 +1018,38 @@
                         }
                         vm.linesAdmissions[i].admissionFee = parseFloat(thisAdmission).toFixed(2);
                         vm.admissionFee += parseFloat(thisAdmission);
-                        vm.total += parseFloat(thisAdmission);
+                        if (override_checked == true) {
+                            console.log("ADMISSIONS OVERRIDE");
+                            console.log(vm.linesAdmissions[i].override_price);
+                            var override_price = vm.linesAdmissions[i].override_price;
+
+                            if (vm.linesAdmissions[i].override_price == undefined) {
+                                 override_price = parseFloat('0.00');
+                            }
+
+                            if (override_price > 0) {
+			    } else {
+				override_price = parseFloat('0.00');
+			    }
+
+                            vm.total += parseFloat(override_price);
+                        } else {
+                            vm.total += parseFloat(thisAdmission);
+                        }
 
                     }
-                    vm.admissionsLines = JSON.stringify(vm.linesAdmissions);
+
                 }
-
-                // add per-person fees
-                // vm.total += (parseInt(form.num_adult.value) || 0)*vm.pricing.adult;
-                // vm.total += (parseInt(form.num_concession.value) || 0)*vm.pricing.concession;
-                // vm.total += (parseInt(form.num_child.value) || 0)*vm.pricing.child;
-                // vm.total += (parseInt(form.num_infant.value) || 0)*vm.pricing.infant;
-                
-//                vm.total += vm.pricing.mooring;
-                // generate per night rate the ugly way
-                // (price can vary based on date, so this is an approximate measure)
-//                vm.perDayFee = vm.total/{{ booking.num_days }};
-
-                // generate + add park entry fees
- //               vm.vehicles.forEach(function (el) {
-//                    if (el[2]) {
-//                        switch(el[0]) {
-//                            case '1':
-//                                vm.entryFee += vm.pricing.vehicleConc;
-//                                break;
-//                            case '2':
-//                                vm.entryFee += vm.pricing.motorcycle;
-//                                break;
-//                            case '0':
-//                            default:
-//                                vm.entryFee += vm.pricing.vehicle;
-//                                break;
-//                        }
-//                    }
-//                });
-//                vm.total += vm.entryFee;
-                // show concession warning text if the number > 0
-//                vm.concessionWarning = (parseInt(form.num_concession.value) > 0);
+                vm.admissionsLines = JSON.stringify(vm.linesAdmissions);
+                vm.bookingLines = JSON.stringify(vm.linesBooking);
                 return;
             },
             validate: function (e) {
+                var vm = this;
                 var isValid = true;
                 var form = document.forms.addBookingForm;
+                var override_checked = $('#override').prop("checked");
+
                 var fields = $(form).find(':input');
                 $('.tooltip-err').tooltip("destroy");
                 $.each(fields, function(i, field) {
@@ -946,6 +1069,72 @@
                          }
                     }
                 });
+
+
+                if (override_checked == true ) {
+                    console.log('over ride');
+                    var overrideReason = $('#overrideReason').val(); 
+                    $("#mooring_pricing_table").find('input').each(function() {
+                             field = $('#'+this.id);
+                             if (this.type == 'number') {
+                                  if (this.value.length > 3 && parseFloat(this.value) >= 0 ) {
+                                  } else {
+                                      isValid = false;
+                                      $(field).closest('.form-group').addClass('has-error');
+                                      $(field).focus();
+                                      $(field).select();
+                                      $(field).addClass('tooltip-err');
+                                      $(field).tooltip().attr("data-original-title", "Please complete all mooring override pricing amounts either with same price or price equal to or greater than zero.")
+
+                                  }
+                                  console.log(this.value);
+                             }
+                    });
+
+                    $("#admissions_pricing_table").find('input').each(function() {
+                             console.log(this.id);
+                             field = $('#'+this.id);
+                             if (this.type == 'number') {
+                                  if (this.value.length > 3 && parseFloat(this.value) >= 0 ) {
+                                  } else {
+                                      isValid = false;
+                                      $(field).closest('.form-group').addClass('has-error');
+                                      $(field).focus();
+                                      $(field).select();
+                                      $(field).addClass('tooltip-err');
+                                      $(field).tooltip().attr("data-original-title", "Please complete all admissions override pricing amounts either with same price or price equal to or greater than zero.")
+
+                                  }
+                                  console.log(this.value);
+                             }
+                    });
+                    if (overrideReason > 0 ) { 
+		    } else  {
+                         var field = $('#overrideReason');
+                         isValid = false;
+                         $(field).closest('.form-group').addClass('has-error');
+                         $(field).focus();
+                         $(field).select();
+                         $(field).addClass('tooltip-err');
+                         $(field).tooltip().attr("data-original-title", "Please select and override reason.")
+
+ 	            }
+                    if (vm.overrideDetail.length > 5) {
+		    } else {
+                         var field = $('#overrideDetail');
+                         isValid = false;
+                         $(field).closest('.form-group').addClass('has-error');
+                         $(field).focus();
+                         $(field).select();
+                         $(field).addClass('tooltip-err');
+                         $(field).tooltip().attr("data-original-title", "Please enter a valid over ride details length.")
+		    }
+
+                   
+
+                }
+                vm.bookingLines = JSON.stringify(vm.linesBooking);
+                console.log(vm.linesBooking);
                 if (isValid) {
                     form.submit();
                 }
@@ -963,7 +1152,7 @@
                 });
             },
         },
-        mounted: function () {
+        mounted: function() {
             var vm = this;
 
             // check that expiry is in a sane range
@@ -1078,6 +1267,30 @@
             vm.calculateTotal();
             // console.log("FEE CHANGE");
 	    // console.log(vm.booking_change_fees);
+            $('#override').on("click", function() {
+                    var override_checked = $('#'+this.id).prop("checked"); 
+                    for (var i = 0; i < vm.linesAdmissions.length; i++){
+                        var thisAdmission = 0;
+                        if (override_checked == true) {
+                            console.log("ADMISSIONS OVERRIDE");
+                            console.log(vm.linesAdmissions[i].override_price);
+                            var override_price = vm.linesAdmissions[i].override_price;
+
+                            if (vm.linesAdmissions[i].override_price == undefined) {
+                                 vm.linesAdmissions[i].override_price = vm.linesAdmissions[i].admissionFee;
+                            }
+
+                            if (override_price > 0) {
+                            } else {
+                                 vm.linesAdmissions[i].override_price = vm.linesAdmissions[i].admissionFee; 
+                            }
+
+                        }
+
+                    }
+
+               vm.calculateTotal(); 
+            });
 
             $( "#id_email" ).change(function() {
                 var email = this.value;

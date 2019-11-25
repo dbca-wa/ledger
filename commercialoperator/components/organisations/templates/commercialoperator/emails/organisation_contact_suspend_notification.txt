@@ -1,0 +1,22 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+
+ {% if linked_by.email != user.email %}
+        Your have been suspended from:
+
+        Organisation : {{ organisation.name }}
+
+        ABN : {{ organisation.abn}}
+
+        You were linked to this organisation by {{ linked_by.get_full_name }}({{linked_by.email}}).
+    {% else %}
+        Your have suspended yourself from:
+
+        Organisation : {{ organisation.name }}
+
+        ABN : {{ organisation.abn}}
+    {% endif %}
+    You can now make applications on behalf of this organisation.
+
+{%  endblock %}
