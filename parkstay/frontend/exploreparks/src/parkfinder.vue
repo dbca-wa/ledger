@@ -501,6 +501,10 @@ export default {
             hideExtraFilters: true,
             suggestions: {},
             extentFeatures: [],
+
+            //Added to store values of api date
+            //currentDate: null,
+
             arrivalDate: null,
             departureDate: null,
             numAdults: 2,
@@ -550,13 +554,13 @@ export default {
         arrivalDateString: {
             cache: false,
             get: function() {
-                return this.arrivalEl[0].value ? moment.utc(this.arrivalData.getDate()).format('YYYY/MM/DD') : null;
+                return this.arrivalEl[0].value ? moment(this.arrivalData.getDate()).format('YYYY/MM/DD') : null;
             }
         },
         departureDateString: {
             cache: false,
             get: function() {
-                return this.departureEl[0].value ? moment.utc(this.departureData.getDate()).format('YYYY/MM/DD') : null;
+                return this.departureEl[0].value ? moment(this.departureData.getDate()).format('YYYY/MM/DD') : null;
             }
         },
         numPeople: {
@@ -595,6 +599,25 @@ export default {
     methods: {
         toggleShowFilters: function() {
             this.hideExtraFilters = !this.hideExtraFilters;
+        },
+        my_function: function(my_date) {
+            console.log(typeof(my_date));
+            console.log(my_date);
+
+            //let new_date = new Date(my_date);
+
+            //console.log('new_date: '+new_Date);
+            //let your_date = new_date.getDate() + '/' + (new_date.getMonth()+1) + '/' + new_date.getYear();
+
+            let date_list = my_date.split(',');
+            let day_list= date_list[0].split('/');
+
+            let correctedDate = day_list[1]+'/'+day_list[0] +'/'+day_list[2]
+
+
+        this.arrivalEl.fdatepicker('update',correctedDate );
+
+
         },
         search: function(place) {
             if (!place) {
@@ -865,14 +888,39 @@ export default {
         var nowTemp = new Date();
         var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
+        //using ajax call to call the get server date function
+
+        var sampleDate = 1;
+        $.ajax({
+        url: vm.parkstayUrl+'/api/server-date',
+        datatype: 'json',
+        success: function(response,stat,xhr) {
+        vm.currentDate = new Date(response).toLocaleString('en-US', {timeZone: 'Australia/Perth'});
+        sampleDate = vm.currentDate
+        console.log('CurrentDate: '+vm.currentDate);
+        vm.my_function(vm.currentDate);
+
+        //return vm.currentDate;
+        }
+        });
+
+        console.log('sampleDate: ' +sampleDate);
+        //End of change
+
+
+
         this.arrivalEl = $('#dateArrival');
         this.departureEl = $('#dateDeparture');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
+            //value: vm.currentDate which you got from server
+            startDate: moment.utc(this.arrivalEL).toDate(),
             endDate: moment.utc(this.arrivalEl).add(180, 'days').toDate(),
             onRender: function (date) {
                 // disallow start dates before today
+
                 return date.valueOf() < now.valueOf() ? 'disabled': '';
+
                 //return '';
             }
         }).on('changeDate', function (ev) {
@@ -880,7 +928,7 @@ export default {
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
-                var newDate = moment.utc(vm.arrivalData.date).add(1, 'days').toDate();
+                var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
                 vm.departureData.setValue();
                 vm.departureData.fill();
@@ -890,7 +938,7 @@ export default {
 
             }
             vm.arrivalData.hide();
-            vm.arrivalDate = moment.utc(vm.arrivalData.date);
+            vm.arrivalDate = moment(vm.arrivalData.date);
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
                 ev.target.dispatchEvent(new CustomEvent('change'));
@@ -907,7 +955,7 @@ export default {
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             vm.departureData.hide();
-            vm.departureDate = moment.utc(vm.departureData.date);
+            vm.departureDate = moment(vm.departureData.date);
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
                 ev.target.dispatchEvent(new CustomEvent('change'));
