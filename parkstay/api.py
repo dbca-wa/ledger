@@ -2349,13 +2349,13 @@ class GetProfile(views.APIView):
 
 
 class GetServerDate(views.APIView):
-    """Returns the server current date in order to restrict dates in frontend calendar components
-    independent of timezone.
+    """Returns the server current datetime (TZ-aware) in order to restrict dates in frontend
+    calendar components independent of client timezone.
     """
     renderer_classes = [JSONRenderer, ]
 
     def get(self, request, format=None):
-        return Response(date.today().isoformat())
+        return Response(timezone.make_aware(datetime.now()).isoformat())
 
 
 class UpdateProfilePersonal(views.APIView):
