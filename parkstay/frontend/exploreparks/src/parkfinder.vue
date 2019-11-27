@@ -460,6 +460,7 @@ div.awesomplete > input {
 </style>
 
 <script>
+import Vue from 'vue'
 import Awesomplete from 'awesomplete';
 import ol from 'openlayers';
 //var ol = require('openlayers/dist/ol-debug');
@@ -503,7 +504,7 @@ export default {
             extentFeatures: [],
 
             //Added to store values of api date
-            //currentDate: null,
+            currentDate: null,
 
             arrivalDate: null,
             departureDate: null,
@@ -601,9 +602,6 @@ export default {
             this.hideExtraFilters = !this.hideExtraFilters;
         },
         my_function: function(my_date) {
-            console.log(typeof(my_date));
-            console.log(my_date);
-
             //let new_date = new Date(my_date);
 
             //console.log('new_date: '+new_Date);
@@ -613,9 +611,9 @@ export default {
             let day_list= date_list[0].split('/');
 
             let correctedDate = day_list[1]+'/'+day_list[0] +'/'+day_list[2]
+            console.log('CorrectedDate: '+correctedDate);
 
-
-        this.arrivalEl.fdatepicker('update',correctedDate );
+            //this.arrivalEl.fdatepicker('update',correctedDate );
 
 
         },
@@ -819,6 +817,29 @@ export default {
             this.groundsSource.loadSource();
             this.refreshPopup();
         }, 250),
+
+        // Added these methods to use server date extracted from an api call
+        // Needs to be implemented in the system
+        setData: function(datestring) {
+          let vm = this
+             var tempDate = datestring.body;
+            //  console.log('1 : '+tempDate);
+              //console.log('Type of response'+typeof(tempDate));
+              vm.currentDate = vm.currentDate = moment({year: tempDate.getFullYear(), month: tempDate.getMonth(), day: tempDate.getDate(), hour: 0, minute: 0, second: 0});
+              console.log('In setdata ,Function Date currentDate:'+vm.currentDate);
+
+        },
+
+        fetchServerDate: function() {
+          let vm = this;
+
+          vm.$http.get(vm.parkstayUrl+'/api/server-date').then(function(response)  {
+            this.setData(response.body)
+          })
+        },
+
+        // End of change
+
         updateFilter: function() {
             var vm = this;
             // make a lookup table of campground features to filter on
@@ -877,56 +898,43 @@ export default {
                 }
             });
             this.updateViewport(true);
-        }
+        },
+
     },
     mounted: function () {
         var vm = this;
         $(document).foundation();
         console.log('Loading map...');
 
-        // enable arrival/departure date pickers
         var nowTemp = new Date();
         var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
-        //using ajax call to call the get server date function
+        // Added this portion from availability to solve datepicker utc - issue
 
-        var sampleDate = 1;
-        $.ajax({
-        url: vm.parkstayUrl+'/api/server-date',
-        datatype: 'json',
-        success: function(response,stat,xhr) {
-        vm.currentDate = new Date(response).toLocaleString('en-US', {timeZone: 'Australia/Perth'});
-        sampleDate = vm.currentDate
-        console.log('CurrentDate: '+vm.currentDate);
-        vm.my_function(vm.currentDate);
+        var today = moment.utc().add(8, 'hours');
+        today = moment.utc({year: today.year(), month: today.month(), day: today.date()})
 
-        //return vm.currentDate;
-        }
-        });
-
-        console.log('sampleDate: ' +sampleDate);
         //End of change
-
-
 
         this.arrivalEl = $('#dateArrival');
         this.departureEl = $('#dateDeparture');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
             //value: vm.currentDate which you got from server
-            startDate: moment.utc(this.arrivalEL).toDate(),
+            //startDate: moment(this.arrivalEL).toDate(),
             endDate: moment.utc(this.arrivalEl).add(180, 'days').toDate(),
             onRender: function (date) {
                 // disallow start dates before today
 
-                return date.valueOf() < now.valueOf() ? 'disabled': '';
+                return date.valueOf() < today.valueOf() ? 'disabled': '';
 
                 //return '';
             }
         }).on('changeDate', function (ev) {
-            //console.log('arrivalEl changeDate');
+           // console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
+
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
