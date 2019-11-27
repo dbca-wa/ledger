@@ -550,7 +550,10 @@ export default {
             }
             
             vm.chainedSelectDistricts2(vm.proposal.region, regions);
-            vm.chainedSelectSubActivities1(vm.proposal.activity);
+            if(vm.activity_matrix){
+                vm.chainedSelectSubActivities1(vm.proposal.activity);
+            }
+            //vm.chainedSelectSubActivities1(vm.proposal.activity);
             if(vm.proposal.sub_activity_level1!="" && vm.proposal.sub_activity_level1!=null){
             vm.chainedSelectSubActivities2(vm.proposal.sub_activity_level1);
             }
@@ -564,9 +567,10 @@ export default {
   },
   mounted: function() {
     let vm = this;
+    vm.fetchActivityMatrix();
     vm.fetchRegions();
     vm.fetchApplicationTypes();
-    vm.fetchActivityMatrix();
+    //vm.fetchActivityMatrix();
     vm.form = document.forms.new_proposal;
   },
   

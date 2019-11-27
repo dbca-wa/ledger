@@ -5,6 +5,6 @@
     <p><strong>Organisation: {{ request.name }}</strong></p>
     <p><strong>ABN: {{ request.abn }}</strong></p>
     <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
-    <p>Note: If you haven't logged into the Commercial Operator Licensing System recently you may need to login first before using the provided link.</p>
+    <p>Note: If you haven't logged into the {{settings.SYSTEM_NAME}} recently you may need to login first before using the provided link.</p>
 
 {%  endblock %}

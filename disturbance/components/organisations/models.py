@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields.jsonb import JSONField
 from ledger.accounts.models import Organisation as ledger_organisation
 from ledger.accounts.models import EmailUser, RevisionedMixin, Document
-from disturbance.components.main.models import UserAction,CommunicationsLogEntry,Document
+from disturbance.components.main.models import UserAction,CommunicationsLogEntry
 from disturbance.components.organisations.utils import random_generator
 from disturbance.components.organisations.emails import (
                         send_organisation_request_accept_email_notification,
