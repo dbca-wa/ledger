@@ -209,6 +209,7 @@ class MakePaymentView(TemplateView):
 
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
+        #import ipdb; ipdb.set_trace()
 
         try:
             booking = create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORARY)

@@ -79,7 +79,7 @@ from '@/utils/hooks'
             let vm = this;
             return{
                 values: null,
-                headers: '{"Park": "select", "Arrival": "date", "Passengers (6yrs+)": "number", "Children under 6 years": "number", "Free of charge":"number", "Cost":"total"}',
+                headers: '{"Park": "select", "Arrival": "date", "Same tour group": "checkbox", "Passengers (6yrs+)": "number", "Children under 6 years": "number", "Free of charge":"number", "Cost":"total"}',
                 parks: [],
                 land_parks: [],
                 parks_available: false,
@@ -267,7 +267,8 @@ from '@/utils/hooks'
                                 adult:vm.land_parks[i].park.adult_price,
                                 child:vm.land_parks[i].park.child_price,
                                 //senior:vm.land_parks[i].park.senior
-                            }
+                            },
+                            max_group_arrival_by_date: vm.land_parks[i].park.max_group_arrival_by_date,
                         });
                     }
                     if (vm.parks.length==0) {

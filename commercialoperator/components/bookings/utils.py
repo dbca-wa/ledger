@@ -56,9 +56,10 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
     for row in lines:
         park_id = row[0]['value']
         arrival = row[1]
-        no_adults = int(row[2]) if row[2] else 0
-        no_children = int(row[3]) if row[3] else 0
-        no_free_of_charge = int(row[4]) if row[4] else 0
+        same_tour_group = True if row[2] else False
+        no_adults = int(row[3]) if row[3] else 0
+        no_children = int(row[4]) if row[4] else 0
+        no_free_of_charge = int(row[5]) if row[5] else 0
         park = Park.objects.get(id=park_id)
 
         if any([no_adults, no_children, no_free_of_charge]) > 0:
