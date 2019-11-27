@@ -326,16 +326,14 @@ export default {
           var total_children_same_group;
           var no_adults;
           var no_children;
+          var selected_adults;
+          var selected_children;
 
           if (selected_park) {
 
             // calc totals adults and children already paid for in previous sessions, or accounted for in current session
             //vm.update_visitors_same_group_tour(selected_date, row, row_idx)
-            var running_total_adults_same_group = vm.total_adults_same_group
-            var running_total_children_same_group = vm.total_children_same_group
 
-            total_adults_same_group = running_total_adults_same_group
-            total_children_same_group = running_total_children_same_group
             for(var i=0, length=vm.table.tbody.length; i<length; i++) {
 
                 var row = vm.table.tbody[i]
@@ -344,12 +342,14 @@ export default {
                 var district_id = row[0].district_id;
 
                 //let [total_adults_same_group, total_children_same_group] = vm.update_visitors_same_group_tour(arrival, district_id, row, row_idx)
-                let [total_adults_same_group, total_children_same_group] = vm.get_visitors_same_group_tour(arrival, district_id)
+                var [total_adults_same_group, total_children_same_group] = vm.get_visitors_same_group_tour(arrival, district_id)
                 console.log('*** ' + selected_park + ' row: ' + row);
 
                 /* Previous Sessions - total no_adults and children, excluding those from the same tour group, previously already paid for */
-                var no_adults = isNaN(parseInt(row[vm.idx_adult])) ? 0 : Math.max( parseInt(row[vm.idx_adult]) - total_adults_same_group, 0);
-                var no_children = isNaN(parseInt(row[vm.idx_child])) ? 0 : Math.max( parseInt(row[vm.idx_child]) - total_children_same_group, 0);
+                selected_adults = isNaN(parseInt(row[vm.idx_adult])) ? 0 : parseInt(row[vm.idx_adult])
+                selected_children = isNaN(parseInt(row[vm.idx_child])) ? 0 : parseInt(row[vm.idx_child])
+                no_adults = Math.max( selected_adults - total_adults_same_group, 0);
+                no_children = Math.max( selected_children - total_children_same_group, 0);
 
                 var adult_price = no_adults==0 ? 0.00 : no_adults * vm.adult_price(row);
                 var child_price = no_children==0 ? 0.00 : no_children * vm.child_price(row);
@@ -358,7 +358,8 @@ export default {
                 vm.table.tbody[row_idx][vm.idx_price] = (adult_price + child_price).toFixed(2);
                 vm.updateTableJSON();
 
-                vm.update_visitors_same_group_tour(arrival, district_id, row, row_idx)
+                //vm.update_visitors_same_group_tour(arrival, district_id, no_adults + total_adults_same_group, no_children + total_children_same_group)
+                vm.update_visitors_same_group_tour(arrival, district_id, Math.max( selected_adults, total_adults_same_group), Math.max( selected_children, total_children_same_group))
                 //total_adults_same_group = Math.max( total_adults_same_group, isNaN(parseInt(row[vm.idx_adult])) ? 0 : parseInt(row[vm.idx_adult]) )
                 //total_children_same_group = Math.max( total_children_same_group, isNaN(parseInt(row[vm.idx_child])) ? 0 : parseInt(row[vm.idx_child]) )
             }
@@ -465,7 +466,7 @@ export default {
                 return [0, 0];
             }
         },
-        update_tour_group_data: function(selected_park, row, row_idx) {
+        __update_tour_group_data: function(selected_park, row, row_idx) {
             // {arrivat_date: {district_id: {'total_adults': 5, 'total_children': 5}}}
             // eg. {'2019-11-26': {5: {'total_adults': 5, 'total_children': 5}}}
             let vm = this;
@@ -497,15 +498,6 @@ export default {
                 vm.tour_group_data_tmp[arrival] = {};
                 vm.tour_group_data_tmp[arrival][district_id] =  max_visitors;
             }
-
-            //for(var i = 0, length = this.col_headers.length; i < length; i++) { 
-            //    init_row.push('')
-            //}
-
-            //const tour_group_data_tmp = {'a': 1, 'b': 2, 'c' : 3};
-            //for (const [key, value] of Object.entries(vm.tour_group_data_tmp)) {
-            //    console.log(key, value);
-            //}
         },
         park_change: function(selected_park, row, row_idx) {
           let vm = this;
@@ -528,10 +520,10 @@ export default {
             let vm = this;
 
             for(var i=0, length=vm.max_group_arrival.length; i<length; i++) { 
-                if (arrival==vm.max_group_arrival[i][arrival]) {
-                    for(var j=0, length=vm.max_group_arrival[i][district].length; j<length; j++) { 
-                        if (district_id==vm.max_group_arrival[i][district][district_id]) {
-                            return [ vm.max_group_arrival[i][district][j][total_adults], vm.max_group_arrival[i][district][j][total_children] ]
+                if (arrival==vm.max_group_arrival[i].arrival) {
+                    for(var j=0, length=vm.max_group_arrival[i].district.length; j<length; j++) { 
+                        if (district_id==vm.max_group_arrival[i].district[j].district_id) {
+                            return [ vm.max_group_arrival[i].district[j].total_adults, vm.max_group_arrival[i].district[j].total_children ]
                         }
                     }
                 }
@@ -542,7 +534,7 @@ export default {
             let vm = this;
 
             for(var i=0, length=vm.max_group_arrival.length; i<length; i++) { 
-                if (arrival==vm.max_group_arrival[i][arrival]) {
+                if (arrival==vm.max_group_arrival[i].arrival) {
                     return i
                 }
             }
@@ -553,34 +545,32 @@ export default {
 
             var idx = vm.find_arrival_idx(arrival)
             if (idx > -1) {
-                for(var j=0, length=vm.max_group_arrival[idx][district].length; j<length; j++) { 
-                    if (district_id==vm.max_group_arrival[idx][district][district_id]) {
+                for(var j=0, length=vm.max_group_arrival[idx].district.length; j<length; j++) { 
+                    if (district_id==vm.max_group_arrival[idx].district[j].district_id) {
                         return j
                     }
                 }
             }
             return -1
         },
-        update_visitors_same_group_tour: function(arrival, district_id, row, row_idx) {
+        update_visitors_same_group_tour: function(arrival, district_id, total_adults, total_children) {
             /*
                 Checks if a park in this district has been previously booked on the same arrival date, if so pay for only excess adults and children
             */
             let vm = this;
-            var total_adults = 0;
-            var total_children = 0;
 
             var idx1 = vm.find_arrival_idx(arrival)
             var idx2 = vm.find_district_idx(arrival, district_id)
             if (idx1 > -1 && idx2 > -1) {
-                if (district_id==vm.max_group_arrival[idx1][district][district_id]) {
-                    vm.max_group_arrival[idx1][arrival] = arrival
-                    vm.max_group_arrival[idx1][district][idx2][total_adults] = total_adults
-                    vm.max_group_arrival[idx1][district][idx2][total_children] = total_children
+                if (district_id==vm.max_group_arrival[idx1]["district"][idx2]["district_id"]) {
+                    vm.max_group_arrival[idx1]["arrival"] = arrival
+                    vm.max_group_arrival[idx1]["district"][idx2]["total_adults"] = total_adults
+                    vm.max_group_arrival[idx1]["district"][idx2]["total_children"] = total_children
                 }
             } else if (idx1 > -1) {
-                vm.max_group_arrival[idx1][district].push({district_id: district_id, total_adults: total_adults, total_children:total_children})
+                vm.max_group_arrival[idx1]["district"].push({district_id: district_id, total_adults: total_adults, total_children:total_children})
             } else if (idx2 > -1) {
-                vm.max_group_arrival.push({arrival: arrival, district: {district_id: district_id, total_adults: total_adults, total_children: total_children}})
+                vm.max_group_arrival.push({arrival: arrival, district: [{district_id: district_id, total_adults: total_adults, total_children: total_children}]})
             }
 
         },
@@ -635,7 +625,7 @@ export default {
                     arrival = arrival_dates[j]
                     total_adults = vm.options[i].max_group_arrival_by_date[arrival].total_adults
                     total_children = vm.options[i].max_group_arrival_by_date[arrival].total_children
-                    vm.max_group_arrival.push({arrival: arrival, district: {district_id: district_id, total_adults: total_adults, total_children: total_children}})
+                    vm.max_group_arrival.push({arrival: arrival, district: [{district_id: district_id, total_adults: total_adults, total_children: total_children}]})
                 }
             }
         },
