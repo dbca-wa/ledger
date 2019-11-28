@@ -167,8 +167,8 @@ class ParkSerializer(serializers.ModelSerializer):
         #    )
         #return ParkBooking.objects.filter(booking__proposal_id=488).values('arrival', 'park__district_id').annotate(total_adults=Sum('no_adults'), total_children=Sum('no_children'), total_free=Sum('no_free_of_charge'))
         #ParkBooking.objects.filter(booking__proposal_id=488).values('arrival', 'park__district_id').annotate(total_adults=Sum('no_adults'))
-        #today = datetime.now().date()
-        today = date(2019,11,15)
+        today = datetime.now().date()
+        #today = date(2019,11,15)
         group =  obj.bookings.filter(arrival__gte=today).values('arrival').annotate(total_adults=Max('no_adults'), total_children=Max('no_children'), total_free=Max('no_free_of_charge'))
         #return group
         if group:
