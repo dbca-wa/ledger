@@ -74,7 +74,7 @@
         <nav class="navbar navbar-inverse navbar-fixed-top">
               <div>
 
-                < <button type="button" class="button formButton1" @click="scrollMeTo('infoSection1')">
+                 <button type="button" class="button formButton1" @click="scrollMeTo('infoSection1')">
                             About the Campground
                         </button>
                  <button type="button" class="button formButton1" @click="scrollMeTo('bookSection')">
@@ -112,6 +112,7 @@
             <div class="row" v-show="status == 'online'">
             <div v-if="long_description" class="columns small-12 medium-12 large-12">
 
+                <!-- Empty div , Might need to be removed later on -->
                 <div class="row">
 
                    <!-- Commenting out the more info button
