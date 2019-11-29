@@ -378,6 +378,10 @@ export default {
           }
         },
 
+        get_district_arrival_map: function() {
+            vm.district_arrival_map = 0;
+        },
+
         get_districts: function() {
             let vm = this;
             var districts = [];
