@@ -9,28 +9,34 @@
             </div>
         </div>
         <div class="row" v-else-if="status == 'offline'">
+
+            <nav class="navbar navbar-inverse navbar-fixed-top">
+              <div>
+                <ul>
+                  <li><a href='#' @click="scrollMeTo('infoSection')"> About the Campground </a> </li>
+                </ul>
+               <!-- <button type="button" class="button formButton1" @click="scrollMeTo('infoSection')">
+                            About the Campground
+                        </button> -->
+              </div>
+
+            </nav>
+
             <div class="columns small-12 medium-12 large-12">
 
               <!-- Expected changes for the more info for non bookable sites -->
-              <div class="row" v-if="name">
-                    <div class="columns small-12">
-                        <h1>Info about camping at {{ name }}</h1>
-                    </div>
-               </div>
 
-              <div class="columns small-6 medium-6 large-3">
+              <!-- <div class="columns small-6 medium-6 large-3">
                         <button type="button" class="button formButton" @click="toggleMoreInfo">
                             More Information &nbsp;&nbsp;
                             <i style="font-size:large;" v-if="!showMoreInfo" class="fa fa-caret-down"></i>
                             <i style="font-size:large;" v-else class="fa fa-caret-up"></i>
                         </button>
-              </div>
+              </div> -->
 
-               <div class="row" style="margin-bottom:15px;" v-if="showMoreInfo">
-                      <div class="columns small-12 medium-12 large-12">
-                        <div v-html="long_description"></div>
+               <div ref="infoSection" class="columns small-12 medium-12 large-12">
+                          <div v-html="long_description"></div>
                       </div>
-                </div>
 
                 <!-- Original implementation for offline
                 <div class="callout alert">
@@ -64,9 +70,24 @@
             </div>
         </div>
 
+        <div v-if="status == 'online'" >
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+              <div>
+
+                 <button type="button" class="button formButton1" @click="scrollMeTo('infoSection1')">
+                            About the Campground
+                        </button>
+                 <button type="button" class="button formButton1" @click="scrollMeTo('bookSection')">
+                            Booking Now
+                        </button>
+              </div>
+
+            </nav>
+          </div>
+
         <div class="row" v-if="name">
             <div class="columns small-12">
-                <h1>Book camping at {{ name }}</h1>
+                <h1>Camping at {{ name }}</h1>
             </div>
         </div>
         <div v-if="ongoing_booking" class="row">
@@ -90,25 +111,30 @@
         </div>
             <div class="row" v-show="status == 'online'">
             <div v-if="long_description" class="columns small-12 medium-12 large-12">
+
+                <!-- Empty div , Might need to be removed later on -->
                 <div class="row">
-                    <div class="columns small-6 medium-6 large-3">
+
+                   <!-- Commenting out the more info button
+
+                   <div class="columns small-6 medium-6 large-3">
                         <button type="button" class="button formButton" @click="toggleMoreInfo">
                             More Information &nbsp;&nbsp;
                             <i style="font-size:large;" v-if="!showMoreInfo" class="fa fa-caret-down"></i>
                             <i style="font-size:large;" v-else class="fa fa-caret-up"></i>
                         </button>
-                    </div>
+                    </div> -->
 
                     <!-- Added button to scroll down to booking section -->
-                    <div>
+                    <!-- <div>
                       <button type="button" class="button formButton" @click = "scrollMeTo('bookSection') ">
                         Booking Section &nbsp;&nbsp;
                         </button>
-                    </div>
+                    </div> -->
                     <!-- End of addition -->
 
                 </div>
-                <div class="row" style="margin-bottom:15px;" v-if="showMoreInfo">
+                <div ref = 'infoSection1' class="row" style="margin-bottom:15px;" v-if="showMoreInfo">
                     <div class="columns small-12 medium-12 large-12">
                         <div v-html="long_description"></div>
                     </div>
@@ -287,6 +313,15 @@
         width: 100%;
     }
 
+    .button.formButton1 {
+        display: block;
+        background-color: transparent;
+        width: 10%;
+        font-color: white;
+        float: left ;
+        padding-bottom : none;
+    }
+
     .siteWarning {
         font-weight: bold;
         font-style: italic;
@@ -294,6 +329,13 @@
     .continueBooking {
         text-decoration: none;
     }
+     .li {
+    position: relative;
+    float: left;
+    display: block;
+    }
+
+
 }
 
 </style>

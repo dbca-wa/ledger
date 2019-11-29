@@ -116,10 +116,10 @@
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
 
                         <!-- Add line to join the 2 buttons into 1 -->
-                        <a id="mapPopupBookInfo" class="button formButton" style="margin-bottom: 0;" target="_blank">More Info/Book now</a>
+                       <!--  <a id="mapPopupBookInfo" class="button formButton" style="margin-bottom: 0;" target="_blank">More Info/Book now</a> -->
 
-                        <!-- <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
-                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank">Book now</a> -->
+                         <a id="mapPopupBook" class="button formButton1" style="margin-bottom: 0; margin-top: 1em;" target="_blank">Book now</a>
+                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0;" target="_blank">More Info</a>
 
                     </div>
                 </div>
@@ -149,9 +149,11 @@
                                 <!-- <a class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info/Book now</a> -->
 
 
-                                <a v-if="f.campground_type == 0 || f.campground_type == 1 " class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info/Book now</a>
+                                <a v-if="f.campground_type == 0  " class="button formButton1" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
 
-                                <a v-else class="button formButton" v-bind:href="f.info_url" target="_blank">More info/Book now</a>
+                                <a v-else-if="f.campground_type == 1  " class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info</a>
+
+                                <a v-else class="button formButton2" v-bind:href="f.info_url" target="_blank">More info</a>
 
 
                             <!-- End of change -->
@@ -319,6 +321,18 @@
     .button.formButton {
         display: block;
         width: 100%;
+    }
+
+    .button.formButton1{
+      display: block;
+      background-color: green;
+      width: 100%;
+    }
+
+    .button.formButton2{
+      display: block;
+      background-color: purple;
+      width: 100%;
     }
 
     .button.selector {
@@ -590,8 +604,10 @@ export default {
                     'gear_type': this.gearType,
                 };
                 if (this.arrivalDate && this.departureDate) {
+
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
                     params['departure'] = this.departureDate.format('YYYY/MM/DD');
+
                 }
                 return $.param(params);
             }
@@ -600,22 +616,6 @@ export default {
     methods: {
         toggleShowFilters: function() {
             this.hideExtraFilters = !this.hideExtraFilters;
-        },
-        my_function: function(my_date) {
-            //let new_date = new Date(my_date);
-
-            //console.log('new_date: '+new_Date);
-            //let your_date = new_date.getDate() + '/' + (new_date.getMonth()+1) + '/' + new_date.getYear();
-
-            let date_list = my_date.split(',');
-            let day_list= date_list[0].split('/');
-
-            let correctedDate = day_list[1]+'/'+day_list[0] +'/'+day_list[2]
-            console.log('CorrectedDate: '+correctedDate);
-
-            //this.arrivalEl.fdatepicker('update',correctedDate );
-
-
         },
         search: function(place) {
             if (!place) {
@@ -737,13 +737,19 @@ export default {
                 //$("#mapPopupInfo").attr('href', feature.get('info_url'));
 
                // if/else used to diffrentiate campground type(if covers type 0 and 1) ,diffrentiated at api - backend
-                if (feature.get('campground_type') == 0 || feature.get('campground_type') == 1 ){
+                if (feature.get('campground_type') == 0) {
 
-                $("#mapPopupBookInfo").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                $("#mapPopupBook").show();
+                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                $("#mapPopupInfo").hide();
+                } else if( feature.get('campground_type') == 1 ){
 
+                $("#mapPopupBook").hide();
+                $("#mapPopupInfo").show();
+                $("#mapPopupInfo").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
 
                 } else {
-                  $("#mapPopupBookInfo").attr('href', feature.get('info_url'));
+                  $("#mapPopupInfo").attr('href', feature.get('info_url'));
                 }
 
                /* if (feature.get('campground_type') == 0) {
@@ -803,8 +809,8 @@ export default {
             }
         },
         updateDates: function(ev) {
-            //console.log('BANG');
-            //console.log(ev);
+           // console.log('BANG');
+           // console.log(ev);
             // for the first time someone changes the dates, enable the
             // "Show bookable campsites only" flag
             if (this.dateSetFirstTime) {
@@ -818,15 +824,14 @@ export default {
             this.refreshPopup();
         }, 250),
 
-        // Added these methods to use server date extracted from an api call
-        // Needs to be implemented in the system
+        // TODO Added these methods to use server date extracted from an api call
+        // Needs to be implemented in the system, have to use server date to restrict arrival date instead of today
+        // Currently this function is not used
         setData: function(datestring) {
           let vm = this
              var tempDate = datestring.body;
-            //  console.log('1 : '+tempDate);
-              //console.log('Type of response'+typeof(tempDate));
               vm.currentDate = vm.currentDate = moment({year: tempDate.getFullYear(), month: tempDate.getMonth(), day: tempDate.getDate(), hour: 0, minute: 0, second: 0});
-              console.log('In setdata ,Function Date currentDate:'+vm.currentDate);
+             // console.log('In setdata ,Function Date currentDate:'+vm.currentDate);
 
         },
 
@@ -921,7 +926,7 @@ export default {
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
             //value: vm.currentDate which you got from server
-            //startDate: moment(this.arrivalEL).toDate(),
+            startDate: moment(today).toDate(),
             endDate: moment.utc(this.arrivalEl).add(180, 'days').toDate(),
             onRender: function (date) {
                 // disallow start dates before today
@@ -942,11 +947,10 @@ export default {
                 vm.departureData.fill();
                 vm.departureEl.trigger('changeDate');
 
-                console.log(newDate);
-
             }
-            vm.arrivalData.hide();
+
             vm.arrivalDate = moment(vm.arrivalData.date);
+
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
                 ev.target.dispatchEvent(new CustomEvent('change'));
@@ -964,6 +968,7 @@ export default {
         }).on('change', function (ev) {
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
+
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
                 ev.target.dispatchEvent(new CustomEvent('change'));
@@ -1082,6 +1087,7 @@ export default {
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
                 isCustom = true;
                 var arrival = vm.arrivalDateString;
+
                 if (arrival) {
                     params.arrival = arrival;
                 }
@@ -1258,14 +1264,24 @@ export default {
 
                 // This portion needs to be modified to accomodate the new button
                 // Online/Offline sites is determined by the backend api
-                if (feature.get('campground_type') == 0 || feature.get('campground_type') == 1 ) {
+               if (feature.get('campground_type') == 0) {
 
-                $("#mapPopupBookInfo").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                $("#mapPopupBook").show()
+                $("#mapPopupInfo").hide()
+                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+
+                } else if (feature.get('campground_type') == 1 ) {
+
+                $("#mapPopupBook").hide ()
+                $("#mapPopupInfo").show()
+                $("#mapPopupInfo").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
 
                 }
                 // Now,this section is used for the partner accomadation
                 else {
-                $("#mapPopupBookInfo").attr('href', feature.get('info_url'));
+                $("#mapPopupInfo").show()
+                $("#mapPopupBook").hide()
+                $("#mapPopupInfo").attr('href', feature.get('info_url'));
                 }
 
                 /* $("#mapPopupInfo").attr('href', feature.get('info_url'));
