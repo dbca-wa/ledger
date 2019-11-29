@@ -26,11 +26,11 @@
                       </td>
 
                       <td v-if="col_types[index]=='checkbox'" v-for="(value, index) in row">
-                          <div><input class="tbl_input" :type="col_types[index]" v-model="row[index]" @change="calcPrice(row[index], row, row_idx)"/> </div>
+                          <div><input class="tbl_input" :type="col_types[index]" v-model="row[index]" @change="calcPrice(row, row_idx)"/> </div>
                       </td>
 
                       <td v-if="col_types[index]=='text' || col_types[index]=='number'" v-for="(value, index) in row">
-                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[1]==''" @change="calcPrice(row[index], row, row_idx)"/>
+                          <input :readonly="readonly" class="tbl_input" :type="col_types[index]" min="0" value="0" v-model="row[index]" :required="isRequired" :onclick="isClickable" :disabled="row[1]==''" @change="calcPrice(row, row_idx)"/>
                       </td>
 
                       <td v-if="col_types[index]=='total'" v-for="(value, index) in row">
@@ -288,6 +288,10 @@ export default {
                 return item !== row
             })
             vm.updateTableJSON();
+
+            /* need to recalc table prices, because same_tour group calc may have changed for one or more rows */
+            vm.update_arrival_dates()
+            vm.calcPrice(row, row_idx)
         },
 
         adult_price: function(row) {
@@ -296,7 +300,10 @@ export default {
         child_price: function(row) {
             return row[this.idx_park] ? row[this.idx_park].prices.child : '';
         },
-        calcPrice: function(selected_park, row, row_idx) {
+        check: function(selected_park, row, row_idx) {
+            console.log('check')
+        },
+        calcPrice: function(row, row_idx) {
           let vm = this;
 
           var total_adults_same_group = 0;
@@ -308,7 +315,10 @@ export default {
           var adult_price = 0;
           var child_price = 0;
 
-          if (selected_park) {
+          var selected_arrival_date = row[vm.idx_arrival_date]
+
+          console.log('check')
+          if (selected_arrival_date !== "") {
 
             for(var i=0; i<vm.districts.length; i++) {
                 var district_id = vm.districts[i];
@@ -340,8 +350,14 @@ export default {
                             if (count == 0 && same_tour_group_checked) {
                                 var [total_adults_same_group, total_children_same_group] = vm.get_visitors_same_group_tour(arrival, district_id)
                             }
-                            no_adults = Math.max( selected_adults - total_adults_same_group, 0);
-                            no_children = Math.max( selected_children - total_children_same_group, 0);
+
+                            if (same_tour_group_checked) {
+                                no_adults = Math.max( selected_adults - total_adults_same_group, 0);
+                                no_children = Math.max( selected_children - total_children_same_group, 0);
+                            } else {
+                                no_adults = selected_adults;
+                                no_children = selected_children;
+                            }
 
                             adult_price = no_adults==0 ? 0.00 : no_adults * vm.adult_price(row);
                             child_price = no_children==0 ? 0.00 : no_children * vm.child_price(row);
@@ -400,13 +416,15 @@ export default {
             }
         },
         update_arrival_dates: function() {
-            /* updates vm.arrival_dates list with current arrival dates from the table */
+            /* updates vm.arrival_dates list with current arrival dates from the table
+               (initial update to vm.arrival_dates occured 
+            */
             let vm = this;
             var selected_date = [];
 
-            for(var i=0; i<vm.options.length; i++) {
+            for(var i=0; i<vm.table.tbody.length; i++) {
                 selected_date = vm.table.tbody[i][1]
-                if ( !(vm.arrival_dates.indexOf(arrival) > -1)) {
+                if ( !(vm.arrival_dates.indexOf(selected_date) > -1)) {
                     vm.arrival_dates.push(selected_date);
                 }
             }
@@ -429,21 +447,28 @@ export default {
         },
         park_change: function(selected_park, row, row_idx) {
           let vm = this;
-            if (selected_park==null) {
+            if (selected_park===null || selected_park==='') {
                 // reset the row
                 vm.table.tbody[row_idx] = vm.reset_row();
             }
             vm.updateTableJSON();
+
+            /* need to recalc table prices, because same_tour group calc may have changed for one or more rows */
+            vm.update_arrival_dates()
+            vm.calcPrice(row, row_idx)
         },
         date_change: function(selected_date, row, row_idx) {
           let vm = this;
-            if (selected_date==null || selected_date=='') {
+            if (selected_date===null || selected_date==='') {
                 // reset part of the row (date onwards)
                 vm.table.tbody[row_idx] = vm.reset_row_part(row);
             }
             vm.updateTableJSON();
-            //vm.update_visitors_same_group_tour(selected_date, row, row_idx)
-            vm.add_arrival_date(selected_date)
+            //vm.add_arrival_date(selected_date)
+
+            /* need to recalc table prices, because same_tour group calc may have changed for one or more rows */
+            vm.update_arrival_dates()
+            vm.calcPrice(row, row_idx)
         },
         get_visitors_same_group_tour: function(arrival, district_id) {
             let vm = this;
