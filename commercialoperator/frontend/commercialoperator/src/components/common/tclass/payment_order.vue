@@ -194,6 +194,9 @@ from '@/utils/hooks'
                 var idx_child = vm.$refs.order_table.idx_child;
                 var idx_free = vm.$refs.order_table.idx_free;
                 var idx_price = vm.$refs.order_table.idx_price;
+                var idx_adult_same_tour = vm.$refs.order_table.idx_adult_same_tour;
+                var idx_child_same_tour = vm.$refs.order_table.idx_child_same_tour;
+                var idx_free_same_tour = vm.$refs.order_table.idx_free_same_tour;
 
                 var errors = [];
                 var tbody = vm.$refs.order_table.table.tbody;

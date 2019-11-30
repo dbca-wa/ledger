@@ -204,6 +204,10 @@ class ParkBooking(RevisionedMixin):
     no_adults = models.SmallIntegerField(default=0)
     no_children = models.SmallIntegerField(default=0)
     no_free_of_charge = models.SmallIntegerField(default=0)
+    same_tour_group= models.BooleanField(default=False)
+    no_adults_same_tour = models.SmallIntegerField(blank=True, null=True)
+    no_children_same_tour = models.SmallIntegerField(blank=True, null=True)
+    no_free_of_charge_same_tour = models.SmallIntegerField(blank=True, null=True)
     cost = models.DecimalField(max_digits=8, decimal_places=2, default='0.00')
 
     def __str__(self):
@@ -239,13 +243,19 @@ class ParkBooking(RevisionedMixin):
             return None
 
         lines = []
-        if self.no_adults > 0:
+        if self.no_adults_same_tour and self.no_adults_same_tour > 0:
+            lines.append(add_line_item('Adult (Same Tour Group, Total {})'.format(self.no_adults), price=self.park.adult_price, no_persons=self.no_adults_same_tour))
+        elif self.no_adults > 0:
             lines.append(add_line_item('Adult', price=self.park.adult_price, no_persons=self.no_adults))
 
-        if self.no_children > 0:
+        if self.no_children_same_tour and self.no_children_same_tour > 0:
+            lines.append(add_line_item('Child (Same Tour Group, Total {})'.format(self.no_children), price=self.park.child_price, no_persons=self.no_children_same_tour))
+        elif self.no_children > 0:
             lines.append(add_line_item('Child', price=self.park.child_price, no_persons=self.no_children))
 
-        if self.no_free_of_charge > 0:
+        if self.no_free_of_charge_same_tour and self.no_free_of_charge_same_tour > 0:
+            lines.append(add_line_item('Free (Same Tour Group, Total {})'.format(self.no_free_of_charge), price=0.0, no_persons=self.no_free_of_charge_same_tour))
+        elif self.no_free_of_charge > 0:
             lines.append(add_line_item('Free', price=0.0, no_persons=self.no_free_of_charge))
 
         return lines

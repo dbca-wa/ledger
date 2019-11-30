@@ -256,12 +256,13 @@ export default {
         },
         reset_row: function() {
             var init_row = [];
-            for(var i = 0, length = this.col_headers.length; i < length; i++) { init_row.push('')  }
+            var length = this.col_headers.length + 3 // adding 3, for 3 same_tour_group values for number of adults, children and free_of_charge
+            for(var i = 0; i<length; i++) { init_row.push('')  }
             return init_row;
         },
         reset_row_part: function(row) {
             // reset part of the row (from date onwards)
-            for(var i = 1, length = row.length; i < length; i++) { row[i]=''  }
+            for(var i=1; i<row.length; i++) { row[i]=''  }
             return row;
         },
 
@@ -274,8 +275,9 @@ export default {
         addRow: function() {
           let vm = this;
           var newRow = [];
+          var length = vm.table.thead.length + 3 // adding 3, for 3 same_tour_group values for number of adults, children and free_of_charge
 
-          for(var i = 0, length = vm.table.thead.length; i < length; i++) {
+          for(var i=0; i<vm.table.thead.length; i++) {
             newRow.push('')
           }
           newRow[vm.idx_same_group_tour] = false;
@@ -376,10 +378,17 @@ export default {
                             vm.updateTableJSON();
 
                             if (same_tour_group_checked) {
+                                vm.table.tbody[row_idx][vm.idx_adult_same_tour] = no_adults
+                                vm.table.tbody[row_idx][vm.idx_child_same_tour] = no_children
+
                                 total_adults_same_group = Math.max( total_adults_same_group, selected_adults )
                                 total_children_same_group = Math.max( total_children_same_group, selected_children )
                                 count += 1
+                            } else {
+                                vm.table.tbody[row_idx][vm.idx_adult_same_tour] = ''
+                                vm.table.tbody[row_idx][vm.idx_child_same_tour] = ''
                             }
+
                         }
                     }
                 }
