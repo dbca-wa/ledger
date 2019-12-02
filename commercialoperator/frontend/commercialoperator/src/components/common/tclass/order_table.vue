@@ -26,6 +26,7 @@
                       </td>
 
                       <td v-if="col_types[index]=='checkbox'" v-for="(value, index) in row">
+                          <!-- <div><input class="tbl_input" :type="col_types[index]" v-model="row[index]" @change="calcPrice(row, row_idx, index)" :title="tooltip_same_group_tour(row, row_idx)" :disabled="get_same_tour_group_checkbox(row_idx)"/> </div> -->
                           <div><input class="tbl_input" :type="col_types[index]" v-model="row[index]" @change="calcPrice(row, row_idx, index)" :title="tooltip_same_group_tour(row, row_idx)"/> </div>
                       </td>
 
@@ -38,7 +39,7 @@
                       </td>
 
                       <td v-if="!readonly">
-                          <a class="fa fa-trash-o" v-on:click="deleteRow(row)" title="Delete row" style="cursor: pointer; color:red;" :disabled="disabled"></a>
+                          <a class="fa fa-trash-o" v-on:click="deleteRow(row, row_idx)" title="Delete row" style="cursor: pointer; color:red;" :disabled="disabled"></a>
                       </td>
                   </tr>
 
@@ -145,6 +146,10 @@ export default {
                     tbody: value['tbody']
             }
         }
+        vm.same_tour_group_checkbox = []
+        for(var i=0; i<vm.table.tbody.length; i++) {
+            vm.same_tour_group_checkbox.push(true)
+        }
 
 /*
         [
@@ -203,7 +208,6 @@ export default {
             districts: [],
             arrival_dates: [],
             district_arrival_map: [],
-
         }
     },
     watch:{
@@ -283,10 +287,11 @@ export default {
           newRow[vm.idx_same_group_tour] = false;
           
           vm.table.tbody.push(newRow);
+          vm.same_tour_group_checkbox.push(true)
 
           vm.updateTableJSON();
         },
-        deleteRow: function(row) {
+        deleteRow: function(row, row_idx) {
             let vm = this;
 
             // pop row from data structure
@@ -297,6 +302,7 @@ export default {
 
             /* need to recalc table prices, because same_tour group calc may have changed for one or more rows */
             vm.update_arrival_dates()
+            vm.same_tour_group_checkbox.splice(row_idx,1)
             vm.calcPrice(row, row_idx, -1) // dummy col_idx=-1
         },
 
@@ -309,8 +315,44 @@ export default {
         check: function(selected_park, row, row_idx) {
             console.log('check')
         },
-        tooltip_same_group_tour: function(arrival, district_id) {
-            return 'Tick if this is for the same tour group as the booking for <other park> for <same date>.'
+        tooltip_same_group_tour: function(row, row_idx) {
+            let vm = this;
+            var selected_arrival = row[vm.idx_arrival_date]
+            var selected_district_id = row[vm.idx_park].district_id
+            if (selected_arrival=="" || selected_district_id=="") {
+                return '';
+            }
+            return 'Tick if this is for the same tour group as the booking for district ' + selected_district_id + ' for ' + selected_arrival + '.';
+        },
+        get_same_tour_group_checkbox: function(row_idx) {
+            return this.same_tour_group_checkbox[row_idx]
+        },
+        disable_same_tour_group_checkbox: function(row) {
+            let vm = this;
+            if (!(row && row[vm.idx_park]=="")) {
+                var selected_arrival = row[vm.idx_arrival_date]
+                var selected_district_id = row[vm.idx_park].district_id
+                if (selected_arrival=="" || selected_district_id=="") {
+                    return true;
+                }
+                var arrival_dates = []
+                var arrival
+                var district_id
+                vm.get_district_arrival_map()
+
+                for(var i=0; i<vm.district_arrival_map.length; i++) {
+                    district_id = vm.district_arrival_map[i].district_id;
+                    if ( district_id==selected_district_id) {
+                        arrival_dates = vm.district_arrival_map[i].arrival_dates;
+                        if ( arrival_dates.indexOf(selected_arrival) > -1) {
+                            console.log('False')
+                            return false;
+                        }
+                    }
+                }
+            }
+            console.log('True')
+            return true;
         },
 
         calcPrice: function(row, row_idx, col_idx) {
@@ -347,7 +389,7 @@ export default {
                         var same_tour_group_checked = row[vm.idx_same_group_tour]
 
                         if (district_id == row[vm.idx_park].district_id && arrival == row[vm.idx_arrival_date]) {
-                            var nrows = vm.get_nrows(arrival, district_id)
+                            //var nrows = vm.get_nrows(arrival, district_id)
 
                             selected_adults = isNaN(parseInt(row[vm.idx_adult])) ? 0 : parseInt(row[vm.idx_adult])
                             selected_children = isNaN(parseInt(row[vm.idx_child])) ? 0 : parseInt(row[vm.idx_child])
@@ -361,8 +403,6 @@ export default {
                                     total_adults_same_group = total_adults_same_group_prev;
                                     total_children_same_group = total_children_same_group_prev;
                                 }
-
-                            if (same_tour_group_checked) {
                                 no_adults = Math.max( selected_adults - total_adults_same_group, 0);
                                 no_children = Math.max( selected_children - total_children_same_group, 0);
                             } else {
@@ -380,38 +420,21 @@ export default {
                             if (same_tour_group_checked) {
                                 vm.table.tbody[k][vm.idx_adult_same_tour] = no_adults
                                 vm.table.tbody[k][vm.idx_child_same_tour] = no_children
-
-                                //total_adults_same_group = Math.max( total_adults_same_group, selected_adults )
-                                //total_children_same_group = Math.max( total_children_same_group, selected_children )
-                                //count += 1
                             } else {
                                 vm.table.tbody[k][vm.idx_adult_same_tour] = ''
                                 vm.table.tbody[k][vm.idx_child_same_tour] = ''
                             }
-                            console.log("selected_adults: " + selected_adults + " - " + "selected_children: " + selected_children)
-                            console.log("total_adults_prev: " + total_adults_same_group_prev + " - " + "total_children_prev: " + total_children_same_group_prev)
-                            console.log("total_adults: " + total_adults_same_group + " - " + "total_children: " + total_children_same_group)
-                            console.log("max_group_arrival: " + JSON.stringify(this.max_group_arrival))
-                            console.log()
-
                             total_adults_same_group_prev = Math.max( selected_adults, total_adults_same_group)
                             total_children_same_group_prev = Math.max( selected_children, total_children_same_group)
 
-                            //total_adults_same_group_prev = total_adults_same_group;
-                            //total_children_same_group_prev = total_children_same_group;
-                            //total_adults_same_group = Math.max( selected_adults, total_adults_same_group)
-                            //total_children_same_group = Math.max( selected_children, total_children_same_group)
-                            if(k != row_idx) {
-                                if (count < nrows-1) { // update, except with the last row
-                                    //vm.update_visitors_same_group_tour(arrival, district_id, total_adults_same_group, total_children_same_group)
-                                }
-                            }
-
+                            //vm.update_visitors_same_group_tour(arrival, district_id, total_adults_same_group, total_children_same_group)
+                            /*
                             console.log("selected_adults: " + selected_adults + " - " + "selected_children: " + selected_children)
                             console.log("total_adults_prev: " + total_adults_same_group_prev + " - " + "total_children_prev: " + total_children_same_group_prev)
                             console.log("total_adults: " + total_adults_same_group + " - " + "total_children: " + total_children_same_group)
                             console.log("max_group_arrival: " + JSON.stringify(this.max_group_arrival))
                             console.log()
+                            */
                             count += 1
                         }
                     }
@@ -678,8 +701,8 @@ export default {
         },
         park_change: function(selected_park, row, row_idx) {
             let vm = this;
-            var selected_date = row[1]
-            var selected_district_id = row[0].district_id
+            var selected_date = row[vm.idx_arrival_date]
+            var selected_district_id = row[vm.idx_park].district_id
 
             if (selected_park===null || selected_park==='') {
                 // reset the row
@@ -690,7 +713,9 @@ export default {
             /* need to recalc table prices, because same_tour group calc may have changed for one or more rows */
             vm.update_arrival_dates()
             vm.calcPrice(row, row_idx, vm.idx_park)
-            vm.enable_same_tour_group_checkbox(selected_date, selected_district_id)
+            if (selected_date) {
+                vm.same_tour_group_checkbox[row_idx] = vm.disable_same_tour_group_checkbox(row)
+            }
         },
         date_change: function(selected_date, row, row_idx) {
             let vm = this;
@@ -706,29 +731,9 @@ export default {
             /* need to recalc table prices, because same_tour group calc may have changed for one or more rows */
             vm.update_arrival_dates()
             vm.calcPrice(row, row_idx, vm.idx_arrival_date)
-            vm.enable_same_tour_group_checkbox(selected_date, selected_district_id)
+            vm.same_tour_group_checkbox[row_idx] = vm.disable_same_tour_group_checkbox(row)
         },
-        enable_same_tour_group_checkbox: function(selected_arrival, selected_district_id) {
-            let vm = this;
-            var arrival_dates = []
-            var arrival
-            var district_id
-            vm.get_district_arrival_map()
-
-            for(var i=0; i<vm.district_arrival_map.length; i++) {
-                district_id = vm.district_arrival_map[i].district_id;
-                if ( district_id==selected_district_id) {
-                    arrival_dates = vm.district_arrival_map[i].arrival_dates;
-                    if ( arrival_dates.indexOf(selected_arrival) > -1) {
-                        console.log('True')
-                        return true;
-                    }
-                }
-            }
-            console.log('False')
-            return false;
-        },
-        
+       
         get_visitors_same_tour: function(arrival, district_id) {
             let vm = this;
 
