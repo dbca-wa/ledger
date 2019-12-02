@@ -96,6 +96,10 @@ class OrganisationReader():
         reader = OrganisationReader('/tmp/General_Compliance_Report_1.csv')
         reader._create_organisation_data()
         reader.create_licences()
+
+        ./manage_co.py add_users
+        ./manage_co.py add_orgs
+        ./manage_co.py add_licences
     """
 
     def __init__(self, filename):
@@ -104,7 +108,122 @@ class OrganisationReader():
         self.parks_not_found = []
         self.org_lines = self._read_organisation_data()
 
-    def remove_duplicate_users(self, data, count, debug=False):
+
+    def add_users(self):
+
+        count = 1
+        for data in self.org_lines:
+
+            try:
+                if data['email1']=='chris@club55.com.au':
+                    #import ipdb; ipdb.set_trace()
+                    pass
+            except TypeError, e:
+                print 'a'.format(data['email'])
+                print e
+
+
+            try:
+                # check if email already exists, if so update details
+                print 1
+                user = EmailUser.objects.get(email=data['email1'])
+                user.first_name = data['first_name']
+                user.last_name = data['last_name']
+                user.phone_number = data['phone_number1']
+                user.mobile_number = data['mobile_number']
+                user.save()
+                print '{}    OK'.format(user)
+
+            except IntegrityError, e:
+                #import ipdb; ipdb.set_trace()
+                print '{}    **************** 1 *****************    FAILED'.format(user)
+                continue
+
+            except TypeError, e:
+                print 'b'.format(data['email'])
+                print e
+
+            except Exception, e:
+                try:
+                    user, created = EmailUser.objects.create(
+                        first_name=data['first_name'], last_name=data['last_name'], email=data['email1'], phone_number=data['phone_number1'], mobile_number=data['mobile_number']
+                    )
+                    print '{}    OK'.format(user)
+                except Exception, e:
+                    print '{}    **************** 2 *****************    FAILED'.format(user)
+
+
+    def _add_users(self):
+
+        count = 1
+        for data in self.org_lines:
+
+            try:
+                if data['email1']=='chris@club55.com.au':
+                    import ipdb; ipdb.set_trace()
+            except TypeError, e:
+                print 'a'.format(data['email'])
+                print e
+
+
+            try:
+                # check if email already exists, if so update details
+                print 1
+                user = EmailUser.objects.get(email=data['email1'])
+                user.first_name = data['first_name']
+                user.last_name = data['last_name']
+                user.phone_number = data['phone_number1']
+                user.mobile_number = data['mobile_number']
+                user.save()
+                print 2
+            except TypeError, e:
+                print 'b'.format(data['email'])
+                print e
+
+#            except Exception:
+#                # check if first_name, last_name exists with email_icontains='@ledger'
+#                print 3
+#                users = EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name'], email__icontains='@ledger')
+#                for user in users:
+#                    try:
+#                        user.email = data['email1']
+#                        user.phone_number = data['phone_number1']
+#                        user.mobile_number = data['mobile_number']
+#                        user.save()
+#                        print 4
+#                        break
+#                    except IntegrityError:
+#                        # probably FK related constraint
+#                        continue
+#                    except TypeError:
+#                        # probably FK related constraint
+#                        continue
+#                    except Exception:
+#                        # probably FK related constraint
+#                        continue
+
+             # check if email user exists
+            try:
+                print 5
+                user = EmailUser.objects.get(first_name=data['first_name'], last_name=data['last_name'], email=data['email1'])
+                print 6
+                print '{}    OK'.format(user)
+
+            except TypeError, e:
+                print 'c'.format(data['email'])
+                print e
+
+            except Exception:
+                # create email user
+                print 7
+                user, created = EmailUser.objects.create(
+                    first_name=data['first_name'], last_name=data['last_name'], email=data['email1'], phone_number=data['phone_number1'], mobile_number=data['mobile_number']
+                )
+                print '{}    ***********************************    FAILED'.format(user)
+
+
+
+    def remove_duplicate_users(self, data, debug=False):
         """
         delete duplicate user, and correct existing email
         """
@@ -203,110 +322,22 @@ class OrganisationReader():
 
     def _create_organisation(self, data, count, debug=False):
         try:
-            #if data['email1'] == 'hello@ziyarahtours.com.au':
-            if data['email1'] == 'info@safaris.net.au':
-                import ipdb; ipdb.set_trace()
-            user, created = EmailUser.objects.get_or_create(
-                first_name=data['first_name'],
-                last_name=data['last_name'],
-                defaults={
-                    'email': data['email1'],
-                    'phone_number': data['phone_number1'],
-                    'mobile_number': data['mobile_number'],
-                },
-            )
-            if (user.first_name=='' or user.last_name==''):
-                user.first_name = data['first_name']
-                user.last_name = data['last_name']
-                user.phone_number = data['phone_number1']
-                user.mobile_number = data['mobile_number']
-                user.save()
-
-            if '@ledger.dpaw' in user.email:
-                user.email = data['email1']
-                user.phone_number = data['phone_number1']
-                user.mobile_number = data['mobile_number']
-                user.save()
-
-        except MultipleObjectsReturned:
-            #import ipdb; ipdb.set_trace()
-            #for user in EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name'], email__icontains='ledger.dpaw'):
-            user = EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name'], email__icontains='ledger.dpaw')
-            if user.count() == 1:
-                user = user[0]
-                try:
-                    #import ipdb; ipdb.set_trace()
-                    #EmailUser.objects.get(first_name=data['first_name'], last_name=data['last_name'], email=data['email1']).delete()
-                    if EmailUser.objects.filter(email=data['email1']).count() == 1:
-                        EmailUser.objects.filter(email=data['email1']).delete()
-                    user.email = data['email1']
-                    user.save()
-                except:
-                    print 'ERROR: {} {} {} {}'.format(data['first_name'], data['last_name'], data['email1'], EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name']))
-            elif user.count() > 1:
-#                user = EmailUser.objects.get(first_name=data['first_name'], last_name=data['last_name'], email=data['email1'])
-#                user.phone_number = data['phone_number1']
-#                user.mobile_number = data['mobile_number']
-#                user.save()
-                user = EmailUser.objects.filter(email=data['email1'])
-                if user.count() == 1:
-                    user = user[0]
-                    user.first_name = data['first_name']
-                    user.last_name = data['last_name']
-                    user.phone_number = data['phone_number1']
-                    user.mobile_number = data['mobile_number']
-                    user.save()
-            #elif user.count() > 1:
-            elif EmailUser.objects.filter(email=data['email1']).count() == 1:
-                user = EmailUser.objects.get(email=data['email1'])
-                user.first_name = data['first_name']
-                user.last_name = data['last_name']
-                user.phone_number = data['phone_number1']
-                user.mobile_number = data['mobile_number']
-                user.save()
-
-
-
+            #if data['email1'] == 'info@safaris.net.au':
+            #    import ipdb; ipdb.set_trace()
+            user = EmailUser.objects.get(email=data['email1'])
             #print '{} {} {}'.format(data['first_name'], data['last_name'], EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name']))
-
-        except:
-            user = EmailUser.objects.filter(email=data['email1'])
-            if user.count() == 1:
-                user = user[0]
-                user.first_name = data['first_name']
-                user.last_name = data['last_name']
-                user.phone_number = data['phone_number1']
-                user.mobile_number = data['mobile_number']
-                user.save()
+            #print data['email1']
+        except Exception:
+            print 'user: {}   *********** 1 *********** FAILED'.format(user)
+            return
 
 
 
-            print data['email1']
+        lo=ledger_organisation.objects.filter(abn=data['abn'])
+        if lo.count() > 0:
+            lo = lo[0]
+        else:
 
-        if debug:
-            print 'User: {}'.format(user)
-
-        abn_existing = []
-        abn_new = []
-        process = True
-        try:
-            lo=ledger_organisation.objects.get(abn=data['abn'])
-
-            for org in lo.organisation_set.all():
-                for contact in org.contacts.all():
-                    if 'ledger.dpaw.wa.gov.au' in contact.email:
-                        contact.email = data['email1']
-                        contact.save()
-
-            abn_existing.append(data['abn'])
-            print '{}, Existing ABN: {}'.format(count, data['abn'])
-            process = False
-        except Exception, e:
-            print '{}, Add ABN: {}'.format(count, data['abn'])
-        #print 'DATA: {}'.format(data)
-        print
-
-        if process:
             try:
                 #print 'Country: {}'.format(data['country'])
                 country=Country.objects.get(printable_name__icontains=data['country'])
@@ -332,98 +363,136 @@ class OrganisationReader():
                     country=country.code
                 ).first()
 
-            except:
+            except Exception:
                 print 'Country 2: {}'.format(data['country'])
                 raise
-            if debug:
-                print 'Org Address: {}'.format(oa)
 
-            try:
-                #import ipdb; ipdb.set_trace()
-                data['licencee'] = data['licencee'] + ' ' if ledger_organisation.objects.filter(name=data['licencee']) else data['licencee']
-
-                lo, created = ledger_organisation.objects.get_or_create(
+                lo, created_lo = ledger_organisation.objects.create(
                     abn=data['abn'],
-                    defaults={
-                        'name': data['licencee'],
-                        'postal_address': oa,
-                        'billing_address': oa,
-                        'trading_name': data['trading_name']
-                    }
+                    name=data['licencee'],
+                    postal_address=oa,
+                    billing_address=oa,
+                    trading_name=data['trading_name'],
                 )
+                org, created_org = Organisation.objects.get_or_create(organisation=lo)
 
-#            except IntegrityError:
-#                lo, created = ledger_organisation.objects.get_or_create(
-#                    abn=data['abn'],
-#                    defaults={
-#                        'name': data['licencee'] + ' ',
-#                        'postal_address': oa,
-#                        'billing_address': oa,
-#                        'trading_name': data['trading_name']
-#                    }
-#                )
 
-            except Exception, e:
-                print 'Error creating Organisation: {} - {}'.format(data['licencee'], data['abn'])
-                raise
 
-            if created:
-                abn_new.append(data['abn'])
-            else:
-                print '******** ERROR ********* abn already exists {}'.format(data['abn'])
 
-            if debug:
-                print 'Ledger Org: {}'.format(lo)
 
-            try:
-                org, created = Organisation.objects.get_or_create(organisation=lo)
-            except Exception, e:
-                print 'Org: {}'.format(org)
-                raise
 
-            if debug:
-                print 'Organisation: {}'.format(org)
+        abn_existing = []
+        abn_new = []
+        try:
+            lo=ledger_organisation.objects.get(abn=data['abn'])
 
-            try:
-                delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
-            except Exception, e:
-                import ipdb; ipdb.set_trace()
-                print 'Delegate Creation Failed: {}'.format(user)
-                raise
+            for org in lo.organisation_set.all():
+                for contact in org.contacts.all():
+                    if 'ledger.dpaw.wa.gov.au' in contact.email:
+                        contact.email = data['email1']
+                        contact.save()
 
-            if debug:
-                print 'Delegate: {}'.format(delegate)
+            abn_existing.append(data['abn'])
+            print '{}, Existing ABN: {}'.format(count, data['abn'])
+            process = False
+        except Exception, e:
+            print '{}, Add ABN: {}'.format(count, data['abn'])
+        #print 'DATA: {}'.format(data)
 
-            try:
-                oc, created = OrganisationContact.objects.get_or_create(
-                    organisation=org,
-                    #email=user.email,
-                    email=data['email1'],
-                    defaults={
-                        'first_name': user.first_name,
-                        'last_name': user.last_name,
-                        'phone_number': user.phone_number,
-                        'mobile_number': user.mobile_number if data['mobile_number'] else '',
-                        'user_status': 'active',
-                        'user_role': 'organisation_admin',
-                        'is_admin': True
-                    }
-                )
-                if oc and 'ledger.dpaw.wa.gov.au' in oc.email:
-                    oc.email = data['email1']
-                    oc.save()
+        try:
+            #print 'Country: {}'.format(data['country'])
+            country_str = 'Australia' if data['country'].lower().startswith('a') else data['country']
+            country=Country.objects.get(printable_name__icontains=country_str)
+            oa, created = OrganisationAddress.objects.get_or_create(
+                line1=data['address_line1'],
+                locality=data['suburb'],
+                postcode=data['postcode'] if data['postcode'] else '0000',
+                defaults={
+                    'line2': data['address_line2'],
+                    'line3': data['address_line3'],
+                    'state': data['state'],
+                    'country': country.code,
+                }
+            )
+        except MultipleObjectsReturned:
+            oa = OrganisationAddress.objects.filter(
+                line1=data['address_line1'],
+                locality=data['suburb'],
+                postcode=data['postcode'] if data['postcode'] else '0000',
+                line2=data['address_line2'],
+                line3=data['address_line3'],
+                state=data['state'],
+                country=country.code
+            ).first()
 
-            except Exception, e:
-                import ipdb; ipdb.set_trace()
-                print 'Org Contact: {}'.format(user)
-                raise
+        except Exception, e:
+            print 'Country 2: {}'.format(data['country'])
+            import ipdb; ipdb.set_trace()
+            raise
 
-            if debug:
-                print 'Org Contact: {}'.format(oc)
+        try:
+            #import ipdb; ipdb.set_trace()
+            data['licencee'] = data['licencee'] + ' ' if ledger_organisation.objects.filter(name=data['licencee']) else data['licencee']
 
-            #return abn_new, abn_existing
+            lo, created = ledger_organisation.objects.get_or_create(
+                abn=data['abn'],
+                defaults={
+                    'name': data['licencee'],
+                    'postal_address': oa,
+                    'billing_address': oa,
+                    'trading_name': data['trading_name']
+                }
+            )
+
+        except Exception, e:
+            print 'Error creating Organisation: {} - {}'.format(data['licencee'], data['abn'])
+            raise
+
+        try:
+            org, created = Organisation.objects.get_or_create(organisation=lo)
+        except Exception, e:
+            print 'Error: Org: {}'.format(org)
+            #raise
+
+        try:
+            delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
+        except Exception, e:
+            #import ipdb; ipdb.set_trace()
+            print 'Delegate Creation Failed: {}'.format(user)
+            #raise
+
+        try:
+            oc, created = OrganisationContact.objects.get_or_create(
+                organisation=org,
+                #email=data['email1'],
+                email=delegate.user.email,
+                defaults={
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'phone_number': user.phone_number,
+                    'mobile_number': user.mobile_number if data['mobile_number'] else '',
+                    'user_status': 'active',
+                    'user_role': 'organisation_admin',
+                    'is_admin': True
+                }
+            )
+            if oc and 'ledger.dpaw.wa.gov.au' in oc.email:
+                oc.email = delegate.user.email
+                oc.save()
+
+            if oc and not created:
+                oc.user_role ='organisation_admin'
+                oc.is_admin = True
+                oc.user_status ='active'
+                oc.save()
+
+        except Exception, e:
+            #import ipdb; ipdb.set_trace()
+            print 'Org Contact: {}'.format(user)
+            #raise
 
         return abn_new, abn_existing
+
 
     def _read_organisation_data(self, verify=False):
         def get_start_date(data, row):
@@ -636,18 +705,11 @@ class OrganisationReader():
         return approval
 
     def create_organisation_data(self):
-        abn_existing = []
-        abn_new = []
         count = 1
         for data in self.org_lines:
             new, existing = self._create_organisation(data, count)
             count += 1
-            abn_new = new + abn_new
-            abn_existing = existing + abn_existing
 
-        print 'New: {}, Existing: {}'.format(len(abn_new), len(abn_existing))
-        print 'New: {}'.format(abn_new)
-        print 'Existing: {}'.format(abn_existing)
 
     def create_licences(self):
         approval_error = []
