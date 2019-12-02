@@ -328,7 +328,7 @@ class OrganisationReader():
             #print '{} {} {}'.format(data['first_name'], data['last_name'], EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name']))
             #print data['email1']
         except Exception:
-            print 'user: {}   *********** 1 *********** FAILED'.format(user)
+            print 'user: {}   *********** 1 *********** FAILED'.format(data['email1'])
             return
 
 
@@ -508,24 +508,36 @@ class OrganisationReader():
                 #raise
                 return
 
-            term = data['term'].split() # '3 YEAR'
+#            term = data['term'].split() # '3 YEAR'
+#
+#            #import ipdb; ipdb.set_trace()
+#            if 'YEAR' in term[1]:
+#                start_date = expiry_date - relativedelta(years=int(term[0]))
+#            if 'MONTH' in term[1]:
+#                start_date = expiry_date - relativedelta(months=int(term[0]))
+#            else:
+#                start_date = datetime.date.today()
+#
+#            if data['start_date'] != "" or data['start_date'] != None:
+#                data.update({'start_date': start_date})
+#            else:
+#                data.update({'start_date': datetime.date.today()})
 
-            #import ipdb; ipdb.set_trace()
-            if 'YEAR' in term[1]:
-                start_date = expiry_date - relativedelta(years=int(term[0]))
-            if 'MONTH' in term[1]:
-                start_date = expiry_date - relativedelta(months=int(term[0]))
-            else:
-                start_date = datetime.date.today()
-
-            if data['start_date'] != '':
-                data.update({'start_date': start_date})
+            if data['start_date'] != "" or data['start_date'] != None:
+                try:
+                    issue_date = datetime.datetime.strptime(data['start_date'], '%d-%b-%y').date() # '05-Feb-89'
+                    data.update({'start_date': start_date})
+                except Exception:
+                    data.update({'start_date': datetime.date.today()})
             else:
                 data.update({'start_date': datetime.date.today()})
 
-            if data['issue_date'] != '':
-                issue_date = datetime.datetime.strptime(data['issue_date'], '%d-%b-%y').date() # '05-Feb-89'
-                data.update({'issue_date': start_date})
+            if data['issue_date'] != "" or data['issue_date'] != None:
+                try:
+                    issue_date = datetime.datetime.strptime(data['issue_date'], '%d-%b-%y').date() # '05-Feb-89'
+                    data.update({'issue_date': start_date})
+                except Exception:
+                    data.update({'issue_date': datetime.date.today()})
             else:
                 data.update({'issue_date': datetime.date.today()})
 

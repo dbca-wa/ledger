@@ -38,13 +38,15 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
                 'created': timezone.now(),
             }
         )
-        lines = ast.literal_eval(request.POST['line_details'])['tbody']
+        #lines = ast.literal_eval(request.POST['line_details'])['tbody']
+        lines = json.loads(request.POST['line_details'])['tbody']
 
     elif (booking_type == Booking.BOOKING_TYPE_INTERNET and proposal.org_applicant and proposal.org_applicant.bpay_allowed) or \
          (booking_type == Booking.BOOKING_TYPE_RECEPTION):
          #(booking_type == Booking.BOOKING_TYPE_RECEPTION and proposal.org_applicant.other_allowed):
         booking = Booking.objects.create(proposal_id=proposal.id, created_by=request.user, booking_type=booking_type)
-        lines = ast.literal_eval(request.POST['line_details'])['tbody']
+        #lines = ast.literal_eval(request.POST['line_details'])['tbody']
+        lines = json.loads(request.POST['line_details'])['tbody']
 
     else:
         booking = Booking.objects.create(proposal_id=proposal.id, created_by=request.user, booking_type=booking_type)
