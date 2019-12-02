@@ -703,7 +703,7 @@ class ProposalParkSerializer(BaseProposalSerializer):
         return obj.approval.id
 
     def get_land_parks(self,obj):
-        """ exlude parks with free admission """
+        """ exclude parks with free admission """
         return obj.land_parks_exclude_free
 
 class InternalProposalSerializer(BaseProposalSerializer):

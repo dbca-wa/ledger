@@ -173,7 +173,9 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="switchStatus('with_assessor_requirements')">Enter Requirements</button><br/>
+                                            <button v-if="changingStatus" style="width:80%;" class="btn btn-primary" disabled>Enter Requirements&nbsp;
+                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i></button>
+                                            <button v-if="!changingStatus" style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="switchStatus('with_assessor_requirements')">Enter Requirements</button><br/>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -233,7 +235,9 @@
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <button style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="switchStatus('with_assessor')">Back To Processing</button><br/>
+                                            <button v-if="changingStatus" style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" >Back To Processing&nbsp;
+                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i></button>
+                                            <button v-if="!changingStatus" style="width:80%;" class="btn btn-primary" :disabled="proposal.can_user_edit" @click.prevent="switchStatus('with_assessor')">Back To Processing</button><br/>
                                         </div>
                                     </div>
                                     <div class="row">
@@ -328,7 +332,9 @@
                                         <div class="navbar-inner">
                                             <div v-if="hasAssessorMode" class="container">
                                             <p class="pull-right">
-                                            <button class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="save()">Save Changes</button>
+                                                <button v-if="savingProposal" class="btn btn-primary pull-right" style="margin-top:5px;" disabled >Save Changes&nbsp;
+                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i></button>
+                                                <button v-else class="btn btn-primary pull-right" style="margin-top:5px;" @click.prevent="save()">Save Changes</button>
                                             </p>
                                             </div>
                                         </div>
@@ -392,6 +398,8 @@ export default {
             initialisedSelects: false,
             showingProposal:false,
             showingRequirements:false,
+            savingProposal:false,
+            changingStatus:false,
             state_options: ['requirements','processing'],
             contacts_table_id: vm._uid+'contacts-table',
             contacts_options:{
@@ -587,6 +595,7 @@ export default {
         },
         save: function(e) {
           let vm = this;
+          vm.savingProposal=true;
           let formData = new FormData(vm.form);
             formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
             formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
@@ -597,7 +606,9 @@ export default {
                 'Your application has been saved',
                 'success'
               )
+              vm.savingProposal=false;
           },err=>{
+            vm.savingProposal=false;
           });
         },
         save_wo: function() {
@@ -714,6 +725,7 @@ export default {
             //vm.save_wo();
             //let vm = this;
             if(vm.proposal.processing_status == 'With Assessor' && status == 'with_assessor_requirements'){
+                vm.changingStatus=true;
             let formData = new FormData(vm.form);
             formData.append('selected_parks_activities', JSON.stringify(vm.proposal.selected_parks_activities))
             formData.append('selected_trails_activities', JSON.stringify(vm.proposal.selected_trails_activities))
@@ -743,11 +755,13 @@ export default {
                     'error'
                 )
             });
-              
+              vm.changingStatus=false;
           },err=>{
+            vm.changingStatus=false;
           });
+            //vm.changingStatus=false;
         }
-
+        //vm.changingStatus=false;
         //if approver is pushing back proposal to Assessor then navigate the approver back to dashboard page
         if(vm.proposal.processing_status == 'With Approver' && (status == 'with_assessor_requirements' || status=='with_assessor')) {
             let data = {'status': status, 'approver_comment': vm.approver_comment}
@@ -780,6 +794,7 @@ export default {
 
 
          let data = {'status': status, 'approver_comment': vm.approver_comment}
+         vm.changingStatus=true;
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/switch_status')),JSON.stringify(data),{
                 emulateJSON:true,
             })
@@ -792,6 +807,7 @@ export default {
                     vm.initialiseAssignedOfficerSelect(true);
                     vm.updateAssignedOfficerSelect();
                 });
+                vm.changingStatus=false;
             }, (error) => {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
@@ -800,6 +816,7 @@ export default {
                     helpers.apiVueResourceError(error),
                     'error'
                 )
+                vm.changingStatus=false;
             });
             }
         },

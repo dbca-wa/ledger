@@ -1,7 +1,10 @@
 from rest_framework import serializers
+from django.db.models import Sum, Max
 from commercialoperator.components.main.models import CommunicationsLogEntry, Region, District, Tenure, ApplicationType, ActivityMatrix, AccessType, Park, Trail, Activity, ActivityCategory, Section, Zone, RequiredDocument, Question, GlobalSettings #, ParkPrice
 from commercialoperator.components.proposals.models import  ProposalParkActivity
+from commercialoperator.components.bookings.models import  ParkBooking
 from ledger.accounts.models import EmailUser
+from datetime import datetime, date
 #from commercialoperator.components.proposals.serializers import ProposalTypeSerializer
 
 class CommunicationLogEntrySerializer(serializers.ModelSerializer):
@@ -137,11 +140,13 @@ class ParkSerializer(serializers.ModelSerializer):
     can_edit = serializers.SerializerMethodField()
     last_leaf = serializers.SerializerMethodField()
     zones=ZoneSerializer(many=True)
+    district = serializers.SerializerMethodField()
+    max_group_arrival_by_date = serializers.SerializerMethodField()
     #children=ZoneSerializer(many=True, source='zones')
 
     class Meta:
         model = Park
-        fields=('id', 'name', 'can_edit', 'last_leaf', 'code', 'park_type', 'allowed_activities', 'zone_ids', 'adult_price', 'child_price', 'oracle_code', 'zones' )
+        fields=('id', 'name', 'can_edit', 'last_leaf', 'code', 'park_type', 'allowed_activities', 'zone_ids', 'adult_price', 'child_price', 'oracle_code', 'zones', 'district', 'max_group_arrival_by_date' )
 
     def get_can_edit(self, obj):
         #proposal = self.context['request'].GET.get('proposal')
@@ -152,6 +157,29 @@ class ParkSerializer(serializers.ModelSerializer):
     def get_last_leaf(self, obj):
         return True
 
+    def get_district(self, obj):
+        #import ipdb; ipdb.set_trace()
+        return obj.district.id
+
+    def get_max_group_arrival_by_date(self, obj):
+        #return ParkBooking.objects.filter(
+        #        arrival=date(2019, 11, 23), park__district_id=1).aggregate(total_adults=Sum('no_adults'), total_children=Sum('no_children'), total_free=Sum('no_free_of_charge')
+        #    )
+        #return ParkBooking.objects.filter(booking__proposal_id=488).values('arrival', 'park__district_id').annotate(total_adults=Sum('no_adults'), total_children=Sum('no_children'), total_free=Sum('no_free_of_charge'))
+        #ParkBooking.objects.filter(booking__proposal_id=488).values('arrival', 'park__district_id').annotate(total_adults=Sum('no_adults'))
+        today = datetime.now().date()
+        #today = date(2019,11,15)
+        group =  obj.bookings.filter(arrival__gte=today).values('arrival').annotate(total_adults=Max('no_adults'), total_children=Max('no_children'), total_free=Max('no_free_of_charge'))
+        #return group
+        if group:
+            groups_by_arrival = {}
+            for group_list in list(group):
+                arrival = group_list.pop('arrival')
+                arrival_str = arrival.strftime('%Y-%m-%d')
+                groups_by_arrival.update({arrival_str: group_list})
+            return groups_by_arrival
+        else:
+            return {}
 
 class DistrictSerializer(serializers.ModelSerializer):
     land_parks = ParkSerializer(many=True)
