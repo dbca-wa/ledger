@@ -149,7 +149,7 @@ export default {
             proposal_submitters: [],
             proposal_parks: [],
             proposal_headers:[
-                " Number","Licence","Holder","Status","Payment Method","Arrival","Park","Visitors", "Invoice/Confirmation","Action",
+                " Number","Licence","Holder","Trading name","Status","Payment Method","Arrival","Park","Visitors", "Invoice/Confirmation","Action",
             ],
             proposal_options:{
                 language: {
@@ -190,6 +190,10 @@ export default {
                         data: "applicant",
                         name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email, proposal__approval__proxy_applicant__first_name, proposal__approval__proxy_applicant__last_name",
                         visible: this.level=='internal' ? true : false,
+                    },
+                    {
+                        data: "trading_name",
+                        name: "trading_name"
                     },
                     {
                         data: "payment_status",
@@ -308,9 +312,9 @@ export default {
         filterProposalStatus: function() {
             let vm = this;
             if (vm.filterProposalStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(3).search(vm.filterProposalStatus).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalStatus).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(3).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
             }
         },
         filterProposalPaymentMethod: function() {

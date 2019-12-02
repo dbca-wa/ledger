@@ -15,14 +15,15 @@
                         <div class="panel-body collapse in" :id="pBody">
 
                             <div class="col-sm-12">
-                                <label>Do you apply </label> </br>
+                                <!-- <label>Do you apply </label> </br> -->
                                 <div class="form-group" v-if="!isLoading">
-                                    <div class="radio">
+                                    <!-- <div class="radio">
                                         <label>
                                             <input type="radio"  name="behalf_of_org" v-model="org_applicant" value="yourself"> On behalf of yourself
                                         </label>
-                                    </div>
+                                    </div> -->
                                     <div v-if="profile.commercialoperator_organisations.length > 0">
+                                        <label>Do you apply </label> </br>
                                         <div v-for="org in profile.commercialoperator_organisations" class="radio">
                                             <label v-if ="!org.is_consultant">
                                               <input type="radio" name="behalf_of_org" v-model="org_applicant"  :value="org.id"> On behalf of {{org.name}}
@@ -39,9 +40,9 @@
                                         </div>
                                         -->
                                     </div>
-                                    <!-- <div v-else>
-                                        <p style="color:red"> You cannot add a New Commercial Operator because you do not have an associated Organisation. First add an Organisation. </p>
-                                    </div> -->
+                                    <div v-else>
+                                        <p style="color:red"> You cannot start a new application as you have not linked yourself to any organisation yet. Please go to your account page in the Options menu to link your self to an organisation.</p>
+                                    </div>
                                 </div>
                             </div>
                             <!--
