@@ -18,6 +18,7 @@ class Command(BaseCommand):
     help = 'Run the initial deployment'
     def handle(self, *args, **options):
 
-        reader=OrganisationReader('/home/jawaidm/Downloads/Commercial-Licences-Migration-20191119 SH.csv')
+        reader=OrganisationReader('commercialoperator/utils/csv/CommercialLicencesMigration_02Dec2019.csv')
+        #reader=OrganisationReader('commercialoperator/utils/csv/EClass_licences_02Dec2019.csv')
         reader.add_users()
 
