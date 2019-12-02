@@ -86,7 +86,8 @@ from commercialoperator.components.proposals.serializers import (
     ProposalParkSerializer,
     ChecklistQuestionSerializer,
     ProposalAssessmentSerializer,
-    ProposalAssessmentAnswerSerializer
+    ProposalAssessmentAnswerSerializer,
+    ParksAndTrailSerializer
 )
 from commercialoperator.components.bookings.models import Booking, ParkBooking, BookingInvoice
 from commercialoperator.components.approvals.models import Approval
@@ -970,6 +971,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET',])
+    #@renderer_classes((JSONRenderer,))
+    def parks_and_trails(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = ParksAndTrailSerializer(instance,context={'request':request})
+        return Response(serializer.data)
 
     @detail_route(methods=['GET',])
     def internal_proposal(self, request, *args, **kwargs):

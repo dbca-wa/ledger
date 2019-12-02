@@ -291,6 +291,18 @@ class ProposalAssessmentSerializer(serializers.ModelSerializer):
                 'checklist'
                 )
 
+class ParksAndTrailSerializer(serializers.ModelSerializer):
+    land_parks=ProposalParkSerializer(many=True)
+    marine_parks=ProposalParkSerializer(many=True)
+    trails=ProposalTrailSerializer(many=True)
+
+    class Meta:
+        model = Proposal
+        fields = ('land_parks',
+                'marine_parks',
+                'trails'
+                )
+
 
 class BaseProposalSerializer(serializers.ModelSerializer):
     #org_applicant = OrganisationSerializer()
@@ -304,9 +316,9 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     #applicant_details = ProposalApplicantDetailsSerializer(required=False)
     activities_land = ProposalActivitiesLandSerializer(required=False)
     activities_marine = ProposalActivitiesMarineSerializer(required=False)
-    land_parks=ProposalParkSerializer(many=True)
-    marine_parks=ProposalParkSerializer(many=True)
-    trails=ProposalTrailSerializer(many=True)
+    #land_parks=ProposalParkSerializer(many=True)
+    #marine_parks=ProposalParkSerializer(many=True)
+    #trails=ProposalTrailSerializer(many=True)
     other_details=ProposalOtherDetailsSerializer()
 
     get_history = serializers.ReadOnlyField()
@@ -377,9 +389,9 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'land_activities',
                 'trail_activities',
                 'trail_section_activities',
-                'land_parks',
-                'marine_parks',
-                'trails',
+                # 'land_parks',
+                # 'marine_parks',
+                # 'trails',
                 'training_completed',
                 'fee_invoice_url',
                 'fee_paid',
