@@ -231,7 +231,8 @@ class ParkBooking(RevisionedMixin):
     @property
     def as_line_items(self):
         """ returns a dict line item equiv of the ParkBooking Object for ledger checkout (aggregated via Booking object)"""
-        def add_line_item(age_group, price, no_persons):
+        def add_line_item(age_group, price, no_persons, same_tour_group=False):
+            #if no_persons > 0 or (same_tour_group and no_persons >= 0):
             if no_persons > 0:
                 return {
                     'ledger_description': 'Booking Date {}: {} - {} - {}'.format(self.created.date(), self.park.name, self.arrival, age_group),
@@ -241,22 +242,22 @@ class ParkBooking(RevisionedMixin):
                     'quantity': no_persons,
                 }
             return None
-
+        import ipdb; ipdb.set_trace()
         lines = []
-        if self.no_adults_same_tour and self.no_adults_same_tour > 0:
-            lines.append(add_line_item('Adult (Same Tour Group, Total {})'.format(self.no_adults), price=self.park.adult_price, no_persons=self.no_adults_same_tour))
+        if self.same_tour_group and self.no_adults_same_tour is not None and self.no_adults_same_tour >= 0:
+            lines.append(add_line_item('Adult (Same Tour Group, Total {})'.format(self.no_adults), price=self.park.adult_price, no_persons=self.no_adults_same_tour, same_tour_group=self.same_tour_group))
         elif self.no_adults > 0:
-            lines.append(add_line_item('Adult', price=self.park.adult_price, no_persons=self.no_adults))
+            lines.append(add_line_item('Adult', price=self.park.adult_price, no_persons=self.no_adults, same_tour_group=self.same_tour_group))
 
-        if self.no_children_same_tour and self.no_children_same_tour > 0:
-            lines.append(add_line_item('Child (Same Tour Group, Total {})'.format(self.no_children), price=self.park.child_price, no_persons=self.no_children_same_tour))
+        if self.same_tour_group and self.no_children_same_tour is not None and self.no_children_same_tour >= 0:
+            lines.append(add_line_item('Child (Same Tour Group, Total {})'.format(self.no_children), price=self.park.child_price, no_persons=self.no_children_same_tour, same_tour_group=self.same_tour_group))
         elif self.no_children > 0:
-            lines.append(add_line_item('Child', price=self.park.child_price, no_persons=self.no_children))
+            lines.append(add_line_item('Child', price=self.park.child_price, no_persons=self.no_children, same_tour_group=self.same_tour_group))
 
-        if self.no_free_of_charge_same_tour and self.no_free_of_charge_same_tour > 0:
-            lines.append(add_line_item('Free (Same Tour Group, Total {})'.format(self.no_free_of_charge), price=0.0, no_persons=self.no_free_of_charge_same_tour))
+        if self.same_tour_group and self.no_free_of_charge_same_tour is not None and self.no_free_of_charge_same_tour >= 0:
+            lines.append(add_line_item('Free (Same Tour Group, Total {})'.format(self.no_free_of_charge), price=0.0, no_persons=self.no_free_of_charge_same_tour, same_tour_group=self.same_tour_group))
         elif self.no_free_of_charge > 0:
-            lines.append(add_line_item('Free', price=0.0, no_persons=self.no_free_of_charge))
+            lines.append(add_line_item('Free', price=0.0, no_persons=self.no_free_of_charge, same_tour_group=self.same_tour_group))
 
         return lines
 
