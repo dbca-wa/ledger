@@ -323,7 +323,7 @@
                     <div class="">
                         <div class="row">
                             <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
-                                <ProposalTClass ref="tclass" v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="canEditActivities"  :is_internal="true" :hasAssessorMode="hasAssessorMode"></ProposalTClass>
+                                <ProposalTClass ref="tclass" v-if="proposal && proposal_parks && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="canEditActivities"  :is_internal="true" :hasAssessorMode="hasAssessorMode" :proposal_parks="proposal_parks"></ProposalTClass>
                                     <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                     <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                     <input type='hidden' name="proposal_id" :value="1" />
@@ -392,6 +392,7 @@ export default {
             approver_comment: '',
             form: null,
             members: [],
+            proposal_parks:null,
             department_users : [],
             referral_recipient_groups : [],
             contacts_table_initialised: false,
@@ -645,6 +646,7 @@ export default {
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(vm.proposal.id+'/assign_request_user')))
             .then((response) => {
                 vm.proposal = response.body;
+                vm.fetchProposalParks(vm.proposal.id);
                 vm.original_proposal = helpers.copyObject(response.body);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.updateAssignedOfficerSelect();
@@ -664,6 +666,7 @@ export default {
             let vm = this;
             vm.original_proposal = helpers.copyObject(response.body);
             vm.proposal = helpers.copyObject(response.body);
+            vm.fetchProposalParks(vm.proposal.id);
             // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
             vm.$nextTick(() => {
                 vm.initialiseAssignedOfficerSelect(true);
@@ -688,12 +691,16 @@ export default {
                 }).then((response) => {
                     vm.proposal = response.body;
                     vm.original_proposal = helpers.copyObject(response.body);
+                    
                     // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                     vm.updateAssignedOfficerSelect();
+                    vm.fetchProposalParks(vm.proposal.id);
                 }, (error) => {
                     vm.proposal = helpers.copyObject(vm.original_proposal)
                     vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
+                    
                     vm.updateAssignedOfficerSelect();
+                    vm.fetchProposalParks(vm.proposal.id);
                     swal(
                         'Application Error',
                         helpers.apiVueResourceError(error),
@@ -706,12 +713,16 @@ export default {
                 .then((response) => {
                     vm.proposal = response.body;
                     vm.original_proposal = helpers.copyObject(response.body);
+                    
                     // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                     vm.updateAssignedOfficerSelect();
+                    vm.fetchProposalParks(vm.proposal.id);
                 }, (error) => {
                     vm.proposal = helpers.copyObject(vm.original_proposal)
                     vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
+                    
                     vm.updateAssignedOfficerSelect();
+                    vm.fetchProposalParks(vm.proposal.id);
                     swal(
                         'Application Error',
                         helpers.apiVueResourceError(error),
@@ -739,6 +750,7 @@ export default {
             .then((response) => {
                 vm.proposal = response.body;
                 vm.original_proposal = helpers.copyObject(response.body);
+                vm.fetchProposalParks(vm.proposal.id);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.approver_comment='';
                 vm.$nextTick(() => {
@@ -749,6 +761,7 @@ export default {
             }, (error) => {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
                 vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
+                vm.fetchProposalParks(vm.proposal.id);
                 swal(
                     'Application Error',
                     helpers.apiVueResourceError(error),
@@ -771,6 +784,7 @@ export default {
             .then((response) => {
                 vm.proposal = response.body;
                 vm.original_proposal = helpers.copyObject(response.body);
+                vm.fetchProposalParks(vm.proposal.id);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.approver_comment='';
                 vm.$nextTick(() => {
@@ -801,6 +815,7 @@ export default {
             .then((response) => {
                 vm.proposal = response.body;
                 vm.original_proposal = helpers.copyObject(response.body);
+                vm.fetchProposalParks(vm.proposal.id);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.approver_comment='';
                 vm.$nextTick(() => {
@@ -810,6 +825,7 @@ export default {
                 vm.changingStatus=false;
             }, (error) => {
                 vm.proposal = helpers.copyObject(vm.original_proposal)
+                vm.fetchProposalParks(vm.proposal.id);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 swal(
                     'Application Error',
@@ -819,6 +835,16 @@ export default {
                 vm.changingStatus=false;
             });
             }
+        },
+        fetchProposalParks: function(proposal_id){
+          let vm=this;
+          vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,proposal_id+'/parks_and_trails')).then(response => {
+                    vm.proposal_parks = helpers.copyObject(response.body);
+                    console.log(vm.proposal_parks)
+                },
+                  error => {
+                });
+
         },
         fetchDeparmentUsers: function(){
             let vm = this;
@@ -920,6 +946,7 @@ export default {
                     vm.sendingReferral = false;
                     vm.original_proposal = helpers.copyObject(response.body);
                     vm.proposal = response.body;
+                    vm.fetchProposalParks(vm.proposal.id);
                     // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                     swal(
                         'Referral Sent',
@@ -952,6 +979,7 @@ export default {
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/remind')).then(response => {
                 vm.original_proposal = helpers.copyObject(response.body);
                 vm.proposal = response.body;
+                vm.fetchProposalParks(vm.proposal.id);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 swal(
                     'Referral Reminder',
@@ -973,6 +1001,7 @@ export default {
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/resend')).then(response => {
                 vm.original_proposal = helpers.copyObject(response.body);
                 vm.proposal = response.body;
+                vm.fetchProposalParks(vm.proposal.id);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 swal(
                     'Referral Resent',
@@ -994,6 +1023,7 @@ export default {
             vm.$http.get(helpers.add_endpoint_json(api_endpoints.referrals,r.id+'/recall')).then(response => {
                 vm.original_proposal = helpers.copyObject(response.body);
                 vm.proposal = response.body;
+                vm.fetchProposalParks(vm.proposal.id);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 swal(
                     'Referral Recall',
@@ -1046,11 +1076,13 @@ export default {
           Vue.http.get(`/api/proposal/${to.params.proposal_id}/internal_proposal.json`).then(res => {
               next(vm => {
                 vm.proposal = res.body;
+                vm.fetchProposalParks(to.params.proposal_id);
                 vm.original_proposal = helpers.copyObject(res.body);
                 vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.proposal.selected_trails_activities=[];
                 vm.proposal.selected_parks_activities=[];
                 vm.proposal.marine_parks_activities=[];
+                
               });
             },
             err => {
@@ -1061,11 +1093,13 @@ export default {
           Vue.http.get(`/api/proposal/${to.params.proposal_id}.json`).then(res => {
               next(vm => {
                 vm.proposal = res.body;
+                vm.fetchProposalParks(to.params.proposal_id);
                 vm.original_proposal = helpers.copyObject(res.body);
                 // vm.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 vm.proposal.selected_trails_activities=[];
                 vm.proposal.selected_parks_activities=[];
                 vm.proposal.marine_parks_activities=[];
+                
               });
             },
             err => {

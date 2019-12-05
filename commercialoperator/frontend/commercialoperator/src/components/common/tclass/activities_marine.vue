@@ -94,7 +94,7 @@ from '@/utils/hooks'
               type: Boolean,
               default: true
             },
-            parks:{
+            proposal_parks:{
               type:Object,
               required:true
             }
@@ -576,7 +576,7 @@ from '@/utils/hooks'
             vm.fetchMarineTreeview();
 
             //vm.store_parks(vm.proposal.marine_parks);
-            vm.store_parks(vm.parks.marine_parks);
+            vm.store_parks(vm.proposal_parks.marine_parks);
             //vm.eventListeners();
         }
     }

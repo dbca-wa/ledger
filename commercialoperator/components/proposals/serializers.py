@@ -809,9 +809,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'trail_activities',
                 'trail_section_activities',
                 'activities_marine',
-                'land_parks',
-                'marine_parks',
-                'trails',
+                # 'land_parks',
+                # 'marine_parks',
+                # 'trails',
                 'training_completed',
                 'can_edit_activities',
                 #Following 3 are variable to store selected parks and activities at frontend

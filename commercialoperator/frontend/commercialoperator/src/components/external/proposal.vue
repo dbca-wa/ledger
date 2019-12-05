@@ -36,7 +36,7 @@
                 <h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
             </div>
 
-            <ProposalTClass v-if="proposal && parks && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"  :canEditActivities="canEditActivities" :is_external="true" :parks="parks" ref="proposal_tclass"></ProposalTClass>
+            <ProposalTClass v-if="proposal && proposal_parks && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"  :canEditActivities="canEditActivities" :is_external="true" :proposal_parks="proposal_parks" ref="proposal_tclass"></ProposalTClass>
             <ProposalFilming v-else-if="proposal && proposal.application_type=='Filming'" :proposal="proposal" id="proposalStart"></ProposalFilming>
             <ProposalEvent v-else-if="proposal && proposal.application_type=='Event'" :proposal="proposal" id="proposalStart"></ProposalEvent>
 
@@ -115,7 +115,7 @@ export default {
       newText: "",
       pBody: 'pBody',
       missing_fields: [],
-      parks:null,
+      proposal_parks:null,
     }
   },
   components: {
@@ -546,8 +546,8 @@ export default {
     fetchProposalParks: function(proposal_id){
       let vm=this;
       vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,proposal_id+'/parks_and_trails')).then(response => {
-                vm.parks = helpers.copyObject(response.body);
-                console.log(vm.parks)
+                vm.proposal_parks = helpers.copyObject(response.body);
+                console.log(vm.proposal_parks)
             },
               error => {
             });

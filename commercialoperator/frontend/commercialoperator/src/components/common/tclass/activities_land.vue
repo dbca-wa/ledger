@@ -160,7 +160,7 @@ export default {
               type: Boolean,
               default: true
             },
-            parks:{
+            proposal_parks:{
               type:Object,
               required:true
             }
@@ -783,16 +783,16 @@ export default {
             //    vm.selected_parks_activities.push(data)
             // }
             //--end--
-            if(vm.parks){
-            for (var i = 0; i < vm.parks.land_parks.length; i++) {
-              var current_park=vm.parks.land_parks[i].park.id
+            if(vm.proposal_parks){
+            for (var i = 0; i < vm.proposal_parks.land_parks.length; i++) {
+              var current_park=vm.proposal_parks.land_parks[i].park.id
               var current_activities=[]
               var current_access=[]
-              for (var j = 0; j < vm.parks.land_parks[i].land_activities.length; j++) {
-                current_activities.push(vm.parks.land_parks[i].land_activities[j].activity.id);
+              for (var j = 0; j < vm.proposal_parks.land_parks[i].land_activities.length; j++) {
+                current_activities.push(vm.proposal_parks.land_parks[i].land_activities[j].activity.id);
               }
-               for (var k = 0; k < vm.parks.land_parks[i].access_types.length; k++){
-                current_access.push(vm.parks.land_parks[i].access_types[k].access_type.id);
+               for (var k = 0; k < vm.proposal_parks.land_parks[i].access_types.length; k++){
+                current_access.push(vm.proposal_parks.land_parks[i].access_types[k].access_type.id);
                }
                var data={
                 'park': current_park,
@@ -825,7 +825,7 @@ export default {
 
             //vm.store_trails(vm.proposal.trails); //--Original call to store trails
 
-            vm.store_trails(vm.parks.trails);
+            vm.store_trails(vm.proposal_parks.trails);
 
             //vm.trail_activities = vm.proposal.trail_activities
             //vm.selected_trail_ids = vm.proposal.trail_section_activities
