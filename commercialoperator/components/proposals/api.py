@@ -1647,6 +1647,7 @@ class ReferralViewSet(viewsets.ModelViewSet):
             instance.complete(request)
             data={}
             data['type']=u'referral_complete'
+            data['fromm']=u'{}'.format(instance.referral_group.name)
             data['proposal'] = u'{}'.format(instance.proposal.id)
             data['staff'] = u'{}'.format(request.user.id)
             data['text'] = u'{}'.format(instance.referral_text)
