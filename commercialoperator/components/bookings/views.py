@@ -154,7 +154,6 @@ class DeferredInvoicingView(TemplateView):
             recipient = proposal.submitter.email
             submitter = proposal.submitter
 
-        import ipdb; ipdb.set_trace()
         if isinstance(proposal.org_applicant, Organisation):
             try:
                 if proposal.org_applicant.bpay_allowed and payment_method=='bpay':
@@ -210,7 +209,6 @@ class MakePaymentView(TemplateView):
 
         proposal_id = int(kwargs['proposal_pk'])
         proposal = Proposal.objects.get(id=proposal_id)
-        #import ipdb; ipdb.set_trace()
 
         try:
             booking = create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORARY)

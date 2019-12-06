@@ -26,7 +26,6 @@ logger = logging.getLogger('payment_checkout')
 def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORARY):
     """ Create the ledger lines - line items for invoice sent to payment system """
 
-    #import ipdb; ipdb.set_trace()
     if booking_type == Booking.BOOKING_TYPE_MONTHLY_INVOICING and proposal.org_applicant and proposal.org_applicant.monthly_invoicing_allowed:
         booking, created = Booking.objects.get_or_create(
             invoices__isnull=True,
@@ -304,10 +303,9 @@ def create_fee_lines(proposal, invoice_text=None, vouchers=[], internal=False):
 def create_lines(request, invoice_text=None, vouchers=[], internal=False):
     """ Create the ledger lines - line items for invoice sent to payment system """
 
-    def add_line_item(park, arrival, age_group, price, no_persons, same_tour_group=False):
+    def add_line_item(park, arrival, age_group, price, no_persons):
         #price = Decimal(price)
         price = round(float(price), 2)
-        #import ipdb; ipdb.set_trace()
         #if no_persons > 0 or (same_tour_group and no_persons >= 0):
         if no_persons > 0:
             return {
@@ -331,31 +329,38 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
         park= Park.objects.get(id=park_id)
 
         # same tour group visitors
-        no_adults_same_tour = int(row[7]) if row[7] else None
-        no_children_same_tour = int(row[8]) if row[8] else None
-        no_free_of_charge_same_tour = int(row[9]) if row[9] else None
+        no_adults_same_tour = int(row[7]) if (row[7]!='' and row[7] is not None) else None
+        no_children_same_tour = int(row[8]) if (row[8]!='' and row[8] is not None) else None
+        no_free_of_charge_same_tour = int(row[9]) if (row[9]!='' and row[9] is not None) else None
 
         #no_adults = no_adults if no_adults_same_tour==0 else no_adults_same_tour
         #no_children = no_children if no_children_same_tour==0 else no_children_same_tour
         #no_free_of_charge = no_free_of_charge if no_free_of_charge_same_tour==0 else no_free_of_charge_same_tour
 
-        #import ipdb; ipdb.set_trace()
-        if same_tour_group and no_adults_same_tour is not None and no_adults_same_tour >= 0:
-            lines.append(add_line_item(park, arrival, 'Adult (Same Tour Group, Total {})'.format(no_adults), price=park.adult_price, no_persons=no_adults_same_tour, same_tour_group=same_tour_group))
+        if same_tour_group and no_adults_same_tour is not None:
+            if no_adults_same_tour > 0:
+                lines.append(add_line_item(park, arrival, 'Adult (Same Tour Group, Total {})'.format(no_adults), price=park.adult_price, no_persons=no_adults_same_tour))
+            elif no_adults_same_tour == 0:
+                lines.append(add_line_item(park, arrival, 'Adult (Same Tour Group, Total {})'.format(no_adults), price=0.0, no_persons=no_adults))
         elif no_adults > 0:
-            lines.append(add_line_item(park, arrival, 'Adult', price=park.adult_price, no_persons=no_adults, same_tour_group=same_tour_group))
+            lines.append(add_line_item(park, arrival, 'Adult', price=park.adult_price, no_persons=no_adults))
 
-        if same_tour_group and no_children_same_tour is not None and no_children_same_tour >= 0:
-            lines.append(add_line_item(park, arrival, 'Child (Same Tour Group, Total {})'.format(no_children), price=park.child_price, no_persons=no_children_same_tour, same_tour_group=same_tour_group))
+        if same_tour_group and no_children_same_tour is not None:
+            if no_children_same_tour > 0:
+                lines.append(add_line_item(park, arrival, 'Child (Same Tour Group, Total {})'.format(no_children), price=park.child_price, no_persons=no_children_same_tour))
+            elif no_children_same_tour == 0:
+                lines.append(add_line_item(park, arrival, 'Child (Same Tour Group, Total {})'.format(no_children), price=0.0, no_persons=no_children))
         elif no_children > 0:
-            lines.append(add_line_item(park, arrival, 'Child', price=park.child_price, no_persons=no_children, same_tour_group=same_tour_group))
+            lines.append(add_line_item(park, arrival, 'Child', price=park.child_price, no_persons=no_children))
 
-        if same_tour_group and no_free_of_charge_same_tour is not None and no_free_of_charge_same_tour >= 0:
-            lines.append(add_line_item(park, arrival, 'Free (Same Tour Group, Total {})'.format(no_free_of_charge), price=0.0, no_persons=no_free_of_charge_same_tour, same_tour_group=same_tour_group))
+        if same_tour_group and no_free_of_charge_same_tour is not None:
+            if no_free_of_charge_same_tour > 0:
+                lines.append(add_line_item(park, arrival, 'Free (Same Tour Group, Total {})'.format(no_free_of_charge), price=0.0, no_persons=no_free_of_charge_same_tour))
+            elif no_free_of_charge_same_tour == 0:
+                lines.append(add_line_item(park, arrival, 'Free (Same Tour Group, Total {})'.format(no_free_of_charge), price=0.0, no_persons=no_free_of_charge))
         elif no_free_of_charge > 0:
-            lines.append(add_line_item(park, arrival, 'Free', price=0.0, no_persons=no_free_of_charge, same_tour_group=same_tour_group))
+            lines.append(add_line_item(park, arrival, 'Free', price=0.0, no_persons=no_free_of_charge))
 
-    import ipdb; ipdb.set_trace()
     return lines
 
 def checkout(request, proposal, lines, return_url_ns='public_booking_success', return_preload_url_ns='public_booking_success', invoice_text=None, vouchers=[], proxy=False):
