@@ -677,7 +677,8 @@ class OrganisationReader():
                             application_type=application_type,
                             submitter=submitter,
                             org_applicant=org_applicant,
-                            schema=proposal_type.schema
+                            schema=proposal_type.schema,
+                            migrated=True
                         )
 
             approval = Approval.objects.create(
@@ -686,7 +687,8 @@ class OrganisationReader():
                             start_date=data['start_date'],
                             org_applicant=org_applicant,
                             submitter=submitter,
-                            current_proposal=proposal
+                            current_proposal=proposal,
+                            migrated=True
                         )
 
             proposal.lodgement_number = proposal.lodgement_number.replace('A', 'AM') # Application Migrated
