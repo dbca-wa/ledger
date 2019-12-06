@@ -346,6 +346,7 @@ class CommunicationsLogEntry(models.Model):
         ('onhold_remove', 'Remove On Hold'),
         ('with_qaofficer', 'With QA Officer'),
         ('with_qaofficer_completed', 'QA Officer Completed'),
+        ('referral_complete','Referral Completed'),
     ]
     DEFAULT_TYPE = TYPE_CHOICES[0][0]
 

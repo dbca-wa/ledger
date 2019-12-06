@@ -1645,6 +1645,21 @@ class ReferralViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.complete(request)
+            data={}
+            data['type']=u'referral_complete'
+            data['proposal'] = u'{}'.format(instance.proposal.id)
+            data['staff'] = u'{}'.format(request.user.id)
+            data['text'] = u'{}'.format(instance.referral_text)
+            data['subject'] = u'{}'.format(instance.referral_text)
+            serializer = ProposalLogEntrySerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            comms = serializer.save()
+            if instance.document:
+                document = comms.documents.create(_file=instance.document._file, name=instance.document.name)
+                document.input_name = instance.document.input_name
+                document.can_delete = True
+                document.save()
+
             serializer = self.get_serializer(instance, context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:

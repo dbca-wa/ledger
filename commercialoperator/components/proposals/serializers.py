@@ -972,9 +972,12 @@ class DTReferralSerializer(serializers.ModelSerializer):
     def get_submitter(self,obj):
         return EmailUserSerializer(obj.proposal.submitter).data
 
+    # def get_document(self,obj):
+    #     docs =  [[d.name,d._file.url] for d in obj.referral_documents.all()]
+    #     return docs[0] if docs else None
     def get_document(self,obj):
-        docs =  [[d.name,d._file.url] for d in obj.referral_documents.all()]
-        return docs[0] if docs else None
+        #doc = obj.referral_documents.last()
+        return [obj.document.name, obj.document._file.url] if obj.document else None
 
 class RequirementDocumentSerializer(serializers.ModelSerializer):
     class Meta:
