@@ -535,6 +535,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
         logger.warn("User is neither customer nor internal user: {} <{}>".format(user.get_full_name(), user.email))
         return Proposal.objects.none()
 
+    def get_object(self):
+        try:
+            obj = super(ProposalViewSet, self).get_object()
+        except Exception, e:
+            # because current queryset excludes migrated licences
+            obj = get_object_or_404(Proposal, id=self.kwargs['id'])
+        return obj
+
     @list_route(methods=['GET',])
     def filter_list(self, request, *args, **kwargs):
         """ Used by the internal/external dashboard filters """
@@ -1173,6 +1181,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def renew_approval(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+#            try:
+#                instance = self.get_object()
+#            except Exception, e:
+#                # because current queryset excludes migrated licences
+#                instance = Proposal.objects.get(id=kwargs.get('id'))
+
             instance = instance.renew_approval(request)
             serializer = SaveProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
@@ -1184,6 +1198,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def amend_approval(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+#            try:
+#                instance = self.get_object()
+#            except Exception, e:
+#                # because current queryset excludes migrated licences
+#                instance = Proposal.objects.get(id=kwargs.get('id'))
+
             instance = instance.amend_approval(request)
             serializer = SaveProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
