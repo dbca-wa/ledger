@@ -154,6 +154,7 @@ class DeferredInvoicingView(TemplateView):
             recipient = proposal.submitter.email
             submitter = proposal.submitter
 
+        import ipdb; ipdb.set_trace()
         if isinstance(proposal.org_applicant, Organisation):
             try:
                 if proposal.org_applicant.bpay_allowed and payment_method=='bpay':

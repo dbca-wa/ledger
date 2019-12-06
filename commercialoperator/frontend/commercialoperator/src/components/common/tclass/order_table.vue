@@ -418,8 +418,8 @@ export default {
                             vm.updateTableJSON();
 
                             if (same_tour_group_checked) {
-                                vm.table.tbody[k][vm.idx_adult_same_tour] = no_adults
-                                vm.table.tbody[k][vm.idx_child_same_tour] = no_children
+                                vm.table.tbody[k][vm.idx_adult_same_tour] = no_adults.toString()
+                                vm.table.tbody[k][vm.idx_child_same_tour] = no_children.toString()
                             } else {
                                 vm.table.tbody[k][vm.idx_adult_same_tour] = ''
                                 vm.table.tbody[k][vm.idx_child_same_tour] = ''
