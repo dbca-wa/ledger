@@ -1,5 +1,5 @@
 import re
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.conf import settings
@@ -14,6 +14,8 @@ import traceback
 import os
 from copy import deepcopy
 from datetime import datetime
+import time
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -524,12 +526,11 @@ def save_trail_section_activity_data(instance,select_trails_activities, request)
             raise
 
 
-
-#Save Marine parks, zones and related activity for TClass license
 def save_park_zone_activity_data(instance,marine_parks_activities, request):
     with transaction.atomic():
         try:
             if marine_parks_activities or len(marine_parks_activities)==0:
+                parkzone_activity = []
                 try:
                     #current_parks=instance.parks.all()
                     selected_parks=[]
@@ -551,21 +552,12 @@ def save_park_zone_activity_data(instance,marine_parks_activities, request):
                                                 zone=ProposalParkZone.objects.get(proposal_park=park, zone=a['zone'])
                                                 current_activities=zone.park_activities.all()
                                                 current_activities_id=[s.activity_id for s in current_activities]
-                                                if a['activities']:
-                                                    for act in a['activities']:
-                                                        if act in current_activities_id:
-                                                            #if activity already exists then pass otherwise create the record.
-                                                            pass
-                                                        else:
-                                                            try:
-                                                                if act not in zone.zone.allowed_activities_ids:
-                                                                    pass
-                                                                else:
-                                                                    activity=Activity.objects.get(id=act)
-                                                                    ProposalParkZoneActivity.objects.create(park_zone=zone, activity=activity)
-                                                                    instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_ZONE.format(activity.id,zone.zone.id, park.park.id),request)
-                                                            except:
-                                                                raise
+                                                allowed_act_ids = list(set(zone.zone.allowed_activities_ids).intersection(a['activities']))
+
+                                                [ProposalParkZoneActivity.objects.get_or_create(park_zone=zone, activity_id=act_id) for act_id in allowed_act_ids]
+                                                #parkzone_activity=[ProposalParkZoneActivity(park_zone=zone, activity_id=act_id) for act_id in allowed_act_ids]
+                                                instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_ZONE.format(', '.join(map(str, allowed_act_ids)), zone.zone.id, park.park.id),request)
+
                                                 if 'access_point' in a:
                                                     zone.access_point = a['access_point']
                                                     zone.save()
@@ -573,17 +565,11 @@ def save_park_zone_activity_data(instance,marine_parks_activities, request):
                                                 zone_instance=Zone.objects.get(id=a['zone'])
                                                 zone=ProposalParkZone.objects.create(proposal_park=park, zone=zone_instance)
                                                 instance.log_user_action(ProposalUserAction.ACTION_LINK_ZONE.format(zone.zone.id, park.park.id),request)
-                                                if a['activities']:
-                                                    for act in a['activities']:
-                                                        try:
-                                                            if act not in zone.zone.allowed_activities_ids:
-                                                                pass
-                                                            else:
-                                                                activity=Activity.objects.get(id=act)
-                                                                ProposalParkZoneActivity.objects.create(park_zone=zone, activity=activity)
-                                                                instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_ZONE.format(activity.id,zone.zone.id, park.park.id),request)
-                                                        except:
-                                                            raise
+                                                allowed_act_ids = list(set(zone.zone.allowed_activities_ids).intersection(a['activities']))
+
+                                                [ProposalParkZoneActivity.objects.get_or_create(park_zone=zone, activity_id=act_id) for act_id in allowed_act_ids]
+                                                #parkzone_activity=[ProposalParkZoneActivity(park_zone=zone, activity_id=act_id) for act_id in allowed_act_ids]
+                                                instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_ZONE.format(', '.join(map(str, allowed_act_ids)), zone.zone.id, park.park.id),request)
                                                 if 'access_point' in a:
                                                     zone.access_point = a['access_point']
                                                     zone.save()
@@ -610,25 +596,15 @@ def save_park_zone_activity_data(instance,marine_parks_activities, request):
                                                 zone_instance=Zone.objects.get(id=a['zone'])
                                                 zone=ProposalParkZone.objects.create(proposal_park=park, zone=zone_instance)
                                                 instance.log_user_action(ProposalUserAction.ACTION_LINK_ZONE.format(zone.zone.id, park.park.id),request)
-                                                if a['activities']:
-                                                    for act in a['activities']:
-                                                        try:
-                                                            if act not in zone.zone.allowed_activities_ids:
-                                                                pass
-                                                            else:
-                                                                activity=Activity.objects.get(id=act)
-                                                                ProposalParkZoneActivity.objects.create(park_zone=zone, activity=activity)
-                                                                instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_ZONE.format(activity.id,zone.zone.id, park.park.id),request)
-                                                        except:
-                                                            raise
+                                                allowed_act_ids = list(set(zone.zone.allowed_activities_ids).intersection(a['activities']))
+
+                                                [ProposalParkZoneActivity.objects.get_or_create(park_zone=zone, activity_id=act_id) for act_id in allowed_act_ids]
+                                                #parkzone_activity=[ProposalParkZoneActivity(park_zone=zone, activity_id=act_id) for act_id in allowed_act_ids]
+                                                instance.log_user_action(ProposalUserAction.ACTION_LINK_ACTIVITY_ZONE.format(', '.join(map(str, allowed_act_ids)) ,zone.zone.id, park.park.id),request)
+
                                                 if 'access_point' in a:
                                                     zone.access_point = a['access_point']
                                                     zone.save()
-                                            #Just to check the new activities. Next 3 lines can be deleted.
-                                            #new_activities=zone.park_activities.all()
-                                            #new_activities_id=set(nw.activity_id for nw in new_activities)
-                                            #diff_activity=set(new_activities_id).difference(set(a['activities']))
-                                            #print("not deleting","park:",park.park_id,"zone:",zone.zone_id,"new_activities:",new_activities_id, "diff:", diff_activity)
                                 except:
                                     raise
                             #compare all zones (new+old) with the list of zones selected to get
@@ -651,6 +627,15 @@ def save_park_zone_activity_data(instance,marine_parks_activities, request):
                         instance.log_user_action(ProposalUserAction.ACTION_UNLINK_PARK.format(d, instance.id),request)
                 except:
                     raise
+
+                try:
+                    print '2b'.format()
+                    #with transaction.atomic():
+                    #    ProposalParkZoneActivity.objects.bulk_create(parkzone_activity)
+                    #ProposalParkZoneActivity.objects.bulk_create(parkzone_activity)
+                except IntegrityError:  
+                    pass
+
         except:
             raise
 
@@ -701,7 +686,9 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
             # instance.save()
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
+            print '11'
             viewset.perform_update(serializer)
+            print '22'
             if 'accreditations' in other_details_data:
                 accreditation_types = instance.other_details.accreditations.values_list('accreditation_type', flat=True)
                 for acc in other_details_data['accreditations']:
@@ -747,6 +734,7 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
 
                 except:
                     raise
+
             if select_trails_activities or len(select_trails_activities)==0:
                 try:
 
@@ -754,6 +742,7 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
 
                 except:
                     raise
+
             if marine_parks_activities or len(marine_parks_activities)==0:
                 try:
                     save_park_zone_activity_data(instance, marine_parks_activities, request)
