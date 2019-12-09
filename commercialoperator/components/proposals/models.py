@@ -509,7 +509,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     approval = models.ForeignKey('commercialoperator.Approval',null=True,blank=True)
 
-    previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    #previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    previous_application = models.ForeignKey('self', blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
     #qaofficer_referral = models.BooleanField(default=False)
     #qaofficer_referral = models.OneToOneField('QAOfficerReferral', blank=True, null=True)

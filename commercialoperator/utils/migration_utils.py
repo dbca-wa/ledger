@@ -324,7 +324,9 @@ class OrganisationReader():
         try:
             #if data['email1'] == 'info@safaris.net.au':
             #    import ipdb; ipdb.set_trace()
-            user = EmailUser.objects.get(email=data['email1'])
+            user, created_user = EmailUser.objects.get_or_create(email=data['email1'],
+                    defaults={'first_name': data['first_name'], 'last_name': data['last_name'], 'phone_number': data['phone_number1'], 'mobile_number': data['mobile_number']}
+                )
             #print '{} {} {}'.format(data['first_name'], data['last_name'], EmailUser.objects.filter(first_name=data['first_name'], last_name=data['last_name']))
             #print data['email1']
         except Exception:
@@ -375,11 +377,6 @@ class OrganisationReader():
                     trading_name=data['trading_name'],
                 )
                 org, created_org = Organisation.objects.get_or_create(organisation=lo)
-
-
-
-
-
 
         abn_existing = []
         abn_new = []
@@ -455,9 +452,16 @@ class OrganisationReader():
             #raise
 
         try:
+            #Organisation.objects.get(id=12).delegates.filter().delete()
+            #import ipdb; ipdb.set_trace()
+            #user_delegate_ids = list(UserDelegation.objects.filter(organisation=org)[1:].values_list('id', flat=True))
+            #if len(user_delegate_ids)>0:
+            #    UserDelegation.objects.filter(id__in=user_delegate_ids).delete()
+
+            UserDelegation.objects.filter(organisation=org).delete()
             delegate, created = UserDelegation.objects.get_or_create(organisation=org, user=user)
         except Exception, e:
-            #import ipdb; ipdb.set_trace()
+            import ipdb; ipdb.set_trace()
             print 'Delegate Creation Failed: {}'.format(user)
             #raise
 
@@ -603,9 +607,8 @@ class OrganisationReader():
                     data.update({'start_date': row[28].strip()})
                     data.update({'issue_date': row[29].strip()})
                     data.update({'licence_class': row[30].strip()})
-                    #data.update({'land_parks': row[31].translate(None, b' -()').split()})
-                    data.update({'land_parks': [i.strip().replace('`', '') for i in row[31].split(',')]})
-                    #data.update({'land_parks': 'Geikie Gorge National Park,Lawley River National Park,Purnululu National Park'.split(',')})
+                    #data.update({'land_parks': [i.strip().replace('`', '') for i in row[31].split(',')]})
+                    data.update({'land_parks': list(set([i.strip() for i in row[31].split(',')]))})
                     #print data
                     get_start_date(data, row)
 
@@ -616,6 +619,7 @@ class OrganisationReader():
                     #   print
 
         except Exception, e:
+            import ipdb; ipdb.set_trace()
             #logger.info('{}'.format(e))
             logger.info('Main {}'.format(data))
             raise
@@ -704,8 +708,9 @@ class OrganisationReader():
                     park = Park.objects.get(name__icontains=park_name)
                     ProposalPark.objects.create(proposal=proposal, park=park)
                 except Exception, e:
-                    if park_name not in self.parks_not_found:
-                        self.parks_not_found.append(park_name)
+                    if park_name and [park_name, data['email1']] not in self.parks_not_found:
+                        #self.parks_not_found.append(park_name)
+                        self.parks_not_found.append([park_name, data['email1']])
                     #logger.error('Park: {}'.format(park_name))
                     #import ipdb; ipdb.set_trace()
 
@@ -721,6 +726,7 @@ class OrganisationReader():
     def create_organisation_data(self):
         count = 1
         for data in self.org_lines:
+            #import ipdb; ipdb.set_trace()
             new, existing = self._create_organisation(data, count)
             count += 1
 
@@ -741,7 +747,9 @@ class OrganisationReader():
         print 'Approvals: {}'.format(approval_new)
         print 'Approval Errors: {}'.format(approval_error)
         print 'Approvals: {}, Approval_Errors: {}'.format(len(approval_new), len(approval_error))
-        print 'Parks Not Found: {}'.format(self.parks_not_found)
+        #print 'Parks Not Found: {}'.format(self.parks_not_found)
+        for i in self.parks_not_found:
+            print i
 
 
 
