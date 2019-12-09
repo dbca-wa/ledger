@@ -507,12 +507,32 @@ class OrganisationReader():
                 data.update({'start_date': None})
                 data.update({'issue_date': None})
                 data.update({'expiry_date': None})
-                #logger.error('Expiry Date: {}'.format(data['expiry_date']))
-                #logger.error('Data: {}'.format(data))
-                #raise
-                return
+                raise
+                #return
 
-#            term = data['term'].split() # '3 YEAR'
+#        ('1_year','1 Year'),
+#        ('3_year', '3 Years'),
+#        ('5_year', '5 Years'),
+#        ('7_year', '7 Years'),
+#        ('10_year', '10 Years'),
+            #import ipdb; ipdb.set_trace()
+            term = data['term'].split() # '3 YEAR'
+            if term and 'YEAR' in term[1] and 'TERM' not in term[1]:
+                if int(term[0]) == 1:
+                    data.update({'licence_period': '1_year'})
+                elif int(term[0]) == 3:
+                    data.update({'licence_period': '3_year'})
+                elif int(term[0]) == 5:
+                    data.update({'licence_period': '5_year'})
+                elif int(term[0]) == 7:
+                    data.update({'licence_period': '7_year'})
+                elif int(term[0]) == 10:
+                    data.update({'licence_period': '10_year'})
+                else:
+                    data.update({'licence_period': '1_year'})
+            else:
+                data.update({'licence_period': '1_year'})
+
 #
 #            #import ipdb; ipdb.set_trace()
 #            if 'YEAR' in term[1]:
@@ -529,7 +549,10 @@ class OrganisationReader():
 
             if data['start_date'] != "" or data['start_date'] != None:
                 try:
-                    issue_date = datetime.datetime.strptime(data['start_date'], '%d-%b-%y').date() # '05-Feb-89'
+                    if term and 'YEAR' in term[1] and 'TERM' not in term[1]:
+                        start_date = expiry_date - relativedelta(years=int(term[0]))
+                    else:
+                        start_date = datetime.datetime.strptime(data['start_date'], '%d-%b-%y').date() # '05-Feb-89'
                     data.update({'start_date': start_date})
                 except Exception:
                     data.update({'start_date': datetime.date.today()})
@@ -610,6 +633,7 @@ class OrganisationReader():
                     #data.update({'land_parks': [i.strip().replace('`', '') for i in row[31].split(',')]})
                     data.update({'land_parks': list(set([i.strip() for i in row[31].split(',')]))})
                     #print data
+                    #import ipdb; ipdb.set_trace()
                     get_start_date(data, row)
 
                     if data['abn'] != '':
@@ -702,6 +726,8 @@ class OrganisationReader():
             proposal.migrated=True
             approval.migrated=True
             other_details = ProposalOtherDetails.objects.create(proposal=proposal)
+            other_details.preferred_licence_period = data['licence_period']
+            other_details.nominated_start_date = data['start_date']
 
             for park_name in data['land_parks']:
                 try:
@@ -714,6 +740,7 @@ class OrganisationReader():
                     #logger.error('Park: {}'.format(park_name))
                     #import ipdb; ipdb.set_trace()
 
+            other_details.save()
             proposal.save()
             approval.save()
         except Exception, e:
