@@ -1181,12 +1181,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def renew_approval(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-#            try:
-#                instance = self.get_object()
-#            except Exception, e:
-#                # because current queryset excludes migrated licences
-#                instance = Proposal.objects.get(id=kwargs.get('id'))
-
             instance = instance.renew_approval(request)
             serializer = SaveProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
@@ -1198,12 +1192,6 @@ class ProposalViewSet(viewsets.ModelViewSet):
     def amend_approval(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-#            try:
-#                instance = self.get_object()
-#            except Exception, e:
-#                # because current queryset excludes migrated licences
-#                instance = Proposal.objects.get(id=kwargs.get('id'))
-
             instance = instance.amend_approval(request)
             serializer = SaveProposalSerializer(instance,context={'request':request})
             return Response(serializer.data)
