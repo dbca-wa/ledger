@@ -510,8 +510,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     approval = models.ForeignKey('commercialoperator.Approval',null=True,blank=True)
 
-    previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
-    #previous_application = models.ForeignKey('self', blank=True, null=True)
+    #previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    previous_application = models.ForeignKey('self', blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
     #qaofficer_referral = models.BooleanField(default=False)
     #qaofficer_referral = models.OneToOneField('QAOfficerReferral', blank=True, null=True)
@@ -582,7 +582,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     @property
     def fee_paid(self):
-        return True if self.fee_invoice_reference else False
+        return True if self.fee_invoice_reference or self.proposal_type=='amendment' else False
 
     @property
     def fee_amount(self):
@@ -3209,6 +3209,7 @@ def clone_proposal_with_status_reset(proposal):
             proposal.approval = None
             proposal.approval_level_document = None
             proposal.migrated=False
+            #proposal.migrated=False if not original_proposal.migrated else True
 
             proposal.save(no_revision=True)
 

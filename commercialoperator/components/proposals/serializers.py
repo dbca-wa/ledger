@@ -328,6 +328,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
         fields = (
                 'id',
                 'application_type',
+                'proposal_type',
                 'activity',
                 'approval_level',
                 'title',
@@ -464,6 +465,7 @@ class ListProposalSerializer(BaseProposalSerializer):
         fields = (
                 'id',
                 'application_type',
+                'proposal_type',
                 'activity',
                 'approval_level',
                 'title',
@@ -501,6 +503,7 @@ class ListProposalSerializer(BaseProposalSerializer):
         # also require the following additional fields for some of the mRender functions
         datatables_always_serialize = (
                 'id',
+                'proposal_type',
                 'activity',
                 'title',
                 'region',
