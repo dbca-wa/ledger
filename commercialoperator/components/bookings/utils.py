@@ -340,7 +340,7 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
         if same_tour_group and no_adults_same_tour is not None:
             if no_adults_same_tour > 0:
                 lines.append(add_line_item(park, arrival, 'Adult (Same Tour Group, Total {})'.format(no_adults), price=park.adult_price, no_persons=no_adults_same_tour))
-            elif no_adults_same_tour == 0:
+            elif no_adults_same_tour == 0 and no_adults != 0:
                 lines.append(add_line_item(park, arrival, 'Adult (Same Tour Group, Total {})'.format(no_adults), price=0.0, no_persons=no_adults))
         elif no_adults > 0:
             lines.append(add_line_item(park, arrival, 'Adult', price=park.adult_price, no_persons=no_adults))
@@ -348,7 +348,7 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
         if same_tour_group and no_children_same_tour is not None:
             if no_children_same_tour > 0:
                 lines.append(add_line_item(park, arrival, 'Child (Same Tour Group, Total {})'.format(no_children), price=park.child_price, no_persons=no_children_same_tour))
-            elif no_children_same_tour == 0:
+            elif no_children_same_tour == 0 and no_children != 0:
                 lines.append(add_line_item(park, arrival, 'Child (Same Tour Group, Total {})'.format(no_children), price=0.0, no_persons=no_children))
         elif no_children > 0:
             lines.append(add_line_item(park, arrival, 'Child', price=park.child_price, no_persons=no_children))
@@ -356,7 +356,7 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
         if same_tour_group and no_free_of_charge_same_tour is not None:
             if no_free_of_charge_same_tour > 0:
                 lines.append(add_line_item(park, arrival, 'Free (Same Tour Group, Total {})'.format(no_free_of_charge), price=0.0, no_persons=no_free_of_charge_same_tour))
-            elif no_free_of_charge_same_tour == 0:
+            elif no_free_of_charge_same_tour == 0 and no_free_of_charge != 0:
                 lines.append(add_line_item(park, arrival, 'Free (Same Tour Group, Total {})'.format(no_free_of_charge), price=0.0, no_persons=no_free_of_charge))
         elif no_free_of_charge > 0:
             lines.append(add_line_item(park, arrival, 'Free', price=0.0, no_persons=no_free_of_charge))

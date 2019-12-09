@@ -272,8 +272,8 @@ export default {
 
         reset_row_checkbox: function(row) {
             // reset part of the row (checkbox only)
-            for(var i=2; i<row.length-1; i++) { row[i]=''  }
-            return row;
+            row[this.idx_same_group_tour] = '';
+            return row
         },
 
         updateTableJSON: function() {
@@ -331,9 +331,9 @@ export default {
             }
             return 'Tick if this is for the same tour group as the booking for district ' + selected_district_id + ' for ' + selected_arrival + '.';
         },
-        get_same_tour_group_checkbox: function(row_idx) {
-            return this.same_tour_group_checkbox[row_idx]
-        },
+        //get_same_tour_group_checkbox: function(row_idx) {
+        //    return this.same_tour_group_checkbox[row_idx]
+        //},
         disable_same_tour_group_checkbox: function(row, row_idx) {
             let vm = this;
             if (!(row && row[vm.idx_park]=="")) {
@@ -575,7 +575,9 @@ export default {
         park_change: function(selected_park, row, row_idx) {
             let vm = this;
             var selected_date = row[vm.idx_arrival_date]
-            var selected_district_id = row[vm.idx_park].district_id
+            if (row[vm.idx_park]!==null) {
+                var selected_district_id = row[vm.idx_park].district_id
+            }
 
             if (selected_park===null || selected_park==='') {
                 // reset the row
@@ -590,6 +592,7 @@ export default {
                 var is_disabled = vm.disable_same_tour_group_checkbox(row, row_idx)
                 if (is_disabled) {
                     vm.same_tour_group_checkbox[row_idx].checked = false;
+                    vm.table.tbody[row_idx] = vm.reset_row_checkbox(row);
                 }
                 vm.same_tour_group_checkbox[row_idx].disabled = is_disabled;
             }
@@ -611,11 +614,8 @@ export default {
             var is_disabled = vm.disable_same_tour_group_checkbox(row, row_idx)
             if (is_disabled) {
                 vm.same_tour_group_checkbox[row_idx].checked = false;
-                //vm.reset_row_checkbox(row)
                 vm.table.tbody[row_idx] = vm.reset_row_checkbox(row);
             }
-            //$('#id_checkbox_' + row_idx).prop('checked', false);
-            //$('#id_checkbox_' + row_idx).removeAttr('checked');
             vm.same_tour_group_checkbox[row_idx].disabled = is_disabled;
         },
        
