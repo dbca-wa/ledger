@@ -93,6 +93,10 @@ from '@/utils/hooks'
             canEditActivities:{
               type: Boolean,
               default: true
+            },
+            proposal_parks:{
+              type:Object,
+              required:true
             }
         },
         data:function () {
@@ -573,7 +577,8 @@ from '@/utils/hooks'
             vm.proposal.marine_parks_activities=[];
             vm.fetchMarineTreeview();
 
-            vm.store_parks(vm.proposal.marine_parks);
+            //vm.store_parks(vm.proposal.marine_parks);
+            vm.store_parks(vm.proposal_parks.marine_parks);
             //vm.eventListeners();
         }
     }

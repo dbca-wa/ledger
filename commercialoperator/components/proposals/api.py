@@ -86,7 +86,8 @@ from commercialoperator.components.proposals.serializers import (
     ProposalParkSerializer,
     ChecklistQuestionSerializer,
     ProposalAssessmentSerializer,
-    ProposalAssessmentAnswerSerializer
+    ProposalAssessmentAnswerSerializer,
+    ParksAndTrailSerializer
 )
 from commercialoperator.components.bookings.models import Booking, ParkBooking, BookingInvoice
 from commercialoperator.components.approvals.models import Approval
@@ -978,6 +979,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['GET',])
+    #@renderer_classes((JSONRenderer,))
+    def parks_and_trails(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = ParksAndTrailSerializer(instance,context={'request':request})
+        return Response(serializer.data)
 
     @detail_route(methods=['GET',])
     def internal_proposal(self, request, *args, **kwargs):
@@ -1646,6 +1653,22 @@ class ReferralViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance.complete(request)
+            data={}
+            data['type']=u'referral_complete'
+            data['fromm']=u'{}'.format(instance.referral_group.name)
+            data['proposal'] = u'{}'.format(instance.proposal.id)
+            data['staff'] = u'{}'.format(request.user.id)
+            data['text'] = u'{}'.format(instance.referral_text)
+            data['subject'] = u'{}'.format(instance.referral_text)
+            serializer = ProposalLogEntrySerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            comms = serializer.save()
+            if instance.document:
+                document = comms.documents.create(_file=instance.document._file, name=instance.document.name)
+                document.input_name = instance.document.input_name
+                document.can_delete = True
+                document.save()
+
             serializer = self.get_serializer(instance, context={'request':request})
             return Response(serializer.data)
         except serializers.ValidationError:

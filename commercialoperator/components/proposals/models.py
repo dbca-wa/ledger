@@ -2713,10 +2713,12 @@ class Referral(RevisionedMixin):
                         document._file = referral_document
                         document.save()
                         d=ReferralDocument.objects.get(id=document.id)
-                        self.referral_document = d
+                        #self.referral_document = d
+                        self.document = d
                         comment = 'Referral Document Added: {}'.format(document.name)
                     else:
-                        self.referral_document = None
+                        #self.referral_document = None
+                        self.document = None
                         #comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
                         comment = 'Referral Document Deleted'
                     #self.save()

@@ -249,7 +249,7 @@
                     <div class="row">
                         <form :action="proposal_form_url" method="post" name="new_proposal" enctype="multipart/form-data">
                                 
-                                <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="false" :is_external="false" :is_referral="true" :referral="referral" :hasReferralMode="hasReferralMode"></ProposalTClass>
+                                <ProposalTClass v-if="proposal && proposal_parks && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart" :canEditActivities="false" :is_external="false" :is_referral="true" :referral="referral" :hasReferralMode="hasReferralMode" :proposal_parks="proposal_parks"></ProposalTClass>
                                 <input type="hidden" name="csrfmiddlewaretoken" :value="csrf_token"/>
                                 <input type='hidden' name="schema" :value="JSON.stringify(proposal)" />
                                 <input type='hidden' name="proposal_id" :value="1" />
@@ -301,6 +301,7 @@ export default {
             selected_referral: '',
             referral_text: '',
             referral_comment: '',
+            proposal_parks:null,
             sendingReferral: false,
             showingProposal:false,
             form: null,
@@ -559,15 +560,16 @@ export default {
                 emulateJSON:true
                 }).then((response) => {
                 vm.sendingReferral = false;
-                vm.referral = response.body;
+                vm.proposal = helpers.copyObject(response.body);
                 // vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
                 swal(
                     'Referral Sent',
-                    //'The referral has been sent to '+vm.department_users.find(d => d.email == vm.selected_referral).name,
+                    //'The referral has been sent to '+vm.de)artment_users.find(d => d.email == vm.selected_referral).name,
                     // 'The referral has been sent to '+vm.referral_recipient_groups.find(d => d.email == vm.selected_referral).name,
                     'The referral has been sent to '+vm.selected_referral,
                     'success'
                 )
+                vm.fetchProposalParks(vm.proposal.id);
                 $(vm.$refs.referral_recipient_groups).val(null).trigger("change");
                 vm.selected_referral = '';
                 vm.referral_text = '';
@@ -699,6 +701,7 @@ export default {
             Vue.http.get(helpers.add_endpoint_json(api_endpoints.referrals,vm.referral.id)).then(res => {
               
                 vm.referral = res.body;
+                vm.fetchProposalParks(vm.referral.proposal.id);
                 vm.referral.proposal.applicant.address = vm.proposal.applicant.address != null ? vm.proposal.applicant.address : {};
                 //vm.fetchreferrallist(vm.referral.id);
               
@@ -706,6 +709,16 @@ export default {
             err => {
               console.log(err);
             });
+        },
+        fetchProposalParks: function(proposal_id){
+          let vm=this;
+          vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,proposal_id+'/parks_and_trails')).then(response => {
+                    vm.proposal_parks = helpers.copyObject(response.body);
+                    console.log(vm.proposal_parks)
+                },
+                  error => {
+                });
+
         },
         completeReferral:function(){
             let vm = this;
@@ -722,6 +735,8 @@ export default {
                 emulateJSON:true
                 }).then(res => {
                     vm.referral = res.body;
+                    vm.fetchProposalParks(vm.referral.proposal.id);
+
                 },
                 error => {
                     swal(
@@ -797,6 +812,7 @@ export default {
           Vue.http.get(helpers.add_endpoint_json(api_endpoints.referrals,to.params.referral_id)).then(res => {
               next(vm => {
                 vm.referral = res.body;
+                vm.fetchProposalParks(vm.referral.proposal.id);
                 vm.referral.proposal.org_applicant.address = vm.proposal.org_applicant.address != null ? vm.proposal.org_applicant.address : {};
                 //vm.fetchreferrallist(vm.referral.id);
               });
@@ -809,6 +825,7 @@ export default {
           Vue.http.get(`/api/proposal/${to.params.proposal_id}/referall_proposal.json`).then(res => {
               next(vm => {
                 vm.referral = res.body;
+                vm.fetchProposalParks(vm.referral.proposal.id);
                 vm.referral.proposal.applicant.address = vm.referral.proposal.applicant.address != null ? vm.referral.proposal.applicant.address : {};
               });
             },
