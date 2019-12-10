@@ -471,7 +471,7 @@ def test_create_invoice(payment_method='bpay'):
         'oracle_code': 'ABC123 GST',
         'price_incl_tax': Decimal('10.00'),
         'price_excl_tax': Decimal('9.090909090909'),
-        'ledger_description': 'Booking Date 2019-09-24: Neale Junction Nature Reserve - 2019-09-24 - Adult',
+        'ledger_description': 'Neale Junction Nature Reserve - 2019-09-24 - Adult',
         'quantity': 1
     }]
     #products = Booking.objects.last().as_line_items

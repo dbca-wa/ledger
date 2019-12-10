@@ -249,7 +249,7 @@ export default {
                                     links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
                                 }
                             }
-                            if (full.fee_paid){
+                            if (full.fee_paid && full.proposal_type!='Amendment'){
                                 links +=  `<a href='/cols/payments/invoice-pdf/${full.fee_invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${full.fee_invoice_reference}</a><br/>`;
                             }
                             return links;
@@ -379,10 +379,10 @@ export default {
                                     links +=  `<a href='/external/proposal/${full.id}'>View</a><br/>`;
                                 }
                             }
-                            if (full.fee_paid){
+                            if (full.fee_paid && full.proposal_type!='Amendment'){
                                 if(vm.is_payment_admin){
-                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>View Payment</a><br/>`;
-                            }
+                                    links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.fee_invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                                }
                                 links +=  `<a href='/cols/payments/invoice-pdf/${full.fee_invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i>&nbsp #${full.fee_invoice_reference}</a><br/>`;
                             }
                             return links;

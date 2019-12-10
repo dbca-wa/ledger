@@ -196,6 +196,10 @@ class Booking(Payment):
     def deferred_payment_date(self):
         return self.invoices.last().deferred_payment_date
 
+    @property
+    def booking_date(self):
+        return self.park_bookings.last().created.date()
+
 class ParkBooking(RevisionedMixin):
     created = models.DateTimeField(default=timezone.now())
     booking = models.ForeignKey(Booking, on_delete=models.PROTECT, blank=True, null=True, related_name='park_bookings')
@@ -235,7 +239,7 @@ class ParkBooking(RevisionedMixin):
             if no_persons > 0 or (same_tour_group and no_persons >= 0):
             #if no_persons > 0:
                 return {
-                    'ledger_description': 'Booking Date {}: {} - {} - {}'.format(self.created.date(), self.park.name, self.arrival, age_group),
+                    'ledger_description': '{} - {} - {}'.format(self.park.name, self.arrival, age_group),
                     'oracle_code': self.park.oracle_code,
                     'price_incl_tax':  D(price),
                     'price_excl_tax':  D(price) if self.park.is_gst_exempt else calculate_excl_gst(D(price)),
