@@ -2353,6 +2353,7 @@ class GetServerDate(views.APIView):
     calendar components independent of client timezone.
     """
     renderer_classes = [JSONRenderer, ]
+    permission_classes = []
 
     def get(self, request, format=None):
         return Response(timezone.make_aware(datetime.now()).isoformat())

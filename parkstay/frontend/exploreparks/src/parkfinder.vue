@@ -477,12 +477,13 @@ div.awesomplete > input {
 import Vue from 'vue'
 import Awesomplete from 'awesomplete';
 import ol from 'openlayers';
-//var ol = require('openlayers/dist/ol-debug');
 import 'foundation-sites/dist/js/foundation.min';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
-import moment from 'moment' ;
+import moment from 'moment';
 
+var today = moment.utc().add(8, 'hours');
+today = moment.utc({year: today.year(), month: today.month(), day: today.date(), hour: 0, minute: 0, millisecond: 0})
 
 export default {
     name: 'parkfinder',
@@ -802,18 +803,16 @@ export default {
         // TODO Added these methods to use server date extracted from an api call
         // Needs to be implemented in the system, have to use server date to restrict arrival date instead of today
         // Currently this function is not used
-        setData: function(datestring) {
-          let vm = this
-             var tempDate = datestring.body;
-              vm.currentDate = vm.currentDate = moment({year: tempDate.getFullYear(), month: tempDate.getMonth(), day: tempDate.getDate(), hour: 0, minute: 0, second: 0});
-
+        setDate: function(datestring) {
+            let vm = this;
+            var tempDate = new Date(datestring)
+            vm.currentDate = moment({year: tempDate.getFullYear(), month: tempDate.getMonth(), day: tempDate.getDate(), hour: 0, minute: 0, second: 0, millisecond: 0});
         },
 
         fetchServerDate: function() {
           let vm = this;
-
           vm.$http.get(vm.parkstayUrl+'/api/server-date').then(function(response)  {
-            this.setData(response.body)
+              this.setDate(response.body)
           })
         },
 
@@ -883,31 +882,15 @@ export default {
     mounted: function () {
         var vm = this;
         $(document).foundation();
-        console.log('Loading map...');
-
-        var nowTemp = new Date();
-        var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
-
-        // Added this portion from availability to solve datepicker utc - issue
-
-        var today = moment.utc().add(8, 'hours');
-        today = moment.utc({year: today.year(), month: today.month(), day: today.date()})
-
-        // End of change
 
         this.arrivalEl = $('#dateArrival');
         this.departureEl = $('#dateDeparture');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
-            //value: vm.currentDate which you got from server
-            startDate: moment(today).toDate(),
             endDate: moment.utc(this.arrivalEl).add(180, 'days').toDate(),
             onRender: function (date) {
-                // disallow start dates before today
-
-                return date.valueOf() < today.valueOf() ? 'disabled': '';
-
-                //return '';
+                // Disallow start dates before today.
+                return date.valueOf() < today.toDate().valueOf() ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
             ev.target.dispatchEvent(new CustomEvent('change'));
@@ -930,6 +913,7 @@ export default {
         this.departureData = this.departureEl.fdatepicker({
             format: 'dd/mm/yyyy',
             onRender: function (date) {
+                // Disallow departure date before arrival date.
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
