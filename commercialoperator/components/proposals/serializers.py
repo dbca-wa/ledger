@@ -291,6 +291,18 @@ class ProposalAssessmentSerializer(serializers.ModelSerializer):
                 'checklist'
                 )
 
+class ParksAndTrailSerializer(serializers.ModelSerializer):
+    land_parks=ProposalParkSerializer(many=True)
+    marine_parks=ProposalParkSerializer(many=True)
+    trails=ProposalTrailSerializer(many=True)
+
+    class Meta:
+        model = Proposal
+        fields = ('land_parks',
+                'marine_parks',
+                'trails'
+                )
+
 
 class BaseProposalSerializer(serializers.ModelSerializer):
     #org_applicant = OrganisationSerializer()
@@ -304,9 +316,9 @@ class BaseProposalSerializer(serializers.ModelSerializer):
     #applicant_details = ProposalApplicantDetailsSerializer(required=False)
     activities_land = ProposalActivitiesLandSerializer(required=False)
     activities_marine = ProposalActivitiesMarineSerializer(required=False)
-    land_parks=ProposalParkSerializer(many=True)
-    marine_parks=ProposalParkSerializer(many=True)
-    trails=ProposalTrailSerializer(many=True)
+    #land_parks=ProposalParkSerializer(many=True)
+    #marine_parks=ProposalParkSerializer(many=True)
+    #trails=ProposalTrailSerializer(many=True)
     other_details=ProposalOtherDetailsSerializer()
 
     get_history = serializers.ReadOnlyField()
@@ -328,6 +340,7 @@ class BaseProposalSerializer(serializers.ModelSerializer):
         fields = (
                 'id',
                 'application_type',
+                'proposal_type',
                 'activity',
                 'approval_level',
                 'title',
@@ -377,9 +390,9 @@ class BaseProposalSerializer(serializers.ModelSerializer):
                 'land_activities',
                 'trail_activities',
                 'trail_section_activities',
-                'land_parks',
-                'marine_parks',
-                'trails',
+                # 'land_parks',
+                # 'marine_parks',
+                # 'trails',
                 'training_completed',
                 'fee_invoice_url',
                 'fee_paid',
@@ -464,6 +477,7 @@ class ListProposalSerializer(BaseProposalSerializer):
         fields = (
                 'id',
                 'application_type',
+                'proposal_type',
                 'activity',
                 'approval_level',
                 'title',
@@ -501,6 +515,7 @@ class ListProposalSerializer(BaseProposalSerializer):
         # also require the following additional fields for some of the mRender functions
         datatables_always_serialize = (
                 'id',
+                'proposal_type',
                 'activity',
                 'title',
                 'region',
@@ -703,7 +718,7 @@ class ProposalParkSerializer(BaseProposalSerializer):
         return obj.approval.id
 
     def get_land_parks(self,obj):
-        """ exlude parks with free admission """
+        """ exclude parks with free admission """
         return obj.land_parks_exclude_free
 
 class InternalProposalSerializer(BaseProposalSerializer):
@@ -797,9 +812,9 @@ class InternalProposalSerializer(BaseProposalSerializer):
                 'trail_activities',
                 'trail_section_activities',
                 'activities_marine',
-                'land_parks',
-                'marine_parks',
-                'trails',
+                # 'land_parks',
+                # 'marine_parks',
+                # 'trails',
                 'training_completed',
                 'can_edit_activities',
                 #Following 3 are variable to store selected parks and activities at frontend
@@ -960,9 +975,12 @@ class DTReferralSerializer(serializers.ModelSerializer):
     def get_submitter(self,obj):
         return EmailUserSerializer(obj.proposal.submitter).data
 
+    # def get_document(self,obj):
+    #     docs =  [[d.name,d._file.url] for d in obj.referral_documents.all()]
+    #     return docs[0] if docs else None
     def get_document(self,obj):
-        docs =  [[d.name,d._file.url] for d in obj.referral_documents.all()]
-        return docs[0] if docs else None
+        #doc = obj.referral_documents.last()
+        return [obj.document.name, obj.document._file.url] if obj.document else None
 
 class RequirementDocumentSerializer(serializers.ModelSerializer):
     class Meta:

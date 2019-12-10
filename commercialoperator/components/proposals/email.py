@@ -157,8 +157,14 @@ def send_referral_complete_email_notification(referral,request):
         'url': url,
         'referral_comments': referral.referral_text
     }
+    attachments=[]
+    if referral.document:
+        file_name = referral.document._file.name
+        #attachment = (file_name, doc._file.file.read(), 'image/*')
+        attachment = (file_name, referral.document._file.file.read())
+        attachments.append(attachment)
 
-    msg = email.send(referral.sent_by.email, context=context)
+    msg = email.send(referral.sent_by.email,attachments=attachments, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_referral_email(msg, referral, sender=sender)
     if referral.proposal.org_applicant:

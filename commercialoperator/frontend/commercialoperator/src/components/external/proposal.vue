@@ -36,7 +36,7 @@
                 <h4>Commercial Operator - {{proposal.application_type}} application: {{proposal.lodgement_number}}</h4>
             </div>
 
-            <ProposalTClass v-if="proposal && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"  :canEditActivities="canEditActivities" :is_external="true" ref="proposal_tclass"></ProposalTClass>
+            <ProposalTClass v-if="proposal && proposal_parks && proposal.application_type=='T Class'" :proposal="proposal" id="proposalStart"  :canEditActivities="canEditActivities" :is_external="true" :proposal_parks="proposal_parks" ref="proposal_tclass"></ProposalTClass>
             <ProposalFilming v-else-if="proposal && proposal.application_type=='Filming'" :proposal="proposal" id="proposalStart"></ProposalFilming>
             <ProposalEvent v-else-if="proposal && proposal.application_type=='Event'" :proposal="proposal" id="proposalStart"></ProposalEvent>
 
@@ -52,9 +52,15 @@
                                   <div class="navbar-inner">
                                     <div v-if="proposal && !proposal.readonly" class="container">
                                       <p class="pull-right" style="margin-top:5px">
-                                        <input type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit"/>
-                                        <input type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue"/>
-                                        <input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()"/>
+                                        <button v-if="saveExitProposal" type="button" class="btn btn-primary" disabled>Save and Exit&nbsp;
+                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i></button>
+                                        <input v-else type="button" @click.prevent="save_exit" class="btn btn-primary" value="Save and Exit" :disabled="savingProposal || paySubmitting"/>
+                                        <button v-if="savingProposal" type="button" class="btn btn-primary" disabled>Save and Continue&nbsp;
+                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i></button>
+                                        <input v-else type="button" @click.prevent="save" class="btn btn-primary" value="Save and Continue" :disabled="saveExitProposal || paySubmitting"/>
+                                        <button v-if="paySubmitting" type="button" class="btn btn-primary" disabled>{{ submit_text() }}&nbsp;
+                                                <i class="fa fa-circle-o-notch fa-spin fa-fw"></i></button>
+                                        <input v-else type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed || saveExitProposal || savingProposal"/>
                                         <!--<input type="button" @click.prevent="submit" class="btn btn-primary" :value="submit_text()" :disabled="!proposal.training_completed"/>-->
                                         <input id="save_and_continue_btn" type="hidden" @click.prevent="save_wo_confirm" class="btn btn-primary" value="Save Without Confirmation"/>
                                       </p>
@@ -103,9 +109,13 @@ export default {
       proposal_readonly: true,
       hasAmendmentRequest: false,
       submitting: false,
+      saveExitProposal: false,
+      savingProposal:false,
+      paySubmitting:false,
       newText: "",
       pBody: 'pBody',
       missing_fields: [],
+      proposal_parks:null,
     }
   },
   components: {
@@ -168,6 +178,7 @@ export default {
     save: function(e) {
       let vm = this;
       //vm.form=document.forms.new_proposal;
+      vm.savingProposal=true;
       vm.save_applicant_data();
       //await vm.save_applicant_data();
 
@@ -186,14 +197,17 @@ export default {
             'Your application has been saved',
             'success'
           );
+          vm.savingProposal=false;
       },err=>{
+        vm.savingProposal=false;
       });
     },
     save_exit: function(e) {
       let vm = this;
       this.submitting = true;
+      this.saveExitProposal=true;
       this.save(e);
-
+      this.saveExitProposal=false;
       // redirect back to dashboard
       vm.$router.push({
         name: 'external-proposals-dash'
@@ -401,6 +415,7 @@ export default {
     },
     submit: function(){
         let vm = this;
+        
         let formData = vm.set_formData()
 
 /*
@@ -412,11 +427,13 @@ export default {
             text: missing_data,
             type:'error'
           })
+          //vm.paySubmitting=false;
           return false;
         }
 
         // remove the confirm prompt when navigating away from window (on button 'Submit' click)
         vm.submitting = true;
+        vm.paySubmitting=true;
 
         swal({
             title: vm.submit_text() + " Application",
@@ -425,6 +442,7 @@ export default {
             showCancelButton: true,
             confirmButtonText: vm.submit_text()
         }).then(() => {
+          
             if (!vm.proposal.fee_paid) {
                 vm.save_and_redirect();
 
@@ -446,7 +464,9 @@ export default {
                 });
             }
         },(error) => {
+          vm.paySubmitting=false;
         });
+        //vm.paySubmitting=false;
     },
 
    _submit: function(){
@@ -523,6 +543,16 @@ export default {
         $('body').append(formElement);
         $(formElement).submit();
     },
+    fetchProposalParks: function(proposal_id){
+      let vm=this;
+      vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,proposal_id+'/parks_and_trails')).then(response => {
+                vm.proposal_parks = helpers.copyObject(response.body);
+                console.log(vm.proposal_parks)
+            },
+              error => {
+            });
+
+    },
 
   },
 
@@ -547,7 +577,13 @@ export default {
             vm.proposal.marine_parks_activities=[];
             vm.loading.splice('fetching proposal', 1);
             vm.setdata(vm.proposal.readonly);
-          
+            vm.fetchProposalParks(to.params.proposal_id);
+            // Vue.http.get(helpers.add_endpoint_json(api_endpoints.proposals,to.params.proposal_id+'/parks_and_trails')).then(response => {
+            //     vm.parks = helpers.copyObject(response.body);
+            //     console.log(vm.parks)
+            // },
+            //   error => {
+            // });
             
             Vue.http.get(helpers.add_endpoint_json(api_endpoints.proposals,to.params.proposal_id+'/amendment_request')).then((res) => {
                      

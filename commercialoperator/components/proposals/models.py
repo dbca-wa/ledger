@@ -80,6 +80,7 @@ class ProposalType(models.Model):
     #activities = TaggableManager(verbose_name="Activities",help_text="A comma-separated list of activities.")
     #site = models.OneToOneField(Site, default='1')
     replaced_by = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    #replaced_by = models.ForeignKey('self', blank=True, null=True)
     version = models.SmallIntegerField(default=1, blank=False, null=False)
 
     def __str__(self):
@@ -509,7 +510,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     approval = models.ForeignKey('commercialoperator.Approval',null=True,blank=True)
 
-    previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    #previous_application = models.ForeignKey('self', on_delete=models.PROTECT, blank=True, null=True)
+    previous_application = models.ForeignKey('self', blank=True, null=True)
     proposed_decline_status = models.BooleanField(default=False)
     #qaofficer_referral = models.BooleanField(default=False)
     #qaofficer_referral = models.OneToOneField('QAOfficerReferral', blank=True, null=True)
@@ -580,7 +582,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
     @property
     def fee_paid(self):
-        return True if self.fee_invoice_reference else False
+        return True if self.fee_invoice_reference or self.proposal_type=='amendment' else False
 
     @property
     def fee_amount(self):
@@ -1910,6 +1912,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 previous_proposal = Proposal.objects.get(id=self.id)
                 proposal = clone_proposal_with_status_reset(previous_proposal)
                 proposal.proposal_type = 'amendment'
+                proposal.training_completed = True
                 #proposal.schema = ProposalType.objects.first().schema
                 ptype = ProposalType.objects.filter(name=proposal.application_type).latest('version')
                 proposal.schema = ptype.schema
@@ -2711,10 +2714,12 @@ class Referral(RevisionedMixin):
                         document._file = referral_document
                         document.save()
                         d=ReferralDocument.objects.get(id=document.id)
-                        self.referral_document = d
+                        #self.referral_document = d
+                        self.document = d
                         comment = 'Referral Document Added: {}'.format(document.name)
                     else:
-                        self.referral_document = None
+                        #self.referral_document = None
+                        self.document = None
                         #comment = 'Referral Document Deleted: {}'.format(request.data['referral_document_name'])
                         comment = 'Referral Document Deleted'
                     #self.save()

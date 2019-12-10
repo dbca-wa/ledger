@@ -298,6 +298,7 @@ def _create_confirmation(confirmation_buffer, booking):
             colWidths=(
             0.7 * inch,
             None,
+            #6.0 * inch,
             0.7 * inch,
             1.0 * inch,
             )

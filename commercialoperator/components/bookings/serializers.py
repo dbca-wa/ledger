@@ -51,6 +51,7 @@ class BookingSerializer(serializers.ModelSerializer):
     approval_number = serializers.SerializerMethodField(read_only=True)
     applicant = serializers.SerializerMethodField(read_only=True)
     org_applicant = serializers.SerializerMethodField(read_only=True)
+    trading_name = serializers.SerializerMethodField(read_only=True)
     proxy_applicant = serializers.SerializerMethodField(read_only=True)
     payment_status = serializers.SerializerMethodField(read_only=True)
     payment_method = serializers.SerializerMethodField(read_only=True)
@@ -65,6 +66,7 @@ class BookingSerializer(serializers.ModelSerializer):
             'approval_number',
             'applicant',
             'org_applicant',
+            'trading_name',
             'proxy_applicant',
             'payment_status',
             'payment_method',
@@ -78,6 +80,7 @@ class BookingSerializer(serializers.ModelSerializer):
             'approval_number',
             'applicant',
             'org_applicant',
+            'trading_name',
             'proxy_applicant',
             'payment_status',
             'payment_method',
@@ -103,6 +106,12 @@ class BookingSerializer(serializers.ModelSerializer):
     def get_org_applicant(self,obj):
         try:
             return obj.proposal.approval.org_applicant.name
+        except:
+            return ''
+
+    def get_trading_name(self,obj):
+        try:
+            return obj.proposal.approval.org_applicant.organisation.trading_name
         except:
             return ''
 

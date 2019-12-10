@@ -30,7 +30,7 @@
                                     <div>
                                         <!--<pre>{{ selected_activities }}</pre>-->
                                         <label class="control-label">Select the parks for which the activities are required</label>
-                                        <TreeSelect :proposal="proposal" :value.sync="selected_zone_ids" :options="marine_park_options" :default_expand_level="1" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
+                                        <TreeSelect :proposal="proposal" :value.sync="selected_zone_ids" :options="marine_park_options" :default_expand_level="0" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
                                     </div>
                                 </div>
                             </form>
@@ -93,6 +93,10 @@ from '@/utils/hooks'
             canEditActivities:{
               type: Boolean,
               default: true
+            },
+            proposal_parks:{
+              type:Object,
+              required:true
             }
         },
         data:function () {
@@ -379,7 +383,7 @@ from '@/utils/hooks'
                     }
                 ]
                 vm.marine_activities = response.body['marine_activities']
-
+                /*
                 vm.marine_park_options = [
                     {
                         'id': 'All',
@@ -387,6 +391,8 @@ from '@/utils/hooks'
                         'children': response.body['marine_parks']
                     }
                 ]
+                */
+                vm.marine_park_options = response.body['marine_parks']
                 vm.marine_parks = response.body['marine_parks']
                 vm.park_map = vm.get_park_map();
                 vm.park_activities = vm.get_park_activities();
@@ -571,7 +577,8 @@ from '@/utils/hooks'
             vm.proposal.marine_parks_activities=[];
             vm.fetchMarineTreeview();
 
-            vm.store_parks(vm.proposal.marine_parks);
+            //vm.store_parks(vm.proposal.marine_parks);
+            vm.store_parks(vm.proposal_parks.marine_parks);
             //vm.eventListeners();
         }
     }
