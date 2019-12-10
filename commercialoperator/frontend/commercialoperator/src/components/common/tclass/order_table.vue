@@ -10,7 +10,10 @@
                 <thead v-if="table.thead.length">
                   <tr>
                     <th v-for="(heading, index) in table.thead">
-                      {{ table.thead[index] }}
+                      {{ table.thead[index] }} <i class="fa fa-info-circle" aria-hidden="true" title="some help text ..." style="cursor: pointer;"></i>
+                      <span v-if="table.thead[index]=='Same tour group'">
+                          <i class="fa fa-info-circle" aria-hidden="true" title="some help text ..." style="cursor: pointer;"></i>
+                      </span>
                     </th>
                   </tr>
                 </thead>
