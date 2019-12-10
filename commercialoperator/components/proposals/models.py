@@ -1912,6 +1912,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 previous_proposal = Proposal.objects.get(id=self.id)
                 proposal = clone_proposal_with_status_reset(previous_proposal)
                 proposal.proposal_type = 'amendment'
+                proposal.training_completed = True
                 #proposal.schema = ProposalType.objects.first().schema
                 ptype = ProposalType.objects.filter(name=proposal.application_type).latest('version')
                 proposal.schema = ptype.schema
@@ -3211,7 +3212,6 @@ def clone_proposal_with_status_reset(proposal):
             proposal.approval = None
             proposal.approval_level_document = None
             proposal.migrated=False
-            #proposal.migrated=False if not original_proposal.migrated else True
 
             proposal.save(no_revision=True)
 
