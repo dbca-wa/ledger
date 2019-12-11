@@ -15,7 +15,7 @@
             :open-direction="open_direction"
             :disabled="disabled"
             open-on-focus="true"
-            limit="20"
+            :limit="limit"
             >
 
             <template slot="option-label" slot-scope="{ node }">
@@ -119,6 +119,10 @@ export default {
             type: Boolean,
             default: false
         },
+        limit:{
+            type: Number,
+            default: Infinity
+        },
 
     },
 
@@ -197,6 +201,9 @@ export default {
     },
 
     mounted:function () {
+        if (!this.disabled) {
+            this.limit = 20
+        }
     }
 }
 </script>
