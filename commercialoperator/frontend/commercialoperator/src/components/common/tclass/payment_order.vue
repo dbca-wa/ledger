@@ -271,7 +271,8 @@ from '@/utils/hooks'
                                 child:vm.land_parks[i].park.child_price,
                                 //senior:vm.land_parks[i].park.senior
                             },
-                            district_id: vm.land_parks[i].park.district,
+                            region_id: vm.land_parks[i].park.region.id,
+                            region_name: vm.land_parks[i].park.region.name,
                             max_group_arrival_by_date: vm.land_parks[i].park.max_group_arrival_by_date,
                         });
                     }
