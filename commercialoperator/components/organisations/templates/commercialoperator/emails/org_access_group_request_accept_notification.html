@@ -1,0 +1,15 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+    <p>A new organisation request has been submitted:</p>
+    <p><strong>Organisation : {{ name }}</strong></p>
+    <p><strong>ABN : {{ abn }}</strong></p>
+    <br>
+
+    <p>
+    You can access this Organisation Request using the following link:
+    </p>
+    <a href="{{url}}">Access Organisation Request</a>
+    <br>
+
+{%  endblock %}

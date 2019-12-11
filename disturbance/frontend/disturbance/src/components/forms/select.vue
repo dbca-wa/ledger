@@ -11,7 +11,7 @@
             </template> 
 
             <template v-if="help_text_url">
-                <HelpText :help_text_url="help_text_url" />
+                <HelpTextUrl :help_text_url="help_text_url" />
             </template>
             <template v-if="help_text_assessor_url && assessorMode">
                 <HelpTextUrl  :help_text_url="help_text_assessor_url" assessorMode={assessorMode} isForAssessor={true} />

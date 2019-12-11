@@ -1,0 +1,13 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Please be aware that your commercial operations licence {{ approval.lodgement_number }} on {{ approval.expiry_date}}
+    
+    To apply for a new Commercial Operations Licence please click <a href="{{url}}">here</a>
+    
+    If you would like to continue operating withing WA's national parks and other conservation reserves you need a licence under the Conservation and Land Management Regulations 2002.
+    
+    If you have any questions about how to apply for a new licence please contact a licensing office on {{settings.DEP_PHONE}} or email {{settings.SUPPORT_EMAIL}}
+    
+
+{%  endblock %}

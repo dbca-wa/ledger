@@ -551,11 +551,9 @@ export default {
         },
         uploadID: function() {
             let vm = this;
-            console.log('uploading id');
             vm.uploadingID = true;
             let data = new FormData();
             data.append('identification', vm.uploadedID);
-            console.log(data);
             if (vm.uploadedID == null){
                 vm.uploadingID = false;
                 swal({
@@ -577,7 +575,6 @@ export default {
                         window.location.reload(true);
                     });
                 }, (error) => {
-                    console.log(error);
                     vm.uploadingID = false;
                     let error_msg = '<br/>';
                     for (var key in error.body) {
@@ -797,9 +794,17 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            if (error.status ==500){
-                                swal('Unlink','Last Organisation Admin can not be unlinked.','error');
+                            let error_msg = '<br/>';
+                            for (var key in error.body) {
+                              if (error.body[key].indexOf('last_admin')>-1) {
+                                error_msg += 'The Organisation will have no Administrator.<br/>';
+                              }
                             }
+                            swal(
+                              'Unlink User',
+                              'There was an error unlinking ' + name + ' from the Organisation.' + error_msg,
+                              'error'
+                            )
                         });
                     }
                 },(error) => {
@@ -891,7 +896,17 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Company Admin','There was an error making ' + name + ' an Organisation User.','error')
+                            let error_msg = '<br/>';
+                            for (var key in error.body) {
+                              if (error.body[key].indexOf('last_admin')>-1) {
+                                error_msg += 'The Organisation will have no Administrator.<br/>';
+                              }
+                            }
+                            swal(
+                              'Organisation User',
+                              'There was an error making ' + name + ' an Organisation User.' + error_msg,
+                              'error'
+                            )
                         });
                     }
                 },(error) => {
@@ -939,7 +954,17 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Suspend User','There was an error suspending ' + name + ' as a User.','error')
+                            let error_msg = '<br/>';
+                            for (var key in error.body) {
+                              if (error.body[key].indexOf('last_admin')>-1) {
+                                error_msg += 'The Organisation will have no Administrator.<br/>';
+                              }
+                            }
+                            swal(
+                              'Suspend User',
+                              'There was an error suspending ' + name + ' as a User.' + error_msg,
+                              'error'
+                            )
                         });
                     }
                 },(error) => {
@@ -1078,7 +1103,17 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Company Admin','There was an error making ' + name + ' an Organisation Consultant.','error')
+                            let error_msg = '<br/>';
+                            for (var key in error.body) {
+                              if (error.body[key].indexOf('last_admin')>-1) {
+                                error_msg += 'The Organisation will have no Administrator.<br/>';
+                              }
+                            }
+                            swal(
+                              'Organisation Consultant',
+                              'There was an error making ' + name + ' an Organisation Consultant.' + error_msg,
+                              'error'
+                            )
                         });
                     }
                 },(error) => {
@@ -1102,7 +1137,6 @@ export default {
                     'success'
                 )
             }, (error) => {
-                console.log(error);
                 vm.updatingDetails = false;
             });
 
@@ -1129,7 +1163,6 @@ export default {
                 )
                 vm.$refs.contacts_datatable.vmDataTable.ajax.reload();
             }, (error) => {
-                console.log(error);
                 swal(
                     'Contact Deleted', 
                     'The contact could not be deleted because of the following error: ' + error,
@@ -1152,7 +1185,6 @@ export default {
                 )
                 if (vm.org.address == null){ vm.org.address = {}; }
             }, (error) => {
-                console.log(error);
                 vm.updatingAddress = false;
             });
         },
@@ -1184,10 +1216,16 @@ export default {
                         },(error) => {
                         });
                     }, (error) => {
+                        let error_msg = '<br/>';
+                        for (var key in error.body) {
+                          if (error.body[key].indexOf('last_admin')>-1) {
+                            error_msg += 'The Organisation will have no Administrator.<br/>';
+                          }
+                        }
                         swal(
-                            'Unlink',
-                            'There was an error unlinking ' + person.name + ' from ' + org_name + '.',
-                            'error'
+                          'Unlink User',
+                          'There was an error unlinking ' + person.name + ' from the Organisation.' + error_msg,
+                          'error'
                         )
                     });
                 }

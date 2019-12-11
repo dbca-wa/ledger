@@ -1,11 +1,17 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address
+from ledger.accounts.models import EmailUser,Address, Document
 from disturbance.components.organisations.models import (   
                                     Organisation,
                                 )
+from disturbance.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
 from ledger.accounts.utils import in_dbca_domain
 
+class DocumentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Document
+        fields = ('id','description','file','name','uploaded_date')
 
 class UserAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,16 +28,50 @@ class UserAddressSerializer(serializers.ModelSerializer):
 class UserOrganisationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='organisation.name')
     abn = serializers.CharField(source='organisation.abn')
+    is_consultant = serializers.SerializerMethodField(read_only=True)
+    is_admin = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Organisation
         fields = (
             'id',
             'name',
-            'abn'
+            'abn',
+            'email',
+            'is_consultant',
+            'is_admin'
         )
 
+    def get_is_admin(self, obj):
+        user = EmailUser.objects.get(id=self.context.get('user_id'))
+        return can_admin_org(obj, user)
+
+    def get_is_consultant(self, obj):
+        user = EmailUser.objects.get(id=self.context.get('user_id'))
+        return is_consultant(obj, user)
+
+    def get_email(self, obj):
+        email = EmailUser.objects.get(id=self.context.get('user_id')).email
+        return email
+
+class UserFilterSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EmailUser
+        fields = (
+            'id',
+            'last_name',
+            'first_name',
+            'email',
+            'name'
+        )
+
+    def get_name(self, obj):
+        return obj.get_full_name()
+
+
 class UserSerializer(serializers.ModelSerializer):
-    disturbance_organisations = UserOrganisationSerializer(many=True)
+    disturbance_organisations = serializers.SerializerMethodField()
     residential_address = UserAddressSerializer()
     personal_details = serializers.SerializerMethodField()
     address_details = serializers.SerializerMethodField()
@@ -80,7 +120,12 @@ class UserSerializer(serializers.ModelSerializer):
         else:
             return False
 
-
+    def get_disturbance_organisations(self, obj):
+        disturbance_organisations = obj.disturbance_organisations
+        serialized_orgs = UserOrganisationSerializer(
+            disturbance_organisations, many=True, context={
+                'user_id': obj.id}).data
+        return serialized_orgs
 
 
 
@@ -107,3 +152,4 @@ class ContactSerializer(serializers.ModelSerializer):
         if not obj.get('phone_number') and not obj.get('mobile_number'):
             raise serializers.ValidationError('You must provide a mobile/phone number')
         return obj
+

@@ -1,9 +1,8 @@
-{%  extends 'wildlifecompliance/emails/base_email.html' %}
+{%  extends 'wildlifecompliance/emails/base_email.txt' %}
 {% block content %}
-    Reminder: An assessment to a wildlife licensing application is required.
+    Reminder: an assessment to an application is required.
     {% if url %}
-        Please copy and paste the following link into your browser to review the application:
-        {{ url }}
-        Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.
+        Link: {{ url }}
+        Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.
     {% endif %}
 {% endblock %}

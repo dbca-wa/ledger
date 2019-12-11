@@ -1,0 +1,12 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Your organisation request has been approved:
+
+    Organisation : {{ request.name }}
+
+    ABN : {{ request.abn}}
+
+    You have been linked to this organisation and you can now make applications on behalf of this organisation.
+
+{%  endblock %}

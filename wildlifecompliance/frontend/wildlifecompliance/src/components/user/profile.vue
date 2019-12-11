@@ -269,7 +269,7 @@
                               </div>
                           </div>
 
-                          <div v-if="managesOrg=='Consultant'">
+                          <div v-if="managesOrg=='Consultant' && addingCompany">
                               <h3>New Organisation (as consultant)</h3>
                               <div class="form-group">
                                   <label for="" class="col-sm-2 control-label" >Organisation</label>
@@ -310,7 +310,7 @@
 
 
 
-                          <div style="margin-top:15px;" v-if="addingCompany">
+                          <div style="margin-top:15px;" v-if="managesOrg=='Yes' && addingCompany">
                               <h3>New Organisation</h3>
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
@@ -455,6 +455,8 @@ export default {
                 this.resetNewOrg();
                 this.uploadedFile = null;
                 this.addingCompany = false;
+            } else if (this.managesOrg == 'Consultant' && this.newOrg) {
+                this.addCompany();
             } else {
                 this.addCompany()
                 this.addingCompany=false
@@ -574,6 +576,11 @@ export default {
                             }).then(() => {
                                 vm.updatingPersonal = false;
                                 vm.profile.personal_details = true;
+                                if (vm.completedProfile) {
+                                    vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
+                                    },(error) => {
+                                    })
+                                }
                             });
                         }, (error) => {
                             vm.updatingPersonal = false;
@@ -617,6 +624,11 @@ export default {
                     }).then(() => {
                         vm.updatingPersonal = false;
                         vm.profile.personal_details = true;
+                        if (vm.completedProfile) {
+                            vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
+                            },(error) => {
+                            })
+                        }
                     });
                 }, (error) => {
                     vm.updatingPersonal = false;
@@ -651,6 +663,11 @@ export default {
                     html: 'Your contact details has been successfully updated.',
                     type: 'success',
                 })
+                if (vm.completedProfile) {
+                    vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
+                    },(error) => {
+                    })
+                }
             }, (error) => {
                 vm.updatingContact = false;
                 vm.profile.contact_details = false;
@@ -691,6 +708,11 @@ export default {
                     html: 'There was an error updating your address details.<br/>' + error_msg,
                     type: 'error'
                 })
+                if (vm.completedProfile) {
+                    vm.$http.get(api_endpoints.user_profile_completed).then((response) => {
+                    },(error) => {
+                    })
+                }
             });
         },
         checkOrganisation: function() {
@@ -726,7 +748,11 @@ export default {
                 this.newOrg.detailsChecked = false;
                 let error_msg = '<br/>';
                 for (var key in error.body) {
-                    error_msg += key + ': ' + error.body[key] + '<br/>';
+                    if (key==='non_field_errors'){
+                        error_msg += error.body[key] + '<br/>';
+                    } else {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
                 }
                 swal({
                     title: 'Checking Organisation',
@@ -819,6 +845,8 @@ export default {
             data.append('abn', vm.newOrg.abn);
             data.append('identification', vm.uploadedFile);
             data.append('role',vm.role);
+            vm.newOrg.name = vm.newOrg.name == null ? '' : vm.newOrg.name
+            vm.newOrg.abn = vm.newOrg.abn == null ? '' : vm.newOrg.abn
             if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
                 vm.registeringOrg = false;
                 swal(
@@ -844,11 +872,14 @@ export default {
                         }
                     });
                 }, (error) => {
-                    console.log(error);
                     vm.registeringOrg = false;
                     let error_msg = '<br/>';
                     for (var key in error.body) {
-                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                        if (key==='non_field_errors'){
+                            error_msg += error.body[key] + '<br/>';
+                        } else {
+                            error_msg += key + ': ' + error.body[key] + '<br/>';
+                        }
                     }
                     swal(
                         'Error submitting organisation request',
@@ -881,6 +912,8 @@ export default {
             data.append('abn', vm.newOrg.abn);
             data.append('identification', vm.uploadedFile);
             data.append('role',vm.role);
+            vm.newOrg.name = vm.newOrg.name == null ? '' : vm.newOrg.name
+            vm.newOrg.abn = vm.newOrg.abn == null ? '' : vm.newOrg.abn
             if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
                 vm.registeringOrg = false;
                 swal(
@@ -906,11 +939,14 @@ export default {
                         }
                     });
                 }, (error) => {
-                    console.log(error);
                     vm.registeringOrg = false;
                     let error_msg = '<br/>';
                     for (var key in error.body) {
-                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                        if (key==='non_field_errors'){
+                            error_msg += error.body[key] + '<br/>';
+                        } else {
+                            error_msg += key + ': ' + error.body[key] + '<br/>';
+                        }
                     }
                     swal(
                         'Error submitting organisation request',
@@ -1015,9 +1051,15 @@ export default {
                             'success'
                         )
                     }, (error) => {
+                        let error_msg = '<br/>';
+                        for (var key in error.body) {
+                          if (error.body[key].indexOf('last_admin')>-1) {
+                            error_msg += 'The Organisation will have no Administrator.<br/>';
+                          }
+                        }
                         swal(
                             'Unlink',
-                            'There was an error unlinking you from '+org_name+'.',
+                            'There was an error unlinking you from '+org_name+'.' + error_msg,
                             'error'
                         )
                     });

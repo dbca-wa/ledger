@@ -1,0 +1,16 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+
+	<!-- Your Compliance with requirements {{ compliance.reference }} {{compliance.requirement.requirement}} is due for submission.   
+    <p>
+    You can access this Compliance using the following link:
+    </p>
+    <a href="{{url}}">Access Compliance</a> -->
+    <p>Please be aware that the following is due for submission:<br>
+ 	{{ compliance.reference }} {{compliance.requirement.requirement}}</p>  
+    <p>
+    To complete the licence requirement please login to your account <a href="{{url}}">here</a>.
+    </p>
+
+{%  endblock %}

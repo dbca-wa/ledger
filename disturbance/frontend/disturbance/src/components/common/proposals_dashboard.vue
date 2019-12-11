@@ -152,7 +152,7 @@ export default {
             proposal_submitters: [],
             proposal_status: [],
             proposal_ex_headers:[
-                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
+                "Number","Region","District","Activity","Title","Submitter","Proponent","Status","Lodged on","Action"
                 //"LodgementNo","ProcessingStatus","AssessorProcess","CanUserEdit",
             ],
 
@@ -194,6 +194,12 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn,
                         searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
+                    },
+                    {
+                        data: "district",
+                        //name: "District",
+                        visible: false,
+                        searchable: false,
                     },
                     {
 						data: "activity",
@@ -319,9 +325,13 @@ export default {
                 */
             },
             proposal_headers:[
-                "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
+                "Number","Region","District","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
                 //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
             ],
+            // proposal_headers:[
+            //     "Number","Region","Activity","Title","Submitter","Proponent","Status","Lodged on","Assigned Officer","Action",
+            //     //"LodgementNo","CustomerStatus","AssessorProcess","CanUserEdit","CanUserView",
+            // ],
             proposal_options:{
                 autoWidth: false,
                 language: {
@@ -360,6 +370,12 @@ export default {
                         },
                         'createdCell': helpers.dtPopoverCellFn,
                         searchable: false, // handles by filter_queryset override method - class ProposalFilterBackend
+                    },
+                    {
+                        data: "district",
+                        //name: "District",
+                        visible: false,
+                        searchable: false,
                     },
                     {data: "activity"},
                     {
@@ -502,26 +518,26 @@ export default {
         filterProposalActivity: function() {
             let vm = this;
             if (vm.filterProposalActivity!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search(vm.filterProposalActivity).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(3).search(vm.filterProposalActivity).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(2).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(3).search('').draw();
             }
         },
         filterProposalSubmitter: function(){
             //this.$refs.proposal_datatable.vmDataTable.draw();
             let vm = this;
             if (vm.filterProposalSubmitter!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalSubmitter).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(5).search(vm.filterProposalSubmitter).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
             }
         },
         filterProposalStatus: function() {
             let vm = this;
             if (vm.filterProposalStatus!= 'All') {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search(vm.filterProposalStatus).draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(7).search(vm.filterProposalStatus).draw();
             } else {
-                vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
+                vm.$refs.proposal_datatable.vmDataTable.columns(7).search('').draw();
             }
         },
         filterProposalLodgedFrom: function(){

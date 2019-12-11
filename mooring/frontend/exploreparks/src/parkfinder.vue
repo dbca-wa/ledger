@@ -28,7 +28,7 @@
 
                 <div class="row">
                     <div class="small-12 columns">
-                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for mooring's..."/></label>
+                        <label>Search <input class="input-group-field" id="searchInput" type="text" placeholder="Search for a mooring..."/></label>
                     </div>
                 </div>
                 <div class="row">
@@ -49,19 +49,19 @@
                 </div>
                 <div class="row">
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Registration  <input v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" style="text-transform:uppercase" :disabled="current_booking.length > 0" /></label>
+                    <label>Vessel Registration  <input v-model="vesselRego" id="vesselRego" name="vessel_rego" type="text" placeholder="REGO134" style="text-transform:uppercase" :disabled="current_booking.length > 0" step='0.01' /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Size (Meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" :disabled="current_booking.length > 0" /></label>
+                    <label>Vessel Size (Meters) <input v-model="vesselSize" id="vesselSize" name="vessel_size" type="number" placeholder="35" :disabled="current_booking.length > 0" step='0.01' /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Draft (Meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" :disabled="current_booking.length > 0" /></label>
+                    <label>Vessel Draft (Meters) <input v-model="vesselDraft" id="vesselDraft" name="vessel_draft" type="number" placeholder="10" :disabled="current_booking.length > 0" step='0.01' /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Beams (Meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" :disabled="current_booking.length > 0" /></label>
+                    <label>Vessel Beams (Meters)  <input v-model="vesselBeam" id="vesselBeam" name="vessel_beams" type="number" placeholder="3" :disabled="current_booking.length > 0" step='0.01' /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns">
-                    <label>Vessel Weight (Tonnes)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" :disabled="current_booking.length > 0" /></label>
+                    <label>Vessel Weight (Tonnes)  <input v-model="vesselWeight" id="vesselWeight" name="vessel_weight" type="number" placeholder="2" :disabled="current_booking.length > 0" step='0.01' /></label>
                     </div>
                     <div class="small-12 medium-12 large-6 columns" >
                         <label>
@@ -254,7 +254,7 @@
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
                         <p>Mooring Limits</p>
                         <div class="row">
-                            <div class="col-md-7">
+                            <div class="col-md-7"  style='display:none'>
                                 <small>Max Stay: <span id='max_stay_period'></span> day/s</small>
                             </div>
                             <div class="col-md-5">
@@ -295,7 +295,7 @@
                                 <p ><i><small>Max Stay Period: {{ f.max_advance_booking }} day/s </small></i></p> -->
                                 <p>Mooring Limits</p>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-6"  style='display:none'>
                                         <small>Max Stay: {{ f.max_advance_booking }} day/s</small>
                                     </div>
                                     <div class="col-md-6">
@@ -912,10 +912,10 @@ export default {
                     method: 'GET',
                     success: function(data, stat, xhr) {
                         if(data[0]){
-                            vm.vesselWeight =  Math.ceil(data[0].vessel_weight);
-                            vm.vesselBeam = Math.ceil(data[0].vessel_beam);
-                            vm.vesselSize = Math.ceil(data[0].vessel_size);
-                            vm.vesselDraft = Math.ceil(data[0].vessel_draft);
+                            vm.vesselWeight =  parseFloat(data[0].vessel_weight);
+                            vm.vesselBeam = parseFloat(data[0].vessel_beam);
+                            vm.vesselSize = parseFloat(data[0].vessel_size);
+                            vm.vesselDraft = parseFloat(data[0].vessel_draft);
                             $("#vesselSize").val(data[0].vessel_size);
                             $("#vesselWeight").val(data[0].vessel_weight);
                             $("#vesselBeam").val(data[0].vessel_beam);
@@ -2103,6 +2103,11 @@ export default {
                 altShiftDragRotate: false,
                 pinchRotate: false,
             }),
+            interactions: ol.interaction.defaults({}).extend([
+                  new ol.interaction.PinchZoom({
+                      constrainResolution: true
+                   })
+            ]),
             layers: [
                 this.streets,
                 this.tenure,
@@ -2437,6 +2442,11 @@ export default {
                 altShiftDragRotate: false,
                 pinchRotate: false,
             }),
+            interactions: ol.interaction.defaults({}).extend([
+                  new ol.interaction.PinchZoom({
+                      constrainResolution: true
+                   })
+            ]),
             layers: [
                 this.streets,
                 this.satellite,
@@ -2559,7 +2569,6 @@ export default {
        });
 
        map.addOverlay(popup);
-
        // another loop to spawn the popup on click
        this.olmap.on('singleclick', function(ev) {
           var feature = ev.map.forEachFeatureAtPixel(ev.pixel, 
@@ -2576,8 +2585,6 @@ export default {
                 $('#mapPopupName').html(properties.props.name);
                 $('#mapPopupInfo').attr('href', properties.props.info_url);
                 if (properties.props.mooring_type == 0 || properties.props.mooring_type == 1 || properties.props.mooring_type == 2) {
-                    console.log('MOOR');
-                    console.log(properties.props.mooring_type);
                     $('#mapPopupMooringType').val(properties.props.mooring_physical_type);
                     if (properties.bookable == true) { 
                         $('#mapPopupBook').show();

@@ -9,10 +9,40 @@
             </div>
         </div>
         <div class="row" v-else-if="status == 'offline'">
+
+            <nav class="navbar navbar-inverse navbar-fixed-top">
+              <div>
+                <ul>
+                  <li><a href='#' @click="scrollMeTo('infoSection')"> About the Campground </a> </li>
+                </ul>
+               <!-- <button type="button" class="button formButton1" @click="scrollMeTo('infoSection')">
+                            About the Campground
+                        </button> -->
+              </div>
+
+            </nav>
+
             <div class="columns small-12 medium-12 large-12">
+
+              <!-- Expected changes for the more info for non bookable sites -->
+
+              <!-- <div class="columns small-6 medium-6 large-3">
+                        <button type="button" class="button formButton" @click="toggleMoreInfo">
+                            More Information &nbsp;&nbsp;
+                            <i style="font-size:large;" v-if="!showMoreInfo" class="fa fa-caret-down"></i>
+                            <i style="font-size:large;" v-else class="fa fa-caret-up"></i>
+                        </button>
+              </div> -->
+
+               <div ref="infoSection" class="columns small-12 medium-12 large-12">
+                          <div v-html="long_description"></div>
+                      </div>
+
+                <!-- Original implementation for offline
                 <div class="callout alert">
                     Sorry, this campground doesn't yet support online bookings. Please visit the <a href="https://parks.dpaw.wa.gov.au/campgrounds-status">Camp Site Availability checker</a> for expected availability.
-                </div>
+                </div> -->
+
             </div>
         </div>
         <div class="row" v-else-if="status == 'empty'">
@@ -40,9 +70,24 @@
             </div>
         </div>
 
+        <div v-if="status == 'online'" >
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+              <div>
+
+                 <button type="button" class="button formButton1" @click="scrollMeTo('infoSection1')">
+                            About the Campground
+                        </button>
+                 <button type="button" class="button formButton1" @click="scrollMeTo('bookSection')">
+                            Booking Now
+                        </button>
+              </div>
+
+            </nav>
+          </div>
+
         <div class="row" v-if="name">
             <div class="columns small-12">
-                <h1>Book camping at {{ name }}</h1>
+                <h1>Camping at {{ name }}</h1>
             </div>
         </div>
         <div v-if="ongoing_booking" class="row">
@@ -64,24 +109,38 @@
                 </div>
             </div>
         </div>
-        <div class="row" v-show="status == 'online'">
+            <div class="row" v-show="status == 'online'">
             <div v-if="long_description" class="columns small-12 medium-12 large-12">
+
+                <!-- Empty div , Might need to be removed later on -->
                 <div class="row">
-                    <div class="columns small-6 medium-6 large-3">
+
+                   <!-- Commenting out the more info button
+
+                   <div class="columns small-6 medium-6 large-3">
                         <button type="button" class="button formButton" @click="toggleMoreInfo">
                             More Information &nbsp;&nbsp;
                             <i style="font-size:large;" v-if="!showMoreInfo" class="fa fa-caret-down"></i>
                             <i style="font-size:large;" v-else class="fa fa-caret-up"></i>
                         </button>
-                    </div>
+                    </div> -->
+
+                    <!-- Added button to scroll down to booking section -->
+                    <!-- <div>
+                      <button type="button" class="button formButton" @click = "scrollMeTo('bookSection') ">
+                        Booking Section &nbsp;&nbsp;
+                        </button>
+                    </div> -->
+                    <!-- End of addition -->
+
                 </div>
-                <div class="row" style="margin-bottom:15px;" v-if="showMoreInfo">
+                <div ref = 'infoSection1' class="row" style="margin-bottom:15px;" v-if="showMoreInfo">
                     <div class="columns small-12 medium-12 large-12">
                         <div v-html="long_description"></div>
                     </div>
                 </div>
             </div>
-            <div class="columns small-6 medium-6 large-3">
+            <div ref="bookSection" class="columns small-6 medium-6 large-3">
                 <label>Arrival
                     <input id="date-arrival" type="text" placeholder="dd/mm/yyyy" v-on:change="update"/>
                 </label>
@@ -93,7 +152,7 @@
             </div>
             <div v-if="!useAdminApi" class="small-6 medium-6 large-3 columns">
                 <label>
-                    Guests 
+                    Guests
                     <input type="button" class="button formButton" v-bind:value="numPeople" data-toggle="guests-dropdown"/>
                 </label>
                 <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
@@ -139,7 +198,7 @@
                         <option value="caravan" v-if="gearTotals.caravan">Caravan / Camper trailer</option>
                     </select>
                 </label>
-            </div>           
+            </div>
         </div>
         <div class="row" v-show="status == 'online'"><div class="columns table-scroll">
             <table class="hover">
@@ -164,7 +223,7 @@
                             </template>
                         </td>
                         <td v-if="!useAdminApi" class="date" v-for="(day, siteAvailabilityIndex) in site.availability" v-bind:key="siteAvailabilityIndex" v-bind:class="{available: day[0]}" > {{ day[1] }} </td>
-                        <td v-if="useAdminApi" class="date" v-for="(day, siteAvailabilityIndex) in site.availability" v-bind:key="siteAvailabilityIndex" v-bind:class="{available: day[0]}" > 
+                        <td v-if="useAdminApi" class="date" v-for="(day, siteAvailabilityIndex) in site.availability" v-bind:key="siteAvailabilityIndex" v-bind:class="{available: day[0]}" >
                             <span data-tooltip v-bind:title="day[3]"> {{ day[1] }} </span>
                         </td>
                     </tr>
@@ -234,8 +293,8 @@
         background-color: #656869;
         color: white;
     }
-    table tbody tr.breakdown:nth-child(2n), 
-    table tbody tr.breakdown:nth-child(2n):hover, 
+    table tbody tr.breakdown:nth-child(2n),
+    table tbody tr.breakdown:nth-child(2n):hover,
     table.hover:not(.unstriped) tr.breakdown:nth-of-type(2n):hover {
         background-color: #454d50;
         color: white;
@@ -254,6 +313,15 @@
         width: 100%;
     }
 
+    .button.formButton1 {
+        display: block;
+        background-color: transparent;
+        width: 10%;
+        font-color: white;
+        float: left ;
+        padding-bottom : none;
+    }
+
     .siteWarning {
         font-weight: bold;
         font-style: italic;
@@ -261,6 +329,13 @@
     .continueBooking {
         text-decoration: none;
     }
+     .li {
+    position: relative;
+    float: left;
+    display: block;
+    }
+
+
 }
 
 </style>
@@ -323,9 +398,12 @@ export default {
             errorMsg: null,
             classes: {},
             sites: [],
-            long_description: '',   
+            long_description: '',
+
+            campground_type: null,
+
             map: null,
-            showMoreInfo: false,
+            showMoreInfo: true,
             ongoing_booking: false,
             ongoing_booking_id: null,
             showSecondErrorLine: true,
@@ -386,6 +464,16 @@ export default {
                 site.showBreakdown = true;
             }
         },
+
+        // Added function to scroll to the booking section when the book button is clicked
+        scrollMeTo: function(refName){
+          var element = this.$refs[refName];
+          var top = element.offsetTop;
+
+          window.scrollTo(0, top);
+        },
+        // End of new function
+
         submitBooking: function (site) {
             var vm = this;
             var submitData = {
@@ -402,8 +490,6 @@ export default {
                 submitData.campground = vm.parkstayGroundId;
                 submitData.campsite_class = site.type;
             }
-            //console.log(site);
-            //console.log(submitData);
             $.ajax({
                 url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
@@ -414,14 +500,11 @@ export default {
                     withCredentials: true
                 },
                 success: function(data, stat, xhr) {
-                    //console.log(data);
                     if (data.status == 'success') {
                         window.location.href = vm.parkstayUrl + '/booking';
                     }
                 },
                 error: function(xhr, stat, err) {
-                    //console.log('POST error');
-                    //console.log(xhr);
                     vm.errorMsg = (xhr.responseJSON && xhr.responseJSON.msg) ? xhr.responseJSON.msg : '"'+err+'" response when communicating with Parkstay.';
                     vm.update();
                 }
@@ -464,7 +547,6 @@ export default {
                     vm.updateURL();
                     url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
                 }
-                //console.log('AJAX '+url);
                 $.ajax({
                     url: url,
                     dataType: 'json',
@@ -473,11 +555,19 @@ export default {
                         vm.days = data.days;
                         vm.classes = data.classes;
                         vm.long_description = data.long_description;
+
+                        vm.campground_type = data.campground_type;
+
                         vm.map = data.map;
                         vm.ongoing_booking = data.ongoing_booking;
                         vm.ongoing_booking_id = data.ongoing_booking_id;
 
-                        if (data.sites.length == 0) {
+                        if (data.campground_type == 1){
+                          vm.status = 'offline';
+                          return;
+                        }
+
+                        else if (data.sites.length == 0) {
                             vm.status = 'empty';
                             return;
                         }
@@ -542,17 +632,12 @@ export default {
             format: 'dd/mm/yyyy',
             endDate: moment.utc(today).add(180, 'days').toDate(),
             onRender: function (date) {
-                // disallow start dates before today
-                //console.log(date);
-                //console.log(today.toDate());
+                // Disallow start dates before today
                 return date.valueOf() < today.toDate().valueOf() ? 'disabled': '';
-                //return '';
             }
         }).on('changeDate', function (ev) {
-            //console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            //console.log('arrivalEl change');
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment.utc(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -574,13 +659,12 @@ export default {
         this.departureData = this.departureEl.fdatepicker({
             format: 'dd/mm/yyyy',
             onRender: function (date) {
+                // Disallow departure date before arrival date.
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            //console.log('departureEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            //console.log('departureEl change');
             vm.departureData.hide();
             vm.departureDate = moment.utc(vm.departureData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
@@ -591,13 +675,14 @@ export default {
             }
         }).data('datepicker');
 
-        
+
         this.arrivalData.date = this.arrivalDate.toDate();
         this.arrivalData.setValue();
         this.arrivalData.fill();
         this.departureData.date = this.departureDate.toDate();
         this.departureData.setValue();
         this.departureData.fill();
+
         this.update();
     }
 }

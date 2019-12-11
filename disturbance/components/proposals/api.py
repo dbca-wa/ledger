@@ -2,6 +2,7 @@ import traceback
 import os
 import base64
 import geojson
+import json
 from six.moves.urllib.parse import urlparse
 from wsgiref.util import FileWrapper
 from django.db.models import Q, Min
@@ -41,6 +42,7 @@ from disturbance.components.proposals.models import (
     ProposalStandardRequirement,
     AmendmentRequest,
     AmendmentReason,
+    AmendmentRequestDocument,
 
 )
 from disturbance.components.proposals.serializers import (
@@ -65,6 +67,7 @@ from disturbance.components.proposals.serializers import (
     ListProposalSerializer,
     ProposalReferralSerializer,
     AmendmentRequestDisplaySerializer,
+    SaveProposalRegionSerializer,
 )
 from disturbance.components.approvals.models import Approval
 from disturbance.components.approvals.serializers import ApprovalSerializer
@@ -361,6 +364,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 instance.save(version_comment='Approval File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
                 #instance.current_proposal.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
 
+            elif action == 'hide' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.documents.get(id=document_id)
+
+                document.hidden=True
+                document.save()
+                instance.save(version_comment='File hidden: {}'.format(document.name)) # to allow revision to be added to reversion history
+            
             elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
                 proposal_id = request.POST.get('proposal_id')
                 filename = request.POST.get('filename')
@@ -372,11 +383,12 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 path = default_storage.save('proposals/{}/documents/{}'.format(proposal_id, filename), ContentFile(_file.read()))
 
                 document._file = path
+                #import ipdb; ipdb.set_trace()
                 document.save()
                 instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
                 #instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
 
-            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.documents.filter(input_name=section) if d._file] )
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete, can_hide=d.can_hide) for d in instance.documents.filter(input_name=section, hidden=False) if d._file] )
 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -553,6 +565,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['GET',])
     def internal_proposal(self, request, *args, **kwargs):
         instance = self.get_object()
+        instance.internal_view_log(request)
         serializer = InternalProposalSerializer(instance,context={'request':request})
         return Response(serializer.data)
 
@@ -809,6 +822,25 @@ class ProposalViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(e))
 
     @detail_route(methods=['POST',])
+    def approval_level_comment(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance = instance.save_approval_level_comment(request)
+            serializer = InternalProposalSerializer(instance,context={'request':request})
+            return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
     def final_approval(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
@@ -901,6 +933,41 @@ class ProposalViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             save_proponent_data(instance,request,self)
             return redirect(reverse('external'))
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+        raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['post'])
+    @renderer_classes((JSONRenderer,))
+    def update_region_section(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            region = request.data.get('region')
+            district = request.data.get('district')
+            activity = request.data.get('activity')
+            sub_activity1 = request.data.get('sub_activity1')
+            sub_activity2 = request.data.get('sub_activity2')
+            management_area = request.data.get('category')
+            approval_level = request.data.get('approval_level')
+            data={
+                'region': region,
+                'district': district,
+                'activity': activity,
+                'sub_activity_level1': sub_activity1,
+                'sub_activity_level2': sub_activity2,
+                'management_area': management_area,
+                'approval_level': approval_level,
+            }
+            serializer = SaveProposalRegionSerializer(instance,data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            serializer = self.get_serializer(instance, context={'request':request})
+            return Response(serializer.data)
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -1023,20 +1090,23 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 'district': district,
                 'activity': activity,
                 'approval_level': approval_level,
+                'sub_activity_level1':sub_activity1,
+                'sub_activity_level2':sub_activity2,
+                'management_area':category,
                 #'tenure': tenure,
                 'data': [
-                    {
-                        u'regionActivitySection': [{
-                            'Region': Region.objects.get(id=region).name if region else None,
-                            'District': District.objects.get(id=district).name if district else None,
-                            #'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
-                            #'ApplicationType': ApplicationType.objects.get(id=application_type).name
-                            'ActivityType': activity,
-                            'Sub-activity level 1': sub_activity1,
-                            'Sub-activity level 2': sub_activity2,
-                            'Management area': category,
-                        }]
-                    }
+                    # {
+                    #     u'regionActivitySection': [{
+                    #         'Region': Region.objects.get(id=region).name if region else None,
+                    #         'District': District.objects.get(id=district).name if district else None,
+                    #         #'Tenure': Tenure.objects.get(id=tenure).name if tenure else None,
+                    #         #'ApplicationType': ApplicationType.objects.get(id=application_type).name
+                    #         'ActivityType': activity,
+                    #         'Sub-activity level 1': sub_activity1,
+                    #         'Sub-activity level 2': sub_activity2,
+                    #         'Management area': category,
+                    #     }]
+                    # }
 
                 ],
             }
@@ -1308,17 +1378,19 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            reason_id=request.data.get('reason')
-            data = {
-                #'schema': qs_proposal_type.order_by('-version').first().schema,
-                'text': request.data.get('text'),
-                'proposal': request.data.get('proposal'),
-                'reason': AmendmentReason.objects.get(id=reason_id) if reason_id else None,
-            }
-            serializer = self.get_serializer(data= request.data)
+            # reason_id=request.data.get('reason')
+            # data = {
+            #     #'schema': qs_proposal_type.order_by('-version').first().schema,
+            #     'text': request.data.get('text'),
+            #     'proposal': request.data.get('proposal'),
+            #     'reason': AmendmentReason.objects.get(id=reason_id) if reason_id else None,
+            # }
+            #serializer = self.get_serializer(data= request.data)
+            serializer = self.get_serializer(data= json.loads(request.data.get('data')))
             #serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception = True)
             instance = serializer.save()
+            instance.add_documents(request)
             instance.generate_amendment(request)
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
@@ -1334,6 +1406,23 @@ class AmendmentRequestViewSet(viewsets.ModelViewSet):
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
 
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def delete_document(self, request, *args, **kwargs):
+        try:
+            #import ipdb; ipdb.set_trace()
+            instance = self.get_object()
+            AmendmentRequestDocument.objects.get(id=request.data.get('id')).delete()
+            return Response([dict(id=i.id, name=i.name,_file=i._file.url) for i in instance.requirement_documents.all()])
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
 
 
 

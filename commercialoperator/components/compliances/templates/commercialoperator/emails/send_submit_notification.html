@@ -1,0 +1,12 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+	The Compliance {{ compliance.reference }} has been submitted and can be assessed.
+
+    <p>
+    You can access this Compliance using the following link:
+    </p>
+    <a href="{{url}}">Access Compliance</a>
+
+
+{%  endblock %}

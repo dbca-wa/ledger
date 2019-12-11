@@ -99,6 +99,16 @@ uwsgi*.ini
 # wildlifecompliance build static files
 wildlifecompliance/static/wildlifecompliance_vue/static/*
 
+
+# npm locks
+#*-lock.json
+
+commercialoperator/static/commercialoperator_vue/static/css/app.css
+commercialoperator/static/commercialoperator_vue/static/js/app.js
+commercialoperator/static/commercialoperator_vue/static/js/manifest.js
+commercialoperator/static/commercialoperator_vue/static/js/vendor.js
+commercialoperator/static/commercialoperator_vue/static/js/babel-polyfill.js
+
 disturbance/static/disturbance_vue/static/css/app.css
 disturbance/static/disturbance_vue/static/js/app.js
 disturbance/static/disturbance_vue/static/js/manifest.js

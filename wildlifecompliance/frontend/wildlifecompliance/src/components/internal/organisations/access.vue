@@ -74,7 +74,7 @@
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3>Organisation Access Request</h3> 
+                        <h3>Organisation Access Request {{ requestType }}</h3>
                     </div>
                     <div class="panel-body panel-collapse">
                         <div class="row">
@@ -115,7 +115,7 @@
                                         <div class="col-sm-6">
                                             <input type="text" disabled class="form-control" name="email" placeholder="" v-model="access.requester.email">
                                         </div>
-                                    </div>   
+                                    </div>
                                 </form>
                             </div>
                         </div>
@@ -298,6 +298,7 @@ export default {
             ]
         },
         commsTable : null,
+        requestType : null,
     }
   },
   watch: {},
@@ -310,6 +311,7 @@ export default {
     Vue.http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,to.params.access_id)).then((response) => {
         next(vm => {
             vm.access = response.body
+            vm.requestType = vm.access.role == 'employee' ? '(Administrator)' : '(Consultant)'
         })
     },(error) => {
         console.log(error);

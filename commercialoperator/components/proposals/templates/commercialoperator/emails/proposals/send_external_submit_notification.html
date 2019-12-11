@@ -1,0 +1,24 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+	Your Application for a commercial operations licence has been submitted, the application number is {{ proposal.lodgement_number }}<br><br>
+
+	Submitter: {{ proposal.submitter.get_full_name }}<br>
+	Lodgement date: {{ proposal.lodgement_date }}
+
+	<p>
+		It may take up to 2 weeks to process your application.
+	</p>
+
+	<p>
+		You will receive a notification email if there is any incomplete information or documents missing from the application.
+	</p>
+	<p>If you would like to amend the application noew please contact a licensing office on {{settings.DEP_PHONE}} or email {{settings.SUPPORT_EMAIL}}</p>
+
+    <!-- <p>
+    You can access this Application using the following link:
+    </p>
+    <a href="{{url}}">Access Application</a> -->
+
+
+{%  endblock %}

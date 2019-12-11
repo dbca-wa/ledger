@@ -12,9 +12,11 @@ Basket = get_model('basket', 'basket')
 from oscar.apps.basket.middleware import BasketMiddleware as CoreBasketMiddleware
 
 class BasketMiddleware(CoreBasketMiddleware):
-    
-    def __init__(self, get_response=None):
-        self.get_response = get_response
+
+    # Required for Python 3
+    def __init__(self):
+        #response = self.get_response(request)
+        return None
 
     def get_cookie_basket(self, cookie_key, request, manager):
         """

@@ -7,7 +7,7 @@
             <div class="row"><div class="col-sm-12">
                 <h2>Success!</h2>
                 <p>A confirmation email has been sent to {{ booking.customer.email }}. </p>
-                <p>{% if booking.cost_total < 0 %}{% if refund_failed|length > 0 %}Sorry your refund failed to automatically refund and require a manually refund to be completed.  Please allow upto 28 days for this to be completed.  Your reference is {{ refund_failed.0.refund_amount }} {% else %}A refund has automatically been refunded to you,  please allow 1-3 business days for the money to be credit to your account.{%endif %}{%endif %}</p>
+                <p>For any refund details please refer to the email sent to {{ booking.customer.email }}. </p>
                 <p>&nbsp;</p>
 		<p>Please click <a href="{{EXPLORE_PARKS_SEARCH}}">here</a> if you want to make another booking.</p>
 

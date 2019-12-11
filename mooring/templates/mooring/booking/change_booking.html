@@ -49,10 +49,12 @@ Current booking information below.  Please click change booking button below to 
 
 
 
-
+        {% if booking.booking_type == 1 %}
         <div class="col-sm-12 col-md-12 col-lg-12">
+                 
 		<a href="/change-booking/{{ booking_id }}/" class="btn btn-info btn-lg" target="_blank">Change Booking</a>
 	</div>
+        {% endif %}
 
     </div>
 {% endblock %}

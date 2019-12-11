@@ -3,7 +3,8 @@
 {%  block content %}
         <p>Your payment for your application has been received.</p>
         <p>A copy of your invoice is attached to this email.</p>
-        <p><strong>Application : {{ application.id }}</strong></p>
-        <p><strong>Link: {{url}}</strong></p>
+        <p><strong>Application: {{ application.id }}</strong></p>
+        <p><strong>Link: <a href="{{url}}">{{url}}</a></strong></p>
         <p><strong>Invoice: {{ invoice_url }}</strong></p>
+        <p>Note: If you haven't logged into the Wildlife Licensing System recently you may need to login first before using the provided link.</p>
 {%  endblock %}

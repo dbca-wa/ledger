@@ -1,0 +1,23 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+    <p>This is a reminder that your commercial operations licence
+    <strong> {{ approval.lodgement_number}}</strong> expires on <strong>{{approval.expiry_date}}</strong>.</p>
+    
+    <p>To renew your commercial operations licence please click <a href="{{url}}">here</a>.</p>
+    <p>It is important you apply to renew your licence now so that we can process it before your current licence expires. If you would like to continue operating within WA’s national parks and other conservation reserves you need a licence under the Conservation and Land Management Regulations 2002.</p>
+
+    <p>As a reminder, the Commercial Operator Handbook (2019) outlines the conditions of your licence. The handbook is available online at the Department of Biodiversity, Conservation and Attractions website:</p> 
+    
+    <a href="{{handbook_url}}"/a>
+
+    <p>Please make sure you have access to this handbook, either in hardcopy or online, when operating within WA’s national parks and conservation reserves.</p>
+
+    <p>If you have any questions about how to renew your licence please call Licencing Officer on {{settings.DEP_PHONE}} or email {{settings.SUPPORT_EMAIL}}.</p>
+
+
+    <!-- <p>Please find the attached renewal notice.</p>
+    <p>To Renew your Commercial Operations Licence please click the link: {{url}}</p> -->
+    
+    
+{%  endblock %}

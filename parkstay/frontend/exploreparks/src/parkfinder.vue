@@ -20,12 +20,13 @@
                         <div class="dropdown-pane" id="guests-dropdown" data-dropdown data-auto-focus="true">
                             <div class="row">
                                 <div class="small-6 columns">
-                                    <label for="num_adults" class="text-right">Adults (non-concessions)<label>
+                                    <label for="num_adults" class="text-right">Adults (non-concessions)</label>
                                 </div><div class="small-6 columns">
-                                    <input type="number" id="numAdults" name="num_adults" v-model.number="numAdults" min="0" max="16"/></label>
+                                   <label> <input type="number" id="numAdults" name="num_adults" v-model.number="numAdults" min="0" max="16"/></label>
                                 </div>
                             </div><div class="row">
                                 <div class="small-6 columns">
+                                <!-- <a class="button" v-bind:href="f.info_url" target="_blank">More info</a> -->
                                     <label for="num_concessions" class="text-right"><span class="has-tip" title="Holders of one of the following Australian-issued cards:
 - Seniors Card
 - Age Pension
@@ -35,19 +36,19 @@
 - Companion Card
 - Department of Veterans' Affairs">Concessions</span></label>
                                 </div><div class="small-6 columns">
-                                    <input type="number" id="numConcessions" name="num_concessions" v-model.number="numConcessions" min="0" max="16"/></label>
+                                  <label>  <input type="number" id="numConcessions" name="num_concessions" v-model.number="numConcessions" min="0" max="16"/></label>
                                 </div>
                             </div><div class="row">
                                 <div class="small-6 columns">
-                                    <label for="num_children" class="text-right">Children (ages 6-15)<label>
+                                    <label for="num_children" class="text-right">Children (ages 6-15)</label>
                                 </div><div class="small-6 columns">
-                                    <input type="number" id="numChildren" name="num_children" v-model.number="numChildren" min="0" max="16"/></label>
+                                   <label> <input type="number" id="numChildren" name="num_children" v-model.number="numChildren" min="0" max="16"/></label>
                                 </div>
                             </div><div class="row">
                                 <div class="small-6 columns">
-                                    <label for="num_infants" class="text-right">Infants (ages 0-5)<label>
+                                    <label for="num_infants" class="text-right">Infants (ages 0-5)</label>
                                 </div><div class="small-6 columns">
-                                    <input type="number" id="numInfants" name="num_infants" v-model.number="numInfants" min="0" max="16"/></label>
+                                 <label>   <input type="number" id="numInfants" name="num_infants" v-model.number="numInfants" min="0" max="16"/></label>
                                 </div>
                             </div>
                         </div>
@@ -113,8 +114,13 @@
                         <p><i id="mapPopupPrice"></i></p>
                         <img class="thumbnail" id="mapPopupImage" />
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
-                        <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0; margin-top: 1em;" target="_blank">More info</a>
-                        <a id="mapPopupBook" class="button formButton" style="margin-bottom: 0;" target="_blank">Book now</a>
+
+                        <!-- Add line to join the 2 buttons into 1 -->
+                       <!--  <a id="mapPopupBookInfo" class="button formButton" style="margin-bottom: 0;" target="_blank">More Info/Book now</a> -->
+
+                         <a id="mapPopupBook" class="button formButton1" style="margin-bottom: 0; margin-top: 1em;" target="_blank">Book now</a>
+                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0;" target="_blank">More Info</a>
+
                     </div>
                 </div>
             </div>
@@ -133,8 +139,25 @@
                             <div class="small-12 medium-9 large-9 columns">
                                 <div v-html="f.description"/>
                                 <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
-                                <a class="button" v-bind:href="f.info_url" target="_blank">More info</a>
-                                <a v-if="f.campground_type == 0" class="button" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+
+                                <!-- This line has to be changed to use a v-if/else clause
+                                 Changed again to utilize changes in api to further enable forwarding offline sites to availability app
+                                 -->
+
+                                <!--<a class="button" v-bind:href="f.info_url" target="_blank">More info</a> -->
+
+                                <!-- <a class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info/Book now</a> -->
+
+
+                                <a v-if="f.campground_type == 0  " class="button formButton1" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+
+                                <a v-else-if="f.campground_type == 1  " class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info</a>
+
+                                <a v-else class="button formButton2" v-bind:href="f.info_url" target="_blank">More info</a>
+
+
+                            <!-- End of change -->
+
                             </div>
                         </div>
                     </div>
@@ -273,7 +296,7 @@
 
     @media print, screen and (min-width: 64em) {
         .filter-button {
-            display: none; 
+            display: none;
         }
     }
 
@@ -298,6 +321,18 @@
     .button.formButton {
         display: block;
         width: 100%;
+    }
+
+    .button.formButton1{
+      display: block;
+      background-color: green;
+      width: 100%;
+    }
+
+    .button.formButton2{
+      display: block;
+      background-color: purple;
+      width: 100%;
     }
 
     .button.selector {
@@ -391,7 +426,7 @@
         border-top-color: white;
         border-width: 10px;
         left: 138px;
-        margin-left: -10px; 
+        margin-left: -10px;
     }
 
     .mapPopup:before {
@@ -439,14 +474,16 @@ div.awesomplete > input {
 </style>
 
 <script>
+import Vue from 'vue'
 import Awesomplete from 'awesomplete';
 import ol from 'openlayers';
-//var ol = require('openlayers/dist/ol-debug');
 import 'foundation-sites/dist/js/foundation.min';
 import 'foundation-datepicker/js/foundation-datepicker';
 import debounce from 'debounce';
 import moment from 'moment';
 
+var today = moment.utc().add(8, 'hours');
+today = moment.utc({year: today.year(), month: today.month(), day: today.date(), hour: 0, minute: 0, millisecond: 0})
 
 export default {
     name: 'parkfinder',
@@ -480,6 +517,10 @@ export default {
             hideExtraFilters: true,
             suggestions: {},
             extentFeatures: [],
+
+            //Added to store values of api date
+            currentDate: null,
+
             arrivalDate: null,
             departureDate: null,
             numAdults: 2,
@@ -529,22 +570,22 @@ export default {
         arrivalDateString: {
             cache: false,
             get: function() {
-                return this.arrivalEl[0].value ? moment(this.arrivalData.getDate()).format('YYYY/MM/DD') : null; 
+                return this.arrivalEl[0].value ? moment(this.arrivalData.getDate()).format('YYYY/MM/DD') : null;
             }
         },
         departureDateString: {
             cache: false,
             get: function() {
-                return this.departureEl[0].value ? moment(this.departureData.getDate()).format('YYYY/MM/DD') : null; 
+                return this.departureEl[0].value ? moment(this.departureData.getDate()).format('YYYY/MM/DD') : null;
             }
         },
         numPeople: {
             cache: false,
             get: function() {
                 // annoying wrapper to deal with vue.js' weak number casting
-                var count = (this.numAdults ? this.numAdults : 0) + 
-                            (this.numConcessions ? this.numConcessions : 0) + 
-                            (this.numChildren ? this.numChildren : 0) + 
+                var count = (this.numAdults ? this.numAdults : 0) +
+                            (this.numConcessions ? this.numConcessions : 0) +
+                            (this.numChildren ? this.numChildren : 0) +
                             (this.numInfants ? this.numInfants : 0);
                 if (count === 1) {
                     return `${count} person ▼`;
@@ -564,8 +605,10 @@ export default {
                     'gear_type': this.gearType,
                 };
                 if (this.arrivalDate && this.departureDate) {
+
                     params['arrival'] = this.arrivalDate.format('YYYY/MM/DD');
                     params['departure'] = this.departureDate.format('YYYY/MM/DD');
+
                 }
                 return $.param(params);
             }
@@ -585,7 +628,6 @@ export default {
                 return el['properties']['name'] == place;
             });
             if (target) {
-                //console.log('Search suggestion!')
                 var view = this.olmap.getView();
                 // zoom slightly closer in for campgrounds
                 var resolution = vm.resolutions[10];
@@ -600,7 +642,8 @@ export default {
                 });
 
                 // Open the popup
-                /*let feature = this.groundsData.a.find(f => parseInt(f.a) == parseInt(target.properties.id));
+                /*
+                let feature = this.groundsData.a.find(f => parseInt(f.a) == parseInt(target.properties.id));
                 if (feature){
                     setTimeout(() => {
                         vm.popup.setPosition(feature.getGeometry().getCoordinates());
@@ -608,7 +651,6 @@ export default {
                         // when you pass control of the popup element to OpenLayers :(
                         $("#mapPopupName")[0].innerHTML = feature.get('name');
                         if (feature.get('images')) {
-                            // console.log(feature.get('images')[0].image);
                             $("#mapPopupImage").attr('src', feature.get('images')[0].image);
                             $("#mapPopupImage").show();
                         } else {
@@ -620,15 +662,15 @@ export default {
                             $("#mapPopupPrice")[0].innerHTML = '';
                         }
                         $("#mapPopupDescription")[0].innerHTML = feature.get('description');
+
+                        // Disabled below line,as api is being used to differentiate btw offline and online site
                         $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                        $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
-                        if (feature.get('campground_type') == 0) {
-                            $("#mapPopupBook").show();
-                        } else {
-                            $("#mapPopupBook").hide();
-                        }
-                    },1000);
-                }*/
+
+                        // Made changes to show only one button -->
+                        $("#mapPopupBookInfo").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+
+                    }, 1000);
+                } */
 
 
                 return;
@@ -646,8 +688,6 @@ export default {
                 dataType: 'json',
                 success: function(data, status, xhr) {
                     if (data.features && data.features.length > 0) {
-                        //console.log('Mapbox!');
-                        //console.log(data.features[0]);
                         var view = vm.olmap.getView();
                         view.animate({
                             center: ol.proj.fromLonLat(data.features[0].geometry.coordinates),
@@ -669,8 +709,7 @@ export default {
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
                 if (feature.get('images')) {
-                    // console.log(feature.get('images')[0].image);
-                    $("#mapPopupImage").attr('src', feature.get('images')[0].image);
+                   $("#mapPopupImage").attr('src', feature.get('images')[0].image);
                     $("#mapPopupImage").show();
                 } else {
                     $("#mapPopupImage").hide();
@@ -681,12 +720,21 @@ export default {
                     $("#mapPopupPrice")[0].innerHTML = '';
                 }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
-                $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+
+                // Need to change this portion for the new button
+                // if/else used to diffrentiate campground type(if covers type 0 and 1), differentiated by API
                 if (feature.get('campground_type') == 0) {
                     $("#mapPopupBook").show();
+                    $("#mapPopupInfo").hide();
+                    $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                } else if( feature.get('campground_type') == 1 ){
+                    $("#mapPopupBook").hide();
+                    $("#mapPopupInfo").show();
+                    $("#mapPopupInfo").attr('href', feature.get('info_url'));
                 } else {
                     $("#mapPopupBook").hide();
+                    $("#mapPopupInfo").show();
+                    $("#mapPopupInfo").attr('href', feature.get('info_url'));
                 }
             }
         },
@@ -698,7 +746,7 @@ export default {
             var updateViewportFunc = function() {
                 // this object is going to be hammered by vue.js introspection, strip openlayers stuff
                 vm.extentFeatures = vm.groundsSource.getFeaturesInExtent(vm.extent).filter(vm.groundFilter).map(function (el) {
-                    var props = el.getProperties(); 
+                    var props = el.getProperties();
                     props.style = undefined;
                     props.geometry = props.geometry.getCoordinates();
                     props.distance = Math.sqrt(Math.pow(props.geometry[0]-vm.center[0], 2) + Math.pow(props.geometry[1]-vm.center[1], 2));
@@ -708,7 +756,7 @@ export default {
                     /* distance from map center sort */
                     if (a.distance < b.distance) {
                         return -1;
-                    }
+                   }
                     if (a.distance > b.distance) {
                         return 1;
                     }
@@ -725,7 +773,7 @@ export default {
                     }
                     return 0; */
                 });
-                
+
             };
             if (runNow) {
                 updateViewportFunc();
@@ -739,8 +787,6 @@ export default {
             }
         },
         updateDates: function(ev) {
-            //console.log('BANG');
-            //console.log(ev);
             // for the first time someone changes the dates, enable the
             // "Show bookable campsites only" flag
             if (this.dateSetFirstTime) {
@@ -753,6 +799,25 @@ export default {
             this.groundsSource.loadSource();
             this.refreshPopup();
         }, 250),
+
+        // TODO Added these methods to use server date extracted from an api call
+        // Needs to be implemented in the system, have to use server date to restrict arrival date instead of today
+        // Currently this function is not used
+        setDate: function(datestring) {
+            let vm = this;
+            var tempDate = new Date(datestring)
+            vm.currentDate = moment({year: tempDate.getFullYear(), month: tempDate.getMonth(), day: tempDate.getDate(), hour: 0, minute: 0, second: 0, millisecond: 0});
+        },
+
+        fetchServerDate: function() {
+          let vm = this;
+          vm.$http.get(vm.parkstayUrl+'/api/server-date').then(function(response)  {
+              this.setDate(response.body)
+          })
+        },
+
+        // End of change
+
         updateFilter: function() {
             var vm = this;
             // make a lookup table of campground features to filter on
@@ -770,7 +835,7 @@ export default {
             this.groundsFilter.clear();
             this.groundsData.forEach(function (el) {
                 // first pass filter against the list of IDs returned by search
-                
+
                 var campgroundType = el.get('campground_type');
                 switch (campgroundType) {
                     case 0:
@@ -778,7 +843,7 @@ export default {
                         return;
                     }
                     break;
-                    case 1: 
+                    case 1:
                     if (!vm.sitesInPerson) {
                         return;
                     }
@@ -791,7 +856,7 @@ export default {
                     default:
                     break;
                 }
-                
+
                 if (vm.groundsIds.has(el.getId())) {
                     if (legit.size) { // if we have a feature filter list
                         // check that all parameters are present
@@ -811,29 +876,23 @@ export default {
                 }
             });
             this.updateViewport(true);
-        }
+        },
+
     },
     mounted: function () {
         var vm = this;
         $(document).foundation();
-        console.log('Loading map...');
-
-        // enable arrival/departure date pickers
-        var nowTemp = new Date();
-        var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
 
         this.arrivalEl = $('#dateArrival');
         this.departureEl = $('#dateDeparture');
         this.arrivalData = this.arrivalEl.fdatepicker({
             format: 'dd/mm/yyyy',
-            endDate: moment(this.arrivalEl).add(180, 'days').toDate(),
+            endDate: moment.utc(this.arrivalEl).add(180, 'days').toDate(),
             onRender: function (date) {
-                // disallow start dates before today
-                return date.valueOf() < now.valueOf() ? 'disabled': '';
-                //return '';
+                // Disallow start dates before today.
+                return date.valueOf() < today.toDate().valueOf() ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            //console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
@@ -842,8 +901,8 @@ export default {
                 vm.departureData.setValue();
                 vm.departureData.fill();
                 vm.departureEl.trigger('changeDate');
+
             }
-            vm.arrivalData.hide();
             vm.arrivalDate = moment(vm.arrivalData.date);
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
@@ -854,14 +913,15 @@ export default {
         this.departureData = this.departureEl.fdatepicker({
             format: 'dd/mm/yyyy',
             onRender: function (date) {
+                // Disallow departure date before arrival date.
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            //console.log('departureEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
             vm.departureData.hide();
             vm.departureDate = moment(vm.departureData.date);
+
         }).on('keydown', function (ev) {
             if (ev.keyCode == 13) {
                 ev.target.dispatchEvent(new CustomEvent('change'));
@@ -879,8 +939,6 @@ export default {
             success: function (response, stat, xhr) {
                 vm.suggestions = response;
                 $(search).on('awesomplete-selectcomplete', function(ev) {
-                    //console.log('autoselect');
-                    //console.log(ev);
                     this.blur();
                     //vm.search(ev.target.value);
                 });
@@ -893,17 +951,14 @@ export default {
 
         // wire up search box
         $(search).on('blur', function(ev) {
-            //console.log('blur');
-            //console.log(ev);
             vm.search(ev.target.value);
         }).on('keypress', function(ev) {
             if (!ev) {
                 ev = window.event;
             }
-            // intercept enter keys 
+            // intercept enter keys
             var keyCode = ev.keyCode || ev.which;
             if (keyCode == '13') {
-                //console.log('enter');
                 this.blur();
                 return false;
             }
@@ -952,7 +1007,7 @@ export default {
         });
 
         this.geojson = new ol.format.GeoJSON({
-            featureProjection: 'EPSG:3857'   
+            featureProjection: 'EPSG:3857'
         });
 
         this.groundsData = new ol.Collection();
@@ -970,9 +1025,9 @@ export default {
         });
 
         this.groundsSource = new ol.source.Vector({
-            features: vm.groundsFilter   
+            features: vm.groundsFilter
         });
-        
+
         this.groundsSource.loadSource = function (onSuccess) {
             var urlBase = vm.parkstayUrl+'/api/campground_map_filter/?';
             var params = {format: 'json'};
@@ -980,6 +1035,7 @@ export default {
             if ((vm.arrivalData.date) && (vm.departureData.date)) {
                 isCustom = true;
                 var arrival = vm.arrivalDateString;
+
                 if (arrival) {
                     params.arrival = arrival;
                 }
@@ -1037,7 +1093,6 @@ export default {
                     });
                     feature.set('style', style);
                 }
-                //console.log(style);
                 return style;
             }
         });
@@ -1112,7 +1167,7 @@ export default {
             var coords = vm.geolocation.getPosition();
             vm.posFeature.setGeometry(coords ? new ol.geom.Point(coords) : null);
         });
-    
+
         // sad loop to change the pointer when mousing over a vector layer
         this.olmap.on('pointermove', function(ev) {
             if (ev.dragging) {
@@ -1141,7 +1196,6 @@ export default {
                 // when you pass control of the popup element to OpenLayers :(
                 $("#mapPopupName")[0].innerHTML = feature.get('name');
                 if (feature.get('images')) {
-                    // console.log(feature.get('images')[0].image);
                     $("#mapPopupImage").attr('src', feature.get('images')[0].image);
                     $("#mapPopupImage").show();
                 } else {
@@ -1153,13 +1207,25 @@ export default {
                     $("#mapPopupPrice")[0].innerHTML = '';
                 }
                 $("#mapPopupDescription")[0].innerHTML = feature.get('description');
-                $("#mapPopupInfo").attr('href', feature.get('info_url'));
-                $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+
+                // This portion needs to be modified to accomodate the new button
+                // Online/Offline sites is determined by the backend api
                 if (feature.get('campground_type') == 0) {
-                    $("#mapPopupBook").show();
-                } else {
-                    $("#mapPopupBook").hide();
+                    $("#mapPopupBook").show()
+                    $("#mapPopupInfo").hide()
+                    $("#mapPopupBook").attr('href', vm.parkstayUrl+'/availability/?site_id='+feature.getId()+'&'+vm.bookingParam);
+                } else if (feature.get('campground_type') == 1 ) {
+                    $("#mapPopupBook").hide ()
+                    $("#mapPopupInfo").show()
+                    $("#mapPopupInfo").attr('href', feature.get('info_url'));
                 }
+                else {
+                    // Now,this section is used for the partner accommodation
+                    $("#mapPopupBook").hide()
+                    $("#mapPopupInfo").show()
+                    $("#mapPopupInfo").attr('href', feature.get('info_url'));
+                }
+
                 return true;
             }, {
                 layerFilter: function (layer) {

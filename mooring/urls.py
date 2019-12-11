@@ -71,6 +71,8 @@ api_patterns = [
     url(r'^api/booking/delete$', api.delete_booking,name='del_booking'),
     url(r'^api/current_booking$', api.current_booking,name='current_booking'),
     url(r'^api/global_settings$', api.GlobalSettingsView.as_view(), name='global_setting'),
+    url(r'^api/check_oracle_code$', api.CheckOracleCodeView.as_view(), name='check_oracle_code'),
+    url(r'^api/refund_oracle$', api.RefundOracleView.as_view(), name='refund_oracle'),
 #    url(r'^api/admissions_key$', api.AdmissionsKeyFromURLView.as_view(), name='admissions_key'),
     url(r'^api/',include(router.urls))
 ]
@@ -122,6 +124,7 @@ urlpatterns = [
     url(r'^no-payment/', views.ZeroBookingView.as_view(), name='no_payment_booking'),
     url(r'^mybookings/', views.MyBookingsView.as_view(), name='public_my_bookings'),
     url(r'^booking-history/(?P<pk>[0-9]+)/', views.ViewBookingHistory.as_view(), name='view_booking_history'),
+    url(r'^booking-history-refund/(?P<pk>[0-9]+)/', views.RefundBookingHistory.as_view(), name='view_refund_booking_history'),
     url(r'^view-booking/(?P<pk>[0-9]+)/', views.ViewBookingView.as_view(), name='public_view_booking'),
     url(r'^change-booking/(?P<pk>[0-9]+)/', views.ChangeBookingView.as_view(), name='public_change_booking'),
     url(r'^cancel-booking/(?P<pk>[0-9]+)/', views.CancelBookingView.as_view(), name='public_cancel_booking'),

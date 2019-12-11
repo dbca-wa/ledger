@@ -1,0 +1,14 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+    Identification for the following organisation you are linked to has been uploaded.
+
+    Organisation: {{ organisation.name }}
+
+    ABN: {{ organisation.abn }}
+
+    Address: {{ organisation.postal_address.line1 }}, {{ organisation.postal_address.locality }},
+        {{ organisation.postal_address.state }}, {{ organisation.postal_address.postcode}},
+        {{ organisation.postal_address.country}}
+    
+{%  endblock %}

@@ -1,0 +1,249 @@
+[
+{
+    "pk": 1,
+    "model": "commercialoperator.region",
+    "fields": {
+        "name": "Goldfields"
+    }
+},
+{
+    "pk": 2,
+    "model": "commercialoperator.region",
+    "fields": {
+        "name": "Kimberley"
+    }
+},
+{
+    "pk": 3,
+    "model": "commercialoperator.region",
+    "fields": {
+        "name": "Midwest"
+    }
+},
+{
+    "pk": 4,
+    "model": "commercialoperator.region",
+    "fields": {
+        "name": "Pilbara"
+    }
+},
+{
+    "pk": 5,
+    "model": "commercialoperator.region",
+    "fields": {
+        "name": "South Coast"
+    }
+},
+{
+    "pk": 6,
+    "model": "commercialoperator.region",
+    "fields": {
+        "name": "South West",
+        "forest_region": true
+    }
+},
+{
+    "pk": 7,
+    "model": "commercialoperator.region",
+    "fields": {
+        "name": "Swan",
+        "forest_region": true
+    }
+},
+{
+    "pk": 8,
+    "model": "commercialoperator.region",
+    "fields": {
+        "name": "Warren",
+        "forest_region": true
+    }
+},
+{
+    "pk": 9,
+    "model": "commercialoperator.region",
+    "fields": {
+        "name": "Wheatbelt"
+    }
+},
+
+{
+    "pk": 1,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 1,
+        "code": "GLD",
+        "name": "Goldfields Region"
+    }
+},
+{
+    "pk": 2,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 2,
+        "code": "EKM",
+        "name": "East Kimberley"
+    }
+},
+{
+    "pk": 3,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 2,
+        "code": "WKM",
+        "name": "West Kimberley"
+    }
+},
+{
+    "pk": 4,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 3,
+        "code": "GER",
+        "name": "Geraldton"
+    }
+},
+{
+    "pk": 5,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 3,
+        "code": "MOR",
+        "name": "Moora"
+    }
+},
+{
+    "pk": 6,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 3,
+        "code": "SHB",
+        "name": "Shark Bay"
+    }
+},
+{
+    "pk": 7,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 4,
+        "code": "EXM",
+        "name": "Exmouth"
+    }
+},
+{
+    "pk": 8,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 4,
+        "code": "PIL",
+        "name": "Pilbara Region"
+    }
+},
+{
+    "pk": 9,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 5,
+        "code": "ALB",
+        "name": "Albany"
+    }
+},
+{
+    "pk": 10,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 5,
+        "code": "ESP",
+        "name": "Esperance"
+    }
+},
+{
+    "pk": 11,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 6,
+        "code": "BWD",
+        "name": "Blackwood"
+    }
+},
+{
+    "pk": 12,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 6,
+        "code": "WTN",
+        "name": "Wellington"
+    }
+},
+{
+    "pk": 13,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 7,
+        "code": "PHS",
+        "name": "Perth Hills"
+    }
+},
+{
+    "pk": 14,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 7,
+        "code": "SWC",
+        "name": "Swan Coastal"
+    }
+},
+{
+    "pk": 15,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 8,
+        "code": "DON",
+        "name": "Donnelly"
+    }
+},
+{
+    "pk": 16,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 8,
+        "code": "FRK",
+        "name": "Frankland"
+    }
+},
+{
+    "pk": 17,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 9,
+        "code": "CWB",
+        "name": "Central Wheatbelt"
+    }
+},
+{
+    "pk": 18,
+    "model": "commercialoperator.district",
+    "fields": {
+        "archive_date": null,
+        "region": 9,
+        "code": "SWB",
+        "name": "Wheatbelt Region"
+    }
+}
+]

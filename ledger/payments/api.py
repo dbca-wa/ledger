@@ -20,8 +20,8 @@ from ledger.payments.cash.models import CashTransaction, Region, District, DISTR
 from ledger.payments.models import TrackRefund
 from ledger.payments.utils import systemid_check, update_payments
 from ledger.payments.facade import bpoint_facade
-from ledger.payments.reports import generate_items_csv, generate_trans_csv
-from ledger.payments.emails import send_refund_email 
+from ledger.payments.reports import generate_items_csv, generate_trans_csv, generate_items_csv_allocated
+from ledger.payments.emails import send_refund_email
 
 from ledger.accounts.models import EmailUser
 from oscar.apps.order.models import Order
@@ -776,6 +776,54 @@ class ReportCreateView(views.APIView):
         except Exception as e:
             traceback.print_exc()
             raise serializers.ValidationError(str(e))
+
+class ReportCreateAllocatedView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self,request,format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            #parse and validate data
+            report = None
+            data = {
+                "start":request.GET.get('start'),
+                "end":request.GET.get('end'),
+                "banked_start":request.GET.get('banked_start',None),
+                "banked_end":request.GET.get('banked_end',None),
+                "system":request.GET.get('system'),
+                "items": request.GET.get('items', False),
+                "region": request.GET.get('region'),
+                "district": request.GET.get('district')
+            }
+            serializer = ReportSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
+            # Generate Report
+            if serializer.validated_data['items']:
+                report = generate_items_csv_allocated(systemid_check(serializer.validated_data['system']),
+                                            serializer.validated_data['start'],
+                                            serializer.validated_data['end'],
+                                            serializer.validated_data['banked_start'],
+                                            serializer.validated_data['banked_end'],
+                                            district = serializer.validated_data['district'])
+            else:
+                report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
+                                            ,serializer.validated_data['start'],
+                                            serializer.validated_data['end'],
+                                            district = serializer.validated_data['district'])
+            if report:
+                response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                return response
+            else:
+                raise serializers.ValidationError('No report was generated.')
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+
+
 #######################################################
 #                                                     #
 #                    /REPORTS                         #

@@ -1,0 +1,24 @@
+include LICENSE
+recursive-include ledger/address/fixtures *.json 
+recursive-include ledger/static/ledger/css *.css *.scss
+recursive-include ledger/static/ledger/fonts *.woff2
+recursive-include ledger/static/ledger/images *.png
+recursive-include ledger/payments/static/payments/js *.js
+recursive-include ledger/payments/cash/fixtures *.json
+recursive-include ledger/payments/templates/dpaw_payments *.html
+recursive-include ledger/payments/templates/dpaw_payments/emails *.html *.txt
+recursive-include ledger/payments/templates/dpaw_payments/invoice *.html
+recursive-include ledger/payments/templates/dpaw_payments/bpay *.html
+recursive-include ledger/payments/templates/dpaw_payments/bpoint *.html
+recursive-include ledger/payments/static/payments/img *.jpg
+recursive-include ledger/payments/static/payments/img *.png
+recursive-include ledger/payments/static/payments/img *.svg
+recursive-include ledger/payments/static/payments/js *.js
+recursive-include ledger/accounts/templates/customers *.html
+recursive-include ledger/accounts/templates/ledger/accounts *.html
+recursive-include ledger/accounts/templates/email *.txt
+recursive-include ledger/templates *.html *.txt
+recursive-include ledger/templates/basket/partials *.html
+recursive-include ledger/templates/partials *.html
+recursive-include ledger/templates/checkout *.html
+recursive-include ledger/templates/email *.html
