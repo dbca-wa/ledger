@@ -114,17 +114,13 @@
                         <p><i id="mapPopupPrice"></i></p>
                         <img class="thumbnail" id="mapPopupImage" />
                         <div id="mapPopupDescription" style="font-size: 0.75rem;"/>
-
-                        <!-- Add line to join the 2 buttons into 1 -->
-                       <!--  <a id="mapPopupBookInfo" class="button formButton" style="margin-bottom: 0;" target="_blank">More Info/Book now</a> -->
-
-                         <a id="mapPopupBook" class="button formButton1" style="margin-bottom: 0; margin-top: 1em;" target="_blank">Book now</a>
-                         <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0;" target="_blank">More Info</a>
-
+                        <a id="mapPopupBook" class="button formButton1" style="margin-bottom: 0; margin-top: 1em;" target="_blank">Book now</a>
+                        <a id="mapPopupInfo" class="button formButton" style="margin-bottom: 0;" target="_blank">More Info</a>
                     </div>
                 </div>
             </div>
         </div>
+
         <template v-if="extentFeatures.length > 0">
             <paginate name="filterResults" class="resultList" :list="extentFeatures" :per="9">
                 <div class="row">
@@ -139,36 +135,23 @@
                             <div class="small-12 medium-9 large-9 columns">
                                 <div v-html="f.description"/>
                                 <p v-if="f.price_hint && Number(f.price_hint)"><i><small>From ${{ f.price_hint }} per night</small></i></p>
-
                                 <!-- This line has to be changed to use a v-if/else clause
                                  Changed again to utilize changes in api to further enable forwarding offline sites to availability app
                                  -->
-
-                                <!--<a class="button" v-bind:href="f.info_url" target="_blank">More info</a> -->
-
-                                <!-- <a class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info/Book now</a> -->
-
-
-                                <a v-if="f.campground_type == 0  " class="button formButton1" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
-
-                                <a v-else-if="f.campground_type == 1  " class="button formButton" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">More Info</a>
-
+                                <a v-if="f.campground_type == 0" class="button formButton1" v-bind:href="parkstayUrl+'/availability/?site_id='+f.id+'&'+bookingParam" target="_blank">Book now</a>
+                                <a v-else-if="f.campground_type == 1" class="button formButton" v-bind:href="f.info_url" target="_blank">More Info</a>
                                 <a v-else class="button formButton2" v-bind:href="f.info_url" target="_blank">More info</a>
-
-
-                            <!-- End of change -->
-
+                                <!-- End of change -->
                             </div>
                         </div>
                     </div>
                 </div>
             </paginate>
             <div class="row">
-                <paginate-links for="filterResults" :classes="{
-                    'ul': 'pagination'
-                }"></paginate-links>
+                <paginate-links for="filterResults" :classes="{'ul': 'pagination'}"></paginate-links>
             </div>
         </template>
+
         <template v-else>
             <div class="row align-center">
                 <div class="small-12 medium-12 large-12 columns">
