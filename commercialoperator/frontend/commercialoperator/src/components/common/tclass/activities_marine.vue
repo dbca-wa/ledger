@@ -517,6 +517,21 @@ from '@/utils/hooks'
 
               vm.checkRequiredDocuements(vm.marine_parks_activities)
           },
+          find_repeated: function(array){
+            var common=new Map();
+            array.forEach(function(obj){
+             var values=Object.values(obj)[0];
+             values.forEach(function(val){
+                 common.set(val,(common.get(val)||0)+1);
+             });
+            });
+            var result=[];
+            common.forEach(function(appearance,el){
+               result.push(el);
+            });
+            return result;
+          },
+
           find_recurring: function(array){
             var common=new Map();
             array.forEach(function(obj){
@@ -566,7 +581,8 @@ from '@/utils/hooks'
             }
 
           vm.selected_zone_ids=zone_ids
-          vm.selected_activities = vm.find_recurring(all_activities)
+          //vm.selected_activities = vm.find_recurring(all_activities)
+          vm.selected_activities = vm.find_repeated(all_activities)
         },
 
         eventListeners: function(){
