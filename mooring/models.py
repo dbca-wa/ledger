@@ -1213,6 +1213,7 @@ class Booking(models.Model):
     canceled_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT, blank=True, null=True,related_name='canceled_bookings')
     old_booking = models.ForeignKey('Booking', null=True, blank=True)
     admission_payment = models.ForeignKey('AdmissionsBooking', null=True, blank=True)
+    override_lines = JSONField(null=True, blank=True, default={})
 
     # Properties
     # =================================
@@ -1285,7 +1286,7 @@ class Booking(models.Model):
         if today <= self.departure:
             if not self.is_canceled:
                 return True
-        return False
+        return True
 
     @property
     def campsite_id_list(self):
@@ -1531,7 +1532,10 @@ class Booking(models.Model):
             total_due = D('0.0')
             lines = []
             if not self.legacy_id:
-                lines = inv.order.lines.filter(oracle_code=self.mooringarea.park.oracle_code)
+                lines = []
+                if inv.order:
+                    lines = inv.order.lines.filter(oracle_code=self.mooringarea.park.oracle_code)
+                
 
             price_dict = {}
             for line in lines:
@@ -1597,7 +1601,8 @@ class OutstandingBookingRecipient(models.Model):
 class BookingInvoice(models.Model):
     booking = models.ForeignKey(Booking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
-
+    system_invoice = models.BooleanField(default=False)
+ 
     def __str__(self):
         return 'Booking {} : Invoice #{}'.format(self.id,self.invoice_reference)
 
@@ -1816,6 +1821,7 @@ class AdmissionsBooking(models.Model):
     cancelation_time = models.DateTimeField(null=True,blank=True)
     created = models.DateTimeField(default=timezone.now)
     location = models.ForeignKey(AdmissionsLocation, blank=True, null=True)    
+    override_lines = JSONField(null=True, blank=True, default={})
 
     def __str__(self):
         email = ''
@@ -1876,6 +1882,7 @@ class AdmissionsOracleCode(models.Model):
 class AdmissionsBookingInvoice(models.Model):
     admissions_booking = models.ForeignKey(AdmissionsBooking, related_name='invoices')
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+    system_invoice = models.BooleanField(default=False)
 
     def __str__(self):
         return 'Fee Payment {} : Invoice #{}'.format(self.id,self.invoice_reference)

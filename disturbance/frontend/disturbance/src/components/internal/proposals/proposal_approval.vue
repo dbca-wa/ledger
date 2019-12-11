@@ -34,12 +34,22 @@
                                         </span></p>
                                         <div v-else>
                                             <p><strong>Attach documents:</strong></p>
-                                            <p>
+                                            <div class="col-sm-12">                                           
                                             <span class="btn btn-info btn-file pull-left">
-                                            Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                            Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                             </span>
                                             <!--<span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName()}}</span>-->
-                                            </span>
+                                            
+                                            </div>
+                                            <div class="row"><p></p></div>
+                                            <div class="row"><p></p></div>
+                                            <div class="row"><p></p></div>
+
+                                            <p>
+                                            <strong>Comments (if no approval attached)</strong>
+                                            </p>
+                                            <p>
+                                            <textarea name="approval_level_comments"  v-model="proposal.approval_level_comment" class="form-control" style="width:70%;"></textarea>
                                             </p>
                                         </div>
 
@@ -49,10 +59,12 @@
                                     <template v-if="isFinalised">
                                         <p><strong>Level of approval: {{proposal.approval_level}}</strong></p>
                                         
-                                    <div v-if="isApprovalLevel">    
-                                        <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
-                                        </p>
-                                    </div>
+                                        <div v-if="isApprovalLevel">    
+                                            <p v-if="proposal.approval_level_document"><strong>Attach documents: <a :href="proposal.approval_level_document[1]" target="_blank">{{proposal.approval_level_document[0]}}</a>
+                                            </p>
+                                            <p v-if="proposal.approval_level_comment"><strong>Comments: {{proposal.approval_level_comment}}
+                                            </p>
+                                        </div>
                                     </template>                                    
                             </div>
                         </div> 

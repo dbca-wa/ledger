@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        {% block greetings %}
+            <p>
+                Dear Sir/Madam,
+            </p>
+        {% endblock %}
+        {% block content %}
+        {% endblock %}
+        {% block signature %}
+            <p>
+                Regards,
+            </p>
+            <p></p>
+            <p>
+            {{settings.BRANCH_NAME}}<br>
+            {{settings.DEP_NAME}}<br>
+            Phone: {{ settings.DEP_PHONE_SUPPORT }}<br>
+            Address: {{ settings.DEP_ADDRESS}}<br>
+            <img src="{{settings.PUBLIC_URL}}/static/commercialoperator/img/dbca-signature-logo.png" title="None" width="500" style="height: auto;">
+            </p>
+        {% endblock %}
+        {% block reply_statement %}
+            <p></p>
+            <p></p>
+            <p>
+                <!--
+                <strong><em>Please do not reply directly to this email. Should you need to contact the licensing section of the Department of 
+                Biodiversity, Conservation and Attractions, please send emails to <a href="mailto:das@dpaw.wa.gov.au">das@dpaw.wa.gov.au</a> 
+                or call (08) 9219 9000.</em></strong>
+                -->
+
+                <strong><em>
+                    Please do not reply directly to this email. Should you need to contact the {{ settings.BRANCH_NAME}}, 
+                    please send emails to <a href="mailto:{{ settings.SUPPORT_EMAIL }}">{{ settings.SUPPORT_EMAIL }}</a> or call {{ settings.DEP_PHONE_SUPPORT }}.
+                </em></strong> 
+            </p> 
+            <!-- <p>{{PUBLIC_URL}}</p> -->
+            <!-- <p>
+                                <img src="{{settings.PUBLIC_URL}}/static/commercialoperator/img/dbca-logo.jpg" title="None" width="500" style="height: auto;">        
+            </p> -->
+        {% endblock %}
+    </body> 
+</html>

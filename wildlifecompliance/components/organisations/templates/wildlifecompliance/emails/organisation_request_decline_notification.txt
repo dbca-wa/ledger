@@ -1,11 +1,11 @@
 {%  extends 'wildlifecompliance/emails/base_email.txt' %}
 
 {%  block content %}
-    Your organisation request has been declined:
+    Your request to be linked with the following organisation has been declined:
 
-    Organisation : {{ request.name }}
+    Organisation: {{ request.name }}
 
-    ABN : {{ request.abn}}
+    ABN: {{ request.abn }}
 
 
 {%  endblock %}

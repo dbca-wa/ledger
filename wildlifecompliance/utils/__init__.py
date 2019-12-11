@@ -1,6 +1,6 @@
 from django.conf import settings
 from collections import OrderedDict
-from wildlifecompliance.components.applications.models import Application, ApplicationType
+from wildlifecompliance.components.applications.models import Application
 from wildlifecompliance.components.licences.models import DefaultActivity
 #from copy import deepcopy
 
@@ -28,7 +28,7 @@ class ActivityPurposeMap():
 def unique_column_names(applications):
     """
     Returns Unique Column Names per Activity-Purpose - since 
-	questions in ApplicationType.schema may be added or deleted for newer applications
+	questions in schema may be added or deleted for newer applications
 
     To run:
         from wildlifecompliance.utils import unique_column_names

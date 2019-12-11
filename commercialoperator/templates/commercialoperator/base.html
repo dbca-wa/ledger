@@ -1,0 +1,187 @@
+{% load bootstrap3 %}
+
+{% load static %}
+
+{% load users %}
+{% load utils %}
+{% is_internal as is_internal_login %}
+{% is_commercialoperator_admin as is_commercialoperator_admin_user %}
+{% can_show_tests as show_tests %}
+{% system_maintenance_due as system_maintenance_due %}
+{% system_name_short as short_name %}
+{% dept_name as department_name %}
+{% system_name as system_name %}
+{% system_name_short as system_name_short %}
+{% support_email as support_email %}
+{% is_payment_officer as is_payment_officer %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            {% bootstrap_css %}
+                <link type="text/css" href="{% static 'commercialoperator/css/base.css' %}" rel="stylesheet">
+            {% if not dev %}
+                <link rel="stylesheet" href="{% static 'commercialoperator_vue/static/css/app.css' %}">
+            {% endif %}
+            {% block extra_css %}
+            {% endblock %}
+            {% block extra_js %}
+            {% endblock %}
+            <title>
+                {% block title %}
+                {{ short_name }} - {{ department_name }}
+                {% endblock %}
+            </title>
+
+        </meta>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+    </head>
+    <body>
+        <header class="topmast">
+            {% block header %}
+                {% include 'commercialoperator/header.html' %}
+            {% endblock %}
+        </header>
+        {% block menu %}
+            <div class="container-fluid">
+                <div class="row">
+                    <nav class="navbar navbar-default">
+                        <div class="container">
+                            <div class="navbar-header">
+                                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                                    <span class="sr-only">Toggle navigation</span>
+                                    <span class="icon-bar"></span>
+                                    <span class="icon-bar"></span>
+                                    <span class="icon-bar"></span>
+                                </button>
+                                <a class="navbar-brand" href="{% url 'ds_home' %}"><div style="inline"><img src="{% static 'commercialoperator/img/dpaw_small.png' %}">{% if is_internal_login %}Applications {% else %}Home {% endif %}</div></a>
+                            </div>
+                            <div id="navbar" class="navbar-collapse collapse">
+                                <ul class="nav navbar-nav">
+                                    {% block left_menu_items %}
+                                        {% if is_internal_login %}
+                                        <li><a href="/internal/approvals">Licences</a></li>
+                                        <li><a href="/internal/compliances">Compliance with Requirements</a></li>
+                                        <li><a href="/internal/organisations/access">Organisation Access</a></li>
+                                        <li><a href="/internal/search">Search</a></li>
+                                        <li><a href="/internal/payment">Park Entry Fees</a></li>
+                                        {% else %}
+                                        <li><a href="/external/payment">Park Entry Fees</a></li>
+                                        {% endif %}
+                                    {% endblock %}
+                                </ul>
+                                <ul class="nav navbar-nav navbar-right">
+                                    {% if request.user.is_authenticated %}
+                                        <li>
+                                            <a>
+                                            Welcome
+                                            <strong>
+                                                {% if request.user.first_name %}
+                                                    {{ request.user.get_short_name }}
+                                                {% elif request.user.last_name %}
+                                                    {{ request.user.last_name }}
+                                                {% else %}
+                                                    {{ request.user.email }}
+                                                {% endif %}
+                                            </strong>
+                                            </a>
+                                        </li>
+                                        <li class="dropdown">
+                                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                                Options
+                                                <span class="caret"></span>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                {% if is_commercialoperator_admin_user or request.user.is_superuser %}
+                                                    <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                                                {% endif %}
+                                                {% if is_commercialoperator_admin_user or request.user.is_superuser or is_payment_officer %}
+                                                    <li><a href="/internal/reports">Reports</a></li>
+                                                {% endif %}
+                                                {% if is_commercialoperator_admin_user or request.user.is_superuser %}
+                                                    <li role="separator" class="divider"></li>
+                                                {% endif %}
+                                                {% if request.user.is_superuser %}
+                                                    <li><a href="{% url 'mgt-commands' %}">Management Commands</a></li>
+                                                {% endif %}
+                                                {% if show_tests and request.user.is_superuser %}
+                                                    <li><a href="{% url 'test-emails' %}">Test Emails</a></li>
+                                                {% endif %}
+                                                <li><a href="{% url 'manage-account' %}">Manage Account</a></li>
+                                                <!-- <li><a href="{% url 'manage-profiles' %}">Manage Profiles</a></li> -->
+                                                {% for org in request.user.commercialoperator_organisations.all %}
+                                                    {% for org_contact in org.contacts.all%}
+                                                        {% ifequal org_contact.email request.user.email %}
+                                                            {% if org_contact.user_status == 'active' %}
+                                                                {% if org_contact.is_admin or org_contact.check_consultant %}
+                                                                    <li><a href="/external/organisations/manage/{{org.id}}">Manage {{ org.organisation.name}} </a></li>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        {% endifequal %}
+                                                    {% endfor %}
+                                                {% endfor %}
+                                                <li role="separator" class="divider"></li>
+
+                                                <!--
+                                                {% for org in request.user.commercialoperator_organisations.all %}
+                                                    <li><a href="/external/organisations/manage/{{org.id}}">Manage {{ org.organisation.name}}</a></li>
+                                                {% endfor %}
+                                                -->
+
+                                                <li><a href="{% url 'accounts:logout' %}?next=/">Logout</a></li>
+                                            </ul>
+                                        </li>
+                                    {% endif %}
+                                    {% block right_menu_items %}
+                                    {% endblock %}
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+            </div>
+        {% endblock %}
+        {% block breadcrumbs %}
+        {% endblock %}
+        {% block messages %}
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        {% for message in messages %}
+                            <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&#215;</button>
+                                {{ message|safe }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        {% endblock %}
+
+		{% if system_maintenance_due %}
+		    <div class="alert alert-warning">
+		    	<strong>Notice!</strong> System will be down for maintenance between {{ system_maintenance_due }}
+		    </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+        {% block modals %}
+        {% endblock %}
+        {% if not dev %}
+            <!--<script type="text/javascript" src="https://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/jquery/2.1.2/jquery.min.js"></script>
+            <script type="text/javascript" src="https://static.dpaw.wa.gov.au/static/cdnjs/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>-->
+            <script type="text/javascript" src="{% static 'commercialoperator_vue/static/js/manifest.js' %}"></script>
+            <script type="text/javascript" src="{% static 'commercialoperator_vue/static/js/vendor.js' %}"></script>
+            <script type="text/javascript" src="{% static 'commercialoperator_vue/static/js/app.js' %}"></script>
+        {% else %}
+            <script type="text/javascript" src="{{ dev_url }}"></script>
+        {% endif %}
+        {% block custom_js %}
+        {% endblock %}
+    </body>
+</html>

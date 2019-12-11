@@ -6,10 +6,12 @@ def mooring_url(request):
     web_url = request.META['HTTP_HOST']
     if web_url in settings.ROTTNEST_ISLAND_URL:
        template_group = 'rottnest'
-       TERMS  = "https://www.rottnestisland.com/boating/moorings/Rental%20Moorings%20and%20Jetty%20Pens"
+       TERMS  = "https://www.rottnestisland.com/~/media/Files/boating-documents/marine-hire-facilities-tcs.pdf?la=en"
+       PUBLIC_URL='https://mooring-ria.dbca.wa.gov.au/'
     else:
        template_group = 'pvs'
        TERMS = "/know/online-mooring-site-booking-terms-and-conditions"
+       PUBLIC_URL='https://mooring.dbca.wa.gov.au'
 
     is_officer = False
     is_inventory = False
@@ -46,7 +48,8 @@ def mooring_url(request):
         'IS_INVENTORY' : is_inventory,
         'IS_ADMIN' : is_admin,
         'IS_PAYMENT_OFFICER' : is_payment_officer,
-        'IS_CUSTOMER' : is_customer
+        'IS_CUSTOMER' : is_customer,
+        'PUBLIC_URL' : PUBLIC_URL
         }
 
 

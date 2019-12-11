@@ -88,7 +88,7 @@ export default {
             type: String,
             required: true,
             validator:function(val) {
-                let options = ['internal','referral','external'];
+                let options = ['internal','external'];
                 return options.indexOf(val) != -1 ? true: false;
             }
         },
@@ -544,9 +544,6 @@ export default {
     computed: {
         is_external: function(){
             return this.level == 'external';
-        },
-        is_referral: function(){
-            return this.level == 'referral';
         },
         wc_version: function (){
             return this.$root.wc_version;

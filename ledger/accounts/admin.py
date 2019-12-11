@@ -1,6 +1,8 @@
 from django.contrib.auth.admin import UserAdmin
 from django.contrib import admin
 from django.forms import modelform_factory
+from django.conf import settings
+from django.contrib.auth.models import Group
 
 from reversion.admin import VersionAdmin
 
@@ -20,7 +22,7 @@ class EmailUserAdmin(UserAdmin):
     )
     fieldsets = (
         (None, {'fields': ('email',)}),
-        ('Personal info', {'fields': ('first_name', 'last_name', 'dob', 'identification', 'character_flagged', 'character_comments')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'dob', 'identification','position_title', 'character_flagged', 'character_comments')}),
         ('Permissions', {'fields': (
             'is_active', 'is_staff', 'is_superuser', 'groups')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
@@ -73,6 +75,10 @@ class EmailUserAdmin(UserAdmin):
 
         obj.save()
 
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        if settings.SYSTEM_GROUPS and db_field.name == "groups" and not request.user.is_superuser:
+            kwargs["queryset"] = Group.objects.filter(name__in=settings.SYSTEM_GROUPS)
+        return super(EmailUserAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):

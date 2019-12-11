@@ -494,7 +494,7 @@ class MooringsiteSerialiser(serializers.ModelSerializer):
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
-        fields = ('name','abbreviation','ratis_id','wkb_geometry','zoom_level','mooring_group')
+        fields = ('id','name','abbreviation','ratis_id','wkb_geometry','zoom_level','mooring_group')
 
 
 class MooringsiteClassSerializer(serializers.HyperlinkedModelSerializer):

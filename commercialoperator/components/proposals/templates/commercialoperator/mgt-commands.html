@@ -1,0 +1,21 @@
+{% extends 'commercialoperator/base.html' %}
+
+{% block content %}
+    <div>
+        <H4>Hover over button to see help text.</H4>
+        <form action="" method="POST">
+            {% csrf_token %}
+            <button type="submit" name="script" value="approval_renewal_notices" {% if approval_renewal_notices == 'true' %}style="color:green" {% endif %} title="Send Approval renewal notice when approval is due to expire in 30 days">Run Script 'approval_renewal_notices'</button><br><br>
+            <button type="submit" name="script" value="expire_approvals" {% if expire_approvals == 'true' %}style="color:green" {% endif %} title="Change the status of Approvals to Expired when past expiry date">Run Script 'expire_approvals'</button><br><br>
+            <button type="submit" name="script" value="send_compliance_reminder" {% if send_compliance_reminder == 'true' %}style="color:green" {% endif %} title="Send notification emails for compliances which has past due dates, and also reminder notification emails for those that are within the daterange prior to due_date (eg. within 14 days of due date)">Run Script 'send_compliance_reminder'</button><br><br>
+            <button type="submit" name="script" value="update_approval_status" {% if update_approval_status == 'true' %}style="color:green" {% endif %} title="Change the status of Approvals to Surrender/Cancelled/Suspended">Run Script 'update_approval_status'</button><br><br>
+            <button type="submit" name="script" value="update_compliance_status" {% if update_compliance_status == 'true' %}style="color:green" {% endif %} title="Change the status of Compliances from future to due when they are close to due date (eg. within 14 days)">Run Script 'update_compliance_status'</button><br><br>
+            <button type="submit" name="script" value="monthly_invoices" {% if monthly_invoices == 'true' %}style="color:green" {% endif %} title="Run the monthly_invoices script">Run Script 'monthly_invoices'</button><br><br>
+        </form>
+        <br>
+    </div>
+    <br />
+    {{ ret }}
+    {{ block.super }}
+{% endblock %}
+

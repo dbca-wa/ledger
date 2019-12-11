@@ -1,0 +1,10 @@
+{%  extends 'disturbance/emails/base_email.txt' %}
+
+{%  block content %}
+     Your Organisation link request has been declined from:
+        Organisation : {{ organisation.name }}
+        ABN : {{ organisation.abn}}
+    
+    You can not make applications on behalf of this organisation now.
+
+{%  endblock %}

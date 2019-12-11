@@ -1,0 +1,35 @@
+{% extends 'commercialoperator/base.html' %}
+{% load static %}
+{% block content %}
+    <div class="container">
+        <div class="well">
+            <div class="row"><div class="col-sm-12">
+                <h2>Success!</h2>
+                <p>A confirmation email has been sent to {{ submitter }}. </p>
+                <p>&nbsp;</p>
+                <p>Please click <a href="{{EXPLORE_PARKS_SEARCH}}">here</a> if you want to make another booking.</p>
+            </div></div>
+        </div>
+        <div class="row"><div class="col-sm-12" style="margin-top: 1em">
+            {% if request.user == submitter or request.user.is_staff or request.session.col_booking == booking_id %}
+                {% if monthly_invoicing %}
+                  <a href="{% url 'cols-monthly-confirmation-pdf' booking_id %}" class="btn btn-info btn-lg" target="_blank">Confirmation</a>
+                {% else %}
+                  <a href="{% url 'cols-confirmation-pdf' invoice_reference %}" class="btn btn-info btn-lg" target="_blank">Confirmation</a>
+                {% endif %}
+
+                {% if not monthly_invoicing %}
+                  {% if request.user.is_authenticated %}
+                    <a href="{% url 'cols-invoice-pdf' invoice_reference %}" class="btn btn-info btn-lg"  target="_blank">Invoice</a>
+                  {% else %}
+                    <a href="{% url 'home' %}" class="btn btn-info btn-lg">Log in</a><p>You must be logged in to see your invoice online.</p>
+                  {% endif %}
+                {% endif %}
+
+                <p style="font-size: 1.5rem; font-weight: bold;">You must bring your confirmation with you to the park</p>
+            {% else %}
+                <p style="font-size: 1.5rem; font-weight: bold;">You do not have permission to access the confirmation or invoice for this booking.<br>Please check your email or contact COLS directly.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

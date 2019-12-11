@@ -81,7 +81,7 @@ class ProcessView(OfficerOrAssessorRequiredMixin, TemplateView):
         convert_documents_to_url(application.data, application.documents.all(), '')
 
         data = {
-            'user': serialize(request.user),
+            'user': serialize(request.user, exclude='residential_address'),
             #'application': serialize(application, posthook=format_application),
             'application': serialize(application,posthook=format_application,
                                         related={

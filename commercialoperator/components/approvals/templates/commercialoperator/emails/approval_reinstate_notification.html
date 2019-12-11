@@ -1,0 +1,8 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+    <p>Your licence to conduct commercial operations on <em>Conservation and Land Management Act 1984 (CALM Act)</em> land has been reinstated. Please login to your account to view the licence.</p>
+    <p><strong>Licence : {{ approval.lodgement_number}}</strong></p>
+    
+    <p>If you have any enquiries or need assistance with the online system please contact a licensing officer on {{settings.DEP_PHONE}}, or email {{settings.SUPPORT_EMAIL}}</p>
+{%  endblock %}

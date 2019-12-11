@@ -1,0 +1,24 @@
+{% extends 'mooring/base.html' %}
+{% load static %}
+{% load forms %}
+{% block content %}
+    <div class="container">
+        <div class="well">
+            <div class="row"><div class="col-sm-12">
+                <h2>Cancellation Completed</h2>
+                <p>A confirmation email has been sent to {{ booking.customer.email }}. </p>
+                 {% if booking.cost_total < 0 %}
+                     {% if refund_failed %}
+                         Your refund has failed.  A reference number for your refund is :
+                         {% for i in refund_failed %}
+                            {{ i.id }}
+  	     	         {% endfor %}
+                            A job has been creating to manually process your refund.  This can take upto 28 days.
+                     {% else %}
+                           A refund has automatically been refunded to you,  please allow 1-3 business days for the money to be credit to your account.
+                     {%endif %}
+                {% endif %} 
+            </div></div>
+        </div>
+    </div>
+{% endblock %}

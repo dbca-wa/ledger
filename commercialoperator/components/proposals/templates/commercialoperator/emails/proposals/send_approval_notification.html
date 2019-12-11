@@ -1,0 +1,32 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+
+ 
+        <!-- <p><strong>COMMERCIAL OPERATIONS LICENCE - {{proposal.lodgement_number}}</strong></p>
+
+        <p>Please find enclosed your commercial operations licence. Please ensure the Handbook is carried by the licence holder or licence holder's representative when entering lands and waters managed by the Department of Biodiversity, Conservation and Attractions as per condition 5.7(b).</p>
+
+        <p>This licence is an important document. Please retain it in a safe location so it can be produced when requested.</p>
+
+        <p>Your licence is valid to {{proposal.approval.expiry_date}}</p> -->
+        <p>Your licence to conduct commercial operations on <em>Conservation and Land Management Act 1984</em> has been approved and expires on {{proposal.approval.expiry_date}}. A copy of your licence is attached to this email and can be accessed in the Commercial Operator Licensing System (COLS) under your account, click <a href="{{url}}">here</a> to login.</p>
+
+        <p><strong>Parks and Activities</strong><br>
+        The activities and parks you are permitted to operate within are listed in Schedule 1 of your licence.</p>
+
+        <p><strong>Commercial Operator Handbook - Licence Conditions</strong><br>
+        All operators are required to adhere to the licence conditions listed in the Commercial Operator Handbook (2019). A copy of the handbook can be downloaded from the DBCA website <a href="{{handbook_url}}">here</a>. Please ensure you have a copy of this handbook on hand either in hardcopy or an electronic version.</p>
+
+        <p><strong>Additional Licence Conditions</strong></br>
+        Additional licence conditions are listed in schedule 2 of the licence, and are listed under the “Licence Requirements” section in COLS. You will need to login to your account and ensure you have completed all additional licence conditions by the due date by uploading the requested documents.</p>
+
+        <p>If you have any enquiries or need assistance with the online system please contact a licensing office on {{settings.DEP_PHONE}} or email {{settings.SUPPORT_EMAIL}}</p>
+   
+       <!-- {% if num_requirement_docs == 1 %}
+           <p><span>Requirement Documents: Please note, there is {{ num_requirement_docs }} requirement document also attached.</span></p>
+       {% elif num_requirement_docs > 1 %}
+           <p><span>Requirement Documents: Please note, there are {{ num_requirement_docs }} requirement documents also attached.</span></p>
+       {% endif %} -->
+
+{%  endblock %}

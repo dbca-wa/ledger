@@ -1,0 +1,17 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+	Your Application {{ proposal.lodgement_number }} has been reviewed and has been recommended for decline.
+    {% if reason %}
+        <p>
+        	<span>Declined Reason: {{ reason }}</span>
+        </p>
+    {% endif %}
+
+    <p>
+    You can access this Application using the following link:
+    </p>
+    <a href="{{url}}">Access Application</a>
+
+
+{%  endblock %}
