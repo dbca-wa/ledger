@@ -14,6 +14,7 @@ import Approval from '../approvals/approval.vue'
 //import PaymentOrder from '@/components/common/tclass/payment_order.vue'
 import PaymentOrder from '@/components/common/tclass/payment_order.vue'
 import PaymentDash from '@/components/common/payments_dashboard.vue'
+import ParkBookingDash from '@/components/common/parkbookings_dashboard.vue'
 import Reports from '@/components/reports/reports.vue'
 export default
 {
@@ -55,9 +56,15 @@ export default
             component: Search,
             name:"internal-search"
         },
+        // {
+        //     path: 'payment',
+        //     component: PaymentDash,
+        //     props: { level: 'internal' }
+        //     //component: PaymentOrder,
+        // },
         {
             path: 'payment',
-            component: PaymentDash,
+            component: ParkBookingDash,
             props: { level: 'internal' }
             //component: PaymentOrder,
         },

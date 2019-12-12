@@ -3,6 +3,7 @@ from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Docu
 from commercialoperator.components.organisations.models import (
                                     Organisation,
                                 )
+from commercialoperator.components.main.models import UserSystemSettings
 from commercialoperator.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
 from ledger.accounts.utils import in_dbca_domain
@@ -24,6 +25,13 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'state',
             'country',
             'postcode'
+        )
+
+class UserSystemSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSystemSettings
+        fields = (
+            'one_row_per_park',
         )
 
 class UserOrganisationSerializer(serializers.ModelSerializer):

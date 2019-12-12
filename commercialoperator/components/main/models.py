@@ -434,6 +434,16 @@ class SystemMaintenance(models.Model):
     def __str__(self):
         return 'System Maintenance: {} ({}) - starting {}, ending {}'.format(self.name, self.description, self.start_date, self.end_date)
 
+class UserSystemSettings(models.Model):
+    one_row_per_park = models.BooleanField(default=False) #Setting for user if they want to see Payment (Park Entry Fees Dashboard) by one row per park or one row per booking
+    user = models.ForeignKey(EmailUser, unique=True, related_name='system_settings')
+
+
+    class Meta:
+        app_label = 'commercialoperator'
+        verbose_name_plural = "User System Settings"
+
+
 import reversion
 reversion.register(Region, follow=['districts'])
 reversion.register(District, follow=['parks'])
