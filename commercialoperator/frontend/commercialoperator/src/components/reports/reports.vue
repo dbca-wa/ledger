@@ -395,12 +395,12 @@ export default {
                     "banked_start":vm.flatDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "banked_end":vm.flatDateEndPicker.data("DateTimePicker").date().set({hour:23,minute:59,second:59,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                 };
-                if(vm.region){
-                    values.region = vm.region;
-                    if (vm.district) {
-                        values.district = vm.district;
-                    }
-                }
+                //if(vm.region){
+                //    values.region = vm.region;
+                //    if (vm.district) {
+                //        values.district = vm.district;
+                //    }
+                //}
                 return values;
             }
             return false;
