@@ -2,6 +2,7 @@
   <div class="container">
     <div id="report-form">
         <form method="get" id="payments-form" action="/ledger/payments/api/report-allocated">
+            <!--
             <div class="well well-sm">
                 <div class="row">
                     <div class="col-lg-12">
@@ -31,6 +32,7 @@
                     </div>
                 </div>
             </div>
+            -->
             <div class="well">
                 <div class="row">
                     <div class="col-md-12">
@@ -389,18 +391,18 @@ export default {
             let vm = this;
             if(vm.form.valid()){
                 var values = {
-                    "system":"S516",
+                    "system":"S557",
                     "start":(vm.region) ? vm.flatDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'):vm.accountsDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "end":(vm.region) ? vm.flatDateEndPicker.data("DateTimePicker").date().set({hour:23,minute:59,second:59,millisecond:0}).format('YYYY-MM-DD H:mm:ss'):vm.accountsDateEndPicker.data("DateTimePicker").date().set({hour:23,minute:59,second:59,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "banked_start":vm.flatDateStartPicker.data("DateTimePicker").date().set({hour:0,minute:0,second:0,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                     "banked_end":vm.flatDateEndPicker.data("DateTimePicker").date().set({hour:23,minute:59,second:59,millisecond:0}).format('YYYY-MM-DD H:mm:ss'),
                 };
-                if(vm.region){
-                    values.region = vm.region;
-                    if (vm.district) {
-                        values.district = vm.district;
-                    }
-                }
+                //if(vm.region){
+                //    values.region = vm.region;
+                //    if (vm.district) {
+                //        values.district = vm.district;
+                //    }
+                //}
                 return values;
             }
             return false;
@@ -431,7 +433,8 @@ export default {
         },
         getReport:function (values) {
             let vm = this;
-            var url = "/ledger/payments/api/report-allocated?"+$.param(values);
+            //var url = "/ledger/payments/api/report-allocated?"+$.param(values);
+            var url = "/ledger/payments/api/report?"+$.param(values);
             window.location.assign(url);
         },
         addFormValidations: function() {
