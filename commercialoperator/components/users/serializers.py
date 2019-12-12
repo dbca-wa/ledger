@@ -154,7 +154,6 @@ class UserSerializer(serializers.ModelSerializer):
     def get_system_settings(self, obj):
         try:
             user_system_settings = obj.system_settings.first()
-            print user_system_settings
             serialized_settings = UserSystemSettingsSerializer(
                 user_system_settings).data
             return serialized_settings

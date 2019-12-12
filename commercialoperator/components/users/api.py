@@ -151,7 +151,6 @@ class UserViewSet(viewsets.ModelViewSet):
             user_setting, created = UserSystemSettings.objects.get_or_create(
                 user = instance
             )
-            print user_setting, created
             serializer = UserSystemSettingsSerializer(user_setting, data=request.data)
             serializer.is_valid(raise_exception=True)
             #instance.residential_address = address

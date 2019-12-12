@@ -16,6 +16,7 @@ import PaymentOrder from '@/components/common/tclass/payment_order.vue'
 import PaymentDash from '@/components/common/payments_dashboard.vue'
 import ParkBookingDash from '@/components/common/parkbookings_dashboard.vue'
 import Reports from '@/components/reports/reports.vue'
+import ParkEntryFeesDashboard from '../park_entry_fees_dashboard.vue'
 export default
 {
     path: '/internal',
@@ -62,11 +63,14 @@ export default
         //     props: { level: 'internal' }
         //     //component: PaymentOrder,
         // },
+        // {
+        //     path: 'payment',
+        //     component: ParkBookingDash,
+        //     props: { level: 'internal' }
+        // },
         {
             path: 'payment',
-            component: ParkBookingDash,
-            props: { level: 'internal' }
-            //component: PaymentOrder,
+            component: ParkEntryFeesDashboard,
         },
         {
             path: 'payment_order',
