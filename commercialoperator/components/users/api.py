@@ -37,7 +37,8 @@ from commercialoperator.components.users.serializers import   (
                                                 ContactSerializer,
                                                 EmailUserActionSerializer,
                                                 EmailUserCommsSerializer,
-                                                EmailUserLogEntrySerializer
+                                                EmailUserLogEntrySerializer,
+                                                UserSystemSettingsSerializer,
                                             )
 from commercialoperator.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
@@ -145,14 +146,17 @@ class UserViewSet(viewsets.ModelViewSet):
     def update_system_settings(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = UserSystemSettingsSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
+            # serializer = UserSystemSettingsSerializer(data=request.data)
+            # serializer.is_valid(raise_exception=True)
             user_setting, created = UserSystemSettings.objects.get_or_create(
-                one_row_per_park = serializer.validated_data['one_row_per_park'],
                 user = instance
             )
+            print user_setting, created
+            serializer = UserSystemSettingsSerializer(user_setting, data=request.data)
+            serializer.is_valid(raise_exception=True)
             #instance.residential_address = address
-            instance.save()
+            serializer.save()
+            instance = self.get_object()
             serializer = UserSerializer(instance)
             return Response(serializer.data);
         except serializers.ValidationError:
