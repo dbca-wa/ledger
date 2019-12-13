@@ -207,18 +207,24 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(park__id__in=[park])
 
             if payment_method:
-                #queryset = queryset.filter(invoices__payment_method=payment_method)
-                queryset = queryset.filter(Q(booking__invoices__payment_method=payment_method) | Q(booking__booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING))
+                if payment_method == str(BookingInvoice.PAYMENT_METHOD_MONTHLY_INVOICING):
+                    # for deferred payment where invoice not yet created (monthly invoicing), append the following qs
+                    queryset = queryset.filter(Q(booking__invoices__payment_method=payment_method) | Q(booking__booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING))
+                else:
+                    queryset = queryset.filter(Q(booking__invoices__payment_method=payment_method))
 
             if payment_status:
                 if payment_status.lower() == 'overdue':
                     refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last() and i.booking.invoices.last().overdue]
                     queryset = queryset.filter(booking__invoices__invoice_reference__in=refs)
                 else:
-                    refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last()]
+                    refs = [i.booking.invoice.reference  for i in ParkBooking.objects.all() if i.booking and hasattr(i.booking, 'invoice') and i.booking.invoice!=None]
                     filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
                     queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs)#.distinct('id')
 
+                    if payment_status.lower() == 'unpaid':
+                        # for deferred payment where invoice not yet created (monthly invoicing), append the following qs
+                        queryset = queryset | ParkBooking.objects.filter(booking__invoices__isnull=True)
                                
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')

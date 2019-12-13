@@ -188,8 +188,9 @@ export default {
                     },
                     {
                         data: "trading_name",
-                        name: "trading_name",
+                        name: "booking__proposal__org_applicant__organisation__trading_name",
                         searchable: false,
+                        orderable: true
                     },
                     {
                         data: "arrival",
@@ -405,56 +406,6 @@ export default {
                 e.preventDefault();
                 var id = $(this).attr('data-reissue-approval');
                 vm.reissueApproval(id);
-            });
-
-            // Internal Extend listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-extend-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-extend-approval');
-                vm.extendApproval(id);
-            });
-
-
-            //Internal Cancel listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-cancel-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-cancel-approval');
-                vm.cancelApproval(id);
-            });
-
-            //Internal Suspend listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-suspend-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-suspend-approval');
-                vm.suspendApproval(id);
-            });
-
-            // Internal Reinstate listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-reinstate-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-reinstate-approval');
-                vm.reinstateApproval(id);
-            });
-
-            //Internal/ External Surrender listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-surrender-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-surrender-approval');
-                vm.surrenderApproval(id);
-            });
-
-            // External renewal listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-renew-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-renew-approval');
-                vm.renewApproval(id);
-            });
-
-            // External amend listener
-            vm.$refs.proposal_datatable.vmDataTable.on('click', 'a[data-amend-approval]', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-amend-approval');
-                vm.amendApproval(id);
             });
 
             //if(vm.is_external){

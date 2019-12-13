@@ -2047,7 +2047,7 @@ class ProposalOtherDetails(models.Model):
 class ProposalAccreditation(models.Model):
     #activities_land = models.CharField(max_length=24, blank=True, default='')
     ACCREDITATION_TYPE_CHOICES = (
-        ('no', 'No'),
+        ('no', 'None'),
         ('atap', 'ATAP'),
         ('eco_certification', 'Eco Certification'),
         ('narta', 'NARTA'),
