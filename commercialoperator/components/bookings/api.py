@@ -38,6 +38,7 @@ from commercialoperator.components.bookings.models import (
 from commercialoperator.components.bookings.serializers import (
     BookingSerializer,
     ParkBookingSerializer,
+    DTParkBookingSerializer,
 #    BookingSerializer2,
 #    ParkBookingSerializer2,
 )
@@ -108,3 +109,36 @@ class ParkBookingViewSet(viewsets.ModelViewSet):
             return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) )
         return ParkBooking.objects.none()
 
+class ParkBookingPaginatedViewSet(viewsets.ModelViewSet):
+    filter_backends = (ProposalFilterBackend,)
+    pagination_class = DatatablesPageNumberPagination
+    renderer_classes = (ProposalRenderer,)
+    page_size = 10
+    queryset = ParkBooking.objects.none()
+    serializer_class = DTParkBookingSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if is_internal(self.request):
+            return ParkBooking.objects.all()
+        elif is_customer(self.request):
+            user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
+            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) )
+        return ParkBooking.objects.none()
+
+    @list_route(methods=['GET',])
+    def park_bookings(self, request, *args, **kwargs):
+        """
+        Paginated serializer for datatables - used by the internal and external dashboard (filtered by the get_queryset method)
+
+        To test:
+            http://localhost:8000/api/booking_paginated/bookings_external/?format=datatables&draw=1&length=2
+        """
+
+        qs = self.get_queryset()
+        qs = self.filter_queryset(qs)
+
+        self.paginator.page_size = qs.count()
+        result_page = self.paginator.paginate_queryset(qs, request)
+        serializer = DTParkBookingSerializer(result_page, context={'request':request}, many=True)
+        return self.paginator.get_paginated_response(serializer.data)

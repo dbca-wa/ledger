@@ -1861,6 +1861,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
                 previous_proposal = Proposal.objects.get(id=self.id)
                 proposal = clone_proposal_with_status_reset(previous_proposal)
                 proposal.proposal_type = 'renewal'
+                proposal.training_completed = False
                 #proposal.schema = ProposalType.objects.first().schema
                 ptype = ProposalType.objects.filter(name=proposal.application_type).latest('version')
                 proposal.schema = ptype.schema
@@ -2046,7 +2047,7 @@ class ProposalOtherDetails(models.Model):
 class ProposalAccreditation(models.Model):
     #activities_land = models.CharField(max_length=24, blank=True, default='')
     ACCREDITATION_TYPE_CHOICES = (
-        ('no', 'No'),
+        ('no', 'None'),
         ('atap', 'ATAP'),
         ('eco_certification', 'Eco Certification'),
         ('narta', 'NARTA'),

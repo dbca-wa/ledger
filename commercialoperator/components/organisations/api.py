@@ -782,7 +782,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     def decline(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            instance.decline(request)
+            reason = ''
+            instance.decline(reason, request)
             serializer = OrganisationRequestSerializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:

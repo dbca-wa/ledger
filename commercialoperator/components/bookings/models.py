@@ -190,7 +190,10 @@ class Booking(Payment):
 
     @property
     def invoice(self):
-        return self.invoices.last().invoice
+        try:
+            return self.invoices.last().invoice
+        except:
+            return None
 
     @property
     def deferred_payment_date(self):
