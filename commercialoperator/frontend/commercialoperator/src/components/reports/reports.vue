@@ -1,7 +1,7 @@
 <template lang="html">
   <div class="container">
     <div id="report-form">
-        <form method="get" id="payments-form" action="/ledger/payments/api/report">
+        <form  method="get" id="payments-form" action="/ledger/payments/api/report">
             <!--
             <div class="well well-sm">
                 <div class="row">
