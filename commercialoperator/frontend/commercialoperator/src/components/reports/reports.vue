@@ -1,7 +1,7 @@
 <template lang="html">
   <div class="container">
     <div id="report-form">
-        <form method="get" id="payments-form" action="/ledger/payments/api/report-allocated">
+        <form method="get" id="payments-form" action="/ledger/payments/api/report">
             <!--
             <div class="well well-sm">
                 <div class="row">
@@ -433,7 +433,7 @@ export default {
         },
         getReport:function (values) {
             let vm = this;
-            //var url = "/ledger/payments/api/report-allocated?"+$.param(values);
+            //var url = "/ledger/payments/api/report?"+$.param(values);
             var url = "/ledger/payments/api/report?"+$.param(values);
             window.location.assign(url);
         },
