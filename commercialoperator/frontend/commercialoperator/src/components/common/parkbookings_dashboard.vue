@@ -4,7 +4,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Park Entry Fees (Park bookings) <small v-if="is_external">Entry fees apply to passengers <a :href="payment_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></small>
+                    <h3 class="panel-title">Park Entry Fees (per Park) <small v-if="is_external">Entry fees apply to passengers <a :href="payment_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></small>
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>

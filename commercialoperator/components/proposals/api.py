@@ -217,7 +217,6 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 else:
                     refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last()]
                     filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
-                    print refs, filtered_refs
                     queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs)#.distinct('id')
 
                                
