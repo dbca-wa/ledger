@@ -45,7 +45,7 @@ module.exports = {
     referrals_paginated_internal:   "/api/proposal_paginated/referrals_internal/?format=datatables",
     qaofficer_paginated_internal:   "/api/proposal_paginated/qaofficer_internal/?format=datatables",
     booking_paginated_internal:     "/api/booking_paginated/bookings_external/?format=datatables",
-    parkbooking_paginated_internal: "/api/parkbooking_paginated/parkbookings_external/?format=datatables",
+    parkbooking_paginated_internal: "/api/parkbooking_paginated/park_bookings/?format=datatables",
     //filter_list:                    "/api/proposal_paginated/filter_list.json",
     filter_list:                    "/api/proposal/filter_list.json",
     filter_list_approvals:          "/api/approvals/filter_list.json",

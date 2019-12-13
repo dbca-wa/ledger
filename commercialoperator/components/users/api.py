@@ -37,12 +37,14 @@ from commercialoperator.components.users.serializers import   (
                                                 ContactSerializer,
                                                 EmailUserActionSerializer,
                                                 EmailUserCommsSerializer,
-                                                EmailUserLogEntrySerializer
+                                                EmailUserLogEntrySerializer,
+                                                UserSystemSettingsSerializer,
                                             )
 from commercialoperator.components.organisations.serializers import (
     OrganisationRequestDTSerializer,
 )
 from commercialoperator.components.main.utils import retrieve_department_users
+from commercialoperator.components.main.models import UserSystemSettings
 
 class DepartmentUserList(views.APIView):
     renderer_classes = [JSONRenderer,]
@@ -128,6 +130,32 @@ class UserViewSet(viewsets.ModelViewSet):
             )
             instance.residential_address = address
             instance.save()
+            serializer = UserSerializer(instance)
+            return Response(serializer.data);
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    def update_system_settings(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            # serializer = UserSystemSettingsSerializer(data=request.data)
+            # serializer.is_valid(raise_exception=True)
+            user_setting, created = UserSystemSettings.objects.get_or_create(
+                user = instance
+            )
+            serializer = UserSystemSettingsSerializer(user_setting, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            #instance.residential_address = address
+            serializer.save()
+            instance = self.get_object()
             serializer = UserSerializer(instance)
             return Response(serializer.data);
         except serializers.ValidationError:

@@ -197,6 +197,29 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                     filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
                     queryset = queryset.filter(invoices__invoice_reference__in=filtered_refs)#.distinct('id')
 
+        #Filtering for ParkBooking dashboard
+        if queryset.model is ParkBooking:
+            park = request.GET.get('park')
+            payment_method = request.GET.get('payment_method')
+            payment_status = request.GET.get('payment_status')
+
+            if park:
+                queryset = queryset.filter(park__id__in=[park])
+
+            if payment_method:
+                #queryset = queryset.filter(invoices__payment_method=payment_method)
+                queryset = queryset.filter(Q(booking__invoices__payment_method=payment_method) | Q(booking__booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING))
+
+            if payment_status:
+                if payment_status.lower() == 'overdue':
+                    refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last() and i.booking.invoices.last().overdue]
+                    queryset = queryset.filter(booking__invoices__invoice_reference__in=refs)
+                else:
+                    refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last()]
+                    filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
+                    queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs)#.distinct('id')
+
+                               
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
         if queryset.model is Proposal:
@@ -230,6 +253,13 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(park_bookings__arrival__gte=date_from)
             elif date_to:
                 queryset = queryset.filter(park_bookings__arrival__lte=date_to)
+        elif queryset.model is ParkBooking:
+            if date_from and date_to:
+                queryset = queryset.filter(arrival__range=[date_from, date_to])
+            elif date_from:
+                queryset = queryset.filter(arrival__gte=date_from)
+            elif date_to:
+                queryset = queryset.filter(arrival__lte=date_to)
 
         queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
         setattr(view, '_datatables_total_count', total_count)
