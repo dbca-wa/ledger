@@ -703,10 +703,21 @@ export default {
                 confirmButtonText: 'Renew licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
+                swal({
+                    title: "Loading...",
+                    //text: "Loading...",
+                    allowOutsideClick: false,
+                    allowEscapeKey:false,
+                    onOpen: () =>{
+                        swal.showLoading()
+                    }
+                })
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/renew_approval')),{
                 
                 })
                 .then((response) => {
+                    swal.hideLoading();
+                    swal.close();
                    let proposal = {}
                    proposal = response.body
                    vm.$router.push({
@@ -737,17 +748,27 @@ export default {
                 confirmButtonText: 'Amend licence',
                 //confirmButtonColor:'#d9534f'
             }).then(() => {
+                swal({
+                    title: "Loading...",
+                    //text: "Loading...",
+                    allowOutsideClick: false,
+                    allowEscapeKey:false,
+                    onOpen: () =>{
+                        swal.showLoading()
+                    }
+                })
                 vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,(proposal_id+'/amend_approval')),{
                 
                 })
                 .then((response) => {
+                    swal.hideLoading();
+                    swal.close();
                    let proposal = {}
                    proposal = response.body
                    vm.$router.push({
                     name:"draft_proposal",
                     params:{proposal_id: proposal.id}
                    });
-                    
                 }, (error) => {
                     console.log(error);
                     swal({
@@ -755,12 +776,12 @@ export default {
                     text: error.body,
                     type: "error",                   
                     })
-
                 });
             },(error) => {
 
             });
         },
+
 
         cancelApproval: function(approval_id){
             this.$refs.approval_cancellation.approval_id = approval_id;
