@@ -102,10 +102,10 @@
                 </div>
                 -->
 
-                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities" ref="activities_land"></ActivitiesLand>
+                <ActivitiesLand :proposal="proposal" id="proposalStartActivitiesLand" :canEditActivities="canEditActivities" :proposal_parks="proposal_parks" ref="activities_land"></ActivitiesLand>
               </div>
               <div class="tab-pane fade" id="pills-activities-marine" role="tabpanel" aria-labelledby="pills-activities-marine-tab">
-                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities" ref="activities_marine"></ActivitiesMarine>
+                <ActivitiesMarine :proposal="proposal" id="proposalStartActivitiesMarine" :canEditActivities="canEditActivities" ref="activities_marine" :proposal_parks="proposal_parks"></ActivitiesMarine>
               </div>
               <div class="tab-pane fade" id="pills-other-details" role="tabpanel" aria-labelledby="pills-other-details-tab">
                 <OtherDetails :proposal="proposal" id="proposalStartOtherDetails" ref="other_details"></OtherDetails>
@@ -170,6 +170,10 @@
             referral:{
                 type: Object,
                 required:false
+            },
+            proposal_parks:{
+                type:Object,
+                default:null
             },
         },
         data:function () {

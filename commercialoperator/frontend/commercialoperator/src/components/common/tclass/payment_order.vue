@@ -79,7 +79,7 @@ from '@/utils/hooks'
             let vm = this;
             return{
                 values: null,
-                headers: '{"Park": "select", "Arrival": "date", "Passengers (6yrs+)": "number", "Children under 6 years": "number", "Free of charge":"number", "Cost":"total"}',
+                headers: '{"Park": "select", "Arrival": "date", "Same tour group": "checkbox", "Passengers (6yrs+)": "number", "Children under 6 years": "number", "Free of charge":"number", "Cost":"total"}',
                 parks: [],
                 land_parks: [],
                 parks_available: false,
@@ -194,6 +194,9 @@ from '@/utils/hooks'
                 var idx_child = vm.$refs.order_table.idx_child;
                 var idx_free = vm.$refs.order_table.idx_free;
                 var idx_price = vm.$refs.order_table.idx_price;
+                var idx_adult_same_tour = vm.$refs.order_table.idx_adult_same_tour;
+                var idx_child_same_tour = vm.$refs.order_table.idx_child_same_tour;
+                var idx_free_same_tour = vm.$refs.order_table.idx_free_same_tour;
 
                 var errors = [];
                 var tbody = vm.$refs.order_table.table.tbody;
@@ -267,7 +270,10 @@ from '@/utils/hooks'
                                 adult:vm.land_parks[i].park.adult_price,
                                 child:vm.land_parks[i].park.child_price,
                                 //senior:vm.land_parks[i].park.senior
-                            }
+                            },
+                            region_id: vm.land_parks[i].park.region.id,
+                            region_name: vm.land_parks[i].park.region.name,
+                            max_group_arrival_by_date: vm.land_parks[i].park.max_group_arrival_by_date,
                         });
                     }
                     if (vm.parks.length==0) {

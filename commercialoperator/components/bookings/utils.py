@@ -37,13 +37,15 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
                 'created': timezone.now(),
             }
         )
-        lines = ast.literal_eval(request.POST['line_details'])['tbody']
+        #lines = ast.literal_eval(request.POST['line_details'])['tbody']
+        lines = json.loads(request.POST['line_details'])['tbody']
 
     elif (booking_type == Booking.BOOKING_TYPE_INTERNET and proposal.org_applicant and proposal.org_applicant.bpay_allowed) or \
          (booking_type == Booking.BOOKING_TYPE_RECEPTION):
          #(booking_type == Booking.BOOKING_TYPE_RECEPTION and proposal.org_applicant.other_allowed):
         booking = Booking.objects.create(proposal_id=proposal.id, created_by=request.user, booking_type=booking_type)
-        lines = ast.literal_eval(request.POST['line_details'])['tbody']
+        #lines = ast.literal_eval(request.POST['line_details'])['tbody']
+        lines = json.loads(request.POST['line_details'])['tbody']
 
     else:
         booking = Booking.objects.create(proposal_id=proposal.id, created_by=request.user, booking_type=booking_type)
@@ -56,10 +58,20 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
     for row in lines:
         park_id = row[0]['value']
         arrival = row[1]
-        no_adults = int(row[2]) if row[2] else 0
-        no_children = int(row[3]) if row[3] else 0
-        no_free_of_charge = int(row[4]) if row[4] else 0
+        same_tour_group = True if row[2]==True else False
+        no_adults = int(row[3]) if row[3] else 0
+        no_children = int(row[4]) if row[4] else 0
+        no_free_of_charge = int(row[5]) if row[5] else 0
         park = Park.objects.get(id=park_id)
+
+        # same tour group visitors
+        no_adults_same_tour = int(row[7]) if row[7] else 0
+        no_children_same_tour = int(row[8]) if row[8] else 0
+        no_free_of_charge_same_tour = int(row[9]) if row[9] else 0
+
+        #no_adults = no_adults if no_adults_same_tour==0 else no_adults_same_tour
+        #no_children = no_children if no_children_same_tour==0 else no_children_same_tour
+        #no_free_of_charge = no_free_of_charge if no_free_of_charge_same_tour==0 else no_free_of_charge_same_tour
 
         if any([no_adults, no_children, no_free_of_charge]) > 0:
             park_booking = ParkBooking.objects.create(
@@ -69,7 +81,11 @@ def create_booking(request, proposal, booking_type=Booking.BOOKING_TYPE_TEMPORAR
                 no_adults = no_adults,
                 no_children = no_children,
                 no_free_of_charge = no_free_of_charge,
-                cost = no_adults*park.adult_price + no_children*park.child_price
+                cost = no_adults*park.adult_price + no_children*park.child_price,
+                no_adults_same_tour = no_adults_same_tour,
+                no_children_same_tour = no_children_same_tour,
+                no_free_of_charge_same_tour = no_free_of_charge_same_tour,
+                same_tour_group = same_tour_group,
             )
     if not park_booking:
         raise ValidationError('Must have at least one person visiting the park')
@@ -290,6 +306,7 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
     def add_line_item(park, arrival, age_group, price, no_persons):
         #price = Decimal(price)
         price = round(float(price), 2)
+        #if no_persons > 0 or (same_tour_group and no_persons >= 0):
         if no_persons > 0:
             return {
                 'ledger_description': '{} - {} - {}'.format(park.name, arrival, age_group),
@@ -305,18 +322,43 @@ def create_lines(request, invoice_text=None, vouchers=[], internal=False):
     for row in tbody:
         park_id = row[0]['value']
         arrival = row[1]
-        no_adults = int(row[2]) if row[2] else 0
-        no_children = int(row[3]) if row[3] else 0
-        no_free_of_charge = int(row[4]) if row[4] else 0
+        same_tour_group = True if row[2] else False
+        no_adults = int(row[3]) if row[3] else 0
+        no_children = int(row[4]) if row[4] else 0
+        no_free_of_charge = int(row[5]) if row[5] else 0
         park= Park.objects.get(id=park_id)
 
-        if no_adults > 0:
+        # same tour group visitors
+        no_adults_same_tour = int(row[7]) if (row[7]!='' and row[7] is not None) else None
+        no_children_same_tour = int(row[8]) if (row[8]!='' and row[8] is not None) else None
+        no_free_of_charge_same_tour = int(row[9]) if (row[9]!='' and row[9] is not None) else None
+
+        #no_adults = no_adults if no_adults_same_tour==0 else no_adults_same_tour
+        #no_children = no_children if no_children_same_tour==0 else no_children_same_tour
+        #no_free_of_charge = no_free_of_charge if no_free_of_charge_same_tour==0 else no_free_of_charge_same_tour
+
+        if same_tour_group and no_adults_same_tour is not None:
+            if no_adults_same_tour > 0:
+                lines.append(add_line_item(park, arrival, 'Adult (Same Tour Group, Total {})'.format(no_adults), price=park.adult_price, no_persons=no_adults_same_tour))
+            elif no_adults_same_tour == 0 and no_adults != 0:
+                lines.append(add_line_item(park, arrival, 'Adult (Same Tour Group, Total {})'.format(no_adults), price=0.0, no_persons=no_adults))
+        elif no_adults > 0:
             lines.append(add_line_item(park, arrival, 'Adult', price=park.adult_price, no_persons=no_adults))
 
-        if no_children > 0:
+        if same_tour_group and no_children_same_tour is not None:
+            if no_children_same_tour > 0:
+                lines.append(add_line_item(park, arrival, 'Child (Same Tour Group, Total {})'.format(no_children), price=park.child_price, no_persons=no_children_same_tour))
+            elif no_children_same_tour == 0 and no_children != 0:
+                lines.append(add_line_item(park, arrival, 'Child (Same Tour Group, Total {})'.format(no_children), price=0.0, no_persons=no_children))
+        elif no_children > 0:
             lines.append(add_line_item(park, arrival, 'Child', price=park.child_price, no_persons=no_children))
 
-        if no_free_of_charge > 0:
+        if same_tour_group and no_free_of_charge_same_tour is not None:
+            if no_free_of_charge_same_tour > 0:
+                lines.append(add_line_item(park, arrival, 'Free (Same Tour Group, Total {})'.format(no_free_of_charge), price=0.0, no_persons=no_free_of_charge_same_tour))
+            elif no_free_of_charge_same_tour == 0 and no_free_of_charge != 0:
+                lines.append(add_line_item(park, arrival, 'Free (Same Tour Group, Total {})'.format(no_free_of_charge), price=0.0, no_persons=no_free_of_charge))
+        elif no_free_of_charge > 0:
             lines.append(add_line_item(park, arrival, 'Free', price=0.0, no_persons=no_free_of_charge))
 
     return lines
@@ -429,7 +471,7 @@ def test_create_invoice(payment_method='bpay'):
         'oracle_code': 'ABC123 GST',
         'price_incl_tax': Decimal('10.00'),
         'price_excl_tax': Decimal('9.090909090909'),
-        'ledger_description': 'Booking Date 2019-09-24: Neale Junction Nature Reserve - 2019-09-24 - Adult',
+        'ledger_description': 'Neale Junction Nature Reserve - 2019-09-24 - Adult',
         'quantity': 1
     }]
     #products = Booking.objects.last().as_line_items

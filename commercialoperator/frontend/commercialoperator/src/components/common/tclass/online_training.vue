@@ -11,7 +11,7 @@
                 </div>
                 <div class="panel-body collapse in" :id="pBody">
                     <div v-if="proposal.training_completed" class="form-horizontal col-sm-12">
-                        <label style="color: green">Your online training has been completed. Please proceed to pay and submit the appication.</label>
+                        <label style="color: green">Your online training has been completed. Please proceed to pay and submit the application.</label>
                     </div>
                     <div >                        
                         <div class="form-horizontal col-sm-12 borderDecoration">
@@ -180,8 +180,8 @@ from '@/utils/hooks'
                         vm.updateTrainingFlag();
 
                         /* Enable Payment tab (disabled by default in form_tclass.vue) */
-                        $('#pills-payment-tab').attr('style', '');
-                        $('#li-payment').attr('class', 'nav-item');
+                        //$('#pills-payment-tab').attr('style', '');
+                        //$('#li-payment').attr('class', 'nav-item');
                     }
                     vm.attempt++;
                 }

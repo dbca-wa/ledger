@@ -8,7 +8,7 @@
         The activities and parks you are permitted to operate within are listed in Schedule 1 of your licence.
 
         Commercial Operator Handbook - Licence Conditions
-        All operators are required to adhere to the licence conditions listed in the Commercial Operator Handbook (2019). A copy of the handbook can be downloaded from the DBCA website <a href="{{handbook_url}}">here</a>. Please ensure you have a copy of this handbook on hand either in hardcopy or an electronic version.
+        All operators are required to adhere to the licence conditions listed in the Commercial Operator Handbook. A copy of the handbook can be downloaded from the {{settings.DEP_NAME}} website {{settings.COLS_HANDBOOK_URL}}. Please ensure you have a copy of this handbook on hand either in hardcopy or an electronic version.
 
         Additional Licence Conditions
         Additional licence conditions are listed in schedule 2 of the licence, and are listed under the “Licence Requirements” section in COLS. You will need to login to your account and ensure you have completed all additional licence conditions by the due date by uploading the requested documents.

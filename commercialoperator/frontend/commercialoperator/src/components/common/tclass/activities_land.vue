@@ -159,7 +159,12 @@ export default {
             canEditActivities:{
               type: Boolean,
               default: true
+            },
+            proposal_parks:{
+              type:Object,
+              required:true
             }
+
         },
         data:function () {
           let vm = this;
@@ -689,6 +694,22 @@ export default {
               }
             }
           },
+          find_repeated: function(array){
+            var common=new Map();
+            array.forEach(function(obj){
+             var values=Object.values(obj)[0];
+             values.forEach(function(val){
+                 common.set(val,(common.get(val)||0)+1);
+             });
+            });
+            var result=[];
+            common.forEach(function(appearance,el){
+               result.push(el);
+            });
+            return result;
+        },
+
+
           find_recurring: function(array){
             var common=new Map();
             array.forEach(function(obj){
@@ -742,7 +763,8 @@ export default {
             }
           vm.selected_trails=trail_list
           //console.log(trail_list)
-          vm.trail_activities = vm.find_recurring(all_activities)
+          //vm.trail_activities = vm.find_recurring(all_activities)
+          vm.trail_activities = vm.find_repeated(all_activities)
         },
         eventListeners: function(){
         },
@@ -759,15 +781,35 @@ export default {
             //vm.proposal.marine_parks_activities=[];
             //vm.fetchRequiredDocumentList();
 
-            for (var i = 0; i < vm.proposal.land_parks.length; i++) {
-              var current_park=vm.proposal.land_parks[i].park.id
+            //--Start-- Original code to store park
+            // for (var i = 0; i < vm.proposal.land_parks.length; i++) {
+            //   var current_park=vm.proposal.land_parks[i].park.id
+            //   var current_activities=[]
+            //   var current_access=[]
+            //   for (var j = 0; j < vm.proposal.land_parks[i].land_activities.length; j++) {
+            //     current_activities.push(vm.proposal.land_parks[i].land_activities[j].activity.id);
+            //   }
+            //    for (var k = 0; k < vm.proposal.land_parks[i].access_types.length; k++){
+            //     current_access.push(vm.proposal.land_parks[i].access_types[k].access_type.id);
+            //    }
+            //    var data={
+            //     'park': current_park,
+            //     'activities': current_activities,
+            //     'access':current_access  
+            //    }
+            //    vm.selected_parks_activities.push(data)
+            // }
+            //--end--
+            if(vm.proposal_parks){
+            for (var i = 0; i < vm.proposal_parks.land_parks.length; i++) {
+              var current_park=vm.proposal_parks.land_parks[i].park.id
               var current_activities=[]
               var current_access=[]
-              for (var j = 0; j < vm.proposal.land_parks[i].land_activities.length; j++) {
-                current_activities.push(vm.proposal.land_parks[i].land_activities[j].activity.id);
+              for (var j = 0; j < vm.proposal_parks.land_parks[i].land_activities.length; j++) {
+                current_activities.push(vm.proposal_parks.land_parks[i].land_activities[j].activity.id);
               }
-               for (var k = 0; k < vm.proposal.land_parks[i].access_types.length; k++){
-                current_access.push(vm.proposal.land_parks[i].access_types[k].access_type.id);
+               for (var k = 0; k < vm.proposal_parks.land_parks[i].access_types.length; k++){
+                current_access.push(vm.proposal_parks.land_parks[i].access_types[k].access_type.id);
                }
                var data={
                 'park': current_park,
@@ -789,16 +831,21 @@ export default {
 
             //vm.selected_activities = vm.proposal.land_activities
             //vm.selected_access=vm.proposal.land_access
-            vm.selected_activities = vm.find_recurring(activity_list)
-            vm.selected_access=vm.find_recurring(access_list)
+            //vm.selected_activities = vm.find_recurring(activity_list)
+            //vm.selected_access=vm.find_recurring(access_list)
+            vm.selected_activities = vm.find_repeated(activity_list)
+            vm.selected_access=vm.find_repeated(access_list)
             vm.selected_parks=park_list
-
+          }
             this.$nextTick(() => {
               let vm=this;
               //vm.eventListeners();
             });
 
-            vm.store_trails(vm.proposal.trails);
+            //vm.store_trails(vm.proposal.trails); //--Original call to store trails
+
+            vm.store_trails(vm.proposal_parks.trails);
+
             //vm.trail_activities = vm.proposal.trail_activities
             //vm.selected_trail_ids = vm.proposal.trail_section_activities
             //vm.clear_selected_trails_activities()

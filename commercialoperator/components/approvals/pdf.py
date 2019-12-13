@@ -393,7 +393,7 @@ def _create_approval_cols(approval_buffer, approval, proposal, copied_to_permit,
         activities_str = activities_str if access_types_str =='' else access_types_str + ', ' + activities_str
 
         park_data.append([Paragraph(_format_name(p['park']), styles['BoldLeft']),
-                              Paragraph(activities_str, styles['Left'])
+                              Paragraph(activities_str.strip().strip(','), styles['Left']) # remove last trailing comma
                         ])
 
     if park_data:
@@ -603,8 +603,6 @@ def _create_renewal(renewal_buffer, approval, proposal):
     #                            , styles['Left']))
 
     delegation.append(Spacer(1, SECTION_BUFFER_HEIGHT))
-    #delegation.append(Paragraph('As a reminder, the Commercial Operator Handbook (2019) outlines the conditions of your licence.'
-    #    'The handbook is available online at the {} website:'.format(settings.DEP_NAME), styles['Left']))
     delegation.append(Paragraph('As a reminder, the Commercial Operator Handbook outlines the conditions of your licence. '
         'The current handbook is available online at the {} website:'.format(settings.DEP_NAME), styles['Left']))
 

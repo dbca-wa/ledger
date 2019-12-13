@@ -30,7 +30,7 @@
                                     <div>
                                         <!--<pre>{{ selected_activities }}</pre>-->
                                         <label class="control-label">Select the parks for which the activities are required</label>
-                                        <TreeSelect :proposal="proposal" :value.sync="selected_zone_ids" :options="marine_park_options" :default_expand_level="1" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
+                                        <TreeSelect :proposal="proposal" :value.sync="selected_zone_ids" :options="marine_park_options" :default_expand_level="0" allow_edit="true" :disabled="!canEditActivities"></TreeSelect>
                                     </div>
                                 </div>
                             </form>
@@ -93,6 +93,10 @@ from '@/utils/hooks'
             canEditActivities:{
               type: Boolean,
               default: true
+            },
+            proposal_parks:{
+              type:Object,
+              required:true
             }
         },
         data:function () {
@@ -379,7 +383,7 @@ from '@/utils/hooks'
                     }
                 ]
                 vm.marine_activities = response.body['marine_activities']
-
+                /*
                 vm.marine_park_options = [
                     {
                         'id': 'All',
@@ -387,6 +391,8 @@ from '@/utils/hooks'
                         'children': response.body['marine_parks']
                     }
                 ]
+                */
+                vm.marine_park_options = response.body['marine_parks']
                 vm.marine_parks = response.body['marine_parks']
                 vm.park_map = vm.get_park_map();
                 vm.park_activities = vm.get_park_activities();
@@ -511,6 +517,21 @@ from '@/utils/hooks'
 
               vm.checkRequiredDocuements(vm.marine_parks_activities)
           },
+          find_repeated: function(array){
+            var common=new Map();
+            array.forEach(function(obj){
+             var values=Object.values(obj)[0];
+             values.forEach(function(val){
+                 common.set(val,(common.get(val)||0)+1);
+             });
+            });
+            var result=[];
+            common.forEach(function(appearance,el){
+               result.push(el);
+            });
+            return result;
+          },
+
           find_recurring: function(array){
             var common=new Map();
             array.forEach(function(obj){
@@ -560,7 +581,8 @@ from '@/utils/hooks'
             }
 
           vm.selected_zone_ids=zone_ids
-          vm.selected_activities = vm.find_recurring(all_activities)
+          //vm.selected_activities = vm.find_recurring(all_activities)
+          vm.selected_activities = vm.find_repeated(all_activities)
         },
 
         eventListeners: function(){
@@ -571,7 +593,8 @@ from '@/utils/hooks'
             vm.proposal.marine_parks_activities=[];
             vm.fetchMarineTreeview();
 
-            vm.store_parks(vm.proposal.marine_parks);
+            //vm.store_parks(vm.proposal.marine_parks);
+            vm.store_parks(vm.proposal_parks.marine_parks);
             //vm.eventListeners();
         }
     }
