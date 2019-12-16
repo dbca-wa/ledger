@@ -278,7 +278,8 @@ class ProposalAssessmentAnswerSerializer(serializers.ModelSerializer):
                 )
 
 class ProposalAssessmentSerializer(serializers.ModelSerializer):
-    checklist=ProposalAssessmentAnswerSerializer(many=True, read_only=True)
+    #checklist=ProposalAssessmentAnswerSerializer(many=True, read_only=True)
+    checklist=serializers.SerializerMethodField()
 
     class Meta:
         model = ProposalAssessment
@@ -290,6 +291,11 @@ class ProposalAssessmentSerializer(serializers.ModelSerializer):
                 'referral_group_name',
                 'checklist'
                 )
+
+    def get_checklist(self,obj):
+        qs= obj.checklist.order_by('question__order')
+        return ProposalAssessmentAnswerSerializer(qs, many=True, read_only=True).data
+
 
 class ParksAndTrailSerializer(serializers.ModelSerializer):
     land_parks=ProposalParkSerializer(many=True)

@@ -2900,8 +2900,10 @@ class ChecklistQuestion(RevisionedMixin):
                                          default=TYPE_CHOICES[0][0])
     answer_type = models.CharField('Answer type', max_length=30, choices=ANSWER_TYPE_CHOICES,
                                          default=ANSWER_TYPE_CHOICES[0][0])
+
     #correct_answer= models.BooleanField(default=False)
     obsolete = models.BooleanField(default=False)
+    order = models.PositiveSmallIntegerField(default=1)
 
     def __str__(self):
         return self.text
