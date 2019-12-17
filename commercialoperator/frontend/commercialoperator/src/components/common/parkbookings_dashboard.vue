@@ -149,7 +149,7 @@ export default {
             proposal_submitters: [],
             proposal_parks: [],
             proposal_headers:[
-                " Number","Licence","Trading name","Arrival","Park","Visitors", "Invoice/Confirmation","Action","Holder","Status","Payment Method",
+                " Number","Licence","Trading name","Arrival","Park","Visitors", "Invoice/Confirmation","Holder","Status","Payment Method","Action"
             ],
             proposal_options:{
                 language: {
@@ -251,22 +251,6 @@ export default {
                         orderable: false
                     },
                     {
-                        data: "",
-                        mRender:function (data,type,full) {
-                            let links = '';
-                            if (full.payment_status.toLowerCase()=='paid' && vm.is_internal){
-                                if(vm.is_payment_admin){
-                                    links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
-                                }
-                            }
-                            return links;
-                        },
-                        name: '',
-                        searchable: false,
-                        orderable: false,
-                        visible: vm.level=='internal' ? true : false
-                    },
-                    {
                         data: "applicant",
                         name: "booking__proposal__approval__org_applicant__organisation__name, booking__proposal__approval__proxy_applicant__email, proposal__approval__proxy_applicant__first_name, booking__proposal__approval__proxy_applicant__last_name",
                         visible: this.level=='internal' ? true : false,
@@ -282,6 +266,22 @@ export default {
                         name: "payment_method",
                         searchable: false,
                         orderable: false
+                    },
+                    {
+                        data: "",
+                        mRender:function (data,type,full) {
+                            let links = '';
+                            if (full.payment_status.toLowerCase()=='paid' && vm.is_internal){
+                                if(vm.is_payment_admin){
+                                    links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                                }
+                            }
+                            return links;
+                        },
+                        name: '',
+                        searchable: false,
+                        orderable: false,
+                        visible: vm.level=='internal' ? true : false
                     },
 
                 ],
