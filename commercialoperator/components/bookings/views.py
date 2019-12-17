@@ -9,6 +9,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.core.exceptions import PermissionDenied
 
 from datetime import datetime, timedelta, date
 from django.utils import timezone
@@ -56,6 +57,7 @@ from ledger.payments.models import Invoice
 from ledger.basket.models import Basket
 from ledger.payments.mixins import InvoiceOwnerMixin
 from oscar.apps.order.models import Order
+from commercialoperator.helpers import is_internal, is_commercialoperator_admin, is_in_organisation_contacts
 
 import logging
 logger = logging.getLogger('payment_checkout')
@@ -440,44 +442,62 @@ class BookingSuccessView(TemplateView):
         return render(request, self.template_name, context)
 
 
-class InvoicePDFView(InvoiceOwnerMixin,View):
+#class InvoicePDFView(InvoiceOwnerMixin,View):
+class InvoicePDFView(View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
-        if bi:
-            proposal = bi.booking.proposal
-        else:
-            proposal = Proposal.objects.get(fee_invoice_reference=invoice.reference)
+        organisation = bi.booking.proposal.org_applicant.organisation.organisation_set.all()[0]
+        if self.check_owner(organisation):
+            if bi:
+                proposal = bi.booking.proposal
+            else:
+                proposal = Proposal.objects.get(fee_invoice_reference=invoice.reference)
 
-        response = HttpResponse(content_type='application/pdf')
-        response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
-        return response
+            response = HttpResponse(content_type='application/pdf')
+            response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
+            return response
+        raise PermissionDenied
+
+    def get_object(self):
+        return  get_object_or_404(Invoice, reference=self.kwargs['reference'])
+
+    def check_owner(self, organisation):
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or is_commercialoperator_admin(self.request)
+
+
+#class ConfirmationPDFView(InvoiceOwnerMixin,View):
+class ConfirmationPDFView(View):
+    def get(self, request, *args, **kwargs):
+        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
+        bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
+        organisation = bi.booking.proposal.org_applicant.organisation.organisation_set.all()[0]
+
+        if self.check_owner(organisation):
+            # GST ignored here because GST amount is not included on the confirmation PDF
+            response = HttpResponse(content_type='application/pdf')
+            response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking))
+            return response
+        raise PermissionDenied
 
     def get_object(self):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         return invoice
 
-
-class ConfirmationPDFView(InvoiceOwnerMixin,View):
-    def get(self, request, *args, **kwargs):
-        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
-
-        # GST ignored here because GST amount is not included on the confirmation PDF
-        response = HttpResponse(content_type='application/pdf')
-        response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking))
-        return response
-
-    def get_object(self):
-        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        return invoice
+    def check_owner(self, organisation):
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or is_commercialoperator_admin(self.request)
 
 
 class MonthlyConfirmationPDFView(View):
     def get(self, request, *args, **kwargs):
         booking = get_object_or_404(Booking, id=self.kwargs['id'])
 
-        response = HttpResponse(content_type='application/pdf')
-        response.write(create_monthly_confirmation_pdf_bytes('monthly_confirmation.pdf', booking))
-        return response
+        if self.check_owner(organisation):
+            response = HttpResponse(content_type='application/pdf')
+            response.write(create_monthly_confirmation_pdf_bytes('monthly_confirmation.pdf', booking))
+            return response
+        raise PermissionDenied
+
+    def check_owner(self, organisation):
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or is_commercialoperator_admin(self.request)
 
