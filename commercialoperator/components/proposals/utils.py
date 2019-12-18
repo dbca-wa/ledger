@@ -628,13 +628,13 @@ def save_park_zone_activity_data(instance,marine_parks_activities, request):
                 except:
                     raise
 
-                try:
-                    print '2b'.format()
-                    #with transaction.atomic():
-                    #    ProposalParkZoneActivity.objects.bulk_create(parkzone_activity)
-                    #ProposalParkZoneActivity.objects.bulk_create(parkzone_activity)
-                except IntegrityError:  
-                    pass
+#                try:
+#                    pass
+#                    #with transaction.atomic():
+#                    #    ProposalParkZoneActivity.objects.bulk_create(parkzone_activity)
+#                    #ProposalParkZoneActivity.objects.bulk_create(parkzone_activity)
+#                except IntegrityError:  
+#                    pass
 
         except:
             raise
@@ -686,9 +686,7 @@ def save_proponent_data(instance,request,viewset,parks=None,trails=None):
             # instance.save()
             serializer = SaveProposalSerializer(instance, data, partial=True)
             serializer.is_valid(raise_exception=True)
-            print '11'
             viewset.perform_update(serializer)
-            print '22'
             if 'accreditations' in other_details_data:
                 accreditation_types = instance.other_details.accreditations.values_list('accreditation_type', flat=True)
                 for acc in other_details_data['accreditations']:
