@@ -35,24 +35,29 @@
                   4. Other Details
                 </a>
               </li>
-              <li v-if="is_external && !proposal.is_amendment_proposal" class="nav-item" id="li-training">
+              <!--<li v-if="is_external && !proposal.is_amendment_proposal" class="nav-item" id="li-training">-->
+              <li v-if="is_external" class="nav-item" id="li-training">
                 <a class="nav-link" id="pills-online-training-tab" data-toggle="pill" href="#pills-online-training" role="tab" aria-controls="pills-online-training" aria-selected="false">
                   5. Questionnaire
                 </a>
               </li>
-              <li v-if="is_external && !proposal.is_amendment_proposal" class="nav-item" id="li-payment">
+              <!--<li v-if="is_external && !proposal.is_amendment_proposal" class="nav-item" id="li-payment">-->
+              <li v-if="is_external" class="nav-item" id="li-payment">
                 <a class="nav-link disabled" id="pills-payment-tab" data-toggle="pill" href="" role="tab" aria-controls="pills-payment" aria-selected="false">
                   6. Payment
                 </a>
               </li>
               <li v-if="is_external" class="nav-item" id="li-confirm">
                 <a class="nav-link disabled" id="pills-confirm-tab" data-toggle="pill" href="" role="tab" aria-controls="pills-confirm" aria-selected="false">
+                    7. Confirmation
+                    <!--
                     <span v-if="proposal.is_amendment_proposal">
                         5. Confirmation
                     </span>
                     <span v-else>
                         7. Confirmation
                     </span>
+                    -->
                 </a>
               </li>
             </ul>
