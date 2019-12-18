@@ -266,7 +266,7 @@ export default {
                         data: "",
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (full.payment_status.toLowerCase()=='paid' && vm.is_internal){
+                            if ( (full.payment_status.toLowerCase()=='paid' || full.payment_method=='Credit Card') && vm.is_internal) {
                                 if(vm.is_payment_admin){
                                     links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
                                 }
