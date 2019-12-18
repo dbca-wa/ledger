@@ -135,7 +135,7 @@ class Booking(Payment):
 
     def save(self, *args, **kwargs):
         super(Booking, self).save(*args,**kwargs)
-        if self.admission_number == '':
+        if self.admission_number == '' and self.booking_type != self.BOOKING_TYPE_TEMPORARY:
             self.admission_number = 'AD{0:06d}'.format(self.next_id)
             self.save()
 
