@@ -103,10 +103,10 @@ class ParkBookingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if is_internal(self.request):
-            return ParkBooking.objects.all()
+            return ParkBooking.objects.all().exclude(booking__booking_type=Booking.BOOKING_TYPE_TEMPORARY)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) )
+            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) ).exclude(booking__booking_type=Booking.BOOKING_TYPE_TEMPORARY)
         return ParkBooking.objects.none()
 
 class ParkBookingPaginatedViewSet(viewsets.ModelViewSet):
@@ -120,10 +120,10 @@ class ParkBookingPaginatedViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if is_internal(self.request):
-            return ParkBooking.objects.all()
+            return ParkBooking.objects.all().exclude(booking__booking_type=Booking.BOOKING_TYPE_TEMPORARY)
         elif is_customer(self.request):
             user_orgs = [org.id for org in user.commercialoperator_organisations.all()]
-            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) )
+            return  ParkBooking.objects.filter( Q(booking__proposal__org_applicant_id__in = user_orgs) | Q(booking__proposal__submitter = user) ).exclude(booking__booking_type=Booking.BOOKING_TYPE_TEMPORARY)
         return ParkBooking.objects.none()
 
     @list_route(methods=['GET',])
