@@ -463,7 +463,7 @@ class InvoicePDFView(View):
         return  get_object_or_404(Invoice, reference=self.kwargs['reference'])
 
     def check_owner(self, organisation):
-        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or is_commercialoperator_admin(self.request)
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or self.request.user.is_superuser
 
 
 #class ConfirmationPDFView(InvoiceOwnerMixin,View):
@@ -485,7 +485,7 @@ class ConfirmationPDFView(View):
         return invoice
 
     def check_owner(self, organisation):
-        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or is_commercialoperator_admin(self.request)
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or self.request.user.is_superuser
 
 
 class MonthlyConfirmationPDFView(View):
@@ -499,5 +499,5 @@ class MonthlyConfirmationPDFView(View):
         raise PermissionDenied
 
     def check_owner(self, organisation):
-        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or is_commercialoperator_admin(self.request)
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or self.request.user.is_superuser
 
