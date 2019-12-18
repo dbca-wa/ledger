@@ -37,6 +37,9 @@ def in_dbca_domain(request):
         return True
     return False
 
+def is_in_organisation_contacts(request, organisation):
+    return request.user.email in organisation.contacts.all().values_list('email', flat=True)
+
 def is_departmentUser(request):
     return request.user.is_authenticated() and is_model_backend(request) and in_dbca_domain(request)
 
