@@ -102,7 +102,8 @@ def create_booking_by_site(sites_qs, start_date, end_date, num_adult=0, num_conc
     campsite_qs = Campsite.objects.filter(pk__in=sites_qs)
     with transaction.atomic():
         # get availability for campsite, error out if booked/closed
-        availability = get_campsite_availability(campsite_qs, start_date, end_date)
+        user = overridden_by
+        availability = get_campsite_availability(campsite_qs, start_date, end_date,user)
         for site_id, dates in availability.items():
             if not override_checks:
                 if updating_booking:
@@ -203,7 +204,9 @@ def get_open_campgrounds(campsites_qs, start_date, end_date):
     return set(campground_map.keys())
 
 
-def get_campsite_availability(campsites_qs, start_date, end_date):
+def get_campsite_availability(campsites_qs, start_date, end_date, user = None):
+    # Added line to use is_officer from helper methods
+    from parkstay.helpers import is_officer
     """Fetch the availability of each campsite in a queryset over a range of visit dates."""
     # fetch all of the single-day CampsiteBooking objects within the date range for the sites
     bookings_qs = CampsiteBooking.objects.filter(
@@ -284,12 +287,16 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
                 val[start_date + timedelta(days=i)][0] = 'tooearly'
 
     # strike out days after the max_advance_booking
-    for site in campsites_qs:
-        stop = today + timedelta(days=site.campground.max_advance_booking)
-        stop_mark = min(max(stop, start_date), end_date)
-        if start_date > stop:
-            for i in range((end_date - stop_mark).days):
-                results[site.pk][stop_mark + timedelta(days=i)][0] = 'toofar'
+    if user == None or (not is_officer(user)):
+        for site in campsites_qs:
+            stop = today + timedelta(days=site.campground.max_advance_booking)
+            stop_mark = min(max(stop, start_date), end_date)
+            if start_date > stop:
+                for i in range((end_date - stop_mark).days):
+                    results[site.pk][stop_mark + timedelta(days=i)][0] = 'toofar'
+    # Added this section to allow officers to book camp dated after the max_advance_booking
+    elif user != None and is_officer(user):
+        pass
 
     # Get the current stay history
     stay_history = CampgroundStayHistory.objects.filter(
@@ -303,11 +310,15 @@ def get_campsite_availability(campsites_qs, start_date, end_date):
         max_days = settings.PS_MAX_BOOKING_LENGTH
 
     # strike out days after the max_stay period
-    for site in campsites_qs:
-        stop = start_date + timedelta(days=max_days)
-        stop_mark = min(max(stop, start_date), end_date)
-        for i in range((end_date - stop_mark).days):
-            results[site.pk][stop_mark + timedelta(days=i)][0] = 'toofar'
+    if user == None or (not is_officer(user)):
+        for site in campsites_qs:
+            stop = start_date + timedelta(days=max_days)
+            stop_mark = min(max(stop, start_date), end_date)
+            for i in range((end_date - stop_mark).days):
+                results[site.pk][stop_mark + timedelta(days=i)][0] = 'toofar'
+    # Added this section to allow officers to book camp dated after the max_advance_booking
+    elif user != None and is_officer(user):
+        pass
 
     return results
 
@@ -422,7 +433,8 @@ def get_available_campsitetypes(campground_id, start_date, end_date, _list=True)
 
 def get_available_campsites_list(campsite_qs, request, start_date, end_date):
     from parkstay.serialisers import CampsiteSerialiser
-    campsites = get_campsite_availability(campsite_qs, start_date, end_date)
+    user = request.user
+    campsites = get_campsite_availability(campsite_qs, start_date, end_date, user)
     available = []
 
     for site_id, dates in campsites.items():
