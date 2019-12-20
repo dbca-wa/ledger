@@ -447,13 +447,14 @@ class InvoicePDFView(View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
-        organisation = bi.booking.proposal.org_applicant.organisation.organisation_set.all()[0]
-        if self.check_owner(organisation):
-            if bi:
-                proposal = bi.booking.proposal
-            else:
-                proposal = Proposal.objects.get(fee_invoice_reference=invoice.reference)
 
+        if bi:
+            proposal = bi.booking.proposal
+        else:
+            proposal = Proposal.objects.get(fee_invoice_reference=invoice.reference)
+
+        organisation = proposal.org_applicant.organisation.organisation_set.all()[0]
+        if self.check_owner(organisation):
             response = HttpResponse(content_type='application/pdf')
             response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
             return response
@@ -490,7 +491,12 @@ class ConfirmationPDFView(View):
 
 class MonthlyConfirmationPDFView(View):
     def get(self, request, *args, **kwargs):
-        booking = get_object_or_404(Booking, id=self.kwargs['id'])
+        try:
+            booking = get_object_or_404(Booking, id=self.kwargs['id'])
+        except:
+            park_booking = get_object_or_404(ParkBooking, id=self.kwargs['id'])
+            booking = park_booking.booking
+        organisation = booking.proposal.org_applicant.organisation.organisation_set.all()[0]
 
         if self.check_owner(organisation):
             response = HttpResponse(content_type='application/pdf')
