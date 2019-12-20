@@ -319,28 +319,35 @@ class MooringArea(models.Model):
     def _is_open(self,period):
         '''Check if the campground is open on a specified datetime
         '''
+        is_open = False
         open_ranges, closed_ranges = None, None
         # Get all booking ranges
         try:
             open_ranges = self.booking_ranges.filter(Q(status=0),Q(range_start__lte=period), Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
+            is_open = True
         except MooringAreaBookingRange.DoesNotExist:
             pass
         try:
-            closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
+            closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),Q(status=1),Q(range_end__gte=period)).latest('updated_on')
+            #is_open = False
         except MooringAreaBookingRange.DoesNotExist:
-            return True if open_ranges else False
-
-        if not open_ranges:
-            return False
-        if open_ranges.updated_on > closed_ranges.updated_on:
-            return True
-        return False
+            pass
+            #return True if open_ranges else False
+        if open_ranges:
+             is_open = True
+        if closed_ranges:
+             is_open = False
+        #if not open_ranges:
+        #    return False
+        #if open_ranges.updated_on > closed_ranges.updated_on:
+        #    return True
+        return is_open
 
     def _get_current_closure(self):
         closure_period = None
         period = timezone.now()
         if not self.active:
-            closure = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__isnull=True) |Q(range_end__gte=period)).order_by('updated_on')
+            closure = self.booking_ranges.filter(Q(range_start__lte=period),Q(status=1),Q(range_end__gte=period)).order_by('updated_on')
             if closure:
                 closure_period = closure[0]
         return closure_period
@@ -806,7 +813,7 @@ class Mooringsite(models.Model):
             except MooringsiteBookingRange.DoesNotExist:
                 pass
             try:
-                closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__gte=period) | Q(range_end__isnull=True) ).latest('updated_on')
+                closed_ranges = self.booking_ranges.filter(Q(range_start__lte=period),~Q(status=0),Q(range_end__gte=period) ).latest('updated_on')
             except MooringsiteBookingRange.DoesNotExist:
                 return True if open_ranges else False
 
@@ -821,7 +828,7 @@ class Mooringsite(models.Model):
             closure_period = None
             period = datetime.now().date()
             if not self.active:
-                closure = self.booking_ranges.get(Q(range_start__lte=period),~Q(status=0),Q(range_end__isnull=True) |Q(range_end__gte=period))
+                closure = self.booking_ranges.get(Q(range_start__lte=period),Q(status=1),Q(range_end__gte=period))
                 closure_period = closure
             return closure_period
         else:
