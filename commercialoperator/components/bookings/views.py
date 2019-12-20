@@ -490,7 +490,12 @@ class ConfirmationPDFView(View):
 
 class MonthlyConfirmationPDFView(View):
     def get(self, request, *args, **kwargs):
-        booking = get_object_or_404(Booking, id=self.kwargs['id'])
+        try:
+            booking = get_object_or_404(Booking, id=self.kwargs['id'])
+        except:
+            park_booking = get_object_or_404(ParkBooking, id=self.kwargs['id'])
+            booking = park_booking.booking
+        organisation = booking.proposal.org_applicant.organisation.organisation_set.all()[0]
 
         if self.check_owner(organisation):
             response = HttpResponse(content_type='application/pdf')
