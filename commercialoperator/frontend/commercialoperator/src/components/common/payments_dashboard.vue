@@ -254,7 +254,7 @@ export default {
                                 links +=  `<a href='/cols/payments/confirmation-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
                             } else if (full.payment_method.toLowerCase()=='monthly invoicing' && full.invoice_reference == null){
                                 // running aggregated monthly booking - not yet invoiced
-                                links +=  `<a href='/cols/payments/monthly-confirmation-pdf/${full.id}' target='_blank' style='padding-left: 52px;'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
+                                links +=  `<a href='/cols/payments/monthly-confirmation-pdf/booking/${full.id}' target='_blank' style='padding-left: 52px;'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
                             } 
                             return links;
                         },

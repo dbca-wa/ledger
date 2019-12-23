@@ -489,13 +489,28 @@ class ConfirmationPDFView(View):
         return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or self.request.user.is_superuser
 
 
-class MonthlyConfirmationPDFView(View):
+class MonthlyConfirmationPDFBookingView(View):
+    """ for the Visitor Admissions Payment Dashboard - View by Booking (payments_dashboard.vue) """
+
     def get(self, request, *args, **kwargs):
-        try:
-            booking = get_object_or_404(Booking, id=self.kwargs['id'])
-        except:
-            park_booking = get_object_or_404(ParkBooking, id=self.kwargs['id'])
-            booking = park_booking.booking
+        booking = get_object_or_404(Booking, id=self.kwargs['id'])
+        organisation = booking.proposal.org_applicant.organisation.organisation_set.all()[0]
+
+        if self.check_owner(organisation):
+            response = HttpResponse(content_type='application/pdf')
+            response.write(create_monthly_confirmation_pdf_bytes('monthly_confirmation.pdf', booking))
+            return response
+        raise PermissionDenied
+
+    def check_owner(self, organisation):
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or self.request.user.is_superuser
+
+class MonthlyConfirmationPDFParkBookingView(View):
+    """ for the Visitor Admissions Payment Dashboard - View by ParkBooking (parkbookings_dashboard.vue) """
+
+    def get(self, request, *args, **kwargs):
+        park_booking = get_object_or_404(ParkBooking, id=self.kwargs['id'])
+        booking = park_booking.booking
         organisation = booking.proposal.org_applicant.organisation.organisation_set.all()[0]
 
         if self.check_owner(organisation):
