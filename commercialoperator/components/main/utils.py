@@ -1,6 +1,7 @@
 import requests
 import json
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
+import pytz
 from django.conf import settings
 from django.core.cache import cache
 
@@ -24,6 +25,10 @@ def get_department_user(email):
             return None
     except:
         raise
+
+def to_local_tz(_date):
+    local_tz = pytz.timezone(settings.TIME_ZONE)
+    return _date.astimezone(local_tz)
 
 #def add_business_days(from_date, number_of_days):
 #    """ given from_date and number_of_days, returns the next weekday date i.e. excludes Sat/Sun """

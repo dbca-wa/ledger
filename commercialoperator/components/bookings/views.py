@@ -43,6 +43,7 @@ from commercialoperator.components.bookings.utils import (
     calc_payment_due_date,
     create_bpay_invoice,
     create_other_invoice,
+    create_monthly_confirmation,
 )
 
 from commercialoperator.components.proposals.serializers import ProposalSerializer
@@ -58,6 +59,7 @@ from ledger.basket.models import Basket
 from ledger.payments.mixins import InvoiceOwnerMixin
 from oscar.apps.order.models import Order
 from commercialoperator.helpers import is_internal, is_commercialoperator_admin, is_in_organisation_contacts
+from ledger.payments.helpers import is_payment_admin
 
 import logging
 logger = logging.getLogger('payment_checkout')
@@ -178,6 +180,10 @@ class DeferredInvoicingView(TemplateView):
                     ret = create_other_invoice(submitter, booking)
                     invoice_reference = booking.invoice.reference
 
+                if booking and payment_method=='monthly_invoicing':
+                    # For monthly_invoicing, invoice is created later by Cron. Now we only create a confirmation
+                    ret = create_monthly_confirmation(submitter, booking)
+
                 logger.info('{} Created Park Bookings with payment method {} for Proposal ID {}'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), payment_method, proposal.id))
                 #send_monthly_invoicing_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
                 context.update({
@@ -188,7 +194,10 @@ class DeferredInvoicingView(TemplateView):
                     'invoice_reference': invoice_reference
                 })
                 if payment_method=='other':
-                    return HttpResponseRedirect(reverse('payments:invoice-payment') + '?invoice={}'.format(invoice_reference))
+                    if is_payment_admin(request.user):
+                        return HttpResponseRedirect(reverse('payments:invoice-payment') + '?invoice={}'.format(invoice_reference))
+                    else:
+                        raise PermissionDenied
                 else:
                     return render(request, self.template_name, context)
 
@@ -405,8 +414,8 @@ class BookingSuccessView(TemplateView):
                     request.session['cols_last_booking'] = booking.id
                     delete_session_booking(request.session)
 
-                    send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
-                    send_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+                    send_invoice_tclass_email_notification(request.user, booking, invoice, recipients=[recipient])
+                    send_confirmation_tclass_email_notification(request.user, booking, invoice, recipients=[recipient])
 
                     context.update({
                         'booking_id': booking.id,
