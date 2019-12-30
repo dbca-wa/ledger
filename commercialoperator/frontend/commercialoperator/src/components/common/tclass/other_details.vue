@@ -21,7 +21,7 @@
                         </ul>
                         <div v-for=" accreditation in proposal.other_details.accreditations">
                             <div v-if="!accreditation.is_deleted && accreditation.accreditation_type!='no'" class="col-sm-12">
-                                <Accreditation :accreditation="accreditation":proposal_id="proposal.id" :readonly="proposal.readonly" id="accreditation"></Accreditation>
+                                <Accreditation :accreditation="accreditation":proposal_id="proposal.id" :readonly="proposal.readonly" id="accreditation" :ref="accreditation.accreditation_type"></Accreditation>
                             </div>
                             <!-- <fieldset class="scheduler-border">
                                 <legend class="scheduler-border">{{accreditation_type.value}}</legend>
