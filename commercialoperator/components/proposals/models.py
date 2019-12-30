@@ -2443,7 +2443,9 @@ class ProposalUserAction(UserAction):
     ACTION_QA_OFFICER_COMPLETED = "QA Officer Assessment Completed {}"
 
     # monthly invoicing by cron
+    ACTION_SEND_BPAY_INVOICE = "Send BPAY invoice {} for application {} to {}"
     ACTION_SEND_MONTHLY_INVOICE = "Send monthly invoice {} for application {} to {}"
+    ACTION_SEND_MONTHLY_CONFIRMATION = "Send monthly confirmation for booking ID {}, for application {} to {}"
     ACTION_SEND_PAYMENT_DUE_NOTIFICATION = "Send monthly invoice/BPAY payment due notification {} for application {} to {}"
 
     class Meta:

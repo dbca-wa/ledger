@@ -250,11 +250,11 @@ export default {
                         mRender:function (data,type,full) {
                             let links = '';
                             if (full.payment_status.toLowerCase()=='paid' || full.payment_method.toUpperCase()=='BPAY' || (full.payment_method.toLowerCase()=='monthly invoicing' && full.invoice_reference !== null)){
-                                links +=  `<a href='/cols/payments/invoice-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a> &nbsp`;
-                                links +=  `<a href='/cols/payments/confirmation-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
+                                links +=  `<a href='/cols/payments/invoice-pdf/${full.invoice_reference}.pdf' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a> &nbsp`;
+                                links +=  `<a href='/cols/payments/confirmation-pdf/${full.invoice_reference}.pdf' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
                             } else if (full.payment_method.toLowerCase()=='monthly invoicing' && full.invoice_reference == null){
                                 // running aggregated monthly booking - not yet invoiced
-                                links +=  `<a href='/cols/payments/monthly-confirmation-pdf/${full.id}' target='_blank' style='padding-left: 52px;'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
+                                links +=  `<a href='/cols/payments/monthly-confirmation-pdf/booking/${full.id}.pdf' target='_blank' style='padding-left: 52px;'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
                             } 
                             return links;
                         },
@@ -266,9 +266,11 @@ export default {
                         data: "",
                         mRender:function (data,type,full) {
                             let links = '';
-                            if ( (full.payment_status.toLowerCase()=='paid' || full.payment_method=='Credit Card') && vm.is_internal) {
-                                if(vm.is_payment_admin){
+                            if(vm.is_payment_admin){
+                                if ( (full.payment_status.toLowerCase()=='paid' || full.payment_status.toLowerCase()=='over_paid') ) {
                                     links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                                } else {
+                                    links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>Record Payment</a><br/>`;
                                 }
                             }
                             return links;
