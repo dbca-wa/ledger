@@ -386,6 +386,28 @@ export default {
       if (vm.$refs.proposal_tclass.$refs.other_details.selected_accreditations.length==0 ){
         blank_fields.push(' Level of Accreditation is required')
       }
+      else{
+        for(var i=0; i<vm.proposal.other_details.accreditations.length; i++){
+          if(!vm.proposal.other_details.accreditations[i].is_deleted && vm.proposal.other_details.accreditations[i].accreditation_type!='no'){
+            if(vm.proposal.other_details.accreditations[i].accreditation_expiry==null || vm.proposal.other_details.accreditations[i].accreditation_expiry==''){
+              blank_fields.push('Expiry date for accreditation type '+vm.proposal.other_details.accreditations[i].accreditation_type_value+' is required')
+            }
+            // var acc_doc_ref='accreditation_file'+vm.proposal.other_details.accreditations[i].accreditation_type;
+            var acc_ref= vm.proposal.other_details.accreditations[i].accreditation_type;
+            // console.log(acc_doc_ref, acc_ref);
+            if(vm.$refs.proposal_tclass.$refs.other_details.$refs[acc_ref][0].$refs.accreditation_file.documents.length==0){
+              blank_fields.push('Accreditation Certificate for accreditation type '+vm.proposal.other_details.accreditations[i].accreditation_type_value+' is required')
+            }
+
+          }
+        }
+        // for(var j=0; j<vm.$refs.proposal_tclass.$refs.other_details.$refs.accreditation.length; j++){
+        //   if(vm.$refs.proposal_tclass.$refs.other_details.$refs.accreditation[j].$refs.accreditation_file.documents.length==0){
+        //     blank_fields.push('Accreditation Certificate for accreditation type'+vm.$refs.proposal_tclass.$refs.other_details.$refs.accreditation[j].accreditation_type_value+'is required.')
+
+        //   }
+        // }
+      }
 
       if (vm.proposal.other_details.preferred_licence_period=='' || vm.proposal.other_details.preferred_licence_period==null ){
         blank_fields.push(' Preferred Licence Period is required')
