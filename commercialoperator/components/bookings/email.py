@@ -8,6 +8,7 @@ from django.conf import settings
 from commercialoperator.components.emails.emails import TemplateEmailBase
 from commercialoperator.components.bookings.invoice_pdf import create_invoice_pdf_bytes
 from commercialoperator.components.bookings.confirmation_pdf import create_confirmation_pdf_bytes
+from commercialoperator.components.bookings.monthly_confirmation_pdf import create_monthly_confirmation_pdf_bytes
 from commercialoperator.components.bookings.models import Booking
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,11 @@ class InvoiceTClassSendNotificationEmail(TemplateEmailBase):
     subject = 'Your booking invoice.'
     html_template = 'commercialoperator/emails/bookings/tclass/send_invoice_notification.html'
     txt_template = 'commercialoperator/emails/bookings/tclass/send_invoice_notification.txt'
+
+class MonthlyInvoiceTClassSendNotificationEmail(TemplateEmailBase):
+    subject = 'Your monthly booking invoice.'
+    html_template = 'commercialoperator/emails/bookings/tclass/send_monthly_invoice_notification.html'
+    txt_template = 'commercialoperator/emails/bookings/tclass/send_monthly_invoice_notification.txt'
 
 class ConfirmationTClassSendNotificationEmail(TemplateEmailBase):
     subject = 'Your booking confirmation.'
@@ -110,9 +116,8 @@ def send_application_fee_confirmation_tclass_email_notification(request, applica
     else:
         _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
 
-def send_invoice_tclass_email_notification(request, booking, invoice, recipients, is_test=False):
+def send_invoice_tclass_email_notification(sender, booking, invoice, recipients, is_test=False):
     email = InvoiceTClassSendNotificationEmail()
-    #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
 
     context = {
         'booking_number': booking.booking_number,
@@ -127,7 +132,6 @@ def send_invoice_tclass_email_notification(request, booking, invoice, recipients
     if is_test:
         return
 
-    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, booking.proposal, sender=sender)
     #_log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
     if booking.proposal.org_applicant:
@@ -135,13 +139,11 @@ def send_invoice_tclass_email_notification(request, booking, invoice, recipients
     else:
         _log_user_email(msg, booking.proposal.submitter, booking.proposal.submitter, sender=sender)
 
-def send_confirmation_tclass_email_notification(request, booking, invoice, recipients, is_test=False):
+def send_confirmation_tclass_email_notification(sender, booking, invoice, recipients, is_test=False):
     email = ConfirmationTClassSendNotificationEmail()
-    #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
 
     context = {
         'booking_number': booking.booking_number,
-        #'url': url,
     }
 
     filename = 'confirmation.pdf'
@@ -152,7 +154,6 @@ def send_confirmation_tclass_email_notification(request, booking, invoice, recip
     if is_test:
         return
 
-    sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, booking.proposal, sender=sender)
     #_log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
     if booking.proposal.org_applicant:
@@ -188,6 +189,31 @@ def send_proposal_approval_email_notification(proposal,request):
         _log_org_email(msg, proposal.org_applicant, proposal.submitter, sender=sender)
     else:
         _log_user_email(msg, proposal.submitter, proposal.submitter, sender=sender)
+
+def send_monthly_confirmation_tclass_email_notification(sender, booking, recipients, is_test=False):
+    """ Monthly confirmation has deferred invoicing, deferred to the following month. So invoice is created later by Cron """
+    email = ConfirmationTClassSendNotificationEmail()
+    #url = request.build_absolute_uri(reverse('external-proposal-detail',kwargs={'proposal_pk': proposal.id}))
+
+    context = {
+        'booking_number': booking.booking_number,
+    }
+
+    filename = 'monthly_confirmation.pdf'
+    doc = create_monthly_confirmation_pdf_bytes(filename, booking)
+    attachment = (filename, doc, 'application/pdf')
+
+    msg = email.send(recipients, attachments=[attachment], context=context)
+    if is_test:
+        return
+
+    _log_proposal_email(msg, booking.proposal, sender=sender)
+    #_log_org_email(msg, booking.proposal.applicant, booking.proposal.submitter, sender=sender)
+    if booking.proposal.org_applicant:
+        _log_org_email(msg, booking.proposal.org_applicant, booking.proposal.submitter, sender=sender)
+    else:
+        _log_user_email(msg, booking.proposal.submitter, booking.proposal.submitter, sender=sender)
+
 
 def send_monthly_invoice_tclass_email_notification(sender, booking, invoice, recipients, is_test=False):
     email = MonthlyInvoiceTClassSendNotificationEmail()

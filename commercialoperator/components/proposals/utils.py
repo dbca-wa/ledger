@@ -943,8 +943,8 @@ def test_proposal_emails(request):
 
         booking_email.send_application_fee_invoice_tclass_email_notification(request, proposal, api, recipients, is_test=True)
         booking_email.send_application_fee_confirmation_tclass_email_notification(request, application_fee, api, recipients, is_test=True)
-        booking_email.send_invoice_tclass_email_notification(request, booking, bi, recipients, is_test=True)
-        booking_email.send_confirmation_tclass_email_notification(request, booking, bi, recipients, is_test=True)
+        booking_email.send_invoice_tclass_email_notification(request.user, booking, bi, recipients, is_test=True)
+        booking_email.send_confirmation_tclass_email_notification(request.user, booking, bi, recipients, is_test=True)
 
 
 

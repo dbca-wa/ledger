@@ -8,10 +8,15 @@ from datetime import datetime, timedelta, date
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from commercialoperator.components.main.models import Park
-from commercialoperator.components.proposals.models import Proposal
+from commercialoperator.components.proposals.models import Proposal, ProposalUserAction
 from commercialoperator.components.organisations.models import Organisation
 from commercialoperator.components.bookings.models import Booking, ParkBooking, BookingInvoice, ApplicationFee
-from commercialoperator.components.bookings.email import send_monthly_invoice_tclass_email_notification
+from commercialoperator.components.bookings.email import (
+    send_invoice_tclass_email_notification,
+    send_monthly_confirmation_tclass_email_notification,
+    send_confirmation_tclass_email_notification,
+    send_monthly_invoice_tclass_email_notification,
+)
 from ledger.checkout.utils import create_basket_session, create_checkout_session, calculate_excl_gst
 from ledger.payments.models import Invoice
 from ledger.payments.utils import oracle_parser
@@ -149,12 +154,32 @@ def create_monthly_invoice(user, offset_months=-1):
                     deferred_payment_date = calc_payment_due_date(booking, invoice.created + relativedelta(months=1))
                     book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method, deferred_payment_date=deferred_payment_date)
 
-                    #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
-                    #ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
+                    recipients = list(set([booking.proposal.applicant_email, user.email])) # unique list
+                    send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=recipients)
+                    ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(invoice.reference, booking.proposal.id, ', '.join(recipients)), user)
                 except Exception, e:
                     logger.error('Failed to create monthly invoice for booking_id {}'.format(booking.id))
                     logger.error('{}'.format(e))
                     failed_bookings.append(booking.id)
+
+    return failed_bookings
+
+def create_monthly_confirmation(user, booking):
+    """ From 'Park Entry Fees' payment screen, monthly invoicing creates invoice later (the next month), so immediately we only send a confirmation.
+        For more parks/arrival_dates booked for the same licence, the monthly confirmation pdf is appended with all the park entries for that given month.
+    """
+
+    failed_bookings = []
+    with transaction.atomic():
+        if booking.booking_type == Booking.BOOKING_TYPE_MONTHLY_INVOICING and booking.proposal.org_applicant and is_monthly_invoicing_allowed(booking):
+            try:
+                recipients = list(set([booking.proposal.applicant_email, user.email])) # unique list
+                send_monthly_confirmation_tclass_email_notification(user, booking, recipients=recipients)
+                ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_CONFIRMATION.format(booking.id, booking.proposal.id, ', '.join(recipients)), user)
+            except Exception, e:
+                logger.error('Failed to send Monthly Confirmation email for booking_id {}'.format(booking.id))
+                logger.error('{}'.format(e))
+                failed_bookings.append(booking.id)
 
     return failed_bookings
 
@@ -176,15 +201,22 @@ def create_bpay_invoice(user, booking):
                 book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method, deferred_payment_date=deferred_payment_date)
 
                 #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
-                #ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
+                recipients = list(set([booking.proposal.applicant_email, user.email])) # unique list
+                send_invoice_tclass_email_notification(user, booking, invoice, recipients=recipients)
+                send_confirmation_tclass_email_notification(user, booking, invoice, recipients=recipients)
+                ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_BPAY_INVOICE.format(invoice.reference, booking.proposal.id, ', '.join(recipients)), user)
             except Exception, e:
-                logger.error('Failed to create monthly invoice for booking_id {}'.format(booking.id))
+                logger.error('Failed to create BPAY invoice for booking_id {}'.format(booking.id))
                 logger.error('{}'.format(e))
                 failed_bookings.append(booking.id)
 
     return failed_bookings
 
 def create_other_invoice(user, booking):
+    """ This method allows internal payments officer to pay via ledger directly i.e. over the phone credit card details or cheque by post or cash etc 
+    
+        Currently not USED in COLS (Only Payments by CC, BPAY and Monthly Invoicing is allowed), but implemented for use possibly in the future
+    """
 
     failed_bookings = []
     with transaction.atomic():
@@ -197,9 +229,11 @@ def create_other_invoice(user, booking):
                 order = create_invoice(booking, payment_method='other')
                 invoice = Invoice.objects.get(order_number=order.number)
 
+                # TODO determine actual deferred_payment_date - currently defaulting to BPAY equiv.
                 deferred_payment_date = calc_payment_due_date(booking, dt) - relativedelta(days=1)
                 book_inv = BookingInvoice.objects.create(booking=booking, invoice_reference=invoice.reference, payment_method=invoice.payment_method, deferred_payment_date=deferred_payment_date)
 
+                # TODO - determine what emails to be sent and when
                 #send_monthly_invoice_tclass_email_notification(user, booking, invoice, recipients=[booking.proposal.applicant_email])
                 #ProposalUserAction.log_action(booking.proposal,ProposalUserAction.ACTION_SEND_MONTHLY_INVOICE.format(booking.proposal.id),booking.proposal.applicant_email)
             except Exception, e:
