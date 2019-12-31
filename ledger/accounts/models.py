@@ -335,8 +335,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         super(EmailUser, self).save(*args, **kwargs)
 
     def get_full_name(self):
-        full_name = '{} {}'.format(self.first_name, self.last_name)
-        return str(full_name.encode('utf-8').strip())
+        full_name = '{} {}'.format(self.first_name.encode('utf-8').strip(), self.last_name.encode('utf-8').strip())
+        return str(full_name)
 
     def get_full_name_dob(self):
         full_name_dob = '{} {} ({})'.format(self.first_name, self.last_name, self.dob.strftime('%d/%m/%Y'))
