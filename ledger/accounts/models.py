@@ -336,7 +336,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self):
         full_name = '{} {}'.format(self.first_name, self.last_name)
-        return full_name.encode('utf-8').strip()
+        return str(full_name.encode('utf-8').strip())
 
     def get_full_name_dob(self):
         full_name_dob = '{} {} ({})'.format(self.first_name, self.last_name, self.dob.strftime('%d/%m/%Y'))
