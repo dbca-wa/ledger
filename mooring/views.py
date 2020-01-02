@@ -539,12 +539,17 @@ class CancelAdmissionsBookingView(TemplateView):
                 invoice = Invoice.objects.get(reference=bi.invoice_reference)
             RefundFailed.objects.create(admission_booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0,basket_json=booking_cancellation_fees)
 
+        new_order = Order.objects.get(basket=basket)
+        new_invoice = Invoice.objects.get(order_number=new_order.number)
+        new_invoice.settlement_date = None
+        new_invoice.save()
+
         if refund:
             bpoint_refund = BpointTransaction.objects.get(txn_number=refund.txn_number)
             bpoint_refund.crn1 = new_invoice.reference
             bpoint_refund.save()
             update_payments(invoice.reference)
-            update_payments(new_invoice.reference)
+        update_payments(new_invoice.reference)
   
         if failed_refund is True:
             # Refund Failed Assign Refund amount to allocation pool.

@@ -253,6 +253,8 @@ def check_mooring_available_by_time(campsite_id, start_date_time, end_date_time)
      return False
 
 def check_mooring_availablity(campsites_qs, start_date, end_date):
+    if start_date != end_date:
+       end_date =end_date-timedelta(days=1)
 
     avail_results = get_campsite_availability(campsites_qs, start_date, end_date,None, None)
 
