@@ -20,7 +20,7 @@ class OrderCreator(CoreOrderCreator):
         basket and session data.
         """
         if basket.is_empty:
-            raise ValueError(_("Empty baskets cannot be submitted"))
+            raise ValueError("Empty baskets cannot be submitted")
         if not order_number:
             generator = OrderNumberGenerator()
             order_number = generator.order_number(basket)
@@ -31,8 +31,7 @@ class OrderCreator(CoreOrderCreator):
         except Order.DoesNotExist:
             pass
         else:
-            raise ValueError(_("There is already an order with number %s")
-                             % order_number)
+            raise ValueError("There is already an order with number "+str(order_number))
 
         # Ok - everything seems to be in order, let's place the order
         order = self.create_order_model(
