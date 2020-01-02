@@ -269,7 +269,7 @@ export default {
                             if(vm.is_payment_admin){
                                 if ( (full.payment_status.toLowerCase()=='paid' || full.payment_status.toLowerCase()=='over_paid') ) {
                                     links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
-                                } else {
+                                } else if (full.invoice_reference !== null) {
                                     links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>Record Payment</a><br/>`;
                                 }
                             }
