@@ -743,6 +743,7 @@ export default {
             vm.departurePicker = $(vm.bookingForm.departure).closest('.date');
             vm.arrivalPicker.datetimepicker({
                 format: 'DD/MM/YYYY',
+                defaultDate: Moment().startOf('day'),
                 minDate: Moment().startOf('day'),
                 // maxDate: Moment().add(parseInt(vm.campground.max_advance_booking),'days')
             });
