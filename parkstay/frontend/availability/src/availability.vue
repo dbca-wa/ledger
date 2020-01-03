@@ -498,8 +498,6 @@ export default {
                 submitData.campground = vm.parkstayGroundId;
                 submitData.campsite_class = site.type;
             }
-            //console.log(site);
-            //console.log(submitData);
             $.ajax({
                 url: vm.parkstayUrl + '/api/create_booking',
                 method: 'POST',
@@ -510,14 +508,11 @@ export default {
                     withCredentials: true
                 },
                 success: function(data, stat, xhr) {
-                    //console.log(data);
                     if (data.status == 'success') {
                         window.location.href = vm.parkstayUrl + '/booking';
                     }
                 },
                 error: function(xhr, stat, err) {
-                    //console.log('POST error');
-                    //console.log(xhr);
                     vm.errorMsg = (xhr.responseJSON && xhr.responseJSON.msg) ? xhr.responseJSON.msg : '"'+err+'" response when communicating with Parkstay.';
                     vm.update();
                 }
@@ -560,7 +555,6 @@ export default {
                     vm.updateURL();
                     url = vm.parkstayUrl + '/api/availability/'+ vm.parkstayGroundId +'.json/?'+$.param(params);
                 }
-                //console.log('AJAX '+url);
                 $.ajax({
                     url: url,
                     dataType: 'json',
@@ -646,17 +640,12 @@ export default {
             format: 'dd/mm/yyyy',
             endDate: moment.utc(today).add(180, 'days').toDate(),
             onRender: function (date) {
-                // disallow start dates before today
-                //console.log(date);
-                //console.log(today.toDate());
+                // Disallow start dates before today
                 return date.valueOf() < today.toDate().valueOf() ? 'disabled': '';
-                //return '';
             }
         }).on('changeDate', function (ev) {
-            //console.log('arrivalEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            //console.log('arrivalEl change');
             if (vm.arrivalData.date.valueOf() >= vm.departureData.date.valueOf()) {
                 var newDate = moment.utc(vm.arrivalData.date).add(1, 'days').toDate();
                 vm.departureData.date = newDate;
@@ -678,13 +667,12 @@ export default {
         this.departureData = this.departureEl.fdatepicker({
             format: 'dd/mm/yyyy',
             onRender: function (date) {
+                // Disallow departure date before arrival date.
                 return (date.valueOf() <= vm.arrivalData.date.valueOf()) ? 'disabled': '';
             }
         }).on('changeDate', function (ev) {
-            //console.log('departureEl changeDate');
             ev.target.dispatchEvent(new CustomEvent('change'));
         }).on('change', function (ev) {
-            //console.log('departureEl change');
             vm.departureData.hide();
             vm.departureDate = moment.utc(vm.departureData.date);
             vm.days = Math.floor(moment.duration(vm.departureDate.diff(vm.arrivalDate)).asDays());
