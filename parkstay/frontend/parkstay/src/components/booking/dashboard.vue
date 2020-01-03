@@ -445,6 +445,7 @@ export default {
           }
         );
     },
+
     addEventListeners: function() {
       let vm = this;
 
@@ -566,9 +567,14 @@ export default {
           vm.filterDateTo = "";
           vm.$refs.bookings_table.vmDataTable.ajax.reload();
         }
-      });
+        $('#booking-date-from').data("DateTimePicker").maxDate(e.date);
+      })
+
+      console.log('Date from: '+vm.filterDateFrom)
 
       vm.dateFromPicker.on("dp.change", function(e) {
+        console.log("dateFromPicker")
+        console.log(e.date)
         if (vm.dateFromPicker.data("DateTimePicker").date()) {
           vm.filterDateFrom = e.date.format("DD/MM/YYYY");
           vm.dateToPicker.data("DateTimePicker").minDate(e.date);
@@ -577,7 +583,9 @@ export default {
           vm.filterDateFrom = "";
           vm.$refs.bookings_table.vmDataTable.ajax.reload();
         }
-      });
+        $('#booking-date-to').data("DateTimePicker").minDate(e.date);
+      })
+
       helpers.namePopover($, vm.$refs.bookings_table.vmDataTable);
       $(document).on("keydown", function(e) {
         if (
@@ -666,7 +674,7 @@ export default {
                   break;
                 case 2:
                   bk[field] = booking.campground_region;
-                  break;
+                  break;//vm.filterDateFrom = dateFromPicker.defaultDate
                 case 3:
                   bk[field] = booking.firstname + " " + booking.lastname;
                   break;
@@ -838,17 +846,48 @@ export default {
       );
     }
   },
+  created: function() {
+    this.filterDateFrom = Moment().startOf('day').format('DD/MM/YYYY');
+    console.log("this.filterDateFrom")
+    console.log(this.filterDateFrom)
+    this.$nextTick(() => {
+        this.$refs.bookings_table.vmDataTable.ajax.reload();
+    });
+  },
+
   mounted: function() {
     let vm = this;
     vm.dateFromPicker = $("#booking-date-from").datetimepicker(
-      vm.datepickerOptions
+      {
+        format: "DD/MM/YYYY",
+        showClear: true,
+        useCurrent: false,
+        keepInvalid: true,
+        allowInputToggle: true
+      }
     );
+
+    //$('#booking-date-to').data("DateTimePicker").minDate(e.date);
+    //vm.$refs.bookings_table.vmDataTable.ajax.reload();
+
     vm.dateToPicker = $("#booking-date-to").datetimepicker(
-      vm.datepickerOptions
+      {
+        format: "DD/MM/YYYY",
+        showClear: true,
+        useCurrent: false,
+        keepInvalid: true,
+        allowInputToggle: true,
+        minDate: vm.dateFromPicker.data("DateTimePicker").date()
+      }
     );
     vm.fetchCampgrounds();
     vm.fetchRegions();
-    vm.addEventListeners();
+
+    this.addEventListeners();
+    /*this.$nextTick(() => {
+        this.addEventListeners();
+     }); */
+
   }
 };
 </script>

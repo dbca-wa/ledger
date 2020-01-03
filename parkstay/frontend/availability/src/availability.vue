@@ -10,7 +10,7 @@
         </div>
         <div class="row" v-else-if="status == 'offline'">
 
-            <nav class="navbar navbar-inverse navbar-fixed-top">
+            <nav class="navbar navbar-inverse navbar-fixed-bottom">
               <div>
                 <ul>
                   <li><a href='#' @click="scrollMeTo('infoSection')"> About the Campground </a> </li>
@@ -71,14 +71,14 @@
         </div>
 
         <div v-if="status == 'online'" >
-        <nav class="navbar navbar-inverse navbar-fixed-top">
+        <nav class="navbar navbar-inverse navbar-fixed-bottom">
               <div>
 
                  <button type="button" class="button formButton1" @click="scrollMeTo('infoSection1')">
-                            About the Campground
+                            About the campground
                         </button>
                  <button type="button" class="button formButton1" @click="scrollMeTo('bookSection')">
-                            Booking Now
+                            Book Now
                         </button>
               </div>
 
@@ -243,6 +243,10 @@
 
 <style lang="scss">
 
+.navbar-inverse{
+background-color: #f8f8f8;
+}
+
 .f6inject {
     th.site {
         width: 30%;
@@ -317,9 +321,13 @@
         display: block;
         background-color: transparent;
         width: 10%;
-        font-color: white;
+        color: rgb(119,119,119);
         float: left ;
         padding-bottom : none;
+        margin-bottom: 0px;
+    }
+    .button:hover{
+    font-color: #000;
     }
 
     .siteWarning {
