@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Send Approval renewal notice when approval is due to expire in 90 days'
+    help = 'Send Approval renewal notice when approval is due to expire in 90 days (Excludes E Class licences)'
 
     def handle(self, *args, **options):
         try:
@@ -32,7 +32,7 @@ class Command(BaseCommand):
         logger.info('Running command {}'.format(__name__))
 
         # 2 month licences cannot be renewed
-        qs=Approval.objects.filter(**renewal_conditions).exclude(current_proposal__other_details__preferred_licence_period='2_months')
+        qs=Approval.objects.filter(**renewal_conditions).exclude(current_proposal__other_details__preferred_licence_period='2_months').exclude(current_proposal__application_type__name='E Class')
         logger.info('{}'.format(qs))
         for a in qs:
             if a.status == 'current' or a.status == 'suspended':
