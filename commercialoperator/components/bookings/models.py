@@ -141,7 +141,8 @@ class Booking(Payment):
 
     @property
     def booking_number(self):
-        return 'COLS-{0:06d}'.format(self.id)
+        #return 'COLS-{0:06d}'.format(self.id)
+        return self.admission_number
 
     @property
     def num_visitors(self):
