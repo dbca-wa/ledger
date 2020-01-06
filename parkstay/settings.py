@@ -82,5 +82,5 @@ PARKSTAY_EXTERNAL_URL = env('PARKSTAY_EXTERNAL_URL','https://parkstay.dbca.wa.go
 DEV_STATIC = env('DEV_STATIC',False)
 DEV_STATIC_URL = env('DEV_STATIC_URL')
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
-#LEDGER_REFUND_EMAIL = env('LEDGER_REFUND_EMAIL')
-os.environ['LEDGER_REFUND_EMAIL'] = 'True'
+LEDGER_REFUND_EMAIL = env('LEDGER_REFUND_EMAIL', False )
+#os.environ['LEDGER_REFUND_EMAIL'] = 'True'
