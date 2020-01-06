@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Send Approval renewal notice when approval is due to expire in 30 days'
+    help = 'Send Approval renewal notice when approval is due to expire in 90 days'
 
     def handle(self, *args, **options):
         try:
@@ -23,7 +23,7 @@ class Command(BaseCommand):
             user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
 
         today = timezone.localtime(timezone.now()).date()
-        expiry_notification_date = today + timedelta(days=30)
+        expiry_notification_date = today + timedelta(days=90)
         renewal_conditions = {
             'expiry_date__lte': expiry_notification_date,
             'renewal_sent': False,
