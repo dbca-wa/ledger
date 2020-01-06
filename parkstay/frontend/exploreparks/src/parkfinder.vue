@@ -866,6 +866,20 @@ export default {
         var vm = this;
         $(document).foundation();
 
+        console.log('Loading map...');
+
+        var nowTemp = new Date();
+        var now = moment.utc({year: nowTemp.getFullYear(), month: nowTemp.getMonth(), day: nowTemp.getDate(), hour: 0, minute: 0, second: 0}).toDate();
+
+        // Added this portion from availability to solve datepicker utc - issue
+
+        var today = moment.utc().add(8, 'hours');
+        today = moment.utc({year: today.year(), month: today.month(), day: today.date()})
+
+        var later = moment(today).add(-1, 'days')
+
+        //End of change
+
         this.arrivalEl = $('#dateArrival');
         this.departureEl = $('#dateDeparture');
         this.arrivalData = this.arrivalEl.fdatepicker({
