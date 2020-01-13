@@ -176,7 +176,7 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
 class DetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ledger_organisation
-        fields = ('id','name', 'trading_name')
+        fields = ('id','name', 'trading_name', 'email')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
     user_status= serializers.SerializerMethodField()
