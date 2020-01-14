@@ -58,7 +58,12 @@ def send_approval_expire_email_notification(approval):
         'proposal': proposal,
         'url': url
     }
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     try:
     	sender_user = EmailUser.objects.get(email__icontains=sender)
@@ -87,7 +92,12 @@ def send_approval_cancel_email_notification(approval):
     except:
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
@@ -121,7 +131,12 @@ def send_approval_suspend_email_notification(approval, request=None):
     except:
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
@@ -152,7 +167,12 @@ def send_approval_surrender_email_notification(approval, request=None):
     except:
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
     if approval.org_applicant:
@@ -190,7 +210,12 @@ def send_approval_renewal_email_notification(approval):
         attachment = [attachment]
     else:
         attachment = []
-    msg = email.send(proposal.submitter.email, attachments=attachment, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email,cc=all_ccs, attachments=attachment, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
@@ -208,7 +233,12 @@ def send_approval_reinstate_email_notification(approval, request):
         'approval': approval,
 
     }
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender)
