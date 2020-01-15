@@ -74,7 +74,7 @@ export default {
                 'With Assessor',
                 'Approved',
             ],
-            vehicle_headers:["Number", "Vehicle Type","Seating capacity","Registration no.","Registration Expiry","Transport license no.","Action"],
+            vehicle_headers:["Vehicle Type","Seating capacity","Registration no.","Registration Expiry","Transport license no.","Action"],
             vehicle_options:{
                 language: {
                     processing: "<i class='fa fa-4x fa-spinner fa-spin'></i>"
@@ -98,14 +98,14 @@ export default {
                 buttons:[
                 'excel', 'csv', ],
                 columns: [
-                    {
-                        data: "id",
-                        mRender:function (data,type,full) {
-                            //return `C${data}`;
-                            return full.id;
-                        },
-                        //name: "id, lodgement_number",
-                    },
+                    // {
+                    //     data: "id",
+                    //     mRender:function (data,type,full) {
+                    //         //return `C${data}`;
+                    //         return full.id;
+                    //     },
+                    //     //name: "id, lodgement_number",
+                    // },
                     {
                         data: "access_type",
                         mRender:function (data,type,full) {
