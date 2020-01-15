@@ -157,7 +157,7 @@
                                                 </div>
                                                 <div v-for="d in org.delegates">
                                                     <div class="col-sm-6">
-                                                        <h4>{{d.name}}</h4>
+                                                        <h4>{{d.name }} ({{d.email}})</h4>
                                                     </div>
                                                 </div>
                                                 <div class="col-sm-12 top-buffer-s">

@@ -82,6 +82,7 @@ class DelegateSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'email',
         )
 
 
