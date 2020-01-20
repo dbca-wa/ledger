@@ -20,7 +20,7 @@
                                 <div class="col-sm-offset-2 col-sm-8">
                                     <div class="form-group">
                                         <label class="control-label pull-left"  for="Name">Details</label>
-                                        <textarea class="form-control" name="name" v-model="amendment.text"></textarea>
+                                        <textarea class="form-control" name="name" v-model="amendment.text" id="amendment_text"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -193,6 +193,37 @@ export default {
                 vm.amendment.reason = selected.val();
                 vm.amendment.reason_id = selected.val();
             });
+
+            let amendmentTextField = $('#amendment_text');
+            amendmentTextField.on(
+              'paste', 
+              (e) => {
+                  //console.log("plain text only");
+                  // cancel paste
+                  e.preventDefault();
+                  // get text representation of clipboard
+                  let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                  //let transformedText = text.replace(/\n/g,'<br/>')
+                  let s = text.replace(/\n/g,'<br/>')
+                    s = s.replace(/[\u2018|\u2019|\u201A]/g, "\'");
+                    // smart double quotes
+                    s = s.replace(/[\u201C|\u201D|\u201E]/g, "\"");
+                    // ellipsis
+                    s = s.replace(/\u2026/g, "...");
+                    // dashes
+                    s = s.replace(/[\u2013|\u2014]/g, "-");
+                    // circumflex
+                    s = s.replace(/\u02C6/g, "^");
+                    // open angle bracket
+                    s = s.replace(/\u2039/g, "<");
+                    // close angle bracket
+                    s = s.replace(/\u203A/g, ">");
+                    // spaces
+                    s = s.replace(/[\u02DC|\u00A0]/g, " ");
+                  //console.log(s)
+                  // insert text manually
+                  document.execCommand("insertHTML", false, s);
+              });
        }
    },
    mounted:function () {
