@@ -347,7 +347,7 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="bottom" style="color:blue" title="If you are applying as a sole trader please supply your ABN.">&nbsp;</i></label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="form-control" name="abn" v-model.number="newOrg.abn" placeholder="" style="width: 40%">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="" style="width: 40%">
                                 </div>
                                 <div class="col-sm-2">
                                     <button :disabled="!isNewOrgDetails" @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
@@ -727,6 +727,8 @@ export default {
         checkOrganisation: function() {
             let vm = this;
             //this.newOrg.abn = this.newOrg.abn.replace(/\s+/g,'');
+            this.newOrg.abn = this.newOrg.abn.replace(/[^0-9]/g,'')
+
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,'existance'),JSON.stringify(this.newOrg),{
                 emulateJSON:true
             }).then((response) => {
@@ -792,6 +794,7 @@ export default {
             let vm = this;
             vm.registeringOrg = true;
             let data = new FormData();
+            vm.newOrg.abn = vm.newOrg.abn.replace(/[^0-9]/g,'')
             data.append('name', vm.newOrg.name);
             data.append('abn', vm.newOrg.abn);
             data.append('identification', vm.uploadedFile);
@@ -853,6 +856,7 @@ export default {
                     return;
                 }
             }
+            vm.newOrg.abn = vm.newOrg.abn.replace(/[^0-9]/g,'')
             data.append('name', vm.newOrg.name);
             data.append('abn', vm.newOrg.abn);
             data.append('identification', vm.uploadedFile);
