@@ -82,6 +82,7 @@ class DelegateSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'email',
         )
 
 
@@ -176,7 +177,7 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
 class DetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ledger_organisation
-        fields = ('id','name', 'trading_name')
+        fields = ('id','name', 'trading_name', 'email')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
     user_status= serializers.SerializerMethodField()
@@ -314,10 +315,21 @@ class OrgUserAcceptSerializer(serializers.Serializer):
     mobile_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     phone_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
+    # def validate(self, data):
+    #     '''
+    #     Check for either mobile number or phone number
+    #     '''
+    #     if not (data['mobile_number'] or data['phone_number']):
+    #         raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+    #     return data
     def validate(self, data):
-        '''
-        Check for either mobile number or phone number
-        '''
-        if not (data['mobile_number'] or data['phone_number']):
-            raise serializers.ValidationError("User must have an associated phone number or mobile number.")
-        return data
+        #Mobile and phone number for dbca user are updated from active directory so need to skip these users from validation.
+        domain=None
+        if data['email']:
+            domain = data['email'].split('@')[1]
+        if domain in settings.DEPT_DOMAINS:
+            return data
+        else:
+            if not (data['mobile_number'] or data['phone_number']):
+                raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+        return obj
