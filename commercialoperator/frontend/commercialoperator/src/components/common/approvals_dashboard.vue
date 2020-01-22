@@ -214,7 +214,8 @@ export default {
                         else { return full.lodgement_number }
                         },
                         'createdCell': helpers.dtPopoverCellFn,
-                        name: "id, lodgement_number",
+                        //name: "id, lodgement_number",
+                        name: "lodgement_number",
                     },
                     {
                         data: "linked_applications",

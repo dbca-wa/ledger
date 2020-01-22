@@ -46,6 +46,12 @@
                                                 <input type="text" disabled class="form-control" name="last_name" placeholder="" v-model="org.abn">
                                             </div>
                                           </div>
+                                          <div class="form-group">
+                                            <label for="" class="col-sm-3 control-label" >Email</label>
+                                            <div class="col-sm-6">
+                                                <input type="text" class="form-control" name="last_name" placeholder="" v-model="org.email">
+                                            </div>
+                                          </div>
 
                                           <div class="form-group">
                                             <div class="col-sm-12">
@@ -151,7 +157,7 @@
                                                 </div>
                                                 <div v-for="d in org.delegates">
                                                     <div class="col-sm-6">
-                                                        <h4>{{d.name}}</h4>
+                                                        <h4>{{d.name }} ({{d.email}})</h4>
                                                     </div>
                                                 </div>
                                                 <div class="col-sm-12 top-buffer-s">
@@ -398,6 +404,17 @@ export default {
                 )
             }, (error) => {
                 console.log(error);
+                var text= helpers.apiVueResourceError(error);
+                if(typeof text == 'object'){
+                    if (text.hasOwnProperty('email')){
+                        text=text.email[0];
+                    }
+                }
+                swal(
+                    'Error', 
+                    'Organisation details have cannot be saved because of the following error: '+text,
+                    'error'
+                )
                 vm.updatingDetails = false;
             });
         },

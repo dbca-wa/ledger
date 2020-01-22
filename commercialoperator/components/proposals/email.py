@@ -188,8 +188,13 @@ def send_amendment_email_notification(amendment_request, request, proposal):
         'amendment_request_text': amendment_request.text,
         'url': url
     }
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
 
-    msg = email.send(proposal.submitter.email, context=context)
+    msg = email.send(proposal.submitter.email,cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
@@ -231,8 +236,13 @@ def send_external_submit_email_notification(request, proposal):
         'submitter': proposal.submitter.get_full_name(),
         'url': url
     }
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
 
-    msg = email.send(proposal.submitter.email, context=context)
+    msg = email.send(proposal.submitter.email,cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_proposal_email(msg, proposal, sender=sender)
     if proposal.org_applicant:
@@ -291,6 +301,8 @@ def send_proposal_decline_email_notification(proposal,request,proposal_decline):
     all_ccs = []
     if cc_list:
         all_ccs = cc_list.split(',')
+    if proposal.org_applicant and proposal.org_applicant.email:
+        all_ccs.append(proposal.org_applicant.email)
 
     msg = email.send(proposal.submitter.email, bcc= all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
