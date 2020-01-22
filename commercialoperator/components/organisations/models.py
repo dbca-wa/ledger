@@ -552,7 +552,7 @@ def update_organisation_comms_log_filename(instance, filename):
 
 class OrganisationLogDocument(Document):
     log_entry = models.ForeignKey('OrganisationLogEntry',related_name='documents')
-    _file = models.FileField(upload_to=update_organisation_comms_log_filename)
+    _file = models.FileField(upload_to=update_organisation_comms_log_filename, max_length=512)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -585,7 +585,7 @@ class OrganisationRequest(models.Model):
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     requester = models.ForeignKey(EmailUser)
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='org_request_assignee')
-    identification = models.FileField(upload_to='organisation/requests/%Y/%m/%d', null=True, blank=True)
+    identification = models.FileField(upload_to='organisation/requests/%Y/%m/%d', max_length=512, null=True, blank=True)
     status = models.CharField(max_length=100,choices=STATUS_CHOICES, default="with_assessor")
     lodgement_date = models.DateTimeField(auto_now_add=True)
     role = models.CharField(max_length=100,choices=ROLE_CHOICES, default="employee")
@@ -740,7 +740,7 @@ def update_organisation_request_comms_log_filename(instance, filename):
 
 class OrganisationRequestLogDocument(Document):
     log_entry = models.ForeignKey('OrganisationRequestLogEntry',related_name='documents')
-    _file = models.FileField(upload_to=update_organisation_request_comms_log_filename)
+    _file = models.FileField(upload_to=update_organisation_request_comms_log_filename, max_length=512)
 
     class Meta:
         app_label = 'commercialoperator'

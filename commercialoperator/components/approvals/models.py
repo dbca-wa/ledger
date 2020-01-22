@@ -42,7 +42,7 @@ def update_approval_comms_log_filename(instance, filename):
 
 class ApprovalDocument(Document):
     approval = models.ForeignKey('Approval',related_name='documents')
-    _file = models.FileField(upload_to=update_approval_doc_filename)
+    _file = models.FileField(upload_to=update_approval_doc_filename, max_length=512)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
 
     def delete(self):
@@ -520,9 +520,7 @@ class ApprovalLogEntry(CommunicationsLogEntry):
 
 class ApprovalLogDocument(Document):
     log_entry = models.ForeignKey('ApprovalLogEntry',related_name='documents', null=True,)
-    #approval = models.ForeignKey(Approval, related_name='comms_logs1')
-    _file = models.FileField(upload_to=update_approval_comms_log_filename, null=True)
-    #_file = models.FileField(upload_to=update_approval_doc_filename)
+    _file = models.FileField(upload_to=update_approval_comms_log_filename, null=True, max_length=512)
 
     class Meta:
         app_label = 'commercialoperator'

@@ -188,9 +188,7 @@ export default {
                     },
                     {
                         data: "trading_name",
-                        name: "booking__proposal__org_applicant__organisation__trading_name",
-                        searchable: false,
-                        orderable: true
+                        name: "booking__proposal__org_applicant__organisation__trading_name, booking__proposal__org_applicant__organisation__name"
                     },
                     {
                         data: "arrival",

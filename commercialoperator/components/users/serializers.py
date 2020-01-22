@@ -1,9 +1,9 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Document, EmailUserAction, EmailUserLogEntry, CommunicationsLogEntry
+from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity, EmailUserAction, EmailUserLogEntry, CommunicationsLogEntry
 from commercialoperator.components.organisations.models import (
                                     Organisation,
                                 )
-from commercialoperator.components.main.models import UserSystemSettings
+from commercialoperator.components.main.models import UserSystemSettings, Document
 from commercialoperator.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
 from ledger.accounts.utils import in_dbca_domain
