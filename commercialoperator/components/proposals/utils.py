@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from preserialize.serialize import serialize
-from ledger.accounts.models import EmailUser, Document
+from ledger.accounts.models import EmailUser #, Document
 from commercialoperator.components.proposals.models import ProposalDocument, ProposalPark, ProposalParkActivity, ProposalParkAccess, ProposalTrail, ProposalTrailSectionActivity, ProposalTrailSection, ProposalParkZone, ProposalParkZoneActivity, ProposalOtherDetails, ProposalAccreditation, ProposalUserAction, ProposalAssessment, ProposalAssessmentAnswer, ChecklistQuestion
 from commercialoperator.components.approvals.models import Approval
 from commercialoperator.components.proposals.email import send_submit_email_notification, send_external_submit_email_notification
