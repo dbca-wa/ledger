@@ -98,6 +98,9 @@ class Approval(RevisionedMixin):
     #application_type = models.ForeignKey(ApplicationType, null=True, blank=True)
     renewal_count = models.PositiveSmallIntegerField('Number of times an Approval has been renewed', default=0)
     migrated=models.BooleanField(default=False)
+    #for eclass licence as it can be extended/ renewed once
+    extended = models.BooleanField(default=False)
+    expiry_notice_sent = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -364,6 +367,7 @@ class Approval(RevisionedMixin):
                 if self.expiry_date <= today:
                     if not self.status == 'extended':
                         self.status = 'extended'
+                        self.extended=True
                         #send_approval_extend_email_notification(self)
                 self.save()
                 # Log proposal action
