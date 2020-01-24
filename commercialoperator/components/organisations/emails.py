@@ -117,6 +117,7 @@ def send_organisation_reinstate_email_notification(linked_user,linked_by,organis
         'linked_by': linked_by,
         'organisation': organisation
     }
+    all_ccs = []
     if organisation.email:
         cc_list = organisation.email
         if cc_list:
@@ -135,6 +136,7 @@ def send_organisation_contact_suspend_email_notification(linked_user,linked_by,o
         'linked_by': linked_by,
         'organisation': organisation
     }
+    all_ccs = []
     if organisation.email:
         cc_list = organisation.email
         if cc_list:
@@ -151,6 +153,7 @@ def send_organisation_contact_decline_email_notification(user_contact,deleted_by
         'linked_by': deleted_by,
         'organisation': organisation
     }
+    all_ccs = []
     if organisation.email:
         cc_list = organisation.email
         if cc_list:
@@ -169,6 +172,7 @@ def send_organisation_contact_user_email_notification(linked_user,linked_by,orga
         'linked_by': linked_by,
         'organisation': organisation
     }
+    all_ccs = []
     if organisation.email:
         cc_list = organisation.email
         if cc_list:
@@ -186,6 +190,7 @@ def send_organisation_contact_adminuser_email_notification(linked_user,linked_by
         'linked_by': linked_by,
         'organisation': organisation
     }
+    all_ccs = []
     if organisation.email:
         cc_list = organisation.email
         if cc_list:
@@ -203,6 +208,7 @@ def send_organisation_link_email_notification(linked_user,linked_by,organisation
         'linked_by': linked_by,
         'organisation': organisation
     }
+    all_ccs = []
     if organisation.email:
         cc_list = organisation.email
         if cc_list:
@@ -236,6 +242,7 @@ def send_organisation_unlink_email_notification(unlinked_user,unlinked_by,organi
         'unlinked_by': unlinked_by,
         'organisation': organisation
     }
+    all_ccs = []
     if organisation.email:
         cc_list = organisation.email
         if cc_list:
