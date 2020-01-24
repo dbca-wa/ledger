@@ -47,6 +47,12 @@ class ApprovalEclassRenewalNotificationEmail(TemplateEmailBase):
     html_template = 'commercialoperator/emails/approval_eclass_renewal_notification.html'
     txt_template = 'commercialoperator/emails/approval_eclass_renewal_notification.txt'
 
+class ApprovalEclassExpiryNotificationEmail(TemplateEmailBase):
+    subject = '{} - Commercial Operations E class licence expiry.'.format(settings.DEP_NAME)
+    html_template = 'commercialoperator/emails/approval_eclass_expiry_notification.html'
+    txt_template = 'commercialoperator/emails/approval_eclass_expiry_notification.txt'
+
+
 
 def send_approval_expire_email_notification(approval):
     email = ApprovalExpireNotificationEmail()
@@ -230,9 +236,48 @@ def send_approval_renewal_email_notification(approval):
     else:
         _log_user_email(msg, approval.submitter, proposal.submitter, sender=sender_user)
 
-#approval renewal notice
+#approval renewal notice for eclass licence
 def send_approval_eclass_renewal_email_notification(approval):
     email = ApprovalEclassRenewalNotificationEmail()
+    proposal = approval.current_proposal
+    url=settings.SITE_URL if settings.SITE_URL else ''
+    url += reverse('external')
+
+    if "-internal" in url:
+        # remove '-internal'. This email is for external submitters
+        url = ''.join(url.split('-internal'))
+
+
+    context = {
+        'approval': approval,
+        'proposal': approval.current_proposal,
+        'url': url,
+    }
+    sender = settings.DEFAULT_FROM_EMAIL
+    try:
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    except:
+        EmailUser.objects.create(email=sender, password='')
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.assessor_recipients,cc=all_ccs, context=context)
+    sender = settings.DEFAULT_FROM_EMAIL
+    _log_approval_email(msg, approval, sender=sender_user)
+    #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
+    if approval.org_applicant:
+        _log_org_email(msg, approval.org_applicant, proposal.submitter, sender=sender_user)
+    else:
+        _log_user_email(msg, approval.submitter, proposal.submitter, sender=sender_user)
+
+
+#approval expiry notice for eclass licence (18 months prior to expiry)
+def send_approval_eclass_expiry_email_notification(approval):
+    email = ApprovalEclassExpiryNotificationEmail()
     proposal = approval.current_proposal
     url=settings.SITE_URL if settings.SITE_URL else ''
     url += reverse('external')

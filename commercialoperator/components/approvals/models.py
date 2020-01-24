@@ -367,8 +367,8 @@ class Approval(RevisionedMixin):
                 if self.expiry_date <= today:
                     if not self.status == 'extended':
                         self.status = 'extended'
-                        self.extended=True
                         #send_approval_extend_email_notification(self)
+                self.extended=True
                 self.save()
                 # Log proposal action
                 self.log_user_action(ApprovalUserAction.ACTION_EXTEND_APPROVAL.format(self.id),request)
