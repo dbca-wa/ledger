@@ -12,6 +12,9 @@
                         <span v-if="!readonly && v.can_delete">
                             <a @click="delete_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:red;"></a>
                         </span>
+                        <span v-else-if="!readonly && !v.can_delete && v.can_hide">
+                            <a @click="hide_document(v)" class="fa fa-trash-o" title="Remove file" :filename="v.name" style="cursor: pointer; color:blue;"></a>
+                        </span>
                         <span v-else>
                             <span v-if="!assessorMode">
                                 <i class="fa fa-info-circle" aria-hidden="true" title="Previously submitted documents cannot be deleted" style="cursor: pointer;"></i>
@@ -127,7 +130,6 @@ export default {
                     return $(avail[id]).attr('data-que');
                 })];
                 avail.pop();
-                console.log('el', el, 'avail',avail.indexOf(el))
                 if (vm.repeat == 1) {
                     vm.repeat+=1;
                 }else {
@@ -164,6 +166,20 @@ export default {
                     vm.show_spinner = false;
                 });
 
+        },
+        hide_document: function(file) {
+            let vm = this;
+            vm.show_spinner = true;
+            var formData = new FormData();
+            formData.append('action', 'hide');
+            formData.append('document_id', file.id);
+            formData.append('csrfmiddlewaretoken', vm.csrf_token);
+            vm.$http.post(vm.proposal_document_action, formData)
+                .then(res=>{
+                    vm.documents = vm.get_documents()
+                    //vm.documents = res.body;
+                    vm.show_spinner = false;
+                });
         },
 
         delete_document: function(file) {

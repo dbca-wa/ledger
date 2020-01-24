@@ -6,7 +6,8 @@ from django.dispatch import receiver
 from django.db.models.signals import pre_delete
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
-from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+#from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+from ledger.accounts.models import EmailUser, RevisionedMixin
 from django.contrib.postgres.fields.jsonb import JSONField
 
 
@@ -372,7 +373,7 @@ class CommunicationsLogEntry(models.Model):
 
 @python_2_unicode_compatible
 class Document(models.Model):
-    name = models.CharField(max_length=100, blank=True,
+    name = models.CharField(max_length=255, blank=True,
                             verbose_name='name', help_text='')
     description = models.TextField(blank=True,
                                    verbose_name='description', help_text='')

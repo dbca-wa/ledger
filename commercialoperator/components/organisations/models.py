@@ -96,19 +96,29 @@ class Organisation(models.Model):
     def add_user_contact(self,user,request,admin_flag,role):
         with transaction.atomic():
 
-            OrganisationContact.objects.create(
+            contact, created = OrganisationContact.objects.get_or_create(
                 organisation = self,
                 first_name = user.first_name,
                 last_name = user.last_name,
-                mobile_number = user.mobile_number,
-                phone_number = user.phone_number,
-                fax_number = user.fax_number,
                 email = user.email,
-                user_role = role,
-                user_status='pending',
-                is_admin = admin_flag
-
+                defaults = {
+                    'mobile_number': user.mobile_number,
+                    'phone_number': user.phone_number,
+                    'fax_number': user.fax_number,
+                    'user_role': role,
+                    'user_status': 'pending',
+                    'is_admin': admin_flag
+                }
             )
+
+            if not created:
+                contact.mobile_number = user.mobile_number
+                contact.phone_number = user.phone_number
+                contact.fax_number = user.fax_number
+                contact.user_role = role
+                contact.user_status = 'pending'
+                contact.is_admin = admin_flag
+                contact.save()
 
             # log linking
             self.log_user_action(OrganisationAction.ACTION_CONTACT_ADDED.format('{} {}({})'.format(user.first_name,user.last_name,user.email)),request)
@@ -365,9 +375,18 @@ class Organisation(models.Model):
             # delete contact person
             try:
                 org_contact = OrganisationContact.objects.get(organisation = self,email = delegate.user.email)
-                org_contact.user_role ='organisation_user'
-                org_contact.is_admin = False
-                org_contact.save()
+                if org_contact.user_role == 'organisation_admin':
+                    #Last admin user should not be able to make himself user.
+                    if OrganisationContact.objects.filter(organisation = self,user_role = 'organisation_admin', user_status ='active').count() > 1 :
+                        org_contact.user_role ='organisation_user'
+                        org_contact.is_admin = False
+                        org_contact.save()
+                    else:
+                        raise ValidationError('This user is last Organisation Administrator.')
+                else:
+                    org_contact.user_role ='organisation_user'
+                    org_contact.is_admin = False
+                    org_contact.save()
             except OrganisationContact.DoesNotExist:
                 pass
             # log linking
@@ -542,7 +561,7 @@ def update_organisation_comms_log_filename(instance, filename):
 
 class OrganisationLogDocument(Document):
     log_entry = models.ForeignKey('OrganisationLogEntry',related_name='documents')
-    _file = models.FileField(upload_to=update_organisation_comms_log_filename)
+    _file = models.FileField(upload_to=update_organisation_comms_log_filename, max_length=512)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -575,7 +594,7 @@ class OrganisationRequest(models.Model):
     abn = models.CharField(max_length=50, null=True, blank=True, verbose_name='ABN')
     requester = models.ForeignKey(EmailUser)
     assigned_officer = models.ForeignKey(EmailUser, blank=True, null=True, related_name='org_request_assignee')
-    identification = models.FileField(upload_to='organisation/requests/%Y/%m/%d', null=True, blank=True)
+    identification = models.FileField(upload_to='organisation/requests/%Y/%m/%d', max_length=512, null=True, blank=True)
     status = models.CharField(max_length=100,choices=STATUS_CHOICES, default="with_assessor")
     lodgement_date = models.DateTimeField(auto_now_add=True)
     role = models.CharField(max_length=100,choices=ROLE_CHOICES, default="employee")
@@ -730,7 +749,7 @@ def update_organisation_request_comms_log_filename(instance, filename):
 
 class OrganisationRequestLogDocument(Document):
     log_entry = models.ForeignKey('OrganisationRequestLogEntry',related_name='documents')
-    _file = models.FileField(upload_to=update_organisation_request_comms_log_filename)
+    _file = models.FileField(upload_to=update_organisation_request_comms_log_filename, max_length=512)
 
     class Meta:
         app_label = 'commercialoperator'

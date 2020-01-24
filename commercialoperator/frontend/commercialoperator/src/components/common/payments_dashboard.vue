@@ -193,7 +193,7 @@ export default {
                     },
                     {
                         data: "trading_name",
-                        name: "trading_name"
+                        name: "proposal__org_applicant__organisation__trading_name, proposal__org_applicant__organisation__name"
                     },
                     {
                         data: "payment_status",

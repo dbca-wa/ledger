@@ -226,9 +226,11 @@ class DefaultDocument(Document):
 
 class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
-    _file = models.FileField(upload_to=update_proposal_doc_filename)
+    _file = models.FileField(upload_to=update_proposal_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    can_hide= models.BooleanField(default=False) # after initial submit, document cannot be deleted but can be hidden
+    hidden=models.BooleanField(default=False) # after initial submit prevent document from being deleted
 
     class Meta:
         app_label = 'commercialoperator'
@@ -236,7 +238,7 @@ class ProposalDocument(Document):
 
 class OnHoldDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='onhold_documents')
-    _file = models.FileField(upload_to=update_onhold_doc_filename)
+    _file = models.FileField(upload_to=update_onhold_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
@@ -248,10 +250,12 @@ class OnHoldDocument(Document):
 #Documents on Activities(land)and Activities(Marine) tab for T-Class related to required document questions
 class ProposalRequiredDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='required_documents')
-    _file = models.FileField(upload_to=update_proposal_required_doc_filename)
+    _file = models.FileField(upload_to=update_proposal_required_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     required_doc = models.ForeignKey('RequiredDocument',related_name='proposals')
+    can_hide= models.BooleanField(default=False) # after initial submit, document cannot be deleted but can be hidden
+    hidden=models.BooleanField(default=False) # after initial submit prevent document from being deleted
 
     def delete(self):
         if self.can_delete:
@@ -263,7 +267,7 @@ class ProposalRequiredDocument(Document):
 
 class QAOfficerDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='qaofficer_documents')
-    _file = models.FileField(upload_to=update_qaofficer_doc_filename)
+    _file = models.FileField(upload_to=update_qaofficer_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
@@ -279,7 +283,7 @@ class QAOfficerDocument(Document):
 
 class ReferralDocument(Document):
     referral = models.ForeignKey('Referral',related_name='referral_documents')
-    _file = models.FileField(upload_to=update_referral_doc_filename)
+    _file = models.FileField(upload_to=update_referral_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
 
@@ -293,7 +297,7 @@ class ReferralDocument(Document):
 
 class RequirementDocument(Document):
     requirement = models.ForeignKey('ProposalRequirement',related_name='requirement_documents')
-    _file = models.FileField(upload_to=update_requirement_doc_filename)
+    _file = models.FileField(upload_to=update_requirement_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
@@ -1956,7 +1960,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
 class ProposalLogDocument(Document):
     log_entry = models.ForeignKey('ProposalLogEntry',related_name='documents')
-    _file = models.FileField(upload_to=update_proposal_comms_log_filename)
+    _file = models.FileField(upload_to=update_proposal_comms_log_filename, max_length=512)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -2300,7 +2304,8 @@ class AmendmentRequest(ProposalRequest):
                         proposal.processing_status = 'draft'
                         proposal.customer_status = 'draft'
                         proposal.save()
-
+                        proposal.documents.all().update(can_hide=True)
+                        proposal.required_documents.all().update(can_hide=True)
                     # Create a log entry for the proposal
                     proposal.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
                     # Create a log entry for the organisation
