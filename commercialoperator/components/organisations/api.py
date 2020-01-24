@@ -94,7 +94,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def contacts(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = OrganisationContactSerializer(instance.contacts.all(),many=True)
+            serializer = OrganisationContactSerializer(instance.contacts.exclude(user_status='pending'),many=True)
             return Response(serializer.data);
         except serializers.ValidationError:
             print(traceback.print_exc())
