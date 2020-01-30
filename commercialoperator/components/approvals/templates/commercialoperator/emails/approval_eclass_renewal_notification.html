@@ -1,0 +1,10 @@
+{%  extends 'commercialoperator/emails/base_email.html' %}
+
+{%  block content %}
+    <p>The E Class licence
+    <strong> {{ approval.lodgement_number}}</strong> will expire on <strong>{{approval.expiry_date}}</strong>.</p>
+    
+    <p>You can renew the E Class licence for five more years by clicking Extend action on the E Class licence.</p>
+    
+    
+{%  endblock %}

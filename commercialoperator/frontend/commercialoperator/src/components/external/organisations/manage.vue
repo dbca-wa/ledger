@@ -783,7 +783,9 @@ export default {
                             },(error) => {
                             });
                         }, (error) => {
-                            swal('Company Admin','There was an error making ' + name + ' an Organisation User.','error')
+                            console.log(error);
+                            var text= helpers.apiVueResourceError(error);
+                            swal('Company Admin','There was an error making ' + name + ' an Organisation User. ' +text,'error')
                         });
                     }
                 },(error) => {
