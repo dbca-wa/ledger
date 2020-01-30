@@ -110,6 +110,9 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
+            if(vm.amendment.text){
+                vm.amendment.text= vm.formatText(vm.amendment.text)
+            }
             let amendment = JSON.parse(JSON.stringify(vm.amendment));
             vm.$http.post('/api/amendment_request.json',JSON.stringify(amendment),{
                         emulateJSON:true,
@@ -141,6 +144,25 @@ export default {
                     });
                 
 
+        },
+        formatText: function(text){
+            let s = text.replace(/\n/g,'<br/>')
+                    s = s.replace(/[\u2018|\u2019|\u201A]/g, "\'");
+                    // smart double quotes
+                    s = s.replace(/[\u201C|\u201D|\u201E]/g, "\"");
+                    // ellipsis
+                    s = s.replace(/\u2026/g, "...");
+                    // dashes
+                    s = s.replace(/[\u2013|\u2014]/g, "-");
+                    // circumflex
+                    s = s.replace(/\u02C6/g, "^");
+                    // open angle bracket
+                    s = s.replace(/\u2039/g, "<");
+                    // close angle bracket
+                    s = s.replace(/\u203A/g, ">");
+                    // spaces
+                    s = s.replace(/[\u02DC|\u00A0]/g, " ");
+                    return s;
         },
         addFormValidations: function() {
             let vm = this;
@@ -194,36 +216,36 @@ export default {
                 vm.amendment.reason_id = selected.val();
             });
 
-            let amendmentTextField = $('#amendment_text');
-            amendmentTextField.on(
-              'paste', 
-              (e) => {
-                  //console.log("plain text only");
-                  // cancel paste
-                  e.preventDefault();
-                  // get text representation of clipboard
-                  let text = (e.originalEvent || e).clipboardData.getData('text/plain');
-                  //let transformedText = text.replace(/\n/g,'<br/>')
-                  let s = text.replace(/\n/g,'<br/>')
-                    s = s.replace(/[\u2018|\u2019|\u201A]/g, "\'");
-                    // smart double quotes
-                    s = s.replace(/[\u201C|\u201D|\u201E]/g, "\"");
-                    // ellipsis
-                    s = s.replace(/\u2026/g, "...");
-                    // dashes
-                    s = s.replace(/[\u2013|\u2014]/g, "-");
-                    // circumflex
-                    s = s.replace(/\u02C6/g, "^");
-                    // open angle bracket
-                    s = s.replace(/\u2039/g, "<");
-                    // close angle bracket
-                    s = s.replace(/\u203A/g, ">");
-                    // spaces
-                    s = s.replace(/[\u02DC|\u00A0]/g, " ");
-                  //console.log(s)
-                  // insert text manually
-                  document.execCommand("insertHTML", false, s);
-              });
+            // let amendmentTextField = $('#amendment_text');
+            // amendmentTextField.on(
+            //   'paste', 
+            //   (e) => {
+            //       //console.log("plain text only");
+            //       // cancel paste
+            //       e.preventDefault();
+            //       // get text representation of clipboard
+            //       let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+            //       //let transformedText = text.replace(/\n/g,'<br/>')
+            //       let s = text.replace(/\n/g,'<br/>')
+            //         s = s.replace(/[\u2018|\u2019|\u201A]/g, "\'");
+            //         // smart double quotes
+            //         s = s.replace(/[\u201C|\u201D|\u201E]/g, "\"");
+            //         // ellipsis
+            //         s = s.replace(/\u2026/g, "...");
+            //         // dashes
+            //         s = s.replace(/[\u2013|\u2014]/g, "-");
+            //         // circumflex
+            //         s = s.replace(/\u02C6/g, "^");
+            //         // open angle bracket
+            //         s = s.replace(/\u2039/g, "<");
+            //         // close angle bracket
+            //         s = s.replace(/\u203A/g, ">");
+            //         // spaces
+            //         s = s.replace(/[\u02DC|\u00A0]/g, " ");
+            //       //console.log(s)
+            //       // insert text manually
+            //       document.execCommand("insertHTML", false, s);
+            //   });
        }
    },
    mounted:function () {

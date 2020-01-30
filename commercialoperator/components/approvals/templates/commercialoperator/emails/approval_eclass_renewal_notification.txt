@@ -1,0 +1,10 @@
+{%  extends 'commercialoperator/emails/base_email.txt' %}
+
+{%  block content %}
+     The E Class licence {{ approval.lodgement_number}} will expire on {{approval.expiry_date}}.
+    
+    You can renew the E Class licence for five more years by clicking Extend action on the E Class licence.
+
+
+   
+{%  endblock %}
