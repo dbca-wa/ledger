@@ -20,5 +20,6 @@ class Command(BaseCommand):
         subprocess.call('python manage_co.py send_compliance_reminder', shell=True) 
         subprocess.call('python manage_co.py update_approval_status', shell=True) 
         subprocess.call('python manage_co.py expire_approvals', shell=True) 
-        subprocess.call('python manage_co.py approval_renewal_notices', shell=True) 
+        subprocess.call('python manage_co.py approval_renewal_notices', shell=True)
+        subprocess.call('python manage_co.py eclass_renewal_notices', shell=True) 
         logger.info('Command {} completed'.format(__name__))
