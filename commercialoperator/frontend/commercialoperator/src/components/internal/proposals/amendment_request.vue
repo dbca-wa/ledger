@@ -110,9 +110,10 @@ export default {
         sendData:function(){
             let vm = this;
             vm.errors = false;
-            if(vm.amendment.text){
-                vm.amendment.text= vm.formatText(vm.amendment.text)
-            }
+            // if(vm.amendment.text){
+            //     vm.amendment.text= vm.formatText(vm.amendment.text)
+            // }
+            // console.log(vm.amendment.text);
             let amendment = JSON.parse(JSON.stringify(vm.amendment));
             vm.$http.post('/api/amendment_request.json',JSON.stringify(amendment),{
                         emulateJSON:true,
