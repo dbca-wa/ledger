@@ -2233,6 +2233,7 @@ class Vessel(models.Model):
     def __str__(self):
         return self.nominated_vessel
 
+@python_2_unicode_compatible
 class ProposalRequest(models.Model):
     proposal = models.ForeignKey(Proposal, related_name='proposalrequest_set')
     subject = models.CharField(max_length=200, blank=True)
