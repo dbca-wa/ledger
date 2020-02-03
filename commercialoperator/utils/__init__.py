@@ -46,7 +46,7 @@ def search_approval(approval, searchWords):
                     'number': a.lodgement_number,
                     'id': a.id,
                     'type': 'Approval',
-                    'applicant': a.applicant.name,
+                    'applicant': a.applicant,
                     'text': results,
                     }
                 qs.append(res)
@@ -60,7 +60,7 @@ def search_approval(approval, searchWords):
                     'number': a.lodgement_number,
                     'id': a.id,
                     'type': 'Approval',
-                    'applicant': a.applicant.name,
+                    'applicant': a.applicant,
                     'text': results,
                     }
                 qs.append(res)
@@ -77,7 +77,7 @@ def search_approval(approval, searchWords):
                     'number': a.lodgement_number,
                     'id': a.id,
                     'type': 'Approval',
-                    'applicant': a.applicant.name,
+                    'applicant': a.applicant,
                     'text': a.cancellation_details,
                     }
                 qs.append(res)
@@ -99,7 +99,7 @@ def search_compliance(compliance, searchWords):
                     'number': c.reference,
                     'id': c.id,
                     'type': 'Compliance',
-                    'applicant': c.proposal.applicant.name,
+                    'applicant': c.proposal.applicant,
                     'text': c.text,
                     }
                 qs.append(res)
@@ -116,7 +116,7 @@ def search_compliance(compliance, searchWords):
                     'number': c.reference,
                     'id': c.id,
                     'type': 'Compliance',
-                    'applicant': c.proposal.applicant.name,
+                    'applicant': c.proposal.applicant,
                     'text': c.requirement.requirement,
                     }
                 qs.append(res)
