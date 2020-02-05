@@ -192,7 +192,7 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-3"> 
-                                    <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="org.name" placeholder="" style="width: 100%">
                                 </div>
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
@@ -206,7 +206,7 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >Organisation</label>
                                 <div class="col-sm-3"> 
-                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="">
+                                    <input type="text" disabled class="form-control" name="organisation" v-model="orgReq.name" placeholder="" style="width: 100%">
                                 </div>
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN</label>
                                 <div class="col-sm-3"> 
@@ -240,11 +240,11 @@
                                   </label>
                                   <label for="" class="col-sm-2 control-label" >Pin 1</label>
                                   <div class="col-sm-2">
-                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin1" placeholder="">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin1" placeholder="" style="width: 100%">
                                   </div>
                                   <label for="" class="col-sm-2 control-label" >Pin 2</label>
                                   <div class="col-sm-2">
-                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin2" placeholder="">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.pin2" placeholder="" style="width: 100%">
                                   </div>
                                   <div class="col-sm-2">
                                     <button v-if="!validatingPins" @click.prevent="validatePins()" class="btn btn-primary pull-left">Validate</button>
@@ -257,7 +257,7 @@
                                   </label>
                                   <div class="col-sm-12">
                                     <span class="btn btn-primary btn-file pull-left">
-                                        Atttach File <input type="file" ref="uploadedFile" @change="readFile()"/>
+                                        Attach File <input type="file" ref="uploadedFile" @change="readFile()"/>
                                     </span>
                                     <span class="pull-left" style="margin-left:10px;margin-top:10px;">{{uploadedFileName}}</span>
                                   </div>
@@ -292,6 +292,8 @@ export default {
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
             profile: {
+                first_name: '',
+                last_name: '',
                 disturbance_organisations:[],
                 residential_address : {}
             },
@@ -319,17 +321,40 @@ export default {
             showAddressError: false,
             errorListContact:[],
             showContactError: false,
+            role: null, 
         }
     },
     watch: {
+        // managesOrg: function() {
+        //     if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newOrg){
+        //          this.addCompany()
+        //     } else if (this.managesOrg == 'No' && this.newOrg){
+        //         this.resetNewOrg();
+        //         this.uploadedFile = null;
+        //         this.addingCompany = false;
+        //     } 
+        // },
         managesOrg: function() {
+            if (this.managesOrg == 'Yes'){
+              this.newOrg.detailsChecked = false;
+              this.role = 'employee'
+            } else if (this.managesOrg == 'Consultant'){
+              this.newOrg.detailsChecked = false;
+              this.role ='consultant'
+            }else{this.role = null
+              this.newOrg.detailsChecked = false;
+            }
+
             if (this.managesOrg  == 'Yes' && !this.hasOrgs && this.newOrg){
                  this.addCompany()
             } else if (this.managesOrg == 'No' && this.newOrg){
                 this.resetNewOrg();
                 this.uploadedFile = null;
                 this.addingCompany = false;
-            } 
+            } else {
+                this.addCompany()
+                this.addingCompany=false
+            }
         },
     },
     computed: {
@@ -372,7 +397,7 @@ export default {
                 'name': '',
                 'abn': '',
             };
-            this.addingCompany=true;
+            this.addingCompany=true; 
         },
         resetNewOrg: function(){
             this.newOrg = {
@@ -434,7 +459,11 @@ export default {
                     vm.missing_fields.push({id: this.id});
                 }
             });
-            if (vm.profile.mobile_number == '' || vm.profile.phone_number ==''){
+            // if (vm.profile.mobile_number == '' || vm.profile.phone_number ==''){
+            //   vm.errorListContact.push('Value not provided: mobile/ Phone number')
+            //   vm.missing_fields.push({id: $('#mobile').id});
+            // }
+            if ((vm.profile.mobile_number == '' && vm.profile.phone_number =='')|| (vm.profile.mobile_number == null && vm.profile.phone_number ==null)){
               vm.errorListContact.push('Value not provided: mobile/ Phone number')
               vm.missing_fields.push({id: $('#mobile').id});
             }
@@ -514,7 +543,7 @@ export default {
 
         fetchOrgRequestList: function() { //Fetch all the Organisation requests submitted by user which are pending for approval.
             let vm = this;
-            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'user_list')).then((response) => {
+            vm.$http.get(helpers.add_endpoint_json(api_endpoints.organisation_requests,'get_pending_requests')).then((response) => {
                 
                 vm.orgRequest_list=response.body; 
             }, (error) => {
@@ -533,7 +562,7 @@ export default {
                 if (response.body.valid){
                     swal(
                         'Validate Pins',
-                        'The pins you entered have been validated and you have now been linked to this organisation.',
+                        'The pins you entered have been validated and your request will be processed by Organisation Administrator.',
                         'success'
                     )
                     vm.registeringOrg = false;
@@ -563,27 +592,110 @@ export default {
         orgRequest: function() {
             let vm = this;
             vm.registeringOrg = true;
-            let data = new FormData()
-            data.append('name', vm.newOrg.name)
-            data.append('abn', vm.newOrg.abn)
-            data.append('identification', vm.uploadedFile)
-            vm.$http.post(api_endpoints.organisation_requests,data,{
-                emulateJSON:true
-            }).then((response) => {
+            let data = new FormData();
+            data.append('name', vm.newOrg.name);
+            data.append('abn', vm.newOrg.abn);
+            data.append('identification', vm.uploadedFile);
+            data.append('role',vm.role);
+            if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
                 vm.registeringOrg = false;
-                vm.uploadedFile = null;
-                vm.addingCompany = false;
-                vm.resetNewOrg();
                 swal(
-                    'Sent',
-                    'Your organisation request has been successfuly submited.',
-                    'success'
+                    'Error submitting organisation request',
+                    'Please enter the organisation details and attach a file before submitting your request.',
+                    'error'
                 )
-            }, (error) => {
-                vm.registeringOrg = false;
-                console.log(error);
-            });
+            } else {
+                vm.$http.post(api_endpoints.organisation_requests,data,{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    swal({
+                        title: 'Sent',
+                        html: 'Your organisation request has been successfully submitted.',
+                        type: 'success',
+                    }).then(() => {
+                        window.location.reload(true);
+                    });
+                }, (error) => {
+                    console.log(error);
+                    vm.registeringOrg = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                    swal(
+                        'Error submitting organisation request',
+                        error_msg,
+                        'error'
+                    );
+                });
+            }
 
+        },
+        orgConsultRequest: function() {
+            let vm = this;
+            vm.registeringOrg = true;
+            let data = new FormData();
+            let new_organisation = vm.newOrg;
+            for (var organisation in vm.profile.commercialoperator_organisations) {
+                if (new_organisation.abn && vm.profile.commercialoperator_organisations[organisation].abn == new_organisation.abn) {
+                    swal({
+                        title: 'Checking Organisation',
+                        html: 'You are already associated with this organisation.',
+                        type: 'info'
+                    })
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    return;
+                }
+            }
+            data.append('name', vm.newOrg.name);
+            data.append('abn', vm.newOrg.abn);
+            data.append('identification', vm.uploadedFile);
+            data.append('role',vm.role);
+            if (vm.newOrg.name == '' || vm.newOrg.abn == '' || vm.uploadedFile == null){
+                vm.registeringOrg = false;
+                swal(
+                    'Error submitting organisation request',
+                    'Please enter the organisation details and attach a file before submitting your request.',
+                    'error'
+                )
+            } else {
+                vm.$http.post(api_endpoints.organisation_requests,data,{
+                    emulateJSON:true
+                }).then((response) => {
+                    vm.registeringOrg = false;
+                    vm.uploadedFile = null;
+                    vm.addingCompany = false;
+                    vm.resetNewOrg();
+                    swal({
+                        title: 'Sent',
+                        html: 'Your organisation request has been successfully submitted.',
+                        type: 'success',
+                    }).then(() => {
+                        if (this.$route.name == 'account'){
+                           window.location.reload(true);
+                        }
+                    });
+                }, (error) => {
+                    console.log(error);
+                    vm.registeringOrg = false;
+                    let error_msg = '<br/>';
+                    for (var key in error.body) {
+                        error_msg += key + ': ' + error.body[key] + '<br/>';
+                    }
+                    swal(
+                        'Error submitting organisation request',
+                        error_msg,
+                        'error'
+                    );
+                });
+            }
         },
         toggleSection: function (e) {
             let el = e.target;
@@ -640,7 +752,18 @@ export default {
                 });
             },(error) => {
             }); 
-        }
+        },
+        fetchProfile: function(){
+          let vm=this;
+          Vue.http.get(api_endpoints.profile).then((response) => {
+                    vm.profile = response.body
+                    if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+                    if ( vm.profile.commercialoperator_organisations && vm.profile.commercialoperator_organisations.length > 0 ) { vm.managesOrg = 'Yes' }
+        },(error) => {
+            console.log(error);
+        })
+
+        },
     },
     beforeRouteEnter: function(to,from,next){
         Vue.http.get(api_endpoints.profile).then((response) => {

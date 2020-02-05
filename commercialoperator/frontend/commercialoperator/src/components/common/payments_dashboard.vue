@@ -4,7 +4,7 @@
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Admission Fees <small v-if="is_external">View existing admission bookings</small>
+                    <h3 class="panel-title">Park Entry Fees <small v-if="is_external">Entry fees apply to passengers <a :href="payment_help_url" target="_blank"><i class="fa fa-question-circle" style="color:blue">&nbsp;</i></a></small>
                         <a :href="'#'+pBody" data-toggle="collapse"  data-parent="#userInfo" expanded="true" :aria-controls="pBody">
                             <span class="glyphicon glyphicon-chevron-up pull-right "></span>
                         </a>
@@ -27,6 +27,15 @@
                                 <select class="form-control" v-model="filterProposalStatus">
                                     <option value="All">All</option>
                                     <option v-for="s in payment_status" :value="s.value">{{s.name}}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="">Payment Method</label>
+                                <select class="form-control" v-model="filterProposalPaymentMethod">
+                                    <option value="All">All</option>
+                                    <option v-for="s in payment_method" :value="s.value">{{s.name}}</option>
                                 </select>
                             </div>
                         </div>
@@ -108,9 +117,11 @@ export default {
             datatable_id: 'proposal-datatable-'+vm._uid,
             //Profile to check if user has access to process Proposal
             profile: {},
+            is_payment_admin: false,
             // Filters for Proposals
             filterProposalPark: 'All',
             filterProposalStatus: 'All',
+            filterProposalPaymentMethod: 'All',
             filterProposalLodgedFrom: '',
             filterProposalLodgedTo: '',
             filterProposalSubmitter: 'All',
@@ -126,12 +137,19 @@ export default {
                 {name:'Paid', value:'paid'},
                 {name:'Over Paid', value:'over_paid'},
                 {name:'Partially Paid', value:'partially_paid'},
-                {name:'Unpaid', value:'unpaid'}
+                {name:'Unpaid', value:'unpaid'},
+                {name:'Overdue', value:'overdue'}
+            ],
+            payment_method:[
+                {name:'Credit Card', value:'0'},
+                {name:'BPAY', value:'1'},
+                {name:'Monthly Invoicing', value:'2'},
+                {name:'Other', value:'3'}
             ],
             proposal_submitters: [],
             proposal_parks: [],
             proposal_headers:[
-                " Number","Licence","Holder","Status","Arrival","Park","Invoice/Confirmation","Action",
+                " Number","Licence","Holder","Status","Payment Method","Arrival","Park","Visitors", "Invoice/Confirmation","Action",
             ],
             proposal_options:{
                 language: {
@@ -150,6 +168,7 @@ export default {
                     "data": function ( d ) {
                         d.park = vm.filterProposalPark != 'All' && vm.filterProposalPark != null ? vm.filterProposalPark : '';
                         d.payment_status = vm.filterProposalStatus != 'All' && vm.filterProposalStatus != null ? vm.filterProposalStatus : '';
+                        d.payment_method = vm.filterProposalPaymentMethod != 'All' && vm.filterProposalPaymentMethod != null ? vm.filterProposalPaymentMethod : '';
                         d.date_from = vm.filterProposalLodgedFrom != '' && vm.filterProposalLodgedFrom != null ? moment(vm.filterProposalLodgedFrom, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                         d.date_to = vm.filterProposalLodgedTo != '' && vm.filterProposalLodgedTo != null ? moment(vm.filterProposalLodgedTo, 'DD/MM/YYYY').format('YYYY-MM-DD'): '';
                     }
@@ -169,11 +188,18 @@ export default {
                     },
                     {
                         data: "applicant",
-                        name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email, proposal__approval__proxy_applicant__first_name, proposal__approval__proxy_applicant__last_name"
+                        name: "proposal__approval__org_applicant__organisation__name, proposal__approval__proxy_applicant__email, proposal__approval__proxy_applicant__first_name, proposal__approval__proxy_applicant__last_name",
+                        visible: this.level=='internal' ? true : false,
                     },
                     {
                         data: "payment_status",
                         name: "payment_status",
+                        searchable: false,
+                        orderable: false
+                    },
+                    {
+                        data: "payment_method",
+                        name: "payment_method",
                         searchable: false,
                         orderable: false
                     },
@@ -203,15 +229,29 @@ export default {
                         name: "park_bookings__park__name"
 
                     },
-
+                    {
+                        data: "park_bookings",
+                        mRender:function (data,type,full) {
+                            let visitors = '';
+                            _.forEach(data, function (item) {
+                                visitors += 'A: ' + item.no_adults + '; C: ' + item.no_children + '; F: ' + item.no_free_of_charge + '<br>';
+                            });
+                            return visitors;
+                        },
+                        searchable: false,
+                        orderable: true
+                    },
                     {
                         data: '',
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (full.payment_status=='paid'){
+                            if (full.payment_status.toLowerCase()=='paid' || full.payment_method.toUpperCase()=='BPAY' || (full.payment_method.toLowerCase()=='monthly invoicing' && full.invoice_reference !== null)){
                                 links +=  `<a href='/cols/payments/invoice-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a> &nbsp`;
                                 links +=  `<a href='/cols/payments/confirmation-pdf/${full.invoice_reference}' target='_blank'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
-                            }
+                            } else if (full.payment_method.toLowerCase()=='monthly invoicing' && full.invoice_reference == null){
+                                // running aggregated monthly booking - not yet invoiced
+                                links +=  `<a href='/cols/payments/monthly-confirmation-pdf/${full.id}' target='_blank' style='padding-left: 52px;'><i style='color:red;' class='fa fa-file-pdf-o'></i></a><br/>`;
+                            } 
                             return links;
                         },
                         name: '',
@@ -222,14 +262,17 @@ export default {
                         data: "",
                         mRender:function (data,type,full) {
                             let links = '';
-                            if (full.payment_status=='paid'){
-                                links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                            if (full.payment_status.toLowerCase()=='paid' && vm.is_internal){
+                                if(vm.is_payment_admin){
+                                    links +=  `<a href='/ledger/payments/invoice/payment?invoice=${full.invoice_reference}' target='_blank'>View Payment</a><br/>`;
+                                }
                             }
                             return links;
                         },
                         name: '',
                         searchable: false,
-                        orderable: false
+                        orderable: false,
+                        visible: vm.level=='internal' ? true : false
                     }
 
                 ],
@@ -270,9 +313,17 @@ export default {
                 vm.$refs.proposal_datatable.vmDataTable.columns(3).search('').draw();
             }
         },
+        filterProposalPaymentMethod: function() {
+            let vm = this;
+            if (vm.filterProposalPaymentMethod!= 'All') {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search(vm.filterProposalPaymentMethod).draw();
+            } else {
+                vm.$refs.proposal_datatable.vmDataTable.columns(4).search('').draw();
+            }
+        },
         filterProposalPark: function() {
             let vm = this;
-            vm.$refs.proposal_datatable.vmDataTable.columns(5).search('').draw();
+            vm.$refs.proposal_datatable.vmDataTable.columns(6).search('').draw();
         },
 
         filterProposalLodgedFrom: function(){
@@ -292,6 +343,9 @@ export default {
         },
         is_internal: function(){
             return this.level == 'internal';
+        },
+        payment_help_url: function() {
+            return api_endpoints.payment_help_url;
         },
     },
     methods:{
@@ -395,6 +449,10 @@ export default {
                 vm.amendApproval(id);
             });
 
+            //if(vm.is_external){
+            //    vm.$refs.proposal_datatable.vmDataTable.column(7).visible(false);
+            //}
+
         },
         initialiseSearch:function(){
             this.dateSearch();
@@ -449,7 +507,8 @@ export default {
         fetchProfile: function(){
             let vm = this;
             Vue.http.get(api_endpoints.profile).then((response) => {
-                vm.profile = response.body
+                vm.profile = response.body;
+                vm.is_payment_admin= response.body.is_payment_admin;
             },(error) => {
                 console.log(error);
             })

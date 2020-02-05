@@ -1,12 +1,11 @@
 {%  extends 'disturbance/emails/base_email.txt' %}
 
 {%  block content %}
-   
-      
-    
-        A Application for Proposal {{proposal.lodgement_number}} has been declined.
+   		{% if proposal.approval.reissued %}
+ 			Approval {{proposal.approval.lodgement_number}} for Proposal {{proposal.lodgement_number}} has been reissued.
+ 		{% else %}
 
-   
-
+        	Proposal {{proposal.lodgement_number}} has been approved.
+        {% endif %}
 
 {%  endblock %}
