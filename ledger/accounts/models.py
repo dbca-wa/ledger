@@ -331,7 +331,6 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                 self.title = user_details.get('title')
                 self.fax_number = user_details.get('org_unit__location__fax')
                 self.is_staff = True
-        self.email = self.email.lower()            
         super(EmailUser, self).save(*args, **kwargs)
 
     def get_full_name(self):
