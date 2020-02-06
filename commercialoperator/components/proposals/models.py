@@ -37,6 +37,7 @@ from reversion.models import Version
 from dirtyfields import DirtyFieldsMixin
 from decimal import Decimal as D
 import csv
+import time
 
 import logging
 logger = logging.getLogger(__name__)
@@ -843,8 +844,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             return True
         return False
 
-    @property
-    def search_data(self):
+    
+    def search_data_orig(self):
         search_data={}
         parks=[]
         trails=[]
@@ -888,6 +889,51 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             search_data.update({'mooring': []})
             search_data.update({'accreditations':[]})
         return search_data
+
+    
+    @property
+    def search_data(self):
+        search_data={}
+        parks=[]
+        trails=[]
+        activities=[]
+        vehicles=[]
+        vessels=[]
+        accreditations=[]
+        
+        land_parks_name=list(self.parks.filter(park__park_type='land').values_list('park__name', flat=True))
+        land_activities_name=list(self.parks.filter(park__park_type='land', activities__isnull=False).values_list('activities__activity__name', flat=True))
+        marine_parks_name=list(self.parks.filter(park__park_type='marine').values_list('park__name', flat=True))
+        marine_activities_name=list(self.parks.filter(park__park_type='marine',zones__isnull=False, zones__park_activities__isnull=False).values_list('zones__park_activities__activity__name', flat=True))
+        trails_name=list(self.trails.all().values_list('trail__name', flat=True))
+        trail_activities_name=list(self.trails.filter(sections__isnull=False, sections__trail_activities__isnull=False).values_list('sections__trail_activities__activity__name', flat=True))
+        vehicles=list(self.vehicles.all().values_list('rego', flat=True))
+        vessels=list(self.vessels.all().values_list('spv_no', flat=True))
+
+        parks=land_parks_name + marine_parks_name 
+        activities = land_activities_name + marine_activities_name + trail_activities_name
+
+
+        search_data.update({'parks': parks})
+        search_data.update({'trails': trails_name})
+        search_data.update({'vehicles': vehicles})
+        search_data.update({'vessels': vessels})
+        search_data.update({'activities': activities})
+
+        try:
+            other_details=ProposalOtherDetails.objects.get(proposal=self)
+            search_data.update({'other_details': other_details.other_comments})
+            search_data.update({'mooring': other_details.mooring})
+            for acr in other_details.accreditations.all():
+                 accreditations.append(acr.get_accreditation_type_display())
+            # accreditations=[acr.get_accreditation_type_display() for acr in other_details.accreditations.all()]
+            search_data.update({'accreditations': accreditations})
+        except ProposalOtherDetails.DoesNotExist:
+            search_data.update({'other_details': []})
+            search_data.update({'mooring': []})
+            search_data.update({'accreditations':[]})
+        return search_data
+
 
     @property
     def selected_parks_activities(self):
