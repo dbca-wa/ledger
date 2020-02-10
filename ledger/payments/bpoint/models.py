@@ -9,6 +9,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from oscar.apps.order.models import Order
 from ledger.accounts.models import EmailUser
 from ledger.payments.emails import send_refund_email
+from confy import env
 
 class BpointTransaction(models.Model):
     ACTION_TYPES = (
@@ -158,6 +159,8 @@ class BpointTransaction(models.Model):
     def refund(self,info,user,matched=True):
         from ledger.payments.facade import bpoint_facade 
         from ledger.payments.models import TrackRefund, Invoice
+        LEDGER_REFUND_EMAIL = env('LEDGER_REFUND_EMAIL', False)
+
 
         with transaction.atomic():
             amount = info['amount']
@@ -190,8 +193,9 @@ class BpointTransaction(models.Model):
                                 except BpointToken.DoesNotExist:
                                     UsedBpointToken.objects.create(DVToken=txn.dvtoken)
                                 TrackRefund.objects.create(user=user,type=2,refund_id=txn.id,details=details)
-                                # Disabled as requested by Walter
-                                #send_refund_email(Invoice.objects.get(reference=self.crn1),'card',txn.amount,card_ending=self.last_digits)
+                                if LEDGER_REFUND_EMAIL is True:
+                                    # Disabled as requested by Walter and then enabled again for parkstay
+                                    send_refund_email(Invoice.objects.get(reference=self.crn1),'card',txn.amount,card_ending=self.last_digits)
                         else:
                             raise ValidationError('The refund amount is greater than the amount refundable on this card.')
                     else:
