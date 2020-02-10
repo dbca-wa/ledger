@@ -2801,7 +2801,7 @@ class Referral(RevisionedMixin):
                     referral = None
                     # Check if the user is in ledger
                     try:
-                        user = EmailUser.objects.get(email__icontains=referral_email)
+                        user = EmailUser.objects.get(email__icontains=referral_email.lower())
                     except EmailUser.DoesNotExist:
                         # Validate if it is a deparment user
                         department_user = get_department_user(referral_email)

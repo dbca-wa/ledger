@@ -15,13 +15,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            user = EmailUser.objects.get(email='cron@dbca.wa.gov.au')
+            user = EmailUser.objects.get(email=settings.CRON_EMAIL)
         except:
-            user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
+            user = EmailUser.objects.create(email=settings.CRON_EMAIL, password='')
 
         today = timezone.localtime(timezone.now()).date()
         logger.info('Running command {}'.format(__name__))
-        for c in Compliance.objects.filter(processing_status = 'due'):
+        for c in Compliance.objects.filter(processing_status='due'):
             try:
                 c.send_reminder(user)
                 c.save()

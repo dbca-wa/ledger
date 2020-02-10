@@ -175,7 +175,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email=serializer.validated_data['email']
+                email=serializer.validated_data['email'].lower()
             )
             instance.accept_user(user_obj, request)
             serializer = self.get_serializer(instance)
@@ -197,7 +197,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email=serializer.validated_data['email']
+                email=serializer.validated_data['email'].lower()
             )
             instance.accept_declined_user(user_obj, request)
             serializer = self.get_serializer(instance)
@@ -220,7 +220,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email = serializer.validated_data['email']
+                email = serializer.validated_data['email'].lower()
                 )
             instance.decline_user(user_obj,request)
             serializer = self.get_serializer(instance)
@@ -243,7 +243,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email = serializer.validated_data['email']
+                email = serializer.validated_data['email'].lower()
                 )
             instance.unlink_user(user_obj,request)
             serializer = self.get_serializer(instance)
@@ -268,7 +268,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email = serializer.validated_data['email']
+                email = serializer.validated_data['email'].lower()
                 )
             instance.make_admin_user(user_obj,request)
             serializer = self.get_serializer(instance)
@@ -290,7 +290,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email = serializer.validated_data['email']
+                email = serializer.validated_data['email'].lower()
                 )
             instance.make_user(user_obj,request)
             serializer = self.get_serializer(instance)
@@ -315,7 +315,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email = serializer.validated_data['email']
+                email = serializer.validated_data['email'].lower()
                 )
             instance.make_consultant(user_obj,request)
             serializer = self.get_serializer(instance)
@@ -338,7 +338,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email = serializer.validated_data['email']
+                email = serializer.validated_data['email'].lower()
                 )
             instance.suspend_user(user_obj,request)
             serializer = self.get_serializer(instance)
@@ -361,7 +361,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email = serializer.validated_data['email']
+                email = serializer.validated_data['email'].lower()
                 )
             instance.reinstate_user(user_obj,request)
             serializer = self.get_serializer(instance)
@@ -384,7 +384,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             serializer = OrgUserAcceptSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user_obj = EmailUser.objects.get(
-                email = serializer.validated_data['email']
+                email = serializer.validated_data['email'].lower()
                 )
             instance.relink_user(user_obj,request)
             serializer = self.get_serializer(instance)

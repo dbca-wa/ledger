@@ -132,7 +132,7 @@ class AssessorDataSearch(object):
                             res['referrals'].append({
                                 'value':v,
                                 'email':ref_parts[1],
-                                'full_name': EmailUser.objects.get(email=ref_parts[1]).get_full_name()
+                                'full_name': EmailUser.objects.get(email=ref_parts[1].lower()).get_full_name()
                             })
                         elif k.split('-')[-1].lower() == 'assessor':
                             # Assessor
