@@ -82,6 +82,7 @@ class DelegateSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'email',
         )
 
 
@@ -176,7 +177,7 @@ class MyOrganisationsSerializer(serializers.ModelSerializer):
 class DetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ledger_organisation
-        fields = ('id','name', 'trading_name')
+        fields = ('id','name', 'trading_name', 'email')
 
 class OrganisationContactSerializer(serializers.ModelSerializer):
     user_status= serializers.SerializerMethodField()
@@ -256,14 +257,31 @@ class OrganisationActionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class OrganisationRequestCommsSerializer(serializers.ModelSerializer):
+    documents = serializers.SerializerMethodField()
     class Meta:
         model = OrganisationRequestLogEntry
         fields = '__all__'
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
 
 class OrganisationCommsSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganisationLogEntry
         fields = '__all__'
+
+class OrganisationRequestLogEntrySerializer(CommunicationLogEntrySerializer):
+    documents = serializers.SerializerMethodField()
+    class Meta:
+        model = OrganisationRequestLogEntry
+        fields = '__all__'
+        read_only_fields = (
+            'customer',
+        )
+
+    def get_documents(self,obj):
+        return [[d.name,d._file.url] for d in obj.documents.all()]
+
 
 class OrganisationLogEntrySerializer(CommunicationLogEntrySerializer):
     documents = serializers.SerializerMethodField()
@@ -297,10 +315,21 @@ class OrgUserAcceptSerializer(serializers.Serializer):
     mobile_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     phone_number = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
+    # def validate(self, data):
+    #     '''
+    #     Check for either mobile number or phone number
+    #     '''
+    #     if not (data['mobile_number'] or data['phone_number']):
+    #         raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+    #     return data
     def validate(self, data):
-        '''
-        Check for either mobile number or phone number
-        '''
-        if not (data['mobile_number'] or data['phone_number']):
-            raise serializers.ValidationError("User must have an associated phone number or mobile number.")
+        #Mobile and phone number for dbca user are updated from active directory so need to skip these users from validation.
+        domain=None
+        if data['email']:
+            domain = data['email'].split('@')[1]
+        if domain in settings.DEPT_DOMAINS:
+            return data
+        else:
+            if not (data['mobile_number'] or data['phone_number']):
+                raise serializers.ValidationError("User must have an associated phone number or mobile number.")
         return data

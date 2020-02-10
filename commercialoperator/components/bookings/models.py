@@ -135,13 +135,14 @@ class Booking(Payment):
 
     def save(self, *args, **kwargs):
         super(Booking, self).save(*args,**kwargs)
-        if self.admission_number == '':
+        if self.admission_number == '' and self.booking_type != self.BOOKING_TYPE_TEMPORARY:
             self.admission_number = 'AD{0:06d}'.format(self.next_id)
             self.save()
 
     @property
     def booking_number(self):
-        return 'COLS-{0:06d}'.format(self.id)
+        #return 'COLS-{0:06d}'.format(self.id)
+        return self.admission_number
 
     @property
     def num_visitors(self):
@@ -190,7 +191,10 @@ class Booking(Payment):
 
     @property
     def invoice(self):
-        return self.invoices.last().invoice
+        try:
+            return self.invoices.last().invoice
+        except:
+            return None
 
     @property
     def deferred_payment_date(self):

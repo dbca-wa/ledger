@@ -6,7 +6,8 @@ from django.dispatch import receiver
 from django.db.models.signals import pre_delete
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
-from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+#from ledger.accounts.models import EmailUser, Document, RevisionedMixin
+from ledger.accounts.models import EmailUser, RevisionedMixin
 from django.contrib.postgres.fields.jsonb import JSONField
 
 
@@ -372,7 +373,7 @@ class CommunicationsLogEntry(models.Model):
 
 @python_2_unicode_compatible
 class Document(models.Model):
-    name = models.CharField(max_length=100, blank=True,
+    name = models.CharField(max_length=255, blank=True,
                             verbose_name='name', help_text='')
     description = models.TextField(blank=True,
                                    verbose_name='description', help_text='')
@@ -433,6 +434,16 @@ class SystemMaintenance(models.Model):
 
     def __str__(self):
         return 'System Maintenance: {} ({}) - starting {}, ending {}'.format(self.name, self.description, self.start_date, self.end_date)
+
+class UserSystemSettings(models.Model):
+    one_row_per_park = models.BooleanField(default=False) #Setting for user if they want to see Payment (Park Entry Fees Dashboard) by one row per park or one row per booking
+    user = models.ForeignKey(EmailUser, unique=True, related_name='system_settings')
+
+
+    class Meta:
+        app_label = 'commercialoperator'
+        verbose_name_plural = "User System Settings"
+
 
 import reversion
 reversion.register(Region, follow=['districts'])

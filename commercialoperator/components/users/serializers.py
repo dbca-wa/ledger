@@ -1,8 +1,9 @@
 from django.conf import settings
-from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity,Document, EmailUserAction, EmailUserLogEntry, CommunicationsLogEntry
+from ledger.accounts.models import EmailUser,Address, Profile,EmailIdentity, EmailUserAction, EmailUserLogEntry, CommunicationsLogEntry
 from commercialoperator.components.organisations.models import (
                                     Organisation,
                                 )
+from commercialoperator.components.main.models import UserSystemSettings, Document
 from commercialoperator.components.organisations.utils import can_admin_org, is_consultant
 from rest_framework import serializers
 from ledger.accounts.utils import in_dbca_domain
@@ -24,6 +25,13 @@ class UserAddressSerializer(serializers.ModelSerializer):
             'state',
             'country',
             'postcode'
+        )
+
+class UserSystemSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSystemSettings
+        fields = (
+            'one_row_per_park',
         )
 
 class UserOrganisationSerializer(serializers.ModelSerializer):
@@ -84,6 +92,7 @@ class UserSerializer(serializers.ModelSerializer):
     identification = DocumentSerializer()
     is_department_user = serializers.SerializerMethodField()
     is_payment_admin = serializers.SerializerMethodField()
+    system_settings= serializers.SerializerMethodField()
 
     class Meta:
         model = EmailUser
@@ -102,7 +111,9 @@ class UserSerializer(serializers.ModelSerializer):
             'contact_details',
             'full_name',
             'is_department_user',
-            'is_payment_admin'
+            'is_payment_admin',
+            'is_staff',
+            'system_settings',
         )
 
     def get_personal_details(self,obj):
@@ -139,6 +150,15 @@ class UserSerializer(serializers.ModelSerializer):
             commercialoperator_organisations, many=True, context={
                 'user_id': obj.id}).data
         return serialized_orgs
+
+    def get_system_settings(self, obj):
+        try:
+            user_system_settings = obj.system_settings.first()
+            serialized_settings = UserSystemSettingsSerializer(
+                user_system_settings).data
+            return serialized_settings
+        except:
+            return None
 
 
 class PersonalSerializer(serializers.ModelSerializer):

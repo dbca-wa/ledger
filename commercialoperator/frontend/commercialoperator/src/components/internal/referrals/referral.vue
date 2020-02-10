@@ -3,7 +3,7 @@
             <div class="row">
         <h3>Application: {{ proposal.lodgement_number }}</h3>
         <div class="col-md-3">
-            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" comms_add_url="test"/>
+            <CommsLogs :comms_url="comms_url" :logs_url="logs_url" :comms_add_url="comms_add_url" :disable_add_entry="false"/>
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -350,6 +350,7 @@ export default {
             DATE_TIME_FORMAT: 'DD/MM/YYYY HH:mm:ss',
             logs_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/action_log'),
             comms_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/comms_log'),
+            comms_add_url: helpers.add_endpoint_json(api_endpoints.proposals,vm.$route.params.proposal_id+'/add_comms_log'),
             panelClickersInitialised: false,
             referral: {}
         }
@@ -714,7 +715,7 @@ export default {
           let vm=this;
           vm.$http.get(helpers.add_endpoint_json(api_endpoints.proposals,proposal_id+'/parks_and_trails')).then(response => {
                     vm.proposal_parks = helpers.copyObject(response.body);
-                    console.log(vm.proposal_parks)
+                    //console.log(vm.proposal_parks)
                 },
                   error => {
                 });

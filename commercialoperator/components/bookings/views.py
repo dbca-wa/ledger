@@ -9,6 +9,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.core.exceptions import PermissionDenied
 
 from datetime import datetime, timedelta, date
 from django.utils import timezone
@@ -42,6 +43,7 @@ from commercialoperator.components.bookings.utils import (
     calc_payment_due_date,
     create_bpay_invoice,
     create_other_invoice,
+    create_monthly_confirmation,
 )
 
 from commercialoperator.components.proposals.serializers import ProposalSerializer
@@ -56,6 +58,8 @@ from ledger.payments.models import Invoice
 from ledger.basket.models import Basket
 from ledger.payments.mixins import InvoiceOwnerMixin
 from oscar.apps.order.models import Order
+from commercialoperator.helpers import is_internal, is_commercialoperator_admin, is_in_organisation_contacts
+from ledger.payments.helpers import is_payment_admin
 
 import logging
 logger = logging.getLogger('payment_checkout')
@@ -115,7 +119,7 @@ class DeferredInvoicingPreviewView(TemplateView):
             submitter = proposal.submitter
 
         #if isinstance(proposal.org_applicant, Organisation) and (proposal.org_applicant.monthly_invoicing_allowed or proposal.org_applicant.bpay_allowed or proposal.org_applicant.other_allowed):
-        if isinstance(proposal.org_applicant, Organisation) and (proposal.org_applicant.monthly_invoicing_allowed or proposal.org_applicant.bpay_allowed):
+        if isinstance(proposal.org_applicant, Organisation) and (proposal.org_applicant.monthly_invoicing_allowed or proposal.org_applicant.bpay_allowed or (settings.OTHER_PAYMENT_ALLOWED and is_payment_admin(request.user))):
             try:
                 lines = create_lines(request)
                 logger.info('{} Show Park Bookings Preview for BPAY/Other/monthly invoicing'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), proposal.id))
@@ -176,6 +180,10 @@ class DeferredInvoicingView(TemplateView):
                     ret = create_other_invoice(submitter, booking)
                     invoice_reference = booking.invoice.reference
 
+                if booking and payment_method=='monthly_invoicing':
+                    # For monthly_invoicing, invoice is created later by Cron. Now we only create a confirmation
+                    ret = create_monthly_confirmation(submitter, booking)
+
                 logger.info('{} Created Park Bookings with payment method {} for Proposal ID {}'.format('User {} with id {}'.format(proposal.submitter.get_full_name(),proposal.submitter.id), payment_method, proposal.id))
                 #send_monthly_invoicing_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
                 context.update({
@@ -186,7 +194,10 @@ class DeferredInvoicingView(TemplateView):
                     'invoice_reference': invoice_reference
                 })
                 if payment_method=='other':
-                    return HttpResponseRedirect(reverse('payments:invoice-payment') + '?invoice={}'.format(invoice_reference))
+                    if is_payment_admin(request.user):
+                        return HttpResponseRedirect(reverse('payments:invoice-payment') + '?invoice={}'.format(invoice_reference))
+                    else:
+                        raise PermissionDenied
                 else:
                     return render(request, self.template_name, context)
 
@@ -403,8 +414,8 @@ class BookingSuccessView(TemplateView):
                     request.session['cols_last_booking'] = booking.id
                     delete_session_booking(request.session)
 
-                    send_invoice_tclass_email_notification(request, booking, invoice, recipients=[recipient])
-                    send_confirmation_tclass_email_notification(request, booking, invoice, recipients=[recipient])
+                    send_invoice_tclass_email_notification(request.user, booking, invoice, recipients=[recipient])
+                    send_confirmation_tclass_email_notification(request.user, booking, invoice, recipients=[recipient])
 
                     context.update({
                         'booking_id': booking.id,
@@ -440,44 +451,83 @@ class BookingSuccessView(TemplateView):
         return render(request, self.template_name, context)
 
 
-class InvoicePDFView(InvoiceOwnerMixin,View):
+#class InvoicePDFView(InvoiceOwnerMixin,View):
+class InvoicePDFView(View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
+
         if bi:
             proposal = bi.booking.proposal
         else:
             proposal = Proposal.objects.get(fee_invoice_reference=invoice.reference)
 
-        response = HttpResponse(content_type='application/pdf')
-        response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
-        return response
+        organisation = proposal.org_applicant.organisation.organisation_set.all()[0]
+        if self.check_owner(organisation):
+            response = HttpResponse(content_type='application/pdf')
+            response.write(create_invoice_pdf_bytes('invoice.pdf', invoice, proposal))
+            return response
+        raise PermissionDenied
 
     def get_object(self):
-        invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
-        return invoice
+        return  get_object_or_404(Invoice, reference=self.kwargs['reference'])
+
+    def check_owner(self, organisation):
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or self.request.user.is_superuser
 
 
-class ConfirmationPDFView(InvoiceOwnerMixin,View):
+#class ConfirmationPDFView(InvoiceOwnerMixin,View):
+class ConfirmationPDFView(View):
     def get(self, request, *args, **kwargs):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         bi=BookingInvoice.objects.filter(invoice_reference=invoice.reference).last()
+        organisation = bi.booking.proposal.org_applicant.organisation.organisation_set.all()[0]
 
-        # GST ignored here because GST amount is not included on the confirmation PDF
-        response = HttpResponse(content_type='application/pdf')
-        response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking))
-        return response
+        if self.check_owner(organisation):
+            # GST ignored here because GST amount is not included on the confirmation PDF
+            response = HttpResponse(content_type='application/pdf')
+            response.write(create_confirmation_pdf_bytes('confirmation.pdf',invoice, bi.booking))
+            return response
+        raise PermissionDenied
 
     def get_object(self):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         return invoice
 
+    def check_owner(self, organisation):
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or self.request.user.is_superuser
 
-class MonthlyConfirmationPDFView(View):
+
+class MonthlyConfirmationPDFBookingView(View):
+    """ for the Visitor Admissions Payment Dashboard - View by Booking (payments_dashboard.vue) """
+
     def get(self, request, *args, **kwargs):
         booking = get_object_or_404(Booking, id=self.kwargs['id'])
+        organisation = booking.proposal.org_applicant.organisation.organisation_set.all()[0]
 
-        response = HttpResponse(content_type='application/pdf')
-        response.write(create_monthly_confirmation_pdf_bytes('monthly_confirmation.pdf', booking))
-        return response
+        if self.check_owner(organisation):
+            response = HttpResponse(content_type='application/pdf')
+            response.write(create_monthly_confirmation_pdf_bytes('monthly_confirmation.pdf', booking))
+            return response
+        raise PermissionDenied
+
+    def check_owner(self, organisation):
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or self.request.user.is_superuser
+
+class MonthlyConfirmationPDFParkBookingView(View):
+    """ for the Visitor Admissions Payment Dashboard - View by ParkBooking (parkbookings_dashboard.vue) """
+
+    def get(self, request, *args, **kwargs):
+        park_booking = get_object_or_404(ParkBooking, id=self.kwargs['id'])
+        booking = park_booking.booking
+        organisation = booking.proposal.org_applicant.organisation.organisation_set.all()[0]
+
+        if self.check_owner(organisation):
+            response = HttpResponse(content_type='application/pdf')
+            response.write(create_monthly_confirmation_pdf_bytes('monthly_confirmation.pdf', booking))
+            return response
+        raise PermissionDenied
+
+    def check_owner(self, organisation):
+        return is_in_organisation_contacts(self.request, organisation) or is_internal(self.request) or self.request.user.is_superuser
 

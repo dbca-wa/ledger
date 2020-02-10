@@ -57,6 +57,7 @@ from commercialoperator.components.organisations.serializers import (
                                         OrganisationCheckExistSerializer,
                                         LedgerOrganisationFilterSerializer,
                                         OrganisationLogEntrySerializer,
+                                        OrganisationRequestLogEntrySerializer,
                                     )
 #from commercialoperator.components.applications.serializers import (
 #                                        BaseApplicationSerializer,
@@ -93,7 +94,7 @@ class OrganisationViewSet(viewsets.ModelViewSet):
     def contacts(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = OrganisationContactSerializer(instance.contacts.all(),many=True)
+            serializer = OrganisationContactSerializer(instance.contacts.exclude(user_status='pending'),many=True)
             return Response(serializer.data);
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -299,7 +300,10 @@ class OrganisationViewSet(viewsets.ModelViewSet):
             raise
         except ValidationError as e:
             print(traceback.print_exc())
-            raise serializers.ValidationError(repr(e.error_dict))
+            if hasattr(e,'error_dict'):
+                raise serializers.ValidationError(repr(e.error_dict))
+            else:
+                raise serializers.ValidationError(repr(e[0].encode('utf-8')))
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
@@ -782,7 +786,8 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
     def decline(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            instance.decline(request)
+            reason = ''
+            instance.decline(reason, request)
             serializer = OrganisationRequestSerializer(instance)
             return Response(serializer.data)
         except serializers.ValidationError:
@@ -853,6 +858,38 @@ class OrganisationRequestsViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e))
+
+    @detail_route(methods=['POST',])
+    @renderer_classes((JSONRenderer,))
+    def add_comms_log(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                instance = self.get_object()
+                request.data['organisation'] = u'{}'.format(instance.id)
+                request.data['request'] = u'{}'.format(instance.id)
+                request.data['staff'] = u'{}'.format(request.user.id)
+                serializer = OrganisationRequestLogEntrySerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                comms = serializer.save()
+                # Save the files
+                for f in request.FILES:
+                    document = comms.documents.create()
+                    document.name = str(request.FILES[f])
+                    document._file = request.FILES[f]
+                    document.save()
+                # End Save Documents
+
+                return Response(serializer.data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e))
+
 
     def create(self, request, *args, **kwargs):
         try:

@@ -37,6 +37,7 @@ from reversion.models import Version
 from dirtyfields import DirtyFieldsMixin
 from decimal import Decimal as D
 import csv
+import time
 
 import logging
 logger = logging.getLogger(__name__)
@@ -226,9 +227,11 @@ class DefaultDocument(Document):
 
 class ProposalDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='documents')
-    _file = models.FileField(upload_to=update_proposal_doc_filename)
+    _file = models.FileField(upload_to=update_proposal_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
+    can_hide= models.BooleanField(default=False) # after initial submit, document cannot be deleted but can be hidden
+    hidden=models.BooleanField(default=False) # after initial submit prevent document from being deleted
 
     class Meta:
         app_label = 'commercialoperator'
@@ -236,7 +239,7 @@ class ProposalDocument(Document):
 
 class OnHoldDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='onhold_documents')
-    _file = models.FileField(upload_to=update_onhold_doc_filename)
+    _file = models.FileField(upload_to=update_onhold_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
@@ -248,10 +251,12 @@ class OnHoldDocument(Document):
 #Documents on Activities(land)and Activities(Marine) tab for T-Class related to required document questions
 class ProposalRequiredDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='required_documents')
-    _file = models.FileField(upload_to=update_proposal_required_doc_filename)
+    _file = models.FileField(upload_to=update_proposal_required_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     required_doc = models.ForeignKey('RequiredDocument',related_name='proposals')
+    can_hide= models.BooleanField(default=False) # after initial submit, document cannot be deleted but can be hidden
+    hidden=models.BooleanField(default=False) # after initial submit prevent document from being deleted
 
     def delete(self):
         if self.can_delete:
@@ -263,7 +268,7 @@ class ProposalRequiredDocument(Document):
 
 class QAOfficerDocument(Document):
     proposal = models.ForeignKey('Proposal',related_name='qaofficer_documents')
-    _file = models.FileField(upload_to=update_qaofficer_doc_filename)
+    _file = models.FileField(upload_to=update_qaofficer_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
@@ -279,7 +284,7 @@ class QAOfficerDocument(Document):
 
 class ReferralDocument(Document):
     referral = models.ForeignKey('Referral',related_name='referral_documents')
-    _file = models.FileField(upload_to=update_referral_doc_filename)
+    _file = models.FileField(upload_to=update_referral_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
 
@@ -293,7 +298,7 @@ class ReferralDocument(Document):
 
 class RequirementDocument(Document):
     requirement = models.ForeignKey('ProposalRequirement',related_name='requirement_documents')
-    _file = models.FileField(upload_to=update_requirement_doc_filename)
+    _file = models.FileField(upload_to=update_requirement_doc_filename, max_length=512)
     input_name = models.CharField(max_length=255,null=True,blank=True)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
     visible = models.BooleanField(default=True) # to prevent deletion on file system, hidden and still be available in history
@@ -839,8 +844,8 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             return True
         return False
 
-    @property
-    def search_data(self):
+    
+    def search_data_orig(self):
         search_data={}
         parks=[]
         trails=[]
@@ -884,6 +889,51 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
             search_data.update({'mooring': []})
             search_data.update({'accreditations':[]})
         return search_data
+
+    
+    @property
+    def search_data(self):
+        search_data={}
+        parks=[]
+        trails=[]
+        activities=[]
+        vehicles=[]
+        vessels=[]
+        accreditations=[]
+        
+        land_parks_name=list(self.parks.filter(park__park_type='land').values_list('park__name', flat=True))
+        land_activities_name=list(self.parks.filter(park__park_type='land', activities__isnull=False).values_list('activities__activity__name', flat=True))
+        marine_parks_name=list(self.parks.filter(park__park_type='marine').values_list('park__name', flat=True))
+        marine_activities_name=list(self.parks.filter(park__park_type='marine',zones__isnull=False, zones__park_activities__isnull=False).values_list('zones__park_activities__activity__name', flat=True))
+        trails_name=list(self.trails.all().values_list('trail__name', flat=True))
+        trail_activities_name=list(self.trails.filter(sections__isnull=False, sections__trail_activities__isnull=False).values_list('sections__trail_activities__activity__name', flat=True))
+        vehicles=list(self.vehicles.all().values_list('rego', flat=True))
+        vessels=list(self.vessels.all().values_list('spv_no', flat=True))
+
+        parks=land_parks_name + marine_parks_name 
+        activities = land_activities_name + marine_activities_name + trail_activities_name
+
+
+        search_data.update({'parks': parks})
+        search_data.update({'trails': trails_name})
+        search_data.update({'vehicles': vehicles})
+        search_data.update({'vessels': vessels})
+        search_data.update({'activities': activities})
+
+        try:
+            other_details=ProposalOtherDetails.objects.get(proposal=self)
+            search_data.update({'other_details': other_details.other_comments})
+            search_data.update({'mooring': other_details.mooring})
+            for acr in other_details.accreditations.all():
+                 accreditations.append(acr.get_accreditation_type_display())
+            # accreditations=[acr.get_accreditation_type_display() for acr in other_details.accreditations.all()]
+            search_data.update({'accreditations': accreditations})
+        except ProposalOtherDetails.DoesNotExist:
+            search_data.update({'other_details': []})
+            search_data.update({'mooring': []})
+            search_data.update({'accreditations':[]})
+        return search_data
+
 
     @property
     def selected_parks_activities(self):
@@ -1956,7 +2006,7 @@ class Proposal(DirtyFieldsMixin, RevisionedMixin):
 
 class ProposalLogDocument(Document):
     log_entry = models.ForeignKey('ProposalLogEntry',related_name='documents')
-    _file = models.FileField(upload_to=update_proposal_comms_log_filename)
+    _file = models.FileField(upload_to=update_proposal_comms_log_filename, max_length=512)
 
     class Meta:
         app_label = 'commercialoperator'
@@ -2047,8 +2097,8 @@ class ProposalOtherDetails(models.Model):
 class ProposalAccreditation(models.Model):
     #activities_land = models.CharField(max_length=24, blank=True, default='')
     ACCREDITATION_TYPE_CHOICES = (
-        ('no', 'No'),
-        ('atap', 'ATAP'),
+        ('no', 'None'),
+        ('atap', 'QTA'),
         ('eco_certification', 'Eco Certification'),
         ('narta', 'NARTA'),
         ('other', 'Other')
@@ -2229,6 +2279,7 @@ class Vessel(models.Model):
     def __str__(self):
         return self.nominated_vessel
 
+@python_2_unicode_compatible
 class ProposalRequest(models.Model):
     proposal = models.ForeignKey(Proposal, related_name='proposalrequest_set')
     subject = models.CharField(max_length=200, blank=True)
@@ -2300,7 +2351,8 @@ class AmendmentRequest(ProposalRequest):
                         proposal.processing_status = 'draft'
                         proposal.customer_status = 'draft'
                         proposal.save()
-
+                        proposal.documents.all().update(can_hide=True)
+                        proposal.required_documents.all().update(can_hide=True)
                     # Create a log entry for the proposal
                     proposal.log_user_action(ProposalUserAction.ACTION_ID_REQUEST_AMENDMENTS,request)
                     # Create a log entry for the organisation
@@ -2443,7 +2495,9 @@ class ProposalUserAction(UserAction):
     ACTION_QA_OFFICER_COMPLETED = "QA Officer Assessment Completed {}"
 
     # monthly invoicing by cron
+    ACTION_SEND_BPAY_INVOICE = "Send BPAY invoice {} for application {} to {}"
     ACTION_SEND_MONTHLY_INVOICE = "Send monthly invoice {} for application {} to {}"
+    ACTION_SEND_MONTHLY_CONFIRMATION = "Send monthly confirmation for booking ID {}, for application {} to {}"
     ACTION_SEND_PAYMENT_DUE_NOTIFICATION = "Send monthly invoice/BPAY payment due notification {} for application {} to {}"
 
     class Meta:
@@ -2901,8 +2955,10 @@ class ChecklistQuestion(RevisionedMixin):
                                          default=TYPE_CHOICES[0][0])
     answer_type = models.CharField('Answer type', max_length=30, choices=ANSWER_TYPE_CHOICES,
                                          default=ANSWER_TYPE_CHOICES[0][0])
+
     #correct_answer= models.BooleanField(default=False)
     obsolete = models.BooleanField(default=False)
+    order = models.PositiveSmallIntegerField(default=1)
 
     def __str__(self):
         return self.text

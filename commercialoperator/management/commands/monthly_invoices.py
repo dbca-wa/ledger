@@ -24,6 +24,6 @@ class Command(BaseCommand):
 
         if failed_bookings:
             # some invoices failed
-            logger.info('Command {} failed. Invoice failed to generate for booking IDs {}'.format(__name__, ret))
+            logger.info('Command {} failed. Invoice failed to generate for booking IDs {}'.format(__name__, failed_bookings))
             send_monthly_invoices_failed_tclass(failed_bookings)
         logger.info('Command {} completed'.format(__name__))

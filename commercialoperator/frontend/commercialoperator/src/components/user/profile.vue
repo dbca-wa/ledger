@@ -197,6 +197,44 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="profile.is_staff" class="row">
+            <div class="col-sm-12">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h3 class="panel-title">System Settings <small>Set up preferences in using this system</small>
+                        <a class="panelClicker" :href="'#'+sBody" data-toggle="collapse"  data-parent="#userInfo" expanded="false" :aria-controls="sBody">
+                            <span class="glyphicon glyphicon-chevron-down pull-right "></span>
+                        </a>
+                    </h3>
+                  </div>
+                  <div class="panel-body collapse" :id="sBody">
+                      <form class="form-horizontal" action="index.html" method="post">
+                          <div class="form-group">
+                            <label for="" class="col-sm-3">Park Entry Fees dashboard view</label>
+                            <div class="col-sm-3">
+                               <label>
+                                    <input type="radio" value="true" v-model="profile.system_settings.one_row_per_park" />One row per Park
+                                </label>          
+                            </div>
+                            <div class="col-sm-3">
+                                <label>
+                                    <input type="radio" value="false" v-model="profile.system_settings.one_row_per_park"  />One row per Booking
+                                </label>   
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-sm-12">
+                                <button v-if="!updatingSystemSettings" class="pull-right btn btn-primary" @click.prevent="updateSystemSettings()">Update</button>
+                                <button v-else disabled class="pull-right btn btn-primary"><i class="fa fa-spin fa-spinner"></i>&nbsp;Updating</button>
+                            </div>
+                          </div>
+                       </form>
+                  </div>
+                </div>
+            </div>
+        </div>
+
         <div v-if="!isApplication" class="row">
             <div class="col-sm-12">
                 <div class="panel panel-default">
@@ -309,7 +347,7 @@
                               <div class="form-group">
                                 <label for="" class="col-sm-2 control-label" >ABN/ACN <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="bottom" style="color:blue" title="If you are applying as a sole trader please supply your ABN.">&nbsp;</i></label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="form-control" name="abn" v-model.number="newOrg.abn" placeholder="" style="width: 40%">
+                                    <input type="text" class="form-control" name="abn" v-model="newOrg.abn" placeholder="" style="width: 40%">
                                 </div>
                                 <div class="col-sm-2">
                                     <button :disabled="!isNewOrgDetails" @click.prevent="checkOrganisation()" class="btn btn-primary">Check Details</button>
@@ -383,6 +421,7 @@ export default {
             cBody: 'cBody'+vm._uid,
             oBody: 'oBody'+vm._uid,
             idBody: 'idBody'+vm._uid,
+            sBody: 'sBody'+vm._uid,
             profile: {
               first_name: '',
                 last_name: '',
@@ -405,6 +444,7 @@ export default {
             updatingPersonal: false,
             updatingAddress: false,
             updatingContact: false,
+            updatingSystemSettings: false,
             registeringOrg: false,
             orgRequest_list: [],
             missing_fields: [],
@@ -669,9 +709,26 @@ export default {
             });
           }
         },
+        updateSystemSettings: function() {
+            let vm = this;
+            vm.updatingSystemSettings=true;
+            vm.$http.post(helpers.add_endpoint_json(api_endpoints.users,(vm.profile.id+'/update_system_settings')),JSON.stringify(vm.profile.system_settings),{
+                emulateJSON:true
+            }).then((response) => {
+                //console.log(response);
+                vm.updatingSystemSettings=false;
+                vm.profile = response.body;
+                if (vm.profile.residential_address == null){ vm.profile.residential_address = {}; }
+            }, (error) => {
+                console.log(error);
+                vm.updatingSystemSettings=false;
+            });
+        },
         checkOrganisation: function() {
             let vm = this;
             //this.newOrg.abn = this.newOrg.abn.replace(/\s+/g,'');
+            this.newOrg.abn = this.newOrg.abn.replace(/[^0-9]/g,'')
+
             vm.$http.post(helpers.add_endpoint_json(api_endpoints.organisations,'existance'),JSON.stringify(this.newOrg),{
                 emulateJSON:true
             }).then((response) => {
@@ -737,6 +794,7 @@ export default {
             let vm = this;
             vm.registeringOrg = true;
             let data = new FormData();
+            vm.newOrg.abn = vm.newOrg.abn.replace(/[^0-9]/g,'')
             data.append('name', vm.newOrg.name);
             data.append('abn', vm.newOrg.abn);
             data.append('identification', vm.uploadedFile);
@@ -798,6 +856,7 @@ export default {
                     return;
                 }
             }
+            vm.newOrg.abn = vm.newOrg.abn.replace(/[^0-9]/g,'')
             data.append('name', vm.newOrg.name);
             data.append('abn', vm.newOrg.abn);
             data.append('identification', vm.uploadedFile);

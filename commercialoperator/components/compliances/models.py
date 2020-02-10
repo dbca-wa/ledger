@@ -228,7 +228,7 @@ def update_proposal_complaince_filename(instance, filename):
 
 class ComplianceDocument(Document):
     compliance = models.ForeignKey('Compliance',related_name='documents')
-    _file = models.FileField(upload_to=update_proposal_complaince_filename)
+    _file = models.FileField(upload_to=update_proposal_complaince_filename, max_length=512)
     can_delete = models.BooleanField(default=True) # after initial submit prevent document from being deleted
 
     def delete(self):
@@ -285,7 +285,7 @@ def update_compliance_comms_log_filename(instance, filename):
 
 class ComplianceLogDocument(Document):
     log_entry = models.ForeignKey('ComplianceLogEntry',related_name='documents')
-    _file = models.FileField(upload_to=update_compliance_comms_log_filename)
+    _file = models.FileField(upload_to=update_compliance_comms_log_filename, max_length=512)
 
     class Meta:
         app_label = 'commercialoperator'

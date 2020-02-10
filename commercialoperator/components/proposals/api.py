@@ -197,6 +197,35 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                     filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
                     queryset = queryset.filter(invoices__invoice_reference__in=filtered_refs)#.distinct('id')
 
+        #Filtering for ParkBooking dashboard
+        if queryset.model is ParkBooking:
+            park = request.GET.get('park')
+            payment_method = request.GET.get('payment_method')
+            payment_status = request.GET.get('payment_status')
+
+            if park:
+                queryset = queryset.filter(park__id__in=[park])
+
+            if payment_method:
+                if payment_method == str(BookingInvoice.PAYMENT_METHOD_MONTHLY_INVOICING):
+                    # for deferred payment where invoice not yet created (monthly invoicing), append the following qs
+                    queryset = queryset.filter(Q(booking__invoices__payment_method=payment_method) | Q(booking__booking_type=Booking.BOOKING_TYPE_MONTHLY_INVOICING))
+                else:
+                    queryset = queryset.filter(Q(booking__invoices__payment_method=payment_method))
+
+            if payment_status:
+                if payment_status.lower() == 'overdue':
+                    refs = [i.booking.invoices.last().invoice_reference  for i in ParkBooking.objects.all() if i.booking and i.booking.invoices.last() and i.booking.invoices.last().overdue]
+                    queryset = queryset.filter(booking__invoices__invoice_reference__in=refs)
+                else:
+                    refs = [i.booking.invoice.reference  for i in ParkBooking.objects.all() if i.booking and hasattr(i.booking, 'invoice') and i.booking.invoice!=None]
+                    filtered_refs = [i.reference for i in Invoice.objects.filter(reference__in=refs) if i.payment_status==payment_status]
+                    queryset = queryset.filter(booking__invoices__invoice_reference__in=filtered_refs)#.distinct('id')
+
+                    if payment_status.lower() == 'unpaid':
+                        # for deferred payment where invoice not yet created (monthly invoicing), append the following qs
+                        queryset = queryset | ParkBooking.objects.filter(booking__invoices__isnull=True)
+                               
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
         if queryset.model is Proposal:
@@ -230,6 +259,13 @@ class ProposalFilterBackend(DatatablesFilterBackend):
                 queryset = queryset.filter(park_bookings__arrival__gte=date_from)
             elif date_to:
                 queryset = queryset.filter(park_bookings__arrival__lte=date_to)
+        elif queryset.model is ParkBooking:
+            if date_from and date_to:
+                queryset = queryset.filter(arrival__range=[date_from, date_to])
+            elif date_from:
+                queryset = queryset.filter(arrival__gte=date_from)
+            elif date_to:
+                queryset = queryset.filter(arrival__lte=date_to)
 
         queryset = super(ProposalFilterBackend, self).filter_queryset(request, queryset, view)
         setattr(view, '_datatables_total_count', total_count)
@@ -595,6 +631,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 instance.save(version_comment='Approval File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
                 #instance.current_proposal.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
 
+            elif action == 'hide' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.documents.get(id=document_id)
+
+                document.hidden=True
+                document.save()
+                instance.save(version_comment='File hidden: {}'.format(document.name)) # to allow revision to be added to reversion history
+
             elif action == 'save' and 'input_name' in request.POST and 'filename' in request.POST:
                 proposal_id = request.POST.get('proposal_id')
                 filename = request.POST.get('filename')
@@ -610,7 +654,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
                 #instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
 
-            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.documents.filter(input_name=section) if d._file] )
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete, can_hide=d.can_hide) for d in instance.documents.filter(input_name=section, hidden=False) if d._file] )
 
         except serializers.ValidationError:
             print(traceback.print_exc())
@@ -949,6 +993,14 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 instance.save(version_comment='Required document File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
                 #instance.current_proposal.save(version_comment='File Deleted: {}'.format(document.name)) # to allow revision to be added to reversion history
 
+            elif action == 'hide' and 'document_id' in request.POST:
+                document_id = request.POST.get('document_id')
+                document = instance.required_documents.get(id=document_id)
+
+                document.hidden=True
+                document.save()
+                instance.save(version_comment='File hidden: {}'.format(document.name)) # to allow revision to be added to reversion history
+
             elif action == 'save' and 'input_name' and 'required_doc_id' in request.POST and 'filename' in request.POST:
                 proposal_id = request.POST.get('proposal_id')
                 filename = request.POST.get('filename')
@@ -965,7 +1017,7 @@ class ProposalViewSet(viewsets.ModelViewSet):
                 instance.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
                 #instance.current_proposal.save(version_comment='File Added: {}'.format(filename)) # to allow revision to be added to reversion history
 
-            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete) for d in instance.required_documents.filter(required_doc=required_doc_id) if d._file] )
+            return  Response( [dict(input_name=d.input_name, name=d.name,file=d._file.url, id=d.id, can_delete=d.can_delete, can_hide=d.can_hide) for d in instance.required_documents.filter(required_doc=required_doc_id, hidden=False) if d._file] )
 
         except serializers.ValidationError:
             print(traceback.print_exc())

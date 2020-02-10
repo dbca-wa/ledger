@@ -21,7 +21,7 @@
                                     </select>
                                     <select v-else ref="searchOrg" class="form-control" name="organisation">
                                         <option value="">Select Organisation</option>
-                                        <option v-for="o in organisations" :value="o.id">{{ o.name }}</option>
+                                        <option v-for="o in organisations" :value="o.id">{{ o.name }} ({{ o.trading_name }})</option>
                                     </select>
                                 </div>
                             </div>

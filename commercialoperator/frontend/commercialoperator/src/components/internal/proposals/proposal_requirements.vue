@@ -61,13 +61,29 @@ export default {
                 },
                 order: [],
                 dom: 'lBfrtip',
+                // buttons:[
+                // 'excel', 'csv', ], //'copy'
                 buttons:[
-                'excel', 'csv', ], //'copy'
+                {
+                    extend: 'excelHtml5',
+                    text:"Excel",
+                    exportOptions:{
+                        orthogonal:'export'
+                    }
+                },
+                {
+                    extend: 'csv',
+                    text:"CSV",
+                    exportOptions:{
+                        orthogonal:'export'
+                    }
+                }
+                ], //'copy'
                 columns: [
                     {
                         data: "requirement",
                         //orderable: false,
-                        'render': function (value) {
+                        'render': function (value, type) {
                             var ellipsis = '...',
                                 truncated = _.truncate(value, {
                                     length: 25,
@@ -89,7 +105,8 @@ export default {
                                 });
                             }
 
-                            return result;
+                            //return result;
+                            return type=='export' ? value : result;
                         },
                         'createdCell': helpers.dtPopoverCellFn,
 

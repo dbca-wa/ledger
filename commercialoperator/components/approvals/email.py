@@ -42,6 +42,18 @@ class ApprovalRenewalNotificationEmail(TemplateEmailBase):
     html_template = 'commercialoperator/emails/approval_renewal_notification.html'
     txt_template = 'commercialoperator/emails/approval_renewal_notification.txt'
 
+class ApprovalEclassRenewalNotificationEmail(TemplateEmailBase):
+    subject = '{} - Commercial Operations E class licence renewal.'.format(settings.DEP_NAME)
+    html_template = 'commercialoperator/emails/approval_eclass_renewal_notification.html'
+    txt_template = 'commercialoperator/emails/approval_eclass_renewal_notification.txt'
+
+class ApprovalEclassExpiryNotificationEmail(TemplateEmailBase):
+    subject = '{} - Commercial Operations E class licence expiry.'.format(settings.DEP_NAME)
+    html_template = 'commercialoperator/emails/approval_eclass_expiry_notification.html'
+    txt_template = 'commercialoperator/emails/approval_eclass_expiry_notification.txt'
+
+
+
 def send_approval_expire_email_notification(approval):
     email = ApprovalExpireNotificationEmail()
     proposal = approval.current_proposal
@@ -58,7 +70,12 @@ def send_approval_expire_email_notification(approval):
         'proposal': proposal,
         'url': url
     }
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     try:
     	sender_user = EmailUser.objects.get(email__icontains=sender)
@@ -87,7 +104,12 @@ def send_approval_cancel_email_notification(approval):
     except:
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
@@ -121,7 +143,12 @@ def send_approval_suspend_email_notification(approval, request=None):
     except:
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
@@ -152,7 +179,12 @@ def send_approval_surrender_email_notification(approval, request=None):
     except:
         EmailUser.objects.create(email=sender, password='')
         sender_user = EmailUser.objects.get(email__icontains=sender)
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
     if approval.org_applicant:
@@ -190,7 +222,12 @@ def send_approval_renewal_email_notification(approval):
         attachment = [attachment]
     else:
         attachment = []
-    msg = email.send(proposal.submitter.email, attachments=attachment, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email,cc=all_ccs, attachments=attachment, context=context)
     sender = settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender_user)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
@@ -198,6 +235,68 @@ def send_approval_renewal_email_notification(approval):
         _log_org_email(msg, approval.org_applicant, proposal.submitter, sender=sender_user)
     else:
         _log_user_email(msg, approval.submitter, proposal.submitter, sender=sender_user)
+
+#approval renewal notice for eclass licence
+def send_approval_eclass_renewal_email_notification(approval):
+    email = ApprovalEclassRenewalNotificationEmail()
+    proposal = approval.current_proposal
+    
+    context = {
+        'approval': approval,
+        'proposal': approval.current_proposal,
+    }
+    sender = settings.DEFAULT_FROM_EMAIL
+    try:
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    except:
+        EmailUser.objects.create(email=sender, password='')
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.assessor_recipients,cc=all_ccs, context=context)
+    sender = settings.DEFAULT_FROM_EMAIL
+    _log_approval_email(msg, approval, sender=sender_user)
+    #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
+    if approval.org_applicant:
+        _log_org_email(msg, approval.org_applicant, proposal.submitter, sender=sender_user)
+    else:
+        _log_user_email(msg, approval.submitter, proposal.submitter, sender=sender_user)
+
+
+#approval expiry notice for eclass licence (18 months prior to expiry)
+def send_approval_eclass_expiry_email_notification(approval):
+    email = ApprovalEclassExpiryNotificationEmail()
+    proposal = approval.current_proposal
+    
+    context = {
+        'approval': approval,
+        'proposal': approval.current_proposal,
+    }
+    sender = settings.DEFAULT_FROM_EMAIL
+    try:
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    except:
+        EmailUser.objects.create(email=sender, password='')
+        sender_user = EmailUser.objects.get(email__icontains=sender)
+    
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.assessor_recipients,cc=all_ccs, context=context)
+    sender = settings.DEFAULT_FROM_EMAIL
+    _log_approval_email(msg, approval, sender=sender_user)
+    #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender_user)
+    if approval.org_applicant:
+        _log_org_email(msg, approval.org_applicant, proposal.submitter, sender=sender_user)
+    else:
+        _log_user_email(msg, approval.submitter, proposal.submitter, sender=sender_user)
+
 
 
 def send_approval_reinstate_email_notification(approval, request):
@@ -208,7 +307,12 @@ def send_approval_reinstate_email_notification(approval, request):
         'approval': approval,
 
     }
-    msg = email.send(proposal.submitter.email, context=context)
+    all_ccs = []
+    if proposal.org_applicant and proposal.org_applicant.email:
+        cc_list = proposal.org_applicant.email
+        if cc_list:
+            all_ccs = [cc_list]
+    msg = email.send(proposal.submitter.email, cc=all_ccs, context=context)
     sender = request.user if request else settings.DEFAULT_FROM_EMAIL
     _log_approval_email(msg, approval, sender=sender)
     #_log_org_email(msg, approval.applicant, proposal.submitter, sender=sender)

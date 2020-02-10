@@ -27,7 +27,7 @@ router.register(r'proposal_submit',proposal_api.ProposalSubmitViewSet)
 router.register(r'proposal_paginated',proposal_api.ProposalPaginatedViewSet)
 router.register(r'approval_paginated',approval_api.ApprovalPaginatedViewSet)
 router.register(r'booking_paginated',booking_api.BookingPaginatedViewSet)
-#router.register(r'parkbooking_paginated',booking_api.ParkBookingPaginatedViewSet)
+router.register(r'parkbooking_paginated',booking_api.ParkBookingPaginatedViewSet)
 router.register(r'compliance_paginated',compliances_api.CompliancePaginatedViewSet)
 router.register(r'referrals',proposal_api.ReferralViewSet)
 router.register(r'approvals',approval_api.ApprovalViewSet)
@@ -120,7 +120,8 @@ urlpatterns = [
     url(r'^success/fee/$', booking_views.ApplicationFeeSuccessView.as_view(), name='fee_success'),
     url(r'cols/payments/invoice-pdf/(?P<reference>\d+)',booking_views.InvoicePDFView.as_view(), name='cols-invoice-pdf'),
     url(r'cols/payments/confirmation-pdf/(?P<reference>\d+)',booking_views.ConfirmationPDFView.as_view(), name='cols-confirmation-pdf'),
-    url(r'cols/payments/monthly-confirmation-pdf/(?P<id>\d+)',booking_views.MonthlyConfirmationPDFView.as_view(), name='cols-monthly-confirmation-pdf'),
+    url(r'cols/payments/monthly-confirmation-pdf/booking/(?P<id>\d+)',booking_views.MonthlyConfirmationPDFBookingView.as_view(), name='cols-monthly-confirmation-pdf'),
+    url(r'cols/payments/monthly-confirmation-pdf/park-booking/(?P<id>\d+)',booking_views.MonthlyConfirmationPDFParkBookingView.as_view(), name='cols-monthly-confirmation-pdf-park'),
 
     #following url is defined so that to include url path when sending Proposal amendment request to user.
     url(r'^external/proposal/(?P<proposal_pk>\d+)/$', views.ExternalProposalView.as_view(), name='external-proposal-detail'),
