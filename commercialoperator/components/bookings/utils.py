@@ -532,7 +532,7 @@ def create_invoice(booking, payment_method='bpay'):
     from decimal import Decimal
 
     products = Booking.objects.last().as_line_items
-    user = EmailUser.objects.get(email=booking.proposal.applicant_email)
+    user = EmailUser.objects.get(email=booking.proposal.applicant_email.lower())
 
     if payment_method=='monthly_invoicing':
         invoice_text = 'Monthly Payment Invoice'

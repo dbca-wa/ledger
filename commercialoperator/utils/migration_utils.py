@@ -619,7 +619,7 @@ class OrganisationReader():
 
                     emails = row[21].translate(None, b' -()').replace(';', ',').split(',')
                     for num, email in enumerate(emails, 1):
-                        data.update({'email{}'.format(num): email})
+                        data.update({'email{}'.format(num): email.lower()})
 
                     data.update({'t_handbooks': row[22].strip()})
                     data.update({'m_handbooks': row[23].strip()})

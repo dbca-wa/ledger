@@ -19,9 +19,9 @@ class Command(BaseCommand):
         compare_date = today + datetime.timedelta(days=14)
 
         try:
-            user = EmailUser.objects.get(email='cron@dbca.wa.gov.au')
+            user = EmailUser.objects.get(email=settings.CRON_EMAIL)
         except:
-            user = EmailUser.objects.create(email='cron@dbca.wa.gov.au', password = '')
+            user = EmailUser.objects.create(email=settings.CRON_EMAIL, password='')
 
         logger.info('Running command {}'.format(__name__))
         for c in Compliance.objects.filter(processing_status = 'future'):

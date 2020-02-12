@@ -2098,7 +2098,7 @@ class ProposalAccreditation(models.Model):
     #activities_land = models.CharField(max_length=24, blank=True, default='')
     ACCREDITATION_TYPE_CHOICES = (
         ('no', 'None'),
-        ('atap', 'ATAP'),
+        ('atap', 'QTA'),
         ('eco_certification', 'Eco Certification'),
         ('narta', 'NARTA'),
         ('other', 'Other')
@@ -2801,7 +2801,7 @@ class Referral(RevisionedMixin):
                     referral = None
                     # Check if the user is in ledger
                     try:
-                        user = EmailUser.objects.get(email__icontains=referral_email)
+                        user = EmailUser.objects.get(email__icontains=referral_email.lower())
                     except EmailUser.DoesNotExist:
                         # Validate if it is a deparment user
                         department_user = get_department_user(referral_email)
