@@ -650,6 +650,7 @@ $(function(){
            return amount;
         },
         cardRefund: function(amount){
+            amount = amount.replace(/,/g, "");
             payload = {
                 "amount": amount,
                 "details": $("#refund_details > textarea[name='refund_details']").val()
