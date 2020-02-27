@@ -319,7 +319,7 @@ $(function(){
         // Get payload
         payload = {
             "invoice": invoice,
-            "amount": $('#other_amount').val(),
+            "amount": amount,
             "type": 'payment',
             "source": $('#other_source').val()
         }
