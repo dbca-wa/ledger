@@ -305,6 +305,9 @@ $(function(){
         var external = false;
         var amount = $('#other_amount').val();
 
+
+        amount = amount.replace(/,/g, "");
+        console.log('cleaned');
         // Hide div if not hidden
         if (!$errors_div.hasClass('hide')) {
             $errors_div.addClass('hide');
