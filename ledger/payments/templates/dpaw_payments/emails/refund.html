@@ -4,6 +4,6 @@
 {% if refund_type == 'manual' %}
     A refund of ${{amount|floatformat:2}} has been made for invoice reference number {{reference}}.<br />
 {% elif refund_type == 'card' %}
-    A refund of ${{amount|floatformat:2}} has been made for invoice reference number {{reference}} to card number ending in {{card_ending}}.<br />
+    A refund of ${{amount|floatformat:2}} has been made for invoice reference number {{reference}} to the account used to make payment.<br />
 {% endif %}
 {% endblock %}
