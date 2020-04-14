@@ -11,15 +11,14 @@ BOOKING_TIMEOUT = 1200
 
 INSTALLED_APPS += [
     'bootstrap3',
-    'mooring',
     'taggit',
     'rest_framework',
     'rest_framework_gis',
     'crispy_forms',
+    'ledgergw',
 ]
 
 MIDDLEWARE_CLASSES += [
-    'mooring.middleware.BookingTimerMiddleware'
 ]
 
 # maximum number of days allowed for a booking
@@ -35,7 +34,6 @@ WSGI_APPLICATION = 'ledgergw.wsgi.application'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-        'mooring.perms.OfficerPermission',
     )
 }
 
@@ -46,8 +44,8 @@ else:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES']=('rest_framework.renderers.JSONRenderer','rest_framework_csv.renderers.CSVRenderer')
 
 
-TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'mooring', 'templates'))
-TEMPLATES[0]['OPTIONS']['context_processors'].append('mooring.context_processors.mooring_url')
+TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'ledgergw', 'templates'))
+#TEMPLATES[0]['OPTIONS']['context_processors'].append('ledgergw.context_processors.ledgergw_url')
 '''BOOTSTRAP3 = {
     'jquery_url': '/static/common/css/jquery.min.js',
     'base_url': '/static/common/css//twitter-bootstrap/3.3.6/',
@@ -62,24 +60,19 @@ TEMPLATES[0]['OPTIONS']['context_processors'].append('mooring.context_processors
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.path.join(BASE_DIR, 'mooring', 'cache'),
+        'LOCATION': os.path.join(BASE_DIR, 'ledgergw', 'cache'),
     }
 }
-STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'mooring', 'static')))
+STATICFILES_DIRS.append(os.path.join(os.path.join(BASE_DIR, 'ledgergw', 'static')))
 
 
 BPAY_ALLOWED = env('BPAY_ALLOWED',False)
-OSCAR_BASKET_COOKIE_OPEN = 'mooring_basket'
+OSCAR_BASKET_COOKIE_OPEN = 'ledgergw_basket'
 
 CRON_CLASSES = [
-    #'mooring.cron.SendBookingsConfirmationCronJob',
-    'mooring.cron.UnpaidBookingsReportCronJob',
-    'mooring.cron.OracleIntegrationCronJob',
-    'mooring.cron.CheckMooringsNoBookingPeriod',
-    'mooring.cron.RegisteredVesselsImport',
 ]
 
-# Additional logging for mooring
+# Additional logging
 LOGGING['handlers']['booking_checkout'] = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',

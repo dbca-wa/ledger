@@ -9,7 +9,8 @@ from ledger.urls import urlpatterns as ledger_patterns
 # URL Patterns
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^ledgergw/remote/user/(?P<ledgeremail>.+)/', api.user_info), 
+    url(r'^ledgergw/remote/user/(?P<ledgeremail>.+)/(?P<apikey>.+)/', api.user_info), 
+    url(r'^ledgergw/remote/groups/(?P<apikey>.+)/', api.group_info),
 ] + ledger_patterns 
 
 

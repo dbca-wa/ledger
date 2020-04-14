@@ -9,6 +9,8 @@ from django.db.models import Q
 from ledger.accounts import admin as ledger_admin
 from ledger.accounts.models import EmailUser
 from copy import deepcopy
+from ledgergw import models
+from django.contrib.admin import ModelAdmin
 
 admin.site.unregister(EmailUser)
 @admin.register(EmailUser)
@@ -35,4 +37,9 @@ class EmailUserAdmin(ledger_admin.EmailUserAdmin):
                     fieldset[1]['fields'].remove('is_superuser')
                     break
         return fieldsets
+
+
+@admin.register(models.API)
+class APIAdmin(ModelAdmin):
+     list_display = ('id','system_name','system_id',)
 

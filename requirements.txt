@@ -1,4 +1,4 @@
-Django<1.11.0
+Django<1.12.0
 django-extensions==1.9.8
 git+https://github.com/dbca-wa/dpaw-utils.git@0.3a16#egg=dpaw-utils
 git+https://github.com/django-oscar/django-oscar.git@17a1f6b17aba19e3c0b095e90acc654d463e0cf9#egg=django-oscar
@@ -7,13 +7,15 @@ git+https://github.com/scottp-dpaw/social-core.git@email_fix#egg=social-auth-cor
 coverage==4.3.1
 coveralls==1.1
 reportlab==3.5.26
-django_bootstrap3==7.1.0
+#django_bootstrap3==7.1.0
+django_bootstrap3==12.0.3
 django-braces>=1.8.1
 django-datatables-view==1.13.0
 django-reversion==3.0.0
 django-reversion-compare==0.8.6
 git+https://github.com/bruth/django-preserialize.git@11f9e822250ea3374d5cfba477a00ca886689d9f#egg=django-preserialize
-django-countries==3.4.1
+#django-countries==3.4.1
+django-countries==6.1.2
 django-cron==0.5.0
 django-dynamic-fixture==1.9.1
 openpyxl==2.4.8
