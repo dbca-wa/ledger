@@ -67,29 +67,30 @@ def user_info(request, ledgeremail,apikey):
 
 
 def group_info(request, apikey):
-    #booking_id = kwargs['pk']
-    #booking = Booking.objects.get(pk=booking_id)
-    #bpoint_id = None
-    #return HttpResponse("WORKING")
     ledger_json  = {}
-    jsondata = {}
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
 
-    if ledgergw_models.API.objects.filter(api_key=apikey).count():
-        print ("GROUPS")
-        groups = Group.objects.all()
-        ledger_json['groups_list'] = []
-        ledger_json['groups_id_map'] = {}
-        ledger_json['groups_name_map'] = {}
-        for g in groups:
-            ledger_json['groups_list'].append({'group_id': g.id,'group_name': g.name})
-            ledger_json['groups_id_map'][g.id] = g.name
-            ledger_json['groups_name_map'][g.name] = g.id
+    if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
+        if common.api_allow(common.get_client_ip(request),apikey) is True:
+            groups = Group.objects.all()
+            ledger_json['groups_list'] = []
+            ledger_json['groups_id_map'] = {}
+            ledger_json['groups_name_map'] = {}
+            for g in groups:
+                ledger_json['groups_list'].append({'group_id': g.id,'group_name': g.name})
+                ledger_json['groups_id_map'][g.id] = g.name
+                ledger_json['groups_name_map'][g.name] = g.id
 
-        jsondata['groups_list'] = ledger_json['groups_list']
-        jsondata['groups_id_map'] = ledger_json['groups_id_map']
-        jsondata['groups_name_map'] = ledger_json['groups_name_map']
-    else:
-        pass
+            jsondata['groups_list'] = ledger_json['groups_list']
+            jsondata['groups_id_map'] = ledger_json['groups_id_map']
+            jsondata['groups_name_map'] = ledger_json['groups_name_map']
+
+            jsondata['status'] = 200
+            jsondata['message'] = 'Groups Retreived'
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
 
 
 
