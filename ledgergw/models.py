@@ -20,11 +20,17 @@ from datetime import datetime, date
 
 
 class API(models.Model):
+    STATUS = (
+       (0, 'Inactive'),
+       (1, 'Active'),
+    )
+
+
     system_name = models.CharField(max_length=512)
     system_id = models.CharField(max_length=4, null=True, blank=True)
     api_key = models.CharField(max_length=512,null=True, blank=True, default='')
     allowed_ips = models.TextField(null=True, blank=True, default='')
-
+    active = models.SmallIntegerField(choices=STATUS, default=0) 
 
     def save(self, *args, **kwargs):
         if self.api_key is not None:

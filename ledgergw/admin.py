@@ -41,5 +41,5 @@ class EmailUserAdmin(ledger_admin.EmailUserAdmin):
 
 @admin.register(models.API)
 class APIAdmin(ModelAdmin):
-     list_display = ('id','system_name','system_id',)
+     list_display = ('id','system_name','system_id','active')
 
