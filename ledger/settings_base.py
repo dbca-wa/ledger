@@ -275,6 +275,12 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True
         },
+        'commercialoperator': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True
+        },
+
 #        'oscar.checkout': {
 #            'handlers': ['file'],
 #            'level': 'INFO'
