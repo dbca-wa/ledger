@@ -1,6 +1,0 @@
-SHELL=/bin/bash
-# Execute every minute. Polls the CommercialOperator Admin table SystemMaintenance, and checks if the application can be taken down at the time indicated in the Admin table
-* * * * * root cd /var/www/commercialoperator-prod.8088 && source venv/bin/activate && python manage_ds.py system_maintenance_check >/dev/null 2>&1
-#
-# Every day (at 02:00 hrs), run the daily commercialoperator management commands batch
-0 2 * * * www-data cd /var/www/commercialoperator-prod.8088 && source venv/bin/activate && python manage_ds.py cron_tasks >/dev/null 2>&1

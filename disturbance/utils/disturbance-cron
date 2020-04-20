@@ -1,4 +1,0 @@
-SHELL=/bin/bash
-#
-# Execute every minute. Polls the Disturbance Admin table SystemMaintenance, and checks if the application can be taken down at the time indicated in the Admin table
-* * * * * root cd /var/www/disturbance-dev2 && source venv/bin/activate && python manage_ds.py system_maintenance_check >/dev/null 2>&1
