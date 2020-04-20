@@ -1,0 +1,1 @@
+*/2 * * * * root python /app/manage_ledgergw.py test_email >>  /tmp/test_email.log
