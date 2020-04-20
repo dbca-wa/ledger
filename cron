@@ -1,1 +1,1 @@
-*/2 * * * * root python /app/manage_ledgergw.py test_email >>  /tmp/test_email.log
+#*/2 * * * * root  export $(grep -v '^#' /etc/.cronenv | xargs -d '\n') && python /app/manage_ledgergw.py test_email >>  /tmp/test_email.log 2>&1
