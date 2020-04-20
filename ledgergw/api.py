@@ -1,4 +1,5 @@
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from ledger.accounts import models
 from django.contrib.auth.models import Group
 from ledgergw import models as ledgergw_models
@@ -6,16 +7,20 @@ from ledgergw import common
 import json
 import ipaddress
 
+
+@csrf_exempt
 def user_info(request, ledgeremail,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
-
     if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
-
-        print (common.get_client_ip(request))
         if common.api_allow(common.get_client_ip(request),apikey) is True:
-        
+
             ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
+            if ledger_user.count() == 0:
+
+                 a = models.EmailUser.objects.create(email=ledgeremail,first_name=request.POST['first_name'],last_name=request.POST['last_name'])
+                 ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
+                 ledger_user.save()
             if ledger_user.count() > 0:
                     ledger_obj = ledger_user[0]
                     ledger_user_json['ledgerid'] = ledger_obj.id
@@ -27,7 +32,10 @@ def user_info(request, ledgeremail,apikey):
                     ledger_user_json['is_active'] = ledger_obj.is_active
                     ledger_user_json['date_joined'] = ledger_obj.date_joined.strftime('%d/%m/%Y %H:%M')
                     ledger_user_json['title'] = ledger_obj.title
-                    ledger_user_json['dob'] = ledger_obj.dob.strftime('%d/%m/%Y %H:%M')
+                    if ledger_obj.dob:
+                        ledger_user_json['dob'] = ledger_obj.dob.strftime('%d/%m/%Y %H:%M')
+                    else:
+                        ledger_user_json['dob'] = None
                     ledger_user_json['phone_number'] = ledger_obj.phone_number
                     ledger_user_json['position_title'] = ledger_obj.position_title
                     ledger_user_json['mobile_number'] = ledger_obj.mobile_number
@@ -41,10 +49,11 @@ def user_info(request, ledgeremail,apikey):
                     ledger_user_json['character_flagged'] = ledger_obj.character_flagged
                     ledger_user_json['character_comments'] = ledger_obj.character_comments
                     ledger_user_json['extra_data'] = ledger_obj.extra_data
-                    
                     ledger_user_json['fullname'] = ledger_obj.get_full_name()
-                    ledger_user_json['fullnamedob'] = ledger_obj.get_full_name_dob()
-
+                    if ledger_obj.dob:
+                        ledger_user_json['fullnamedob'] = ledger_obj.get_full_name_dob()
+                    else:
+                        ledger_user_json['fullnamedob'] = None
                     # Groups
                     ledger_user_group = []
                     for g in ledger_obj.groups.all():
