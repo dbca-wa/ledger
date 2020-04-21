@@ -11,6 +11,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^ledgergw/remote/user/(?P<ledgeremail>.+)/(?P<apikey>.+)/', api.user_info), 
     url(r'^ledgergw/remote/groups/(?P<apikey>.+)/', api.group_info),
+    url(r'^ledgergw/ip-check/', api.ip_check),
 ] + ledger_patterns 
 
 

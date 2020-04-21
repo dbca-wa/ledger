@@ -28,8 +28,8 @@ class API(models.Model):
 
     system_name = models.CharField(max_length=512)
     system_id = models.CharField(max_length=4, null=True, blank=True)
-    api_key = models.CharField(max_length=512,null=True, blank=True, default='')
-    allowed_ips = models.TextField(null=True, blank=True, default='')
+    api_key = models.CharField(max_length=512,null=True, blank=True, default='', help_text="Key is auto generated,  Leave blank or blank out to create a new key")
+    allowed_ips = models.TextField(null=True, blank=True, default='', help_text="Use network ranges format: eg 1 ip = 10.1.1.1/32 or for a c class block of ips use 192.168.1.0/24 etc")
     active = models.SmallIntegerField(choices=STATUS, default=0) 
 
     def save(self, *args, **kwargs):

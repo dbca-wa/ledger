@@ -105,3 +105,11 @@ def group_info(request, apikey):
 
     return HttpResponse(json.dumps(jsondata), content_type='application/json')
 
+
+
+def ip_check(request):
+    ledger_json  = {}
+    ipaddress = common.get_client_ip(request)
+    jsondata = {'status': 200, 'ipaddress': str(ipaddress)}
+    return HttpResponse(json.dumps(jsondata), content_type='application/json')
+
