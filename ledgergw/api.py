@@ -17,7 +17,7 @@ def user_info_search(request, keyword, apikey):
             jsondata = {'status': 200, 'message': 'No Results'}
             jsondata['users'] = [] 
             ledger_user_json = {}
-            ledger_users = models.EmailUser.objects.filter(first_name__icontains=keyword)
+            ledger_users = models.EmailUser.objects.filter(first_name__icontains=keyword)[:30]
             #,last_name__icontains=keyword)
             for ledger_obj in ledger_users:
                     ledger_user_json = {}
