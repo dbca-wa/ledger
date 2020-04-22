@@ -39,7 +39,7 @@ def user_info_search(request, keyword, apikey):
                     ledger_user_json['mobile_number'] = ledger_obj.mobile_number
                     ledger_user_json['fax_number'] = ledger_obj.fax_number
                     ledger_user_json['organisation'] = ledger_obj.organisation
-                    ledger_user_json['identification'] = ledger_obj.identification
+                    #ledger_user_json['identification'] = ledger_obj.identification
                     ledger_user_json['senior_card'] = ledger_obj.senior_card
                     ledger_user_json['character_flagged'] = ledger_obj.character_flagged
                     ledger_user_json['character_comments'] = ledger_obj.character_comments
@@ -94,7 +94,7 @@ def user_info_id(request, userid,apikey):
                     ledger_user_json['mobile_number'] = ledger_obj.mobile_number
                     ledger_user_json['fax_number'] = ledger_obj.fax_number
                     ledger_user_json['organisation'] = ledger_obj.organisation
-                    ledger_user_json['identification'] = ledger_obj.identification
+                    #ledger_user_json['identification'] = ledger_obj.identification
                     ledger_user_json['senior_card'] = ledger_obj.senior_card
                     ledger_user_json['character_flagged'] = ledger_obj.character_flagged
                     ledger_user_json['character_comments'] = ledger_obj.character_comments
@@ -158,7 +158,7 @@ def user_info(request, ledgeremail,apikey):
                     #ledger_user_json['residential_address'] = ledger_obj.residential_address
                     #ledger_user_json['postal_address'] = ledger_obj.postal_address
                     #ledger_user_json['billing_address'] = ledger_obj.billing_address
-                    ledger_user_json['identification'] = ledger_obj.identification
+                    #ledger_user_json['identification'] = ledger_obj.identification
                     ledger_user_json['senior_card'] = ledger_obj.senior_card
                     ledger_user_json['character_flagged'] = ledger_obj.character_flagged
                     ledger_user_json['character_comments'] = ledger_obj.character_comments
