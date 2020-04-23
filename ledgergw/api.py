@@ -4,60 +4,74 @@ from ledger.accounts import models
 from django.contrib.auth.models import Group
 from ledgergw import models as ledgergw_models
 from ledgergw import common
+from django.db.models import Q
+
 import json
 import ipaddress
 
 
 @csrf_exempt
-def user_info_search(request, keyword, apikey):
+def user_info_search(request, apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
     if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
         if common.api_allow(common.get_client_ip(request),apikey) is True:
+            keyword = request.POST.get('keyword', '')
             jsondata = {'status': 200, 'message': 'No Results'}
             jsondata['users'] = [] 
             ledger_user_json = {}
-            ledger_users = models.EmailUser.objects.filter(first_name__icontains=keyword)[:30]
+            search_filter = Q()
+            query_str_split = keyword.split(" ")
+            search_filter |= Q(email__icontains=keyword)
+        
+            search_filter |= Q(first_name__icontains=query_str_split[0])
+            #for se_wo in query_str_split:
+            #     search_filter |= Q(first_name__icontains=se_wo) | Q(last_name__icontains=se_wo)
+
+
+            ledger_users = models.EmailUser.objects.filter(search_filter)[:50]
             #,last_name__icontains=keyword)
             for ledger_obj in ledger_users:
-                    ledger_user_json = {}
-                    ledger_user_json['ledgerid'] = ledger_obj.id
-                    ledger_user_json['email'] = ledger_obj.email
-                    ledger_user_json['first_name'] = ledger_obj.first_name
-                    ledger_user_json['last_name'] = ledger_obj.last_name
-                    ledger_user_json['is_staff'] = ledger_obj.is_staff
-                    ledger_user_json['is_superuser'] = ledger_obj.is_superuser
-                    ledger_user_json['is_active'] = ledger_obj.is_active
-                    ledger_user_json['date_joined'] = ledger_obj.date_joined.strftime('%d/%m/%Y %H:%M')
-                    ledger_user_json['title'] = ledger_obj.title
-                    if ledger_obj.dob:
-                        ledger_user_json['dob'] = ledger_obj.dob.strftime('%d/%m/%Y %H:%M')
-                    else:
-                        ledger_user_json['dob'] = None
-                    ledger_user_json['phone_number'] = ledger_obj.phone_number
-                    ledger_user_json['position_title'] = ledger_obj.position_title
-                    ledger_user_json['mobile_number'] = ledger_obj.mobile_number
-                    ledger_user_json['fax_number'] = ledger_obj.fax_number
-                    ledger_user_json['organisation'] = ledger_obj.organisation
-                    #ledger_user_json['identification'] = ledger_obj.identification
-                    #ledger_user_json['senior_card'] = ledger_obj.senior_card
-                    ledger_user_json['character_flagged'] = ledger_obj.character_flagged
-                    ledger_user_json['character_comments'] = ledger_obj.character_comments
-                    ledger_user_json['extra_data'] = ledger_obj.extra_data
-                    ledger_user_json['fullname'] = ledger_obj.get_full_name()
-                    if ledger_obj.dob:
-                        ledger_user_json['fullnamedob'] = ledger_obj.get_full_name_dob()
-                    else:
-                        ledger_user_json['fullnamedob'] = None
-                    # Groups
-                    #ledger_user_group = []
-                    #for g in ledger_obj.groups.all():
-                    #    ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
-                    #ledger_user_json['groups'] = ledger_user_group
 
-                    jsondata['users'].append(ledger_user_json)
-                    jsondata['status'] = 200
-                    jsondata['message'] = 'Results'
+                    ledger_user_json = {}
+                    if keyword.lower() in ledger_obj.first_name.lower()+' '+ledger_obj.last_name.lower() or keyword in ledger_obj.email:
+                        ledger_user_json['ledgerid'] = ledger_obj.id
+                        ledger_user_json['email'] = ledger_obj.email
+                        ledger_user_json['first_name'] = ledger_obj.first_name
+                        ledger_user_json['last_name'] = ledger_obj.last_name
+                        ledger_user_json['is_staff'] = ledger_obj.is_staff
+                        ledger_user_json['is_superuser'] = ledger_obj.is_superuser
+                        ledger_user_json['is_active'] = ledger_obj.is_active
+                        ledger_user_json['date_joined'] = ledger_obj.date_joined.strftime('%d/%m/%Y %H:%M')
+                        ledger_user_json['title'] = ledger_obj.title
+                        if ledger_obj.dob:
+                            ledger_user_json['dob'] = ledger_obj.dob.strftime('%d/%m/%Y %H:%M')
+                        else:
+                            ledger_user_json['dob'] = None
+                        ledger_user_json['phone_number'] = ledger_obj.phone_number
+                        ledger_user_json['position_title'] = ledger_obj.position_title
+                        ledger_user_json['mobile_number'] = ledger_obj.mobile_number
+                        ledger_user_json['fax_number'] = ledger_obj.fax_number
+                        ledger_user_json['organisation'] = ledger_obj.organisation
+                        #ledger_user_json['identification'] = ledger_obj.identification
+                        #ledger_user_json['senior_card'] = ledger_obj.senior_card
+                        ledger_user_json['character_flagged'] = ledger_obj.character_flagged
+                        ledger_user_json['character_comments'] = ledger_obj.character_comments
+                        ledger_user_json['extra_data'] = ledger_obj.extra_data
+                        ledger_user_json['fullname'] = ledger_obj.get_full_name()
+                        if ledger_obj.dob:
+                            ledger_user_json['fullnamedob'] = ledger_obj.get_full_name_dob()
+                        else:
+                            ledger_user_json['fullnamedob'] = None
+                        # Groups
+                        #ledger_user_group = []
+                        #for g in ledger_obj.groups.all():
+                        #    ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
+                        #ledger_user_json['groups'] = ledger_user_group
+
+                        jsondata['users'].append(ledger_user_json)
+                        jsondata['status'] = 200
+                        jsondata['message'] = 'Results'
         else:
             jsondata['status'] = 403
             jsondata['message'] = 'Access Forbidden'
