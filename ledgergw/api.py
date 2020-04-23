@@ -24,7 +24,7 @@ def user_info_search(request, apikey):
             query_str_split = keyword.split(" ")
             search_filter |= Q(email__icontains=keyword.lower())
         
-            search_filter |= Q(first_name__icontains=query_str_split[0].lower())
+            #search_filter |= Q(first_name__icontains=query_str_split[0].lower())
             if len(query_str_split) == 1:
                   search_filter |= Q(last_name__icontains=query_str_split[1].lower())
             if len(query_str_split) > 1:
