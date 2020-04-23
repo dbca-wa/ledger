@@ -25,9 +25,10 @@ def user_info_search(request, apikey):
             search_filter |= Q(email__icontains=keyword.lower())
         
             search_filter |= Q(first_name__icontains=query_str_split[0].lower())
-            if len(query_str_split) > 1:
+            if len(query_str_split) == 1:
                   search_filter |= Q(last_name__icontains=query_str_split[1].lower())
-            print (search_filter)
+            if len(query_str_split) > 1:
+                  search_filter |= Q(Q(first_name__icontains=query_str_split[0].lower()) & Q(last_name__icontains=query_str_split[1].lower()))
             #for se_wo in query_str_split:
             #     
             #     search_filter |= Q(first_name__icontains=se_wo.lower()) | Q(last_name__icontains=se_wo.lower())
