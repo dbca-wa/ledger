@@ -24,9 +24,9 @@ def user_info_search(request, apikey):
             query_str_split = keyword.split(" ")
             search_filter |= Q(email__icontains=keyword.lower())
         
-            search_filter |= Q(first_name__icontains=query_str_split[0].lower())
-            #for se_wo in query_str_split:
-            #     search_filter |= Q(first_name__icontains=se_wo) | Q(last_name__icontains=se_wo)
+            #search_filter |= Q(first_name__icontains=query_str_split[0].lower())
+            for se_wo in query_str_split:
+                 search_filter |= Q(first_name__icontains=se_wo.lower()) | Q(last_name__icontains=se_wo.lower())
 
 
             ledger_users = models.EmailUser.objects.filter(search_filter)[:50]
