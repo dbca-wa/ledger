@@ -3,6 +3,8 @@ from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.template import loader
 
+import logging
+logger = logging.getLogger('log')
 
 # Send mail validation to user, the email should include a link to continue the
 # auth process. This is a simple example, it could easily be extended to
@@ -15,3 +17,5 @@ def send_validation(strategy, backend, code, partial_token=None):
 
     send_mail('Your login URL for the customer portal', template,
               settings.DEFAULT_FROM_EMAIL, [code.email], fail_silently=False)
+
+    logger.info('Login token sent: {}'.format(url))

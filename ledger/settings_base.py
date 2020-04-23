@@ -270,11 +270,6 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
-        'disturbance': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': True
-        },
 #        'oscar.checkout': {
 #            'handlers': ['file'],
 #            'level': 'INFO'
