@@ -22,9 +22,9 @@ def user_info_search(request, apikey):
             ledger_user_json = {}
             search_filter = Q()
             query_str_split = keyword.split(" ")
-            search_filter |= Q(email__icontains=keyword)
+            search_filter |= Q(email__icontains=keyword.lower())
         
-            search_filter |= Q(first_name__icontains=query_str_split[0])
+            search_filter |= Q(first_name__icontains=query_str_split[0].lower())
             #for se_wo in query_str_split:
             #     search_filter |= Q(first_name__icontains=se_wo) | Q(last_name__icontains=se_wo)
 
@@ -34,7 +34,7 @@ def user_info_search(request, apikey):
             for ledger_obj in ledger_users:
 
                     ledger_user_json = {}
-                    if keyword.lower() in ledger_obj.first_name.lower()+' '+ledger_obj.last_name.lower() or keyword in ledger_obj.email:
+                    if keyword.lower() in ledger_obj.first_name.lower()+' '+ledger_obj.last_name.lower() or keyword.lower() in ledger_obj.email.lower():
                         ledger_user_json['ledgerid'] = ledger_obj.id
                         ledger_user_json['email'] = ledger_obj.email
                         ledger_user_json['first_name'] = ledger_obj.first_name
