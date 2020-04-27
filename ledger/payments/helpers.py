@@ -1,5 +1,7 @@
 from django.conf import settings
 
+import logging
+logger = logging.getLogger(__name__)
 
 def is_valid_system(system_id):
     ''' Check if the system is in the itsystems register.
