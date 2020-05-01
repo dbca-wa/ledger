@@ -6,7 +6,9 @@
   "scripts": {
     "dev-server": "node build/dev-server.js",
     "build": "node build/build.js",
-    "dev": "node build/build-inplace.js"
+    "dev": "node build/build-inplace.js",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "dependencies": {
     "awesomplete": "^1.1.1",
@@ -35,7 +37,8 @@
     "vue-resource": "^1.0.3",
     "vue-router": "^2.0.1",
     "vuex": "^2.2.1",
-    "webpack-dev-server": "^3.1.6"
+    "webpack-dev-server": "^3.1.6",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "autoprefixer": "^6.7.2",
@@ -77,5 +80,6 @@
   "engines": {
     "node": ">= 4.0.0",
     "npm": ">= 3.0.0"
-  }
+  },
+  "snyk": true
 }
