@@ -6,7 +6,9 @@
   "private": true,
   "scripts": {
     "dev": "node build/dev-server.js",
-    "build": "node build/build.js"
+    "build": "node build/build.js",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "dependencies": {
     "awesomplete": "^1.1.2",
@@ -20,7 +22,8 @@
     "moment": "^2.21.0",
     "openlayers": "^4.6.4",
     "vue": "^2.3.3",
-    "vue-paginate": "^3.5.1"
+    "vue-paginate": "^3.5.1",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "autoprefixer": "^6.7.2",
@@ -62,5 +65,6 @@
   "engines": {
     "node": ">= 4.0.0",
     "npm": ">= 3.0.0"
-  }
+  },
+  "snyk": true
 }
