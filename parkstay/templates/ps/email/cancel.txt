@@ -1,9 +1,0 @@
-{%  extends 'ps/email/base_email.txt' %}
-
-{% block content %}
-Your booking REF {{booking.confirmation_number}}, arrival {{booking.arrival|date:"d/m/Y"}} at {{booking.campground.name}}, {{booking.campground.park.name}} has been cancelled.
-
-If we received an email from you notifying us of cancellation more than 28 days before your booking arrival date, 50% of the total fees paid will be refunded to the account used to make payment within 30 days.
-
-View my Park Stay WA bookings {{my_bookings}}
-{% endblock %}

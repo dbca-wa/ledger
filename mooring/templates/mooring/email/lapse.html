@@ -1,5 +1,0 @@
-{%  extends 'mooring/email/base_email.html' %}
-
-{% block content %}
-Temporary bookings expire after {{ settings.PS_UNPAID_BOOKING_LAPSE_DAYS }} days without payment. As {{ settings.PS_UNPAID_BOOKING_LAPSE_DAYS }} days have elapsed, your temporary booking for {{ booking.mooringarea.name }} has been cancelled.<br/>
-{% endblock %}

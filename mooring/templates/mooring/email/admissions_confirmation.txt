@@ -1,7 +1,0 @@
-{%  extends 'mooring/email/base_email.txt' %}
-
-{% block content %}
-Print or save this confirmation for presentation on arrival and at any time during your stay.
-
-View my Park Stay WA bookings {{my_bookings}}
-{% endblock %}
