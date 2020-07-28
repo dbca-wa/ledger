@@ -2,7 +2,7 @@ from django.core.exceptions import ImproperlyConfigured
 from confy import env, database
 from oscar.defaults import *
 from oscar import get_core_apps, OSCAR_MAIN_TEMPLATE_DIR
-
+import dj_database_url
 import os
 
 # Project paths
@@ -173,10 +173,13 @@ HAYSTACK_CONNECTIONS = {
 }
 
 
+DATABASE_ROUTERS = ['ledger.payments.models.OracleFinanceDBRouter']
+DATABASE_APPS_MAPPING = {'oracle_finance': 'oracle_finance', }
 # Database
 DATABASES = {
     # Defined in the DATABASE_URL env variable.
     'default': database.config(),
+    'oracle_finance':  dj_database_url.config(env='ORACLE_FINANCE_DB') 
 }
 
 

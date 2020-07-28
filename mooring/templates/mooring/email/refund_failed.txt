@@ -1,6 +1,0 @@
-{%  extends 'mooring/email/base_email.txt' %}
-
-{% block content %}
-A refund on booking {{booking.old_booking.id}} with new booking {{booking.id}} has failed and require intervention.  
-
-{% endblock %}

@@ -85,13 +85,33 @@ class OracleAccountCode(models.Model):
         managed = False
         db_table = 'payments_account_codes'
 
+
 class OracleOpenPeriod(models.Model):
+    _DATABASE = "oracle_finance"
     period_name = models.CharField(max_length=240,primary_key=True)
     closing_status = models.CharField(max_length=1)
 
     class Meta:
         managed = False
         db_table = 'payments_open_periods'
+
+
+class OracleFinanceDBRouter(object):
+
+    def db_for_read(self, model, **hints):
+       if model._meta.db_table == 'payments_open_periods' or model._meta.db_table == 'payments_account_codes':
+           return 'oracle_finance'
+       return 'default'
+#     def db_for_read(self, model, **hints):
+#         if model._meta.app_label == 'oracle_finance':
+#             return 'oracle_finance'
+#         return 'default'
+#     
+#     def db_for_write(self, model, **hints):
+#         if model._meta.app_label == 'oracle_finance':
+#             return 'oracle_finance'
+#         return 'default'
+
 
 # Refund Tracking
 class TrackRefund(models.Model):

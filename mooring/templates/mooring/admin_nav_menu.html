@@ -1,6 +1,0 @@
-       <li style='display:none' ><a href="{% url 'dash-campsite-types'%}">Mooring Types</a></li>
-       <li style='display:none' ><a href="{% url 'dash-bulkpricing'%}">Bulk Pricing</a></li>
-       <li><a href="{% url 'dash-bookings'%}">Existing Bookings</a></li>
-       {% if IS_PAYMENT_OFFICER == True %}
-       <li><a href="{% url 'dash-failedrefunds' %}">Failed Refunds&nbsp;{% if REFUND_FAILED_COUNT > 0 %}<span class="badge" style='background-color:#fb3333'>{{ REFUND_FAILED_COUNT }}</span>{% endif %}</a></li>
-       {% endif %}
