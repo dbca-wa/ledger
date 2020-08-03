@@ -28,9 +28,9 @@ install:
     - pip install -r requirements.txt
 before_script:
     - psql -c 'create database travis_ci_test;' -U postgres
-    - python manage_wl.py migrate --noinput
-    - python manage_wl.py load_ledger_fixtures
-    - python manage_wl.py load_fixtures
+    - python manage_ledgergw.py migrate --noinput
+    - python manage_ledgergw.py load_ledger_fixtures
+    - python manage_ledgergw.py load_fixtures
 script:
     - COVERAGE_FILE=.coverage_ledger coverage run --source="." manage_ledgergw.py test --noinput ledger
     - coverage combine .coverage_ledger
