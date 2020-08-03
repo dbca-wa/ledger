@@ -273,7 +273,8 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
-        'ledger_bpoint': ['file'],
+        'ledger_bpoint': { 
+            'handlers': ['file'],
             'level': 'INFO',
         }
 
