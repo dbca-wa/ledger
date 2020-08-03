@@ -273,6 +273,10 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'INFO'
         },
+        'ledger_bpoint': ['file'],
+            'level': 'INFO',
+        }
+
 #        'oscar.checkout': {
 #            'handlers': ['file'],
 #            'level': 'INFO'
