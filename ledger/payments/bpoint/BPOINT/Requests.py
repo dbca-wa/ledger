@@ -8,6 +8,8 @@ from ledger.payments.bpoint.BPOINT.Utils import RequestSender
 from ledger.payments.bpoint.BPOINT.Responses import TransactionResponse,\
     TransactionSearchResponse, AuthKeyResponse, DVTokenResponse,\
     DVTokenSearchResponse, APIResponse, FraudScreeningResponse
+import logging
+logger = logging.getLogger('ledger_bpoint')
 
 class Request(object):
     def __init__(self, credentials):
@@ -94,6 +96,7 @@ class TransactionRequest(CrnBlock, Request):
     
     def submit(self):
         result = Request.submit(self)
+        logger.info('bpoint transaction response: %s', result)
         return TransactionResponse(result)
         
 class Credentials(object):

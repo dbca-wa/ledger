@@ -2,7 +2,6 @@ sudo: false
 language: python
 cache: pip
 python:
-    - "2.7"
     - "3.5"
 addons:
     postgresql: "9.6"
@@ -21,6 +20,7 @@ env:
         - EMAIL_INSTANCE="TEST"
         - NON_PROD_EMAIL="travis@dpaw.wa.gov.au"
         - BPAY_ALLOWED=True
+        - EMAIL_FROM="no-reply@dbca.wa.gov.au" 
 sudo: true
 install:
     - sudo apt-get install postgresql-9.6-postgis-2.4 -y -q
@@ -28,12 +28,9 @@ install:
     - pip install -r requirements.txt
 before_script:
     - psql -c 'create database travis_ci_test;' -U postgres
-    - python manage_wl.py migrate --noinput
-    - python manage_wl.py load_ledger_fixtures
-    - python manage_wl.py load_fixtures
+    - python manage_ledgergw.py migrate --noinput
 script:
-    - COVERAGE_FILE=.coverage_ledger coverage run --source="." manage_wl.py test --noinput ledger
-    - COVERAGE_FILE=.coverage_wl coverage run --source="." manage_wl.py test --noinput wildlifelicensing
-    - coverage combine .coverage_ledger .coverage_wl .coverage_ps .coverage_mo
+    - COVERAGE_FILE=.coverage_ledger coverage run --source="." manage_ledgergw.py test --noinput ledger
+    - coverage combine .coverage_ledger
 after_success:
     - coveralls
