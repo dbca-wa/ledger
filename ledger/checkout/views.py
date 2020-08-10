@@ -237,6 +237,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             raise ValueError('{0} is not a supported BPAY method.'.format(method))
 
     def handle_last_check(self,url):
+        logger.info('checkout --> handle_last_check:'+str(url))
         try:
             res = requests.get(url,cookies=self.request.COOKIES, verify=False)
             res.raise_for_status()
@@ -269,10 +270,13 @@ class PaymentDetailsView(CorePaymentDetailsView):
             method = self.checkout_session.payment_method()
             # Last point to use the check url to see if the payment should be permitted
             if self.checkout_session.get_last_check():
+                logger.info('Order #%s: handling payment --> self.checkout_session.get_last_check', order_number)
                 self.handle_last_check(self.checkout_session.get_last_check())
             if self.checkout_session.free_basket():
+                logger.info('Order #%s: handling payment --> self.checkout_session.free_basket', order_number)
                 self.doInvoice(order_number,total)
             else:
+                logger.info('Order #%s: handling payment --> else', order_number)
                 if method == 'card':
                     try:
                         #Generate Invoice
@@ -287,6 +291,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         card_method = self.checkout_session.card_method()
                         # Check if the user is paying using a stored card
                         if self.checkout_session.checkout_token():
+                            logger.info('Order #%s: self.checkout_session.checkout_token: '+str(method), order_number)
                             try:
                                 token = BpointToken.objects.get(id=self.checkout_session.checkout_token())
                             except BpointToken.DoesNotExist:
@@ -297,8 +302,10 @@ class PaymentDetailsView(CorePaymentDetailsView):
                             else:
                                 bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
                         else:
+                            logger.info('Order #%s: self.checkout_session.checkout_token:else: '+str(method), order_number)
                             # Store card if user wants to store card
                             if self.checkout_session.store_card():
+                                logger.info('Order #%s: self.checkout_session.store_card '+str(method), order_number)
                                 resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'],True)
                                 if self.checkout_session.invoice_association():
                                     invoice.token = resp
@@ -308,27 +315,34 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                     bankcard.last_digits = bankcard.number[-4:]
                                     resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
                             else:
+                                logger.info('Order #%s: self.checkout_session.store_card:else: '+str(method), order_number)
                                 if self.checkout_session.invoice_association():
+                                    logger.info('Order #%s: self.checkout_session.invoice_association '+str(method), order_number)
                                     resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'])
                                     invoice.token = resp
                                     invoice.save()
                                 else:
+                                    logger.info('Order #%s: self.checkout_session.invoice_association:else '+str(method), order_number)
                                     bankcard = kwargs['bankcard']
                                     bankcard.last_digits = bankcard.number[-4:]
                                     resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
                         if not self.checkout_session.invoice_association():
+                            logger.info('Order #%s: if not self.checkout_session.invoice_association '+str(method), order_number)
                             # Record payment source and event
                             source_type, is_created = models.SourceType.objects.get_or_create(
                                 name='Bpoint')
                             # amount_allocated if action is preauth and amount_debited if action is payment
                             if card_method == 'payment':
+                                logger.info('Order #%s: card_method payment '+str(method), order_number)
                                 source = source_type.sources.model(
                                     source_type=source_type,
                                     amount_debited=total.incl_tax, currency=total.currency)
                             elif card_method == 'preauth':
+                                logger.info('Order #%s: card_method preauth '+str(method), order_number)
                                 source = source_type.sources.model(
                                     source_type=source_type,
                                     amount_allocated=total.incl_tax, currency=total.currency)
+                            logger.info('Order #%s: payment source '+str(method), order_number)
                             self.add_payment_source(source)
                             self.add_payment_event('Paid', total.incl_tax)
                     except Exception as e:
