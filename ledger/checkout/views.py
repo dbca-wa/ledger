@@ -276,6 +276,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 if method == 'card':
                     try:
                         #Generate Invoice
+                        logger.info('Order #%s: doInvoice with method: '+str(method), order_number)
                         invoice = self.doInvoice(order_number,total)
                         # Swap user if in session
                         if self.checkout_session.basket_owner():
@@ -335,6 +336,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         raise
                 else:
                     #Generate Invoice
+                    logger.info('Order #%s: doInvoice with method: '+str(method), order_number)
                     self.doInvoice(order_number,total)
 
     def submit(self, user, basket, shipping_address, shipping_method,  # noqa (too complex (10))
