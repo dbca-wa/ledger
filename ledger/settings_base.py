@@ -295,8 +295,8 @@ LOGGING = {
 }
 PAYMENT_LOGGING=env('PAYMENT_LOGGING','False')
 if PAYMENT_LOGGING == 'True':
-   LOGGING = {'loggers': 'ledger_bpoint': { 'handlers': ['file'],'level': 'INFO', } }
-   LOGGING = {'loggers': 'oscar.checkout': { 'handlers': ['file'],'level': 'INFO', } }
+   LOGGING = {'loggers': {'ledger_bpoint': { 'handlers': ['file'],'level': 'INFO', } }}
+   LOGGING = {'loggers': {'oscar.checkout': { 'handlers': ['file'],'level': 'INFO', } }}
 # django-dynamic-fields test generation settings
 DDF_FILL_NULLABLE_FIELDS = False
 
