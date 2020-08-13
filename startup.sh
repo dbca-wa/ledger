@@ -2,6 +2,7 @@
 
 # Start the first process
 env > /etc/.cronenv
+sed -i 's/\"/\\"/g' /etc/.cronenv
 
 service cron start &
 status=$?

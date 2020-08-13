@@ -1,1 +1,5 @@
 #*/2 * * * * root  export $(grep -v '^#' /etc/.cronenv | xargs -d '\n') && python /app/manage_ledgergw.py test_email >>  /tmp/test_email.log 2>&1
+#
+*/1 * * * root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && echo "testing" >> /tmp/cron.log 
+0 4 * * * root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python manage_ledgergw.py collectbpay /mnt/external/CommBiz_WildlifeLicensing 2>&1 | logger -t wl_collectbpay
+
