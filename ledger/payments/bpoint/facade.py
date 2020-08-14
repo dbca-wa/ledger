@@ -189,6 +189,13 @@ class Facade(object):
             raise
 
     def store_token(self, user,token,masked_card,expiry_date,card_type):
+
+        bt = BpointToken.objects.filter(user=user,masked_card=masked_card,expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date(),card_type=card_type)
+        if bt.count() > 0:
+            for b in bt:
+                b.delete()
+                print ("Existing store token exists for userid "+str(user.id)+".  Deleting Existing token to allow new token to be created")
+
         token,created = BpointToken.objects.get_or_create(
             user=user,
             DVToken=token,
