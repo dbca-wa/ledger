@@ -304,14 +304,11 @@ LOGGING = {
     }
 }
 PAYMENT_LOGGING=env('PAYMENT_LOGGING','False')
-print ("LOGGING")
-print (PAYMENT_LOGGING)
 if PAYMENT_LOGGING == 'True' or PAYMENT_LOGGING is True:
    LOGGING['loggers']['ledger_bpoint'] = { 'handlers': ['file'],'level': 'INFO', } 
 LOGGING['loggers']['oscar.checkout'] = { 'handlers': ['file'],'level': 'INFO', } 
    
 
-print (LOGGING)
 # django-dynamic-fields test generation settings
 DDF_FILL_NULLABLE_FIELDS = False
 
