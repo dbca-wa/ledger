@@ -249,6 +249,16 @@ LOGGING = {
             'formatter': 'verbose',
             'maxBytes': 5242880
         },
+
+        'ledger_bpoint': {
+               'level': 'INFO',
+               'class': 'logging.handlers.RotatingFileHandler',
+               'filename': os.path.join(BASE_DIR, 'logs', 'ledger_bpoint.log'),
+               'formatter': 'verbose',
+               'maxBytes': 5242880
+         }
+
+
     },
     'loggers': {
         '': {
@@ -294,9 +304,14 @@ LOGGING = {
     }
 }
 PAYMENT_LOGGING=env('PAYMENT_LOGGING','False')
-if PAYMENT_LOGGING == 'True':
-   LOGGING = {'loggers': {'ledger_bpoint': { 'handlers': ['file'],'level': 'INFO', } }}
-   LOGGING = {'loggers': {'oscar.checkout': { 'handlers': ['file'],'level': 'INFO', } }}
+print ("LOGGING")
+print (PAYMENT_LOGGING)
+if PAYMENT_LOGGING == 'True' or PAYMENT_LOGGING is True:
+   LOGGING['loggers']['ledger_bpoint'] = { 'handlers': ['file'],'level': 'INFO', } 
+LOGGING['loggers']['oscar.checkout'] = { 'handlers': ['file'],'level': 'INFO', } 
+   
+
+print (LOGGING)
 # django-dynamic-fields test generation settings
 DDF_FILL_NULLABLE_FIELDS = False
 
