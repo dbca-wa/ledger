@@ -201,7 +201,7 @@ def _create_header(canvas, doc, draw_page_number=True):
 
     # Invoice address details
     invoice_details_offset = 37
-    current_y -= 0
+    current_y -= 20
     invoice = doc.invoice
     total_gst_tax = invoice.order.total_incl_tax - invoice.order.total_excl_tax
 
