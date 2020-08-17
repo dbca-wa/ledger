@@ -252,6 +252,11 @@ def _create_invoice(invoice_buffer, invoice):
     if invoice.text:
         elements.append(Paragraph(invoice.text, styles['Left']))
         elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
+    else:
+        elements.append(Paragraph(' ', styles['Left']))
+        elements.append(Spacer(1, SECTION_BUFFER_HEIGHT * 2))
+ 
+
     data = [
         ['Item','Product', 'Quantity','Unit Price', 'Total']
     ]
