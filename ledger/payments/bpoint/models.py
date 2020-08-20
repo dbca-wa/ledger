@@ -160,7 +160,7 @@ class BpointTransaction(models.Model):
         from ledger.payments.facade import bpoint_facade 
         from ledger.payments.models import TrackRefund, Invoice
         LEDGER_REFUND_EMAIL = env('LEDGER_REFUND_EMAIL', False)
-
+        LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE =env('LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE', '')
 
         with transaction.atomic():
             amount = info['amount']
@@ -193,6 +193,15 @@ class BpointTransaction(models.Model):
                                 except BpointToken.DoesNotExist:
                                     UsedBpointToken.objects.create(DVToken=txn.dvtoken)
                                 TrackRefund.objects.create(user=user,type=2,refund_id=txn.id,details=details)
+                                if len(LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE) != 0:
+                                    try:
+                                        ltc = LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE.split(":")
+                                        exec('import '+str(ltc[0]))
+                                        exec(ltc[1]+"('"+self.crn1+"',"+str(self.id)+")")
+                                    except Exception as e:
+                                        print (e) 
+
+
                                 if LEDGER_REFUND_EMAIL is True:
                                     # Disabled as requested by Walter and then enabled again for parkstay
                                     send_refund_email(Invoice.objects.get(reference=self.crn1),'card',txn.amount,card_ending=self.last_digits)
