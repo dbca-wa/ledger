@@ -31,7 +31,13 @@ def create_basket_session(request, parameters):
     else:
         product_serializer = serializers.CheckoutProductSerializer(data=serializer.initial_data.get('products'), many=True)
     product_serializer.is_valid(raise_exception=True)
-        
+    # Cleaning up stale Baskets
+    if request.user:
+       if request.user.__class__.__name__ == 'EmailUser':
+          ba = Basket.objects.filter(owner=request.user).exclude(status='Submitted')
+          for b in ba:
+              b.status='Frozen'
+              b.save()
     # validate basket
     if serializer.validated_data.get('vouchers'):
         if custom:
