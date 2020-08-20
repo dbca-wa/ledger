@@ -286,11 +286,11 @@ def parseFile(file_path):
         return success,bpay_file,''
     except IntegrityError as e:
         success = False
-        return success,None,e.message
+        return success,None,str(e)
     except Exception as e:
         traceback.print_exc()
         success = False
-        return success,None,e.message
+        return success,None,str(e)
     finally:
         f.close()
 
