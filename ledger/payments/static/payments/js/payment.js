@@ -305,7 +305,6 @@ $(function(){
         var external = false;
         var amount = $('#other_amount').val();
 
-
         amount = amount.replace(/,/g, "");
         console.log('cleaned');
         // Hide div if not hidden
@@ -336,6 +335,16 @@ $(function(){
             payload['district'] = $('#districts').val();
         }
         payload['receipt'] = $('#receipt_number').val();
+
+        $('#record_manual_payment').prop('disabled', true);
+        $('#recordPaymentLoader').show();
+        $('#other_amount').prop('disabled', true);
+        $('#other_payment').prop('disabled', true);
+        $('#other_source').prop('disabled', true);
+        $('#regions').prop('disabled', true);
+        $('#districts').prop('disabled', true);
+        $('#receipt_number').prop('disabled', true);
+
         // POST
         $.ajax ({
             beforeSend: function(xhrObj){
@@ -348,10 +357,27 @@ $(function(){
             dataType: "json",
             headers: {'X-CSRFToken': getCookie('csrftoken')},
             success: function(resp){
+                $('#other_payment').prop('disabled', false);
+                $('#other_source').prop('disabled', false);
+                $('#other_amount').prop('disabled', false);
+                $('#regions').prop('disabled', false);
+                $('#districts').prop('disabled', false);
+                $('#receipt_number').prop('disabled', false);
+
+                $('#record_manual_payment').prop('disabled', false);
+                $('#recordPaymentLoader').hide();
                 success(resp,invoice,$('#other_source').val());
                 sendCallback();
             },
             error: function(resp){
+                $('#other_payment').prop('disabled', false);
+                $('#other_source').prop('disabled', false);
+                $('#other_amount').prop('disabled', false);
+                $('#regions').prop('disabled', false);
+                $('#receipt_number').prop('disabled', false);
+
+                $('#record_manual_payment').prop('disabled', false);
+                $('#recordPaymentLoader').hide();
                 error(resp);
             },
             complete: function(resp){
@@ -653,7 +679,14 @@ $(function(){
            return amount;
         },
         cardRefund: function(amount){
+            console.log("CARD REFUND") 
             amount = amount.replace(/,/g, "");
+            $('#record_refund').prop( "disabled", true );
+            $('#cancel_refund').prop( "disabled", true );
+            $('#refundAmount').prop( "disabled", true );
+            $('#refund_option').prop( "disabled", true );
+            $('#refund_details_text').prop( "disabled", true );
+            $('#refundLoader').show();
             payload = {
                 "amount": amount,
                 "details": $("#refund_details > textarea[name='refund_details']").val()
@@ -672,8 +705,20 @@ $(function(){
                 success: function(resp){
                     rf.refund_modal.foundation('close');
                     rf.refund_form.reset();
+                    $('#record_refund').prop( "disabled", false );
+                    $('#cancel_refund').prop( "disabled", false );
+                    $('#refundAmount').prop( "disabled", false );
+                    $('#refund_option').prop( "disabled", false );
+                    $('#refund_details_text').prop( "disabled", false );
+                    $('#refundLoader').hide();
                 },
                 error: function(resp){
+                    $('#record_refund').prop( "disabled", false );
+                    $('#cancel_refund').prop( "disabled", false );
+                    $('#refundAmount').prop( "disabled", false );
+                    $('#refund_option').prop( "disabled", false );
+                    $('#refund_details_text').prop( "disabled", false );
+                    $('#refundLoader').hide();
                     var str = resp.responseText.replace(/[\[\]"]/g,'');
                     str = str.replace(/[\{\}"]/g,'');
                     rf.displayError(str);
@@ -684,6 +729,15 @@ $(function(){
             });
         },
         manualRefund: function(){
+            $('#record_manual_payment').prop('disabled', true);
+
+            $('#record_refund').prop( "disabled", true );
+            $('#cancel_refund').prop( "disabled", true );
+            $('#refundAmount').prop( "disabled", true );
+            $('#refund_option').prop( "disabled", true );
+            $('#refund_details_text').prop( "disabled", true );
+            $('#refundLoader').show();
+
             // Get payload
             payload = {
                 "invoice": invoice,
@@ -704,10 +758,26 @@ $(function(){
                 dataType: "json",
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 success: function(resp){
+                    $('#record_manual_payment').prop('disabled', false);
+                    $('#record_refund').prop( "disabled", false );
+                    $('#cancel_refund').prop( "disabled", false );
+                    $('#refundAmount').prop( "disabled", false );
+                    $('#refund_option').prop( "disabled", false );
+                    $('#refund_details_text').prop( "disabled", false );
+                    $('#refundLoader').hide();
+
                     rf.refund_form.reset();
                     $(rf.refund_modal).foundation('close');
                 },
                 error: function(resp){
+                    $('#record_manual_payment').prop('disabled', false);
+                    $('#record_refund').prop( "disabled", false );
+                    $('#cancel_refund').prop( "disabled", false );
+                    $('#refundAmount').prop( "disabled", false );
+                    $('#refund_option').prop( "disabled", false );
+                    $('#refund_details_text').prop( "disabled", false );
+                    $('#refundLoader').hide();
+
                     var str = resp.responseText.replace(/[\[\]"]/g,'');
                     str = str.replace(/[\{\}"]/g,'');
                     rf.displayError(str);

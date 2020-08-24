@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Payments - Department of Parks and Wildlife</title>
+    <title>Payments - Department of Biodiversity, Conservation and Attractions</title>
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -255,7 +255,15 @@
                                         </fieldset>
                                         <div class="row align-right">
                                             <div class="columns medium-3">
-                                                <input id="" type="submit" class="pay_btn float-right button" value="Record Payment" />
+                                                <div class='col-lg-12'>
+<div style='float: right; margin-left: 10px;'>
+<div id="recordPaymentLoader" style="display:none; text-align:right; ">
+                        <p class="text-right"><i class="fa fa-spin fa-spinner fa-2x"></i></p>
+</div>
+</div>
+
+<input id="record_manual_payment" type="submit" class="pay_btn float-right button" value="Record Payment" />
+
                                             </div>
                                         </div>
                                         <!-- Pay Button -->
@@ -319,7 +327,7 @@
                                                     <label>Details: </label>
                                                 </div>
                                                 <div class="medium-6 columns" id="refund_details">
-                                                    <textarea name="refund_details" rows="4" style="width:100%;"></textarea>
+                                                    <textarea id='refund_details_text'  name="refund_details" rows="4" style="width:100%;"></textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -329,7 +337,7 @@
                                         <div class="row align-right">
                                             <div class="columns medium-3 button-group float-right align-right">
                                                 <input id="cancel_refund" type="button" class="pay_btn secondary button" style="margin-right:10px;" value="Cancel"/>
-                                                <input id="" type="submit" class="pay_btn button" value="Record Refund"/>
+                                                <input id="record_refund" type="submit" class="pay_btn button"  value="Record Refund"/>
                                             </div>
                                         </div>
                                     </div>
@@ -534,10 +542,10 @@
     </div>
     <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="//static.dpaw.wa.gov.au/static/libs/datatables/1.10.13/js/dataTables.foundation.min.js"></script>
-    <script type="text/javascript" src="{% static 'payments/js/jquery.glob.js'%}"></script>
-    <script type="text/javascript" src="{% static 'payments/js/jQuery.glob.en-AU.js'%}"></script>
-    <script type="text/javascript" src="{% static 'payments/js/moneyInput.js'%}"></script>
-    <script type="text/javascript" src="{% static 'payments/js/payment.js'%}"></script>
+    <script type="text/javascript" src="{% static 'payments/js/jquery.glob.js'%}?ver={% now "Ymd" %}"></script>
+    <script type="text/javascript" src="{% static 'payments/js/jQuery.glob.en-AU.js'%}?ver={% now "Ymd" %}"></script>
+    <script type="text/javascript" src="{% static 'payments/js/moneyInput.js'%}?ver={% now "Ymd" %}"></script>
+    <script type="text/javascript" src="{% static 'payments/js/payment.js'%}?ver={% now "Ymd" %}"></script>
 </body>
 
 </html>
