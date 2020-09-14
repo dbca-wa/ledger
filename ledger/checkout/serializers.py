@@ -43,6 +43,7 @@ class BasketSerializer(serializers.Serializer):
     vouchers = VoucherSerializer(many=True,required=False)
     system = serializers.CharField(max_length=4, min_length=4)
     custom_basket = serializers.BooleanField(default=False)
+    booking_reference = serializers.CharField(required=False)
 
     def validate_system(self, value):
         if not value:
