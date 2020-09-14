@@ -157,7 +157,8 @@
 {% endblock %}
 
 {% block place_order %}
-    <form method="post" action="{% url 'checkout:preview' %}" id="place_order_form">
+
+    <form method="post" action="{% url 'checkout:preview' %}" id="place_order_form" onsubmit="placeOrderForm();">
         {% csrf_token %}
         <input type="hidden" name="action" value="place_order" />
 
@@ -174,6 +175,7 @@
         <div class="form-group clearfix">
             <div class="row">
                 <div class="col-sm-3 col-sm-offset-9">
+	             <div id='payment-loader'></div>
                      <button id="place-order" formnovalidate type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}">
                          {% if payment_method == 'card' %}
                             {% trans "Pay" %}
@@ -185,4 +187,72 @@
             </div>
         </div>
     </form>
+    <script>
+            var place_order_form = document.getElementById("place_order_form");
+            function placeOrderForm() {
+                               var page = document.getElementById('default');
+                               var pageheight = page.parentElement.scrollHeight;
+		               // var divheight = window.outerHeight || window.pageYOffset ||  window.scrollMaxY;
+		               pageheight = pageheight + 20;
+		               var div = document.createElement("div");
+		                    
+		                   divhtml = "<div id='ledger-payment-loader' style='height:"+pageheight+"px'>";
+                                   divhtml += "<div class='ledger-payment-loader-box-align' >";
+			           divhtml += " <center>";
+			           divhtml += " <div class='ledger-payment-loader-box' >";
+			    
+                                   divhtml += "  <img  src='/static/ledger/images/ajax-loader-spinner.gif'><br><br>";
+                                   divhtml += "  <strong>PROCESSING PAYMENT</strong> ";
+		                   divhtml += "</div>";
+			           divhtml += " </center>";
+			           divhtml += "</div>";
+		               div.innerHTML = divhtml;
+		               div.id = "payment-loader-popup";
+		               div.style.height = pageheight;
+		               document.body.prepend(div);
+	                       document.getElementById("payment-loader").innerHTML= "LOADING";	    
+	    }
+
+            function windowResized() { 
+		    var ploader = document.getElementById('ledger-payment-loader');
+		    var page = document.getElementById('default');
+		    var pageheight = page.parentElement.scrollHeight;
+		    pageheight = pageheight + 20;
+		    // var divheight = window.outerHeight || window.pageYOffset ||  window.scrollMaxY;
+		    console.log(pageheight);
+		    ploader.style.height=pageheight+'px';
+
+            }
+            window.addEventListener("resize",windowResized);
+
+	    //var payment_loader = {
+	    //        init: function() {
+            //            payment_loader.loop();
+	    //        },
+	    //        loop: function() {
+	    //    	if (document.readyState == "loading") {
+            //                console.log(document.readyState);
+	    //    	    document.getElementById("payment-loader").innerHTML= "LOADING";
+	    //    	}
+	    //    	if (document.readyState == "complete") {
+            //                document.getElementById("payment-loader").innerHTML= "COMPLETED";
+	    //            }
+	    //            setInterval("payment_loader.loop()",100);
+	    //        }
+
+            //}
+            //payment_loader.init();
+	    //var chkReadyState = setInterval(function() {
+	    //            if (document.readyState == "complete") {
+	    //    		        // clear the interval
+
+	    //    	}
+	    //            console.log(document.readyState);
+	    //            (chkReadyState);
+	    //    		        // finally your page is loaded.
+	    //}, 100);
+
+    </script>
+
+
 {% endblock place_order %}

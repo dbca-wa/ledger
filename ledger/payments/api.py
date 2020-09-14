@@ -26,6 +26,9 @@ from ledger.payments.emails import send_refund_email
 from ledger.accounts.models import EmailUser
 from oscar.apps.order.models import Order
 from oscar.apps.payment import forms
+
+from confy import env
+
 import traceback
 import six
 
@@ -491,6 +494,16 @@ class CashViewSet(viewsets.ModelViewSet):
                     TrackRefund.objects.create(user=request.user,type=1,refund_id=txn.id,details=serializer.validated_data['details'])
                     send_refund_email(invoice,'manual',txn.amount)
                 update_payments(invoice.reference)
+
+            LEDGER_INVOICE_TRANSACTION_CALLBACK_MODULE =env('LEDGER_INVOICE_TRANSACTION_CALLBACK_MODULE', '')
+            if len(LEDGER_INVOICE_TRANSACTION_CALLBACK_MODULE) != 0:
+                try:
+                    ltc = LEDGER_INVOICE_TRANSACTION_CALLBACK_MODULE.split(":")
+                    exec('import '+str(ltc[0]))
+                    exec(ltc[1]+"('"+invoice.reference+"')")
+                except Exception as e:
+                    print (e)
+
             http_status = status.HTTP_201_CREATED
             serializer = CashSerializer(txn)
             return Response(serializer.data,status=http_status)

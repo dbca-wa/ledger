@@ -23,8 +23,13 @@ selector = Selector()
 def create_basket_session(request, parameters):
     serializer = serializers.BasketSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
-
+    print ("START")
+    print (parameters)
+    print ("FIND")
     custom = serializer.validated_data.get('custom_basket')
+    booking_reference = None
+    if 'booking_reference' in parameters:
+        booking_reference = serializer.validated_data['booking_reference']
     # validate product list
     if custom:
         product_serializer = serializers.CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'), many=True)
@@ -43,18 +48,18 @@ def create_basket_session(request, parameters):
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
                                         request.user, serializer.validated_data['system'],
-                                        vouchers=serializer.validated_data['vouchers'])
+                                        serializer.validated_data['vouchers'],True,booking_reference)
         else:
             basket = createBasket(serializer.validated_data['products'], request.user,
                                     serializer.validated_data['system'],
-                                    vouchers=serializer.validated_data['vouchers'])
+                                    serializer.validated_data['vouchers'],True,booking_reference)
     else:
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
-                                        request.user, serializer.validated_data['system'])
+                                        request.user, serializer.validated_data['system'],None,True,booking_reference)
         else:
             basket = createBasket(serializer.validated_data['products'],
-                                    request.user, serializer.validated_data['system'])
+                                    request.user, serializer.validated_data['system'],None,True,booking_reference)
 
     return basket, BasketMiddleware().get_basket_hash(basket.id)
 
@@ -278,7 +283,7 @@ def calculate_excl_gst(amount):
     return result
 
 
-def createBasket(product_list, owner, system, vouchers=None, force_flush=True):
+def createBasket(product_list, owner, system, vouchers=None, force_flush=True, booking_reference=None):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -314,6 +319,7 @@ def createBasket(product_list, owner, system, vouchers=None, force_flush=True):
         if isinstance(owner, User):
             basket.owner = owner
         basket.system = system
+        basket.booking_reference = booking_reference
         basket.strategy = selector.strategy(user=owner)
         # Check if there are products to be added to the cart and if they are valid products
         if not product_list:
@@ -339,7 +345,7 @@ def createBasket(product_list, owner, system, vouchers=None, force_flush=True):
         raise
 
 
-def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True):
+def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True, booking_reference=None):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -378,6 +384,7 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
             basket.owner = owner
         basket.system = system
         basket.strategy = selector.strategy(user=owner)
+        basket.booking_reference = booking_reference
         basket.custom_ledger = True
         # Check if there are products to be added to the cart and if they are valid products
         # EXAMPLE config for settings.py: os.environ['LEDGER_CUSTOM_PRODUCT_LIST'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code','line_status')"

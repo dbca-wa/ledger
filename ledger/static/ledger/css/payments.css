@@ -1,0 +1,25 @@
+#ledger-payment-loader {
+   top: 0px;
+   position: absolute;
+   width: 100%;
+   z-index: 11;
+   height: 100%;
+   background-color: rgba(0, 0, 0, 0.5);
+}
+
+.ledger-payment-loader-box-align {
+   position: fixed;
+   width: 100%;
+}
+
+.ledger-payment-loader-box {
+   margin-top: 100px;
+   width:300px;
+   background-color: #FFFFFF;
+   padding: 50px;
+   border: 3px solid #bfbfbf;
+}
+
+.payment-layer { 
+   z-index: 10;
+}

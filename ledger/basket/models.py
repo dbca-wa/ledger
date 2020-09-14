@@ -8,6 +8,7 @@ from ledger.catalogue.models import Product
 class Basket(CoreAbstractBasket):
     system = models.CharField(max_length=4)
     custom_ledger = models.BooleanField(default=False)
+    booking_reference = models.CharField(max_length=254, blank=True, null=True)
 
     def all_lines(self):
         """
