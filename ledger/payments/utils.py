@@ -14,6 +14,8 @@ from django.core.urlresolvers import resolve
 from six.moves.urllib.parse import urlparse
 #
 from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction
+from oscar.apps.order.models import Order
+from ledger.basket.models import Basket
 from oscar.core.loading import get_class
 from confy import env
 from decimal import Decimal
@@ -785,4 +787,38 @@ def update_payments_allocation(invoice_reference):
         except:
             print(traceback.print_exc())
             raise
+
+
+def bpoint_integrity_checks(system,days,rowlimit):
+    rows = []
+    if rowlimit is None:
+        rowlimit = 10
+    if days is None:
+        days = 5
+    fromdays = datetime.datetime.today() - datetime.timedelta(days=days)
+
+    bt = BpointTransaction.objects.filter(crn1__istartswith=system, integrity_check=False, created__gt=fromdays).order_by('-id')[:rowlimit]
+    for b in bt:
+        i = Invoice.objects.filter(reference=b.crn1)
+        if i.count() > 0:
+            o = Order.objects.filter(number=i[0].order_number)
+            if o.count() > 0:
+                if o[0].basket:
+                    if o[0].basket.booking_reference is not None:
+                        if len(o[0].basket.booking_reference) > 0:
+                             rows.append({'bpoint_id': b.id ,'reference': b.crn1, 'order_number': i[0].order_number, 'basket': o[0].basket.id, 'booking_reference': o[0].basket.booking_reference})
+
+    return rows
+
+def bpoint_integrity_checks_completed(bpoint_id,crn1):
+    try:  
+       bpt = BpointTransaction.objects.filter(id=bpoint_id,crn1=crn1)
+       if bpt.count() > 0:
+           for b in bpt:
+               b.integrity_check = True
+               b.save()
+               return True
+       return False
+    except:
+        return False
 

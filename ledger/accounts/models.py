@@ -320,17 +320,20 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         post_clean.send(sender=self.__class__, instance=self)
 
     def save(self, *args, **kwargs):
+        print ("SAVE")
         if not self.email:
             self.email = self.get_dummy_email()
         elif in_dbca_domain(self):
             # checks and updates department user details from address book after every login
             user_details = get_department_user_compact(self.email)
+            print ("DBCA")
             if user_details:
                 self.phone_number = user_details.get('telephone')
                 self.mobile_number = user_details.get('mobile_phone')
                 self.title = user_details.get('title')
                 self.fax_number = user_details.get('org_unit__location__fax')
                 self.is_staff = True
+                print ("TT")
         self.email = self.email.lower()            
         super(EmailUser, self).save(*args, **kwargs)
 
