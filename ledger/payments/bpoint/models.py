@@ -162,7 +162,6 @@ class BpointTransaction(models.Model):
         from ledger.payments.models import TrackRefund, Invoice
         LEDGER_REFUND_EMAIL = env('LEDGER_REFUND_EMAIL', False)
         LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE =env('LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE', '')
-
         with transaction.atomic():
             amount = info['amount']
             details = info['details']
@@ -202,10 +201,10 @@ class BpointTransaction(models.Model):
                                     except Exception as e:
                                         print (e) 
 
-
                                 if LEDGER_REFUND_EMAIL is True:
                                     # Disabled as requested by Walter and then enabled again for parkstay
                                     send_refund_email(Invoice.objects.get(reference=self.crn1),'card',txn.amount,card_ending=self.last_digits)
+                                    pass
                         else:
                             raise ValidationError('The refund amount is greater than the amount refundable on this card.')
                     else:

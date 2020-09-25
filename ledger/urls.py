@@ -20,7 +20,7 @@ from oscar.app import application
 
 
 urlpatterns = [
-    url(r'^ledger/admin/', admin.site.urls),
+    #url(r'^ledger/admin/', admin.site.urls, name='ledger_admin'),
     url(r'^ledger/', include('ledger.accounts.urls', namespace='accounts')),
     url(r'^ledger/', include('ledger.payments.urls', namespace='payments')),
     url(r'^ledger/', include('social_django.urls', namespace='social')),
