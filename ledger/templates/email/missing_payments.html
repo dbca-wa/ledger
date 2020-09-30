@@ -1,0 +1,17 @@
+Hello,<br> 
+<br>
+Below is a list of payments that do not exist in ledger:<br>
+<br>
+Please investigate.<br>
+<br>
+<b>Report Date: {{ settlement_date }}
+<br>
+<table> 
+  <tr><th>Txn Number</th><th>Invoice No</th><th>Settlement Date</th><th>Processed Date Time</th></tr>	
+  {% for r in rows %}
+     <tr><td>{{ r.txn_number }}</td><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.processed_date_time }}</td></tr>
+  {% endfor %}
+</table>
+<br><br>
+Kind Regards<br>
+Auto Generated<br>

@@ -130,7 +130,7 @@ class Facade(object):
 
         if res.txn_resp_list:
             return res.txn_resp_list
-        return res.api_response
+        return [] 
 
     def fetch_transaction(self, txn_number):
         '''
@@ -141,7 +141,7 @@ class Facade(object):
         
         if res.txn_resp_list:
              return res.txn_resp_list[0]
-        return res.api_response
+        return res.api_response 
     
     def fetch_transactions(self):
         '''
