@@ -39,6 +39,22 @@ class Gateway(object):
             raise
         return req
 
+    def get_txn_settlement_date(self,settlement_date):
+        '''
+            Get a specific transaction from BPOINT
+        '''
+        txn = TransactionSearchRequest(self.credentials)
+        txn.settlement_date = settlement_date
+
+        return txn.submit()
+
+    def get_txns_settlement_date(self):
+        '''
+            Get all transactions from BPOINT
+        '''
+        return TransactionSearchRequest(self.credentials).submit()
+
+
     def get_txn(self,txn_number):
         '''
             Get a specific transaction from BPOINT

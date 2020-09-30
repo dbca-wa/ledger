@@ -120,7 +120,18 @@ class Facade(object):
         except Exception as e:
             raise
         return txn
-    
+
+    def fetch_transaction_by_settlement_date(self, settlement_date):
+        '''
+            Fetch all the detials of a previously
+            completed transaction
+        '''
+        res = self.gateway.get_txn_settlement_date(settlement_date)
+
+        if res.txn_resp_list:
+            return res.txn_resp_list
+        return res.api_response
+
     def fetch_transaction(self, txn_number):
         '''
             Fetch all the detials of a previously
@@ -129,8 +140,7 @@ class Facade(object):
         res = self.gateway.get_txn(txn_number)
         
         if res.txn_resp_list:
-            return res.txn_resp_list[0]
-        
+             return res.txn_resp_list[0]
         return res.api_response
     
     def fetch_transactions(self):
