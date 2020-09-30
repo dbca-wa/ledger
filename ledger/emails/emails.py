@@ -3,12 +3,17 @@ import mimetypes
 
 import six
 import django
+import hashlib
+import datetime
+
+from django.template.loader import render_to_string, get_template
 from django.conf import settings
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.core.urlresolvers import reverse
 from django.template import loader, Template, Context
 from django.utils.html import strip_tags
 from ledger.accounts.models import Document
+from confy import env
 
 logger = logging.getLogger('log')
 
@@ -259,4 +264,10 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
 
 
     return True
+
+def email_log(line):
+     dt = datetime.datetime.now()
+     f= open(settings.BASE_DIR+"/logs/email.log","a+")
+     f.write(str(dt.strftime('%Y-%m-%d %H:%M:%S'))+': '+line+"\r\n")
+     f.close()
 

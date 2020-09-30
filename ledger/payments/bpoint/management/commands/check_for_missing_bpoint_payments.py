@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from mooring import models 
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 #from ledger.payments.models import Invoice,OracleInterface,CashTransaction
 #from oscar.apps.order.models import Order
@@ -8,7 +7,7 @@ from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from django.conf import settings
 from datetime import timedelta, datetime
 from ledger.payments.bpoint.facade import Facade
-from mooring.emails import sendHtmlEmail
+from ledger.emails.emails import sendHtmlEmail
 
 class Command(BaseCommand):
     help = 'Check for payment which have been completed but are missing a booking.'
