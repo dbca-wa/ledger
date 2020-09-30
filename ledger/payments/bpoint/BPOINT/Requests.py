@@ -171,7 +171,6 @@ class TransactionSearchRequest(Request, CrnBlock):
         
     def submit(self):
         result = Request.submit(self)
-        
         return TransactionSearchResponse(result)
         
 class TransactionAuthKeyRequest(Request, CrnBlock):
