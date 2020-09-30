@@ -193,19 +193,19 @@ def sendHtmlEmail(to,subject,context,template,cc,bcc,from_email,template_group,a
             from_email = 'no-reply@dbca.wa.gov.au'
 
 
-    #django_version = int(str(django.VERSION[0])+''+str(django.VERSION[1]))
-    #if django_version > 110:
-    #   email_obj = TemplateEmailBase2()
-    #else:
-    #   email_obj = TemplateEmailBase()
-
+    django_version = int(str(django.VERSION[0])+''+str(django.VERSION[1]))
+    pcontext = None 
+    if django_version > 110:
+       pcontext = context 
+    else:
+       pcontext = Context(context)
 
     context['version'] = settings.VERSION_NO
     # Custom Email Body Template
-    context['body'] = get_template(template).render(Context(context))
+    context['body'] = get_template(template).render(pcontext)
     # Main Email Template Style ( body template is populated in the center
     if template_group == 'system-oim':
-        main_template = get_template('email/base_email-oim.html').render(Context(context))
+        main_template = get_template('email/base_email-oim.html').render(pcontext)
 
     reply_to=None
 
