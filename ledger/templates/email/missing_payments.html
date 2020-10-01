@@ -7,9 +7,9 @@ Please investigate.<br>
 <b>Report Date: {{ settlement_date }}
 <br>
 <table> 
-  <tr><th>Txn Number</th><th>Invoice No</th><th>Settlement Date</th><th>Processed Date Time</th></tr>	
+	<tr><th>Txn Number</th><th>Invoice No</th><th>Settlement Date</th><th>Processed Date Time</th><th>Action</th></tr>	
   {% for r in rows %}
-     <tr><td>{{ r.txn_number }}</td><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.processed_date_time }}</td></tr>
+  <tr><td>{{ r.txn_number }}</td><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.processed_date_time }}</td><td>{{ r.action }}</td></tr>
   {% endfor %}
 </table>
 <br><br>
