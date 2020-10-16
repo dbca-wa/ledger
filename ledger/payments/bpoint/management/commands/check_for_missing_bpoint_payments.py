@@ -22,6 +22,10 @@ class Command(BaseCommand):
            #system = settings.PS_PAYMENT_SYSTEM_ID
            #system = system.replace('S','0')
            #rows = bpoint_integrity_checks(system,100,2)
+           SYSTEM_ID = ''
+           if settings.PS_PAYMENT_SYSTEM_ID:
+                  SYSTEM_ID = settings.PS_PAYMENT_SYSTEM_ID.replace("S","0")
+                  
            yesterday = datetime.today() - timedelta(days=1)
            settlement_date_search = yesterday.strftime("%Y%m%d")
            if options['settlement_date']:
@@ -49,5 +53,5 @@ class Command(BaseCommand):
               email_list = []
               for email_to in settings.NOTIFICATION_EMAIL.split(","):
                      email_list.append(email_to)
-              sendHtmlEmail(tuple(email_list),"[LEDGER] Missing Bpoint Payments",context,'email/missing_payments.html',None,None,settings.EMAIL_FROM,'system-oim',attachments=None)
+              sendHtmlEmail(tuple(email_list),"[LEDGER] Missing Bpoint Payments "+SYSTEM_ID,context,'email/missing_payments.html',None,None,settings.EMAIL_FROM,'system-oim',attachments=None)
                     
