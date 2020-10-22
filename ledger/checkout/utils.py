@@ -11,6 +11,8 @@ from ledger.checkout import serializers
 from ledger.catalogue.models import Product
 from ledger.basket.models import Basket
 from ledger.basket.middleware import BasketMiddleware
+from ledger.payments.models import Invoice
+from oscar.apps.order.models import Order
 from django.core.signing import BadSignature, Signer
 from django.core.exceptions import ValidationError
 from confy import env
@@ -23,9 +25,6 @@ selector = Selector()
 def create_basket_session(request, parameters):
     serializer = serializers.BasketSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
-    print ("START")
-    print (parameters)
-    print ("FIND")
     custom = serializer.validated_data.get('custom_basket')
     booking_reference = None
     if 'booking_reference' in parameters:
@@ -64,6 +63,18 @@ def create_basket_session(request, parameters):
     return basket, BasketMiddleware().get_basket_hash(basket.id)
 
 
+def use_existing_basket(basket):
+
+    return basket, BasketMiddleware().get_basket_hash(basket.id)
+
+def use_existing_basket_from_invoice(invoice): 
+    
+    inv = Invoice.objects.get(reference=invoice)
+    order =  Order.objects.get(number=inv.order_number)
+    basket = order.basket
+    return basket, BasketMiddleware().get_basket_hash(order.basket.id)
+
+
 def get_cookie_basket(cookie_key,request):
     basket = None
     if cookie_key in request.COOKIES:
@@ -86,7 +97,6 @@ def create_checkout_session(request, parameters):
     serializer.is_valid(raise_exception=True)
 
     session_data = CheckoutSessionData(request) 
-
     # reset method of payment when creating a new session
     session_data.pay_by(None)
     
@@ -118,6 +128,7 @@ def create_checkout_session(request, parameters):
     session_data.set_invoice_text(serializer.validated_data['invoice_text'])
 
     session_data.set_last_check(serializer.validated_data['check_url'])
+    session_data.set_amount_override(serializer.validated_data['amount_override']) 
 
 
 # shortcut for finalizing a checkout session and creating an invoice.
@@ -274,6 +285,13 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def get_last_check(self):
         return self._get('ledger','last_check')
+
+
+    def set_amount_override(self,text):
+        self._set('ledger','amount_override',text)
+
+    def get_amount_override(self):
+        return self._get('ledger','amount_override')
 
 
 def calculate_excl_gst(amount):

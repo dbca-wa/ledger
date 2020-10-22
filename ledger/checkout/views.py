@@ -125,91 +125,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
         ctx = super(PaymentDetailsView, self).get_context_data(**kwargs)
         method = self.checkout_session.payment_method()
         custom_template = self.checkout_session.custom_template()
-
-        ctx['store_card'] = True
-        user = None
-        # only load stored cards if the user is an admin or has legitimately logged in
-        if self.checkout_session.basket_owner() and is_payment_admin(self.request.user):
-            user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
-        elif self.request.user.is_authenticated():
-            user = self.request.user
-
-        if user:
-            cards = user.stored_cards.all()
-            if cards:
-                ctx['cards'] = cards
-
-        ctx['custom_template'] = custom_template
-        ctx['bpay_allowed'] = settings.BPAY_ALLOWED
-        ctx['payment_method'] = method
-        ctx['bankcard_form'] = kwargs.get(
-            'bankcard_form', forms.BankcardForm())
-        ctx['billing_address_form'] = kwargs.get(
-            'billing_address_form', forms.BillingAddressForm())
-        return ctx
-
-    def post(self, request, *args, **kwargs):
-        # Override so we can validate the bankcard/billingaddress submission.
-        # If it is valid, we render the preview screen with the forms hidden
-        # within it.  When the preview is submitted, we pick up the 'action'
-        # parameters and actually place the order.
-        if request.POST.get('action', '') == 'place_order':
-            if self.checkout_session.payment_method() == 'card':
-                return self.do_place_order(request)
-            else:
-                return self.handle_place_order_submission(request)
-        # Validate the payment method
-        payment_method = request.POST.get('payment_method', '')
-        if payment_method == 'bpay' and settings.BPAY_ALLOWED:
-            self.checkout_session.pay_by('bpay')
-        elif payment_method == 'card':
-            self.checkout_session.pay_by('card')
-        elif payment_method: # someone's trying to pull a fast one, refresh the page
-            self.preview = False
-            return self.render_to_response(self.get_context_data())
-
-        # Get if user wants to store the card
-        store_card = request.POST.get('store_card',False)
-        self.checkout_session.permit_store_card(bool(store_card))
-        # Get if user wants to checkout using a stored card
-        checkout_token = request.POST.get('checkout_token',False)
-        if checkout_token:
-            self.checkout_session.checkout_using_token(request.POST.get('card',''))
-
-        if self.checkout_session.payment_method() == 'card' and not checkout_token:
-            bankcard_form = forms.BankcardForm(request.POST)
-            if not bankcard_form.is_valid():
-                # Form validation failed, render page again with errors
-                self.preview = False
-                ctx = self.get_context_data(
-                    bankcard_form=bankcard_form)
-                return self.render_to_response(ctx)
-
-        # Render preview with bankcard hidden
-        if self.checkout_session.payment_method() == 'card' and not checkout_token:
-            return self.render_preview(request,bankcard_form=bankcard_form)
-        else:
-            return self.render_preview(request)
-
-    def do_place_order(self, request):
-        # Helper method to check that the hidden forms wasn't tinkered
-        # with.
-        if not self.checkout_session.checkout_token():
-            bankcard_form = forms.BankcardForm(request.POST)
-            if not bankcard_form.is_valid():
-                messages.error(request, "Invalid submission")
-                return HttpResponseRedirect(reverse('checkout:payment-details'))
-
-        # Attempt to submit the order, passing the bankcard object so that it
-        # gets passed back to the 'handle_payment' method below.
-        submission = self.build_submission()
-        if not self.checkout_session.checkout_token():
-            submission['payment_kwargs']['bankcard'] = bankcard_form.bankcard
-        return self.submit(**submission)
-
-    def doInvoice(self,order_number,total,**kwargs):
-        method = self.checkout_session.bpay_method()
-        system = self.checkout_session.system()
         icrn_format = self.checkout_session.icrn_format()
         # Generate the string to be used to generate the icrn
         crn_string = '{0}{1}'.format(systemid_check(system),order_number)
@@ -300,7 +215,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 invoice.token = '{}|{}|{}'.format(token.DVToken,token.expiry_date.strftime("%m%y"),token.last_digits)
                                 invoice.save()
                             else:
-                                bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
+                                if self.checkout_session.get_amount_override() is not None:
+                                    amount_override = self.checkout_session.get_amount_override()
+                                    bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, amount_override)    
+                                else:
+                                    bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
                         else:
                             logger.info('Order #%s: self.checkout_session.checkout_token:else: '+str(method), order_number)
                             # Store card if user wants to store card
@@ -313,7 +232,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 else:
                                     bankcard = kwargs['bankcard']
                                     bankcard.last_digits = bankcard.number[-4:]
-                                    resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
+                                    if self.checkout_session.get_amount_override() is not None:
+                                         amount_override = self.checkout_session.get_amount_override()
+                                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, amount_override,bankcard)
+                                    else:
+                                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
                             else:
                                 logger.info('Order #%s: self.checkout_session.store_card:else: '+str(method), order_number)
                                 if self.checkout_session.invoice_association():
@@ -325,7 +248,13 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                     logger.info('Order #%s: self.checkout_session.invoice_association:else '+str(method), order_number)
                                     bankcard = kwargs['bankcard']
                                     bankcard.last_digits = bankcard.number[-4:]
-                                    resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
+                                    if self.checkout_session.get_amount_override() is not None:
+                                         amount_override = self.checkout_session.get_amount_override()
+                                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference,amount_override ,bankcard)
+                                    else:
+                                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
+                                    #resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, float(15.00),bankcard)
+
                         if not self.checkout_session.invoice_association():
                             logger.info('Order #%s: if not self.checkout_session.invoice_association '+str(method), order_number)
                             # Record payment source and event

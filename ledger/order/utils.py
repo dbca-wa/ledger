@@ -31,7 +31,10 @@ class OrderCreator(CoreOrderCreator):
         except Order.DoesNotExist:
             pass
         else:
-            raise ValueError("There is already an order with number "+str(order_number))
+            print ("There is already an order with number "+str(order_number))
+            order = Order.objects.get(number=order_number)
+            return order
+        #    raise ValueError("There is already an order with number "+str(order_number))
 
         # Ok - everything seems to be in order, let's place the order
         order = self.create_order_model(
