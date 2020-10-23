@@ -38,6 +38,10 @@ class BasketMiddleware(CoreBasketMiddleware):
                 basket_id = Signer(sep='|').unsign(basket_hash)
                 #basket = Basket.objects.get(pk=basket_id, owner=None, status=Basket.OPEN)
                 basket = Basket.objects.get(pk=basket_id)
+                if basket.status != 'OPEN' or basket.status != 'SUBMITTED':
+                      pass
+                else:
+                    basket = None
             except (BadSignature, Basket.DoesNotExist):
                 request.cookies_to_delete.append(cookie_key)
         return basket
