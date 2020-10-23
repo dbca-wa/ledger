@@ -215,6 +215,16 @@
                         </h3>
                     </td>
                 </tr>
+	        {% if amount_override %}	
+                <tr>
+                    <th class="total"><h3>{% trans "Debit amount" %}</h3></th>
+                    <td class="total align-right">
+                        <h3 class="price_color">
+                                {{ amount_override|currency:basket.currency }}
+                        </h3>
+                    </td>
+                </tr>
+                {% endif %}
                 {% if not order_total.is_tax_known %}
                     <tr>
                         <td><small>{% trans "Taxes will be added during checkout." %}</small></td>

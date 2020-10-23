@@ -75,6 +75,7 @@ class CheckoutSerializer(serializers.Serializer):
     icrn_date = serializers.DateField(required=False, default=None)
     invoice_text = serializers.CharField(required=False, default=None)
     check_url = serializers.URLField(required=False, default=None)
+    amount_override=serializers.FloatField(required=False, default=None)
 
     def validate(self, data):
         if data['proxy'] and not data['basket_owner']:

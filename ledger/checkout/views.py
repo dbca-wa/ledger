@@ -146,6 +146,10 @@ class PaymentDetailsView(CorePaymentDetailsView):
             'bankcard_form', forms.BankcardForm())
         ctx['billing_address_form'] = kwargs.get(
             'billing_address_form', forms.BillingAddressForm())
+        ctx['amount_override'] = None
+        if self.checkout_session.get_amount_override():
+            ctx['amount_override'] =self.checkout_session.get_amount_override()
+
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -210,6 +214,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
     def doInvoice(self,order_number,total,**kwargs):
         method = self.checkout_session.bpay_method()
         system = self.checkout_session.system()
+
         icrn_format = self.checkout_session.icrn_format()
         # Generate the string to be used to generate the icrn
         crn_string = '{0}{1}'.format(systemid_check(system),order_number)
@@ -300,7 +305,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 invoice.token = '{}|{}|{}'.format(token.DVToken,token.expiry_date.strftime("%m%y"),token.last_digits)
                                 invoice.save()
                             else:
-                                bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
+                                if self.checkout_session.get_amount_override() is not None:
+                                    amount_override = self.checkout_session.get_amount_override()
+                                    bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, amount_override)    
+                                else:
+                                    bpoint_facade.pay_with_storedtoken(card_method,'internet','single',token.id,order_number,invoice.reference, total.incl_tax)
                         else:
                             logger.info('Order #%s: self.checkout_session.checkout_token:else: '+str(method), order_number)
                             # Store card if user wants to store card
@@ -313,7 +322,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 else:
                                     bankcard = kwargs['bankcard']
                                     bankcard.last_digits = bankcard.number[-4:]
-                                    resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
+                                    if self.checkout_session.get_amount_override() is not None:
+                                         amount_override = self.checkout_session.get_amount_override()
+                                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, amount_override,bankcard)
+                                    else:
+                                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
                             else:
                                 logger.info('Order #%s: self.checkout_session.store_card:else: '+str(method), order_number)
                                 if self.checkout_session.invoice_association():
@@ -325,7 +338,13 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                     logger.info('Order #%s: self.checkout_session.invoice_association:else '+str(method), order_number)
                                     bankcard = kwargs['bankcard']
                                     bankcard.last_digits = bankcard.number[-4:]
-                                    resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
+                                    if self.checkout_session.get_amount_override() is not None:
+                                         amount_override = self.checkout_session.get_amount_override()
+                                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference,amount_override ,bankcard)
+                                    else:
+                                         resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, total.incl_tax,bankcard)
+                                    #resp = bpoint_facade.post_transaction(card_method,'internet','single',order_number,invoice.reference, float(15.00),bankcard)
+
                         if not self.checkout_session.invoice_association():
                             logger.info('Order #%s: if not self.checkout_session.invoice_association '+str(method), order_number)
                             # Record payment source and event
