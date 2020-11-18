@@ -796,8 +796,10 @@ def bpoint_integrity_checks(system,days,rowlimit):
     if days is None:
         days = 5
     fromdays = datetime.datetime.today() - datetime.timedelta(days=days)
+    # delay check after a recent payment
+    from_minute = datetime.datetime.now() - datetime.timedelta(seconds=70)    
 
-    bt = BpointTransaction.objects.filter(crn1__istartswith=system, integrity_check=False, created__gt=fromdays).order_by('-id')[:rowlimit]
+    bt = BpointTransaction.objects.filter(crn1__istartswith=system, integrity_check=False, created__gt=fromdays, created__lt=from_minute).order_by('-id')[:rowlimit]
     for b in bt:
         i = Invoice.objects.filter(reference=b.crn1)
         if i.count() > 0:
