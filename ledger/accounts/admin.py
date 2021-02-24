@@ -22,7 +22,7 @@ class EmailUserAdmin(UserAdmin):
     )
     fieldsets = (
         (None, {'fields': ('email',)}),
-        ('Personal info', {'fields': ('first_name', 'last_name', 'dob', 'identification','position_title', 'character_flagged', 'character_comments')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'dob', 'identification','title','character_flagged', 'character_comments', 'phone_number', 'mobile_number', 'position_title')}),
         ('Permissions', {'fields': (
             'is_active', 'is_staff', 'is_superuser', 'groups')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
@@ -49,7 +49,7 @@ class EmailUserAdmin(UserAdmin):
     list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_dummy')
     ordering = ('email',)
     search_fields = ('email', 'first_name', 'last_name', 'email')
-    readonly_fields = ('dummy_email',)
+    readonly_fields = ('dummy_email','phone_number', 'mobile_number', 'position_title',)
 
     def is_dummy(self, o):
         return o.is_dummy_user
