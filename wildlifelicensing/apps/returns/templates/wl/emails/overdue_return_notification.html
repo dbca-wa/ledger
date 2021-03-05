@@ -1,9 +1,0 @@
-{%  extends 'wl/emails/base_email.html' %}
-
-{%  block content %}
-    <p>You have an overdue return for Wildlife Licence:</p>
-    <p><strong>{{ return.licence.licence_type.name }}</strong></p>
-    <p>that was due on {{ return.due_date }}. To lodge the return, please follow the following URL:</p>
-    <p><a href='{{ url }}'>{{ url }}</a></p>
-    <p>Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.</p>
-{%  endblock %}

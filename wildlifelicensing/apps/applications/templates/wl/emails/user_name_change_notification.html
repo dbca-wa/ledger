@@ -1,9 +1,0 @@
-{% extends 'wl/emails/base_email.html' %}
-
-{% block content %}
-    <p>User {{ licence.holder.get_full_name }} has changed name and requires the following licence to be reissued:</p>
-    <p><strong>{{ licence.licence_number}}-{{ licence.licence_sequence }}</strong></p>
-    <p>To reissue, please follow the following URL:</p>
-    <p><a href='{{ url }}'>{{ url }}</a></p>
-    <p>Note: If you haven't been on the Wildlife Licensing site recently you might have to login first.</p>
-{% endblock %}
