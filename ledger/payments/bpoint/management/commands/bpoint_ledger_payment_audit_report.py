@@ -37,13 +37,21 @@ class Command(BaseCommand):
            bpoint_amount = 0
            for c in b:
                 if c.bank_response_code == '00':
-
                     amount = str(c.amount)[:-2]+'.'+str(c.amount)[-2:]
-                    bpoint_amount = bpoint_amount + c.amount
+                    if c.action == 'refund':
+                        bpoint_amount = bpoint_amount - c.amount
+                    else:
+                        bpoint_amount = bpoint_amount + c.amount
+                    bpoint_amount_nice = str(bpoint_amount)[:-2]+'.'+str(bpoint_amount)[-2:]
+                    bp_lpb_diff = bpoint_amount_nice
                     bp = BpointTransaction.objects.filter(crn1=c.crn1)
                     if bp.count() > 0:
-                        ledger_payment_amount = ledger_payment_amount + bp[0].amount
-                    rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action+str(":"+amount), 'amount': amount, 'bpoint_amount': bpoint_amount, 'ledger_payment_amount': ledger_payment_amount })
+                        if bp[0].action == 'refund':
+                            ledger_payment_amount = ledger_payment_amount - bp[0].amount
+                        else:
+                            ledger_payment_amount = ledger_payment_amount + bp[0].amount
+                    bp_lpb_diff = float(bpoint_amount_nice) - float(ledger_payment_amount)
+                    rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action, 'amount': amount, 'bpoint_amount': bpoint_amount_nice, 'ledger_payment_amount': ledger_payment_amount, 'bp_lpb_diff': bp_lpb_diff })
 
            if  (len(rows)) > 0:
               print ("Sending Report")
