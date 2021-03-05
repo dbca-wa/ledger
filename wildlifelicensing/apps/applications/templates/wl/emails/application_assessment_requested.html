@@ -1,9 +1,0 @@
-{% extends 'wl/emails/base_email.html' %}
-
-{% block content %}
-    A Wildlife Licensing application has been reviewed and requires your assessment before approval.
-    {% if url %}
-        Click <a href='{{ url }}'>here</a> to review the application.
-        <p>Note: If you haven't been on the Wildlife Licensing site recently you might have to login first before using the provided link.</p>
-    {% endif %}
-{% endblock %}

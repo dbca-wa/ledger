@@ -1,9 +1,0 @@
-{% extends 'wl/emails/base_email.txt' %}
-
-{% block content %}
-    A Wildlife Licensing application has been assessed by {{ assessor }} of {{ assessor_department }}.
-    {% if url %}
-        Please copy and paste the following link into your browser to review the application:
-        {{ url }}
-    {% endif %}
-{% endblock %}

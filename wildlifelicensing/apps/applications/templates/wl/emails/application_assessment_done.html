@@ -1,8 +1,0 @@
-{% extends 'wl/emails/base_email.html' %}
-
-{% block content %}
-    A Wildlife Licensing application has been assessed by {{ assessor }} of {{ assessor_group }}.
-    {% if url %}
-        <div>Click <a href='{{ url }}'>here</a> to review the application.</div>
-    {% endif %}
-{% endblock %}
