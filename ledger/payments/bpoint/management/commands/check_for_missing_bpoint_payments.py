@@ -40,7 +40,7 @@ class Command(BaseCommand):
                 else:
                     pass
                     if c.bank_response_code == '00':
-                         rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action})
+                        rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action, 'amount': c.amount})
                     #rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date })
 
            #print ("Error: Sending Email Notification: "+settings.NOTIFICATION_EMAIL)
