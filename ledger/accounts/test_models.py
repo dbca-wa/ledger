@@ -50,8 +50,20 @@ class AddressTest(TestCase):
 
     def setUp(self):
         super(AddressTest, self).setUp()
+        self.user = get_ddf(EmailUser, dob='1970-01-01')
         get_ddf(Country, iso_3166_1_a2='AU')
-        self.address1 = get_ddf(Address, country='AU')
+        country = Country.objects.get(iso_3166_1_a2='AU')
+
+        self.address1 = Address.objects.create(
+                    line1 = 'PO Box 12121',
+                    line2 = '61 Adelaide Tce',
+                    line3 = '',
+                    #line4 = 'East Perth',
+                    state = 'WA',
+                    postcode = '6004',
+                    country = country,
+                    user = self.user
+                 )
 
     def test_prop_join_fields(self):
         """Test the Address join_fields property
