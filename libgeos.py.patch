@@ -1,0 +1,11 @@
+--- /root/libgeos.py	2020-09-17 06:41:59.294023811 +0000
++++ /root/dev/parkstay_bs/venv/lib/python3.8/site-packages/django/contrib/gis/geos/libgeos.py	2020-09-17 06:42:26.265807788 +0000
+@@ -190,7 +190,7 @@
+     is a release candidate (and what number release candidate), and the C API
+     version.
+     """
+-    ver = geos_version().decode()
++    ver = geos_version().decode().strip()
+     m = version_regex.match(ver)
+     if not m:
+         raise GEOSException('Could not parse version info string "%s"' % ver)
