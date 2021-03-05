@@ -7,9 +7,9 @@ Please investigate.<br>
 <b>Report Date: {{ settlement_date }}
 <br>
 <table> 
-	<tr><th>Txn Number</th><th>Invoice No</th><th>Settlement Date</th><th>Processed Date Time</th><th>Action</th><th>Amount</th><th>Bpoint Audit Amount</th><th>Ledger Audit Amount</th></tr>	
+	<tr><th>Txn Number</th><th>Invoice No</th><th>Settlement Date</th><th>Processed Date Time</th><th>Action</th><th>Amount</th><th>Bpoint Audit Amount</th><th>Ledger Audit Amount</th><th>Diffrence</th></tr>	
   {% for r in rows %}
-  <tr><td>{{ r.txn_number }}</td><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.processed_date_time }}</td><td>{{ r.action }}</td><td>${{ r.amount }}</td><td>${{ r.bpoint_amount }}</td><td>${{ r.ledger_payment_amount }}</td></tr>
+  <tr><td>{{ r.txn_number }}</td><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.processed_date_time }}</td><td>{{ r.action }}</td><td>${{ r.amount }}</td><td>${{ r.bpoint_amount }}</td><td>${{ r.ledger_payment_amount }}</td><td {% if r.bp_lpb_diff > 0 %}bgcolor='red'{% endif %} >{{ r.bp_lpb_diff }}</tr>
   {% endfor %}
 </table>
 <br><br>
