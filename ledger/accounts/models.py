@@ -25,6 +25,8 @@ from ledger.accounts.signals import name_changed, post_clean
 from ledger.accounts.utils import get_department_user_compact, in_dbca_domain
 from ledger.address.models import UserAddress, Country
 
+import logging
+logger = logging.getLogger('log')
 
 def unicode_compatible(value):
     try: 
@@ -276,7 +278,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                            verbose_name="date of birth", help_text='')
     phone_number = models.CharField(max_length=50, null=True, blank=True,
                                     verbose_name="phone number", help_text='')
-    position_title = models.CharField(max_length=50, null=True, blank=True,
+    position_title = models.CharField(max_length=100, null=True, blank=True,
                                     verbose_name="position title", help_text='')
     mobile_number = models.CharField(max_length=50, null=True, blank=True,
                                      verbose_name="mobile number", help_text='')
@@ -326,11 +328,25 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             # checks and updates department user details from address book after every login
             user_details = get_department_user_compact(self.email)
             if user_details:
-                self.phone_number = user_details.get('telephone')
-                self.mobile_number = user_details.get('mobile_phone')
-                self.title = user_details.get('title')
-                self.fax_number = user_details.get('org_unit__location__fax')
+                # check if keys can be found in ITAssets api - the response JSON sent by API may have have changed
+                if 'telephone' not in user_details or 'mobile_phone' not in user_details or 'title' not in user_details or 'location' not in user_details:
+                    logger.warn('Cannot find user details in ITAssets api call for user {}'.format(self.email))
+
+                # Only set the below fields if there is a value from address book (in ITAssets API). 
+                # This will allow fields in EmailUser object to be:
+                #   a. overridden whenever newer/updated fields (e.g. telephone number) are available in address book
+                #   b. if value for the field in address book empty/null, a previous value entered by user will not be overwritten with null
+                if user_details.get('telephone'):
+                    self.phone_number = user_details.get('telephone') 
+                if user_details.get('mobile_phone'):
+                    self.mobile_number = user_details.get('mobile_phone')
+                if user_details.get('title'):
+                    self.position_title = user_details.get('title')
+                if user_details.get('location', {}).get('fax'):
+                    self.fax_number = user_details.get('location', {}).get('fax')
+
                 self.is_staff = True
+
         self.email = self.email.lower()            
         super(EmailUser, self).save(*args, **kwargs)
 
