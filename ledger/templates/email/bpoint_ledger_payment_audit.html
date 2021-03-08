@@ -6,12 +6,33 @@ Please investigate.<br>
 <br>
 <b>Report Date: {{ settlement_date }}
 <br>
-<table> 
-	<tr><th>Txn Number</th><th>Invoice No</th><th>Settlement Date</th><th>Processed Date Time</th><th>Action</th><th>Amount</th><th>Bpoint Audit Amount</th><th>Ledger Audit Amount</th><th>Diffrence</th></tr>	
+<u>Bpoint to Ledger bpoint Ledger audit</u>
+<table cellpadding=1> 
+	<tr><th>Txn Number</th><th>Invoice No</th><th>Bpoint Settlement Date</th><th>Ledger Settlement Date</th><th>Processed Date Time</th><th>Action</th><th>Amount</th><th>Bpoint Audit Amount</th><th>Ledger Audit Amount</th><th>Diffrence</th></tr>	
   {% for r in rows %}
-  <tr><td>{{ r.txn_number }}</td><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.processed_date_time }}</td><td>{{ r.action }}</td><td>${{ r.amount }}</td><td>${{ r.bpoint_amount }}</td><td>${{ r.ledger_payment_amount }}</td><td {% if r.bp_lpb_diff > 0 %}bgcolor='red'{% endif %} >{{ r.bp_lpb_diff }}</tr>
+  <tr><td>{{ r.txn_number }}</td><td {% if r.is_dupe  %}bgcolor='#b2e6ff' {% endif %}>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.ledger_payment_settlement_date }}</td><td>{{ r.processed_date_time }}</td><td>{{ r.action }}</td><td>${{ r.amount }}</td><td>${{ r.bpoint_amount }}</td><td>${{ r.ledger_payment_amount }}</td><td {% if r.bp_lpb_diff > 0 %}bgcolor='red'{% endif %} >{{ r.bp_lpb_diff }}</tr>
   {% endfor %}
 </table>
+<br>
+<u>Bpoint ledger to bpoint missing transaction report</u>
+<br>
+<table cellpadding=1>
+<tr><th>Invoice No</th><th>Ledger Settlement Date</th><th>Created</th><th>Action</th><th>Amount</th></tr>
+{% for r in missing_records %}
+    <tr><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.created }}</td><td>{{ r.action }}</td><td>${{ r.amount }}</td></tr>
+{% endfor %}
+</table>
+<br>
+<u>Bpoint to bpoint ledger missing transaction report</u>
+<br>
+<table cellpadding=1>
+	<tr><th>Invoice No</th><th>Ledger Settlement Date</th><th>Created</th><th>Action</th><th>Amount</th></tr>
+	{% for r in missing_records_in_ledger %}
+	    <tr><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.created }}</td><td>{{ r.action }}</td><td>${{ r.amount }}</td></tr>
+    {% endfor %}
+</table>
+<br>
 <br><br>
+
 Kind Regards<br>
 Auto Generated<br>
