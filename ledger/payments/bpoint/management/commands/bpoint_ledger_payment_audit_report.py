@@ -101,7 +101,7 @@ class Command(BaseCommand):
            ledger_payment_amount_total = 0 
            bp_ledger_payment_refund = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID)
            for bpl in bp_ledger_payment_refund:
-                if bpl[0].action == 'refund':
+                if bpl.action == 'refund':
                     ledger_payment_amount_total = ledger_payment_amount_total - bpl.amount
                 else:
                     ledger_payment_amount_total = ledger_payment_amount_total + bpl.amount
