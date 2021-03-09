@@ -4,10 +4,10 @@ Below is an audit transaction report which is comparing transaction from our pay
 <br>
 The report below can be used to find discrepancies in transactions.<br>
 <br>
-<b>Report Date: {{ settlement_date }}
+<b>Report Date: {{ settlement_date }}</b>
 <br>
-
-All three totals should match,  if the totals do not match then there is discrepancy.
+<br>
+All three totals should match,  if the totals do not match then there is a discrepancy.
 <table cellpadding=1 border=1>
 <tr>
 <th width='200'  align='center'>
@@ -35,7 +35,13 @@ ORACLE RECEIPTS
 </table>
 
 <br>
-<u>Compare Bpoint transaction with ledger payment transaction data.</u>
+<u>Transaction history with rolling totals</u>
+<br>
+<br>
+Compares Bpoint transactions with ledger payment transaction data.  <br>
+&nbsp;&nbsp;* Blue background around invoice number indicates a possible duplicate payment.<br>
+&nbsp;&nbsp;* A red box around the differnce amount indicates the possible location of a discrepancy.<br>
+<br>
 <table cellpadding=1> 
 	<tr><th>Txn Number</th><th>Invoice No</th><th>Bpoint Settlement Date</th><th>Ledger Settlement Date</th><th>Processed Date Time</th><th>Action</th><th>Amount</th><th>Bpoint Audit Amount</th><th>Ledger Audit Amount</th><th>Diffrence</th></tr>	
   {% for r in rows %}
