@@ -1,3 +1,23 @@
+<style>
+.table {
+ border-top: 1px solid #000000;
+ border-left: 1px solid #000000;
+ border-right: 1px solid #000000;
+ border-bottom: 2px solid #000000;
+}
+.tabletd {
+padding:5px;
+border: 1px solid #000000;
+}
+.tableth {
+    padding:5px;
+    border: 1px solid #000000;
+}
+
+</style>
+
+
+
 Hello,<br> 
 <br>
 Below is an audit transaction report which is comparing transaction from our payment gateway provider(bpoint) with transactions in our ledger database.<br>
@@ -8,32 +28,31 @@ The report below can be used to find discrepancies in transactions.<br>
 <br>
 <br>
 All three totals should match,  if the totals do not match then there is a discrepancy.
-<table cellpadding=1 border=1>
+<table class='table' cellpadding=0 border=0 cellspacing=0>
 <tr>
-<th width='200'  align='center'>
+<th class='tableth' width='200'  align='center'>
 BPOINT
 </th>
-<th width='200'  align='center'>
+<th  class='tableth' width='200'  align='center'>
 LEDGER PAYMENTS
 </th>
-<th width='200'  align='center'>
+<th class='tableth' width='200'  align='center'>
 ORACLE RECEIPTS
 </th>
 
 </tr>
 <tr>
-<td align='center'>
+<td class='tabletd' align='center'>
 	$ {{ bpoint_total_amount }}
 </td>
-<td  align='center'>
+<td class='tabletd' align='center'>
       $ {{ ledger_payment_amount_total }}
 </td>
-<td  align='center'>
+<td class='tabletd' align='center'>
        $ {{ oracle_receipts_total }}
 </td>
 </tr>
 </table>
-
 <br>
 <u>Transaction history with rolling totals</u>
 <br>
@@ -42,28 +61,73 @@ Compares Bpoint transactions with ledger payment transaction data.  <br>
 &nbsp;&nbsp;* Blue background around invoice number indicates a possible duplicate payment.<br>
 &nbsp;&nbsp;* A red box around the differnce amount indicates the possible location of a discrepancy.<br>
 <br>
-<table cellpadding=1> 
-	<tr><th>Txn Number</th><th>Invoice No</th><th>Bpoint Settlement Date</th><th>Ledger Settlement Date</th><th>Processed Date Time</th><th>Action</th><th>Amount</th><th>Bpoint Audit Amount</th><th>Ledger Audit Amount</th><th>Diffrence</th></tr>	
+<table class='table' cellpadding=0 border=0 cellspacing=0 > 
+	<tr>
+		<th class='tableth'>Txn Number</th>
+		<th class='tableth'>Invoice No</th>
+		<th class='tableth'>Bpoint Settlement Date</th>
+		<th class='tableth'>Ledger Settlement Date</th>
+		<th class='tableth'>Processed Date Time</th>
+		<th class='tableth'>Action</th>
+		<th class='tableth'>Amount</th>
+		<th class='tableth'>Bpoint Audit Amount</th>
+		<th class='tableth'>Ledger Audit Amount</th>
+		<th class='tableth'>Diffrence</th>
+	</tr>	
   {% for r in rows %}
-  <tr><td>{{ r.txn_number }}</td><td {% if r.is_dupe  %}bgcolor='#b2e6ff' {% endif %}>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.ledger_payment_settlement_date }}</td><td>{{ r.processed_date_time }}</td><td>{{ r.action }}</td><td>${{ r.amount }}</td><td>${{ r.bpoint_amount }}</td><td>${{ r.ledger_payment_amount }}</td><td {% if r.bp_lpb_diff > 0 %}bgcolor='red'{% endif %} >{{ r.bp_lpb_diff }}</tr>
+  <tr>
+	   <td class='tabletd'>{{ r.txn_number }}</td>
+	   <td class='tabletd' {% if r.is_dupe  %}bgcolor='#b2e6ff' {% endif %}>{{ r.crn1 }}</td>
+	   <td class='tabletd' >{{ r.settlement_date }}</td>
+	   <td class='tabletd'>{{ r.ledger_payment_settlement_date }}</td>
+	   <td class='tabletd' >{{ r.processed_date_time }}</td>
+	   <td class='tabletd'>{{ r.action }}</td>
+	   <td class='tabletd'>${{ r.amount }}</td>
+	   <td class='tabletd'>${{ r.bpoint_amount }}</td>
+	   <td class='tabletd'>${{ r.ledger_payment_amount }}</td>
+	   <td class='tabletd' {% if r.bp_lpb_diff > 0 %}bgcolor='red'{% endif %} align='center'>${{ r.bp_lpb_diff }}</td>
+  </tr>
   {% endfor %}
 </table>
 <br>
 <u>Ledger payment transactions that are missing in bpoint</u>
 <br>
-<table cellpadding=1>
-<tr><th>Invoice No</th><th>Ledger Settlement Date</th><th>Created</th><th>Action</th><th>Amount</th></tr>
+<table class='table' cellpadding=0 border=r01 cellspacing=0 >
+<tr>
+	<th class='tableth'>Invoice No</th>
+	<th class='tableth'>Ledger Settlement Date</th>
+	<th class='tableth' >Created</th>
+	<th class='tableth'>Action</th>
+	<th class='tableth' >Amount</th></tr>
 {% for r in missing_records %}
-    <tr><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.created }}</td><td>{{ r.action }}</td><td>${{ r.amount }}</td></tr>
+    <tr>
+	    <td  class='tabletd' >{{ r.crn1 }}</td>
+	    <td  class='tabletd' >{{ r.settlement_date }}</td>
+	    <td  class='tabletd' >{{ r.created }}</td>
+	    <td  class='tabletd' >{{ r.action }}</td>
+	    <td  class='tabletd' >${{ r.amount }}</td></tr>
 {% endfor %}
+
 </table>
 <br>
 <u>Bpoint transactions that are missing in ledger</u>
 <br>
-<table cellpadding=1>
-	<tr><th>Invoice No</th><th>Ledger Settlement Date</th><th>Created</th><th>Action</th><th>Amount</th></tr>
+<table class='table' cellpadding=0 border=1 cellspacing=0 >
+	<tr>
+		<th class='tableth'>Invoice No</th>
+		<th class='tableth'>Ledger Settlement Date</th>
+		<th class='tableth'>Created</th>
+		<th class='tableth'>Action</th>
+		<th class='tableth'>Amount</th>
+	</tr>
 	{% for r in missing_records_in_ledger %}
-	    <tr><td>{{ r.crn1 }}</td><td>{{ r.settlement_date }}</td><td>{{ r.created }}</td><td>{{ r.action }}</td><td>${{ r.amount }}</td></tr>
+	    <tr>
+		    <td class='tabletd'>{{ r.crn1 }}</td>
+		    <td class='tabletd'>{{ r.settlement_date }}</td>
+		    <td class='tabletd'>{{ r.created }}</td>
+		    <td class='tabletd'>{{ r.action }}</td>
+		    <td class='tabletd'>${{ r.amount }}</td>
+	    </tr>
     {% endfor %}
 </table>
 <br>
