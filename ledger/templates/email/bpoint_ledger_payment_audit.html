@@ -6,6 +6,34 @@ The report below can be used to find discrepancies in transactions.<br>
 <br>
 <b>Report Date: {{ settlement_date }}
 <br>
+
+<table cellpadding=1 border=1>
+<tr>
+<th width='200'  align='center'>
+BPOINT
+</th>
+<th width='200'  align='center'>
+LEDGER PAYMENTS
+</th>
+<th width='200'  align='center'>
+ORACLE RECEIPTS
+</th>
+
+</tr>
+<tr>
+<td align='center'>
+	$ {{ bpoint_total_amount }}
+</td>
+<td  align='center'>
+      $ {{ ledger_payment_amount_total }}
+</td>
+<td  align='center'>
+       $ {{ oracle_receipts_total }}
+</td>
+</tr>
+</table>
+
+<br>
 <u>Bpoint to Ledger bpoint Ledger audit</u>
 <table cellpadding=1> 
 	<tr><th>Txn Number</th><th>Invoice No</th><th>Bpoint Settlement Date</th><th>Ledger Settlement Date</th><th>Processed Date Time</th><th>Action</th><th>Amount</th><th>Bpoint Audit Amount</th><th>Ledger Audit Amount</th><th>Diffrence</th></tr>	

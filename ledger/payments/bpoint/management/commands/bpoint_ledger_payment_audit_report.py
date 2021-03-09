@@ -7,6 +7,7 @@ from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from django.conf import settings
 from datetime import timedelta, datetime
 from ledger.payments.bpoint.facade import Facade
+from ledger.payments.models import OracleInterfaceSystem, OracleInterface 
 from ledger.emails.emails import sendHtmlEmail
 
 class Command(BaseCommand):
@@ -37,6 +38,7 @@ class Command(BaseCommand):
            b = bpoint_facade.fetch_transaction_by_settlement_date(settlement_date_search)
            ledger_payment_amount = 0
            bpoint_amount = 0
+           bpoint_amount_nice = 0
            recordcount = 0
            duplicate_check_array =[]
            for c in b:
@@ -64,6 +66,8 @@ class Command(BaseCommand):
                     rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action, 'amount': amount, 'bpoint_amount': bpoint_amount_nice, 'ledger_payment_amount': ledger_payment_amount, 'bp_lpb_diff': bp_lpb_diff ,'ledger_payment_settlement_date': ledger_payment_settlement_date, 'is_dupe': is_dupe})
                     duplicate_check_array.append(c.crn1)
                     recordcount=recordcount + 1
+
+           
            print ("Transaction count in Bpoint: "+str(recordcount))
            missing_records = []
            ledger_bpoint_count = 0
@@ -78,7 +82,6 @@ class Command(BaseCommand):
                   ledger_bpoint_count = ledger_bpoint_count + 1
            print ("Ledger Bpoint Transaction count:" +str(ledger_bpoint_count))
 
-
            missing_records_in_ledger = []
            ledger_bpoint_count = 0
            bp1 = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID)
@@ -89,9 +92,30 @@ class Command(BaseCommand):
                          if rec.crn1 == c.crn1:
                              exists = True
                      if exists is False:
-                            missing_records_in_ledger.append({'crn1': c.crn1, 'created':c.processed_date_time, 'settlement_date': c.settlement_date, 'amount':c.amount,'action': c.action})
+                            bpoint_amount_nice1 = str(c.amount)[:-2]+'.'+str(c.amount)[-2:]
+                            missing_records_in_ledger.append({'crn1': c.crn1, 'created':c.processed_date_time, 'settlement_date': c.settlement_date, 'amount':bpoint_amount_nice1,'action': c.action})
                      ledger_bpoint_count = ledger_bpoint_count + 1
            print ("Ledger Bpoint Transaction count:" +str(ledger_bpoint_count))
+
+           # Totals
+           ledger_payment_amount_total = 0 
+           bp_ledger_payment_refund = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID)
+           for bpl in bp_ledger_payment_refund:
+                if bp[0].action == 'refund':
+                    ledger_payment_amount_total = ledger_payment_amount_total - bp[0].amount
+                else:
+                    ledger_payment_amount_total = ledger_payment_amount_total + bp[0].amount
+
+           ofs = OracleInterfaceSystem.objects.filter(system_id=SYSTEM_ID)
+           source = ''
+           oracle_receipts_total = 0
+           if ofs.count() > 0:
+               source = ofs[0].source
+               oi_receipts = OracleInterface.objects.filter(source=source, receipt_date=settlement_date_search_obj)
+               for oir in oi_receipts:
+                    oracle_receipts_total = oracle_receipts_total + oir.amount
+                  
+               
 
            if  (len(rows)) > 0 or (len(missing_records)) > 0 or (len(missing_records_in_ledger)) > 0:
               print ("Sending Report")
@@ -99,7 +123,10 @@ class Command(BaseCommand):
                   'settlement_date' : settlement_date_search,
                   'rows' : rows,
                   'missing_records': missing_records,
-                  'missing_records_in_ledger' : missing_records_in_ledger
+                  'missing_records_in_ledger' : missing_records_in_ledger,
+                  'bpoint_total_amount': bpoint_amount_nice,
+                  'ledger_payment_amount_total' : ledger_payment_amount_total,
+                  'oracle_receipts_total' : oracle_receipts_total
               }
               email_list = []
               for email_to in settings.NOTIFICATION_EMAIL.split(","):
