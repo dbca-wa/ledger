@@ -7,6 +7,7 @@ The report below can be used to find discrepancies in transactions.<br>
 <b>Report Date: {{ settlement_date }}
 <br>
 
+All three totals should match,  if the totals do not match then there is discrepancy.
 <table cellpadding=1 border=1>
 <tr>
 <th width='200'  align='center'>
@@ -34,7 +35,7 @@ ORACLE RECEIPTS
 </table>
 
 <br>
-<u>Bpoint to Ledger bpoint Ledger audit</u>
+<u>Compare Bpoint transaction with ledger payment transaction data.</u>
 <table cellpadding=1> 
 	<tr><th>Txn Number</th><th>Invoice No</th><th>Bpoint Settlement Date</th><th>Ledger Settlement Date</th><th>Processed Date Time</th><th>Action</th><th>Amount</th><th>Bpoint Audit Amount</th><th>Ledger Audit Amount</th><th>Diffrence</th></tr>	
   {% for r in rows %}
@@ -42,7 +43,7 @@ ORACLE RECEIPTS
   {% endfor %}
 </table>
 <br>
-<u>Bpoint ledger to bpoint missing transaction report</u>
+<u>Ledger payment transactions that are missing in bpoint</u>
 <br>
 <table cellpadding=1>
 <tr><th>Invoice No</th><th>Ledger Settlement Date</th><th>Created</th><th>Action</th><th>Amount</th></tr>
@@ -51,7 +52,7 @@ ORACLE RECEIPTS
 {% endfor %}
 </table>
 <br>
-<u>Bpoint to bpoint ledger missing transaction report</u>
+<u>Bpoint transactions that are missing in ledger</u>
 <br>
 <table cellpadding=1>
 	<tr><th>Invoice No</th><th>Ledger Settlement Date</th><th>Created</th><th>Action</th><th>Amount</th></tr>
