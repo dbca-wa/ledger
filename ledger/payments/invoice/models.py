@@ -343,6 +343,20 @@ class Invoice(models.Model):
             except:
                 raise
 
+#### FUTURE 
+#class InvoiceRelationGroup(models.Model):
+#    created = models.DateTimeField(auto_now_add=True)
+#
+#class InvoiceRelation(models.Model):
+#
+#    system = models.CharField(max_length=4,blank=True,null=True)
+#    invoice_reference = models.CharField(max_length=100, unique=True)
+#    system_booking_reference_no = models.CharField(max_length=100)
+#    system_booking_reference_no_linked = models.CharField(max_length=100)
+#    invoice_group = models.ForeignKey(InvoiceRelationGroup,blank=True,null=True)
+#    created = models.DateTimeField(auto_now_add=True)
+
+
 class InvoiceBPAY(models.Model):
     ''' Link between unmatched bpay payments and invoices
     '''

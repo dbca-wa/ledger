@@ -1,0 +1,29 @@
+{
+  "name": "ledgergw",
+  "version": "1.0.0",
+  "description": "Modules for Ledger GW ",
+  "author": "ASI <asi@dpaw.wa.gov.au>",
+  "private": true,
+  "devDependencies": {
+
+"bootstrap": "3.3.7",
+"bootstrap-datepicker" :"1.9.0",
+"bootstrap-datetimepicker": "0.0.7",
+"datetimepicker":"0.1.39",
+"eonasdan-bootstrap-datetimepicker" : "4.17.49",
+"moment-timezone":"0.4.1",
+"jquery" : "3.6.0",
+"moment": "2.29.1",
+"timepicker" : "1.13.18",
+"twitter-bootstrap" : "2.1.1",
+"validate" : "5.1.0",
+"component-type" : "1.2.1",
+"eivindfjeldstad-dot" : "0.0.1",
+"typecast": "0.0.1"
+
+},
+  "engines": {
+    "node": ">= 4.0.0",
+    "npm": ">= 3.0.0"
+  }
+}
