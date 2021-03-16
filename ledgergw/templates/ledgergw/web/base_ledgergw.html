@@ -1,0 +1,186 @@
+
+{% extends "webtemplate_dbca/base_internet.html" %}
+{% load static from staticfiles %}
+{% block base_style %}
+
+{% endblock %}
+
+{% block extra_head %}
+        <link rel="stylesheet" type="text/css" href="/static/common/node_modules/bootstrap/dist/css/bootstrap.css?ver={{ GIT_COMMIT_HASH }}">
+	<link rel="stylesheet" type="text/css" href="/static/common/node_modules/datatables.net-bs/css/dataTables.bootstrap.css?ver={{ GIT_COMMIT_HASH }}">
+	<link rel="stylesheet" type="text/css" href="/static/common/node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.css?ver={{ GIT_COMMIT_HASH }}">
+	<link rel="stylesheet" type="text/css" href="/static/node_modules/bootstrap-datetimepicker/src/less/bootstrap-datetimepicker.lesiiis?ver={{ GIT_COMMIT_HASH }}">
+	<link rel="stylesheet" type="text/css" href="/static/css/bootstrap-datetimepicker.css?ver={{ GIT_COMMIT_HASH }}" />
+
+        <!-- npm modules -->
+	<script type="text/javascript" src="/static/common/node_modules/jquery/dist/jquery.js?ver={{ GIT_COMMIT_HASH }}"></script>
+	<script type="text/javascript" src="/static/common/node_modules/datatables/media/js/jquery.dataTables.js?ver={{ GIT_COMMIT_HASH }}"></script>
+	<script type="text/javascript" src="/static/common/node_modules/datatables.net-bs/js/dataTables.bootstrap.js?ver={{ GIT_COMMIT_HASH }}"></script>
+        <script type="text/javascript" src="/static/common/node_modules/bootstrap/dist/js/bootstrap.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+
+	<script type="text/javascript" src="/static/common/node_modules/moment/moment.js?ver={{ GIT_COMMIT_HASH }}"></script>
+
+	<script type="text/javascript" src="/static/common/node_modules/node_modules/bootstrap-datepicker/js/bootstrap-datepicker.js?ver={{ GIT_COMMIT_HASH }}"></script>
+        <script type="text/javascript" src="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js?ver={{ GIT_COMMIT_HASH }}"></script>
+
+	<script type="text/javascript" src="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js?ver={{ GIT_COMMIT_HASH }}"></script>
+
+	<script type="text/javascript" src="/static/js/moment.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+	<script type="text/javascript" src="/static/js/bootstrap-datetimepicker.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
+        <!-- npm modules -->
+
+{% endblock %}
+
+{% block base_js %}{% endblock %}
+
+{% block navbar_site_title %}
+
+<a class="navbar-brand" href="/">Dashboard</a>
+<ul class='nav navbar-nav hidden-xs'>
+    {% if staff == True %}
+        <li class='hidden-sm' ><a href="{% url 'application_list' %}" title="Applications">Applications</a></li>
+        <li class='hidden-sm' ><a href="{% url 'approval_list' %}" title="Approvals">Approvals</a></li>
+        <li class='hidden-sm' ><a href="{% url 'compliance_list' %}">Clearance of Conditions</a></li>
+        <li class='hidden-sm' ><a href="{% url 'organisation_access_requests' %}" title="Company Access">Company Access</a></li>
+        <li class='hidden-sm' ><a href="{% url 'search_list' %}">Search</a></li>
+    {% else %}
+        <li class='hidden-sm' ><a href="" title="Contact Us">Contact Us</a></li> 
+        <li class='hidden-sm' ><a href="" title="Further Information">Further Information</a></li>
+    {% endif %}
+</ul>
+
+{% endblock navbar_site_title %}
+{% block navbar_links %}
+{% if staff == True %}
+    <li class='hidden-lg hidden-md'><a href="{% url 'approval_list' %}" title="Applications">Approvals</a></li>
+    <li class='hidden-lg hidden-md'><a href="{% url 'application_list' %}" title="Applications">Applications</a></li>
+    <li class='hidden-lg hidden-md'><a href="{% url 'emergencyworks_list' %}">Emergency works</a></li>
+    <li class='hidden-lg hidden-md'><a href="{% url 'compliance_list' %}">Clearance of Conditions</a></li>
+    <li class='hidden-lg hidden-md'><a href="#" title="Company Access"><strike>Company Access</strike></a></li>
+    <li class='hidden-lg hidden-md'><a href="#"><strike>Search</strike></a></li>
+{% else %}
+    <li class='hidden-lg hidden-md' ><a href="" title="Contact Us">Contact Us</a></li>
+    <li class='hidden-lg hidden-md' ><a href="" title="Further Information">Further Information</a></li>
+{% endif %}
+
+{% block navbar_auth %}
+{% if request.user.is_authenticated %}
+<li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{% firstof user.get_full_name user.email %} <span class="caret"></span></a>
+    <ul class="dropdown-menu" role="menu">
+        {% if user.is_superuser %}
+        <li><a href="{% url 'admin:index' %}" title="Administration">Administration</a></li>
+        {% endif %}
+        <li><a href="{% url 'logout' %}" title="Log out">Log out</a></li>
+    </ul>
+</li>
+{% endif %}
+{% endblock navbar_auth %}
+{% endblock navbar_links %}
+
+{% block page_content %}
+<!-- Messages  -->
+{% if messages %}
+<div class="row">
+    <div class="col-xs-12">
+        {% for message in messages %}
+	{% if message.tags == 'error' %}
+		<div class="alert alert-danger">
+			{{ message|safe }}
+		</div>
+	{% else %}
+        <div class="alert{% if message.tags %} alert-{{ message.tags }}{% endif %}">
+            {{ message|safe }}
+        </div>
+	{% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-xs-12">
+        {% block page_content_inner %}{% endblock %}
+
+        <iframe src="/blank.html" name="file_load_frame" height="300px" width="100%" title="File Load Frame" style='display:none'></iframe>
+
+    </div>
+</div>
+{% endblock page_content %}
+
+{% block page_footer %}
+<div id="footer">
+    <div class="container-fluid">
+        <hr>
+        <div class="row">
+            <div class="col-xs-9 text-muted">
+                <small>v{{ project_version }}, Commit: {{ project_last_commit_date }} &copy; Department of Parks and Wildlife</small>
+            </div>
+            <div class="col-xs-3 text-muted text-right">
+                {% if object.routeid %}
+                <small> Form Step: {{ object.routeid }} </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.overtop-modal {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1050;
+    display: none;
+    /* overflow: hidden; */
+    -webkit-overflow-scrolling: touch;
+    outline: 0;
+}
+</style>
+<div class='overtop-modal' id='overtop' style='background-color: rgba(39, 39, 39, 0.5);'>
+
+<div>
+ 
+</div>
+
+
+
+</div>
+
+<!-- Modal -->
+<div id="myModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Unsaved Form Data</h4>
+      </div>
+      <div class="modal-body">
+        <p>Your form has data that has not yet been saved.  Click "Don't Save" to continue without saving or no to cancel and return to your form.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" onclick="django_form_checks.loadUrl();">Dont Save</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    $(function() {
+        // Initialise datepicker widgets.
+        $(".dateinput").datepicker({
+            format: 'dd/mm/yyyy',
+            autoclose: true,
+            todayHighlight: true
+        });
+    });
+</script>
+
+
+{% endblock extra_js %}
+
