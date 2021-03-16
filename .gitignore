@@ -2,7 +2,6 @@
 .env
 venv/
 venv2/
-node_modules/
 cronjobs
 mooring/cache/*
 
