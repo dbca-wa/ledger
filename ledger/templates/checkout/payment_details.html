@@ -1,6 +1,7 @@
 {% extends 'checkout/payment_details.html' %}
 {% load static %}
 {% load i18n %}
+{% block checkout_title %}{% trans "Check Out" %}{% endblock %}
 
 {%block styles %}
     {{ block.super}}
@@ -15,14 +16,17 @@
         }
     </style>
 {% endblock %}
+
 {% block payment_details %}
 <div clas="container">
     <!-- Pills -->
     <ul class="nav nav-pills nav-justified">
-        <li class="active"><a data-toggle="tab" href="#card">Pay now by Card</a></li>
 {% if bpay_allowed %}
+
+        <li class="active"><a data-toggle="tab" href="#card">Pay now by Card</a></li>
         <li><a data-toggle="tab" href="#bpay">Pay later by BPAY/Cash/Cheque/Money Order</a></li>
 {% endif %}
+
     </ul>
     <!-- Pills -->
     <div class="tab-content">

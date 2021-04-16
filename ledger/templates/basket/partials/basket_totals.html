@@ -73,8 +73,9 @@
                         <tr>
                             <th class="total">{% trans "Basket total" %}</th>
                             <th class="total align-right">
+
                                 {% if not show_tax_separately and basket.is_tax_known %}
-                                    {{ basket.total_incl_tax|currency:basket.currency }}
+				{% if basket.total_incl_tax < 0 %}<span style='color:#ff0000'>REFUNDING</span> {% endif %}  {{ basket.total_incl_tax|currency:basket.currency|cut:"-" }}
                                 {% else %}
                                     {{ basket.total_excl_tax|currency:basket.currency }}
                                 {% endif %}
@@ -165,6 +166,7 @@
                     <tr>
                         <th class="total">{% trans "Basket" %}</th>
                         <th class="total align-right">
+				
                             {{ basket.total_tax|currency:basket.currency }}
                         </th>
                     </tr>

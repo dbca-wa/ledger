@@ -4,6 +4,7 @@
 {% load i18n %}
 {% load purchase_info_tags %}
 {% load staticfiles %}
+{% block checkout_title %}{% trans "Checkout" %}{% endblock %}
 
 {% block title %}
     {% trans "Checkout" %} | {{ block.super }}
@@ -12,6 +13,9 @@
 {% block checkout_nav %}
     {% include 'checkout/nav.html' %}
 {% endblock %}
+
+
+
 
 {% block content %}
     {% if error %}
@@ -25,6 +29,11 @@
             {% include custom_template %}
         {% endif %}
     {% endblock %}
+
+    {% block preview_order %}
+       {% include "checkout/preview-basket.html" %}
+    {% endblock preview_order %}
+
 
     <div class="row shipping-payment">
         {% block shipping_address %}
@@ -81,9 +90,9 @@
                 {% endif %}
             </div>
         {% endblock shipping_address %}
-
         {# You will almost certainly want to override this block to provide a payment summary #}
         {% block payment_method %}
+
             <div class="col-sm-6">
                 <div class="sub-header">
                     <h2>{% trans "Payment" %}</h2>
@@ -107,7 +116,7 @@
                 </a>
             {% endblock %}
 
-            <h2>{% trans "Order contents" %}</h2>
+            <h2>{% trans "Order Information" %}</h2>
         </div>
         <div class="basket-title">
             <div class="row">
@@ -166,8 +175,9 @@
 
     {% block payment_details %}
     {% endblock payment_details %}
-
+  
     {% block place_order %}
     {% endblock place_order %}
-
+    
 {% endblock content %}
+

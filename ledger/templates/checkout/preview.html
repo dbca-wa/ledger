@@ -5,8 +5,33 @@
 {% load purchase_info_tags %}
 {% load staticfiles %}
 
+<style>
+.page_inner {
+border-radius: 6px 6px 6px 6px !important;
+
+}
+
+</style>
+
+
+{% block checkout_title %}
+    {% trans "" %}
+{% endblock %}
+
+{% block checkout_nav %}
+{% endblock %}
+
+{% block iicontent %}
+    {% include "checkout/process-payment.html" %}
+{% endblock %}
+
+{% block preview_order %}
+{% endblock preview_order %}
+
+
 {% block shipping_address %}
 {% if shipping_method.code != 'no-shipping-required'%}
+
     <div class="col-sm-6">
         <div class="sub-header">
             <h2>{% trans "Shipping" %}</h2>
@@ -63,101 +88,20 @@
 {% endblock shipping_address %}
 
 {% block order_contents %}
-    <div class="sub-header">
-        {% block order_contents_actions %}
-        
-        {% endblock %}
+<style>
+.page_inner {
+	border-radius: 6px 6px 6px 6px !important;
 
-        <h2>{% trans "Order contents" %}</h2>
-    </div>
-    <div class="basket-title">
-        <div class="row">
-            <p class="col-sm-9 h4">{% trans "Item" %}</p>
-            <p class="col-sm-1 h4 align-center">{% trans "Quantity" %}</p>
-            <p class="col-sm-2 h4 align-right">{% trans "Total" %}</p>
-        </div>
-    </div>
-    
-    {%if not basket.custom_ledger %}
-        {% for line in basket.all_lines %}
-            {% purchase_info_for_line request line as session %}
-            <div class="basket-items">
-                <div class="row">
-                    <div class="col-sm-2">
-                        <div class="image_container">
-                            {% if line.product.primary_image.original.url %}
-                                {% with image=line.product.primary_image %}
-                                    {% thumbnail image.original "100x100" upscale=False as thumb %}
-                                        <a href="{{ form.instance.product.get_absolute_url }}"><img class="thumbnail" src="{{ thumb.url }}" alt="{{ product.get_title }}"></a>
-                                    {% endthumbnail %}
-                                {% endwith %}
-                            {% else %}
-                                <img class="thumbnail" src="https://static.dpaw.wa.gov.au/images/no-image.jpg" alt="{{ product.get_title }}">
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-sm-7">
-                        <h3>{% comment %}Temp comment to block users from accessing the shop pages. <a href="{{ line.product.get_absolute_url }}">{% endcomment %}{{ line.description }}{% comment %}</a>{% endcomment %}</h3>
-                        
-                    </div>
-                    <div class="col-sm-1 align-center">
-                        {{ line.quantity }}
-                    </div>
-                    <div class="col-sm-2 align-right">
-                        <p class="price_color">
-                            {% if not show_tax_separately and line.is_tax_known %}
-                                {{ line.line_price_incl_tax|currency:basket.currency }}
-                            {% else %}
-                                {{ line.line_price_excl_tax|currency:basket.currency }}
-                            {% endif %}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    {% else %}
-        {% for line in basket.all_lines %}
-            <div class="basket-items">
-                <div class="row">
-                    <div class="col-sm-2">
-                    </div>
-                    <div class="col-sm-7">
-                        <h3>{{ line.ledger_description }}</a></h3>
-                    </div>
-                    <div class="col-sm-1 align-center">
-                        {{ line.quantity }}
-                    </div>
-                    <div class="col-sm-2 align-right">
-                        <p class="price_color">
-                            {% if not show_tax_separately and line.is_tax_known %}
-                                {{ line.line_price_incl_tax|currency:basket.currency }}
-                            {% else %}
-                                {{ line.line_price_excl_tax|currency:basket.currency }}
-                            {% endif %}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-    {% endif %}
+}
 
-    <div class="row">
-        <div class="col-sm-6">&nbsp;</div>
-        <div class="col-sm-6">
-            <div class="sub-header">
-                <h2>{% trans 'Totals' %}</h2>
-            </div>
-            {% include 'basket/partials/basket_totals.html' %}
-        </div>
-    </div>
-
+</style>
 {% endblock order_contents %}
-
 {% block payment_method %}
 
 {% endblock %}
 
 {% block place_order %}
+
 
     <form method="post" action="{% url 'checkout:preview' %}" id="place_order_form" onsubmit="placeOrderForm();">
         {% csrf_token %}
@@ -172,12 +116,16 @@
         <div style="display:none">
             {% block hiddenforms %}{{ bankcard_form.as_p }}{% endblock %}
         </div>
+        {% if payment_method == 'card' %}
+              <center><h2>Preparing to process payment, Please Wait</h2></center>
+        {% endif %}
 
         <div class="form-group clearfix">
             <div class="row">
                 <div class="col-sm-3 col-sm-offset-9">
 	             <div id='payment-loader'></div>
-                     <button id="place-order" formnovalidate type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}">
+
+                     <button id="place-order" formnovalidate type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}" {% if payment_method == 'card' %}style='display:none'{% endif %}>
                          {% if payment_method == 'card' %}
                             {% trans "Pay" %}
                          {% else %}
@@ -188,9 +136,11 @@
             </div>
         </div>
     </form>
+
     <script>
             var place_order_form = document.getElementById("place_order_form");
             function placeOrderForm() {
+                               $('.page_inner').hide();
                                var page = document.getElementById('default');
                                var pageheight = page.parentElement.scrollHeight;
 		               // var divheight = window.outerHeight || window.pageYOffset ||  window.scrollMaxY;
@@ -252,7 +202,21 @@
 	    //            (chkReadyState);
 	    //    		        // finally your page is loaded.
 	    //}, 100);
+     function processPayment() { 
 
+         placeOrderForm(); 
+         document.getElementById("place-order").click();
+     }
+     function checkForJquery() {
+
+     if (window.jQuery) {
+           processPayment();
+     } else {
+           console.log("Waiting for Jquery to Load");
+   	   setTimeout("checkForJquery()", "800");
+     }
+     }
+     checkForJquery();
     </script>
 
 
