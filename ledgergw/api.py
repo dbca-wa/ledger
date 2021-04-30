@@ -6,6 +6,10 @@ from ledgergw import models as ledgergw_models
 from ledgergw import common
 from django.db.models import Q
 
+from django.core.files.base import ContentFile
+from django.utils.crypto import get_random_string
+import base64
+
 import json
 import ipaddress
 
@@ -233,7 +237,58 @@ def group_info(request, apikey):
             jsondata['status'] = 403
             jsondata['message'] = 'Access Forbidden'
 
+    return HttpResponse(json.dumps(jsondata), content_type='application/json')
 
+
+@csrf_exempt
+def add_update_file_emailuser(request, apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
+        if common.api_allow(common.get_client_ip(request),apikey) is True:
+            emailuser_id = request.POST.get('emailuser_id', '')
+            file_group_id = request.POST.get('file_group_id', None)
+            filebase64 = request.POST['filebase64']
+            extension = request.POST.get('extension',None)
+
+            randomfile_name = get_random_string(length=15, allowed_chars=u'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+            b64data = filebase64.split(",") 
+            cfile = ContentFile(base64.b64decode(b64data[1]), name=randomfile_name+'.pdf')
+            private_document = models.PrivateDocument.objects.create(upload=cfile,name=randomfile_name,file_group=file_group_id,file_group_ref_id=emailuser_id,extension=extension)
+            email_user = models.EmailUser.objects.get(id=emailuser_id)
+
+            if int(file_group_id) == 1:
+               email_user.identification2=private_document
+               email_user.save()
+               print ("SAVING")
+            if int(file_group_id) == 2:
+               email_user.senior_card2=private_document
+               email_user.save()
+               print ("SAVING")
+            
+            jsondata = {'status': 200, 'message': 'No Results',}
+        else:
+           jsondata['status'] = 403
+           jsondata['message'] = 'Access Forbidden'
+
+    return HttpResponse(json.dumps(jsondata), content_type='application/json')
+
+@csrf_exempt
+def get_private_document(request, apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
+        if common.api_allow(common.get_client_ip(request),apikey) is True:
+            private_document_id = request.POST.get('private_document_id', None)
+            private_document = models.PrivateDocument.objects.get(id=private_document_id)
+            print (private_document.upload.path)
+            with open(private_document.upload.path, "rb") as doc:
+                 encoded_doc = base64.b64encode(doc.read())
+            print (encoded_doc)
+            jsondata = {'status': 200, 'message': 'Results','data': encoded_doc.decode(), 'filename': private_document.name, 'extension': private_document.extension}
+        else:
+           jsondata['status'] = 403
+           jsondata['message'] = 'Access Forbidden'
 
     return HttpResponse(json.dumps(jsondata), content_type='application/json')
 
@@ -245,3 +300,20 @@ def ip_check(request):
     jsondata = {'status': 200, 'ipaddress': str(ipaddress)}
     return HttpResponse(json.dumps(jsondata), content_type='application/json')
 
+
+#class PrivateDocument(models.Model):
+#
+#    FILE_GROUP = (
+#        (1,'Identification'),
+#        (2,'Senior Card'),
+#    )
+#
+#    upload = models.FileField(max_length=512, upload_to='uploads/%Y/%m/%d', storage=upload_storage)
+#    name = models.CharField(max_length=256)
+#    metadata = JSONField(null=True, blank=True)
+#    text_content = models.TextField(null=True, blank=True, editable=False)  # Text for indexing
+#    file_group = models.IntegerField(choices=FILE_GROUP, null=True, blank=True)
+#    file_group_ref_id = models.IntegerField(null=True, blank=True)
+#    extension = models.CharField(max_length=5, null=True, blank=True)
+#    created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+#

@@ -6,13 +6,15 @@ from django.contrib.auth.models import Group
 
 from reversion.admin import VersionAdmin
 
-from ledger.accounts.models import EmailUser, Document, Address, Profile
+from ledger.accounts.models import EmailUser, Document, PrivateDocument, Address, Profile
 from ledger.accounts.forms import ProfileAdminForm
 
 
 @admin.register(EmailUser)
 class EmailUserAdmin(UserAdmin):
     change_list_template = "ledger/accounts/change_emailuser_list.html"
+
+    raw_id_fields=('identification','identification2','senior_card','senior_card2','residential_address','postal_address','billing_address',)
 
     add_fieldsets = (
         (None, {
@@ -22,7 +24,7 @@ class EmailUserAdmin(UserAdmin):
     )
     fieldsets = (
         (None, {'fields': ('email',)}),
-        ('Personal info', {'fields': ('first_name', 'last_name', 'dob', 'identification','title','character_flagged', 'character_comments', 'phone_number', 'mobile_number', 'position_title')}),
+        ('Personal info', {'fields': ('first_name', 'last_name','position_title', 'dob', 'identification','identification2','senior_card','senior_card2','title','character_flagged', 'character_comments', 'phone_number', 'mobile_number','residential_address','postal_address','postal_same_as_residential','billing_address','billing_same_as_residential' )}),
         ('Permissions', {'fields': (
             'is_active', 'is_staff', 'is_superuser', 'groups')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
@@ -84,11 +86,15 @@ class EmailUserAdmin(UserAdmin):
 class DocumentAdmin(admin.ModelAdmin):
     model = Document
 
+@admin.register(PrivateDocument)
+class DocumentAdmin(admin.ModelAdmin):
+    model = PrivateDocument
+    list_display = ('name','upload', 'file_group','extension', 'created')
+    ordering = ('-id',)
 
 @admin.register(Address)
 class AddressAdmin(VersionAdmin):
     pass
-
 
 @admin.register(Profile)
 class ProfileAdmin(VersionAdmin):

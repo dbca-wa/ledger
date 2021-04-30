@@ -24,6 +24,9 @@ from datetime import datetime, date
 from ledger.accounts.signals import name_changed, post_clean
 from ledger.accounts.utils import get_department_user_compact, in_dbca_domain
 from ledger.address.models import UserAddress, Country
+from django.conf import settings
+
+from django.core.files.storage import FileSystemStorage
 
 import logging
 logger = logging.getLogger('log')
@@ -83,6 +86,36 @@ class Document(models.Model):
 
     def __str__(self):
         return self.name or self.filename
+
+upload_storage = FileSystemStorage(location=settings.LEDGER_PRIVATE_MEDIA_ROOT)
+
+@python_2_unicode_compatible
+class PrivateDocument(models.Model):
+
+    FILE_GROUP = (
+        (1,'Identification'),
+        (2,'Senior Card'),
+    )
+
+    upload = models.FileField(max_length=512, upload_to='uploads/%Y/%m/%d', storage=upload_storage)
+    name = models.CharField(max_length=256)
+    metadata = JSONField(null=True, blank=True)
+    text_content = models.TextField(null=True, blank=True, editable=False)  # Text for indexing
+    file_group = models.IntegerField(choices=FILE_GROUP, null=True, blank=True)
+    file_group_ref_id = models.IntegerField(null=True, blank=True)
+    extension = models.CharField(max_length=5, null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    @property
+    def file_url(self):
+         if self.extension is None:
+                self.extension = ''
+         return settings.PRIVATE_MEDIA_URL+str(self.pk)+'-file'+self.extension
+
+    def __str__(self):
+        if self.file_group:
+            return '{} ({})'.format(self.name, self.get_file_group_display())
+        return self.name
 
 
 class DocumentListener(object):
@@ -289,11 +322,15 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
 
     residential_address = models.ForeignKey(Address, null=True, blank=False, related_name='+')
     postal_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
+    postal_same_as_residential = models.NullBooleanField(default=False) 
     billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
+    billing_same_as_residential = models.NullBooleanField(default=False)
 
     identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
+    identification2 = models.ForeignKey(PrivateDocument, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document_2')
 
     senior_card = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='senior_card')
+    senior_card2 = models.ForeignKey(PrivateDocument, null=True, blank=True, on_delete=models.SET_NULL, related_name='senior_card')
 
     character_flagged = models.BooleanField(default=False)
 
