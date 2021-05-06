@@ -253,20 +253,17 @@ def add_update_file_emailuser(request, apikey):
 
             randomfile_name = get_random_string(length=15, allowed_chars=u'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
             b64data = filebase64.split(",") 
-            cfile = ContentFile(base64.b64decode(b64data[1]), name=randomfile_name+'.pdf')
+            cfile = ContentFile(base64.b64decode(b64data[1]), name=randomfile_name+'.'+extension)
             private_document = models.PrivateDocument.objects.create(upload=cfile,name=randomfile_name,file_group=file_group_id,file_group_ref_id=emailuser_id,extension=extension)
             email_user = models.EmailUser.objects.get(id=emailuser_id)
-
             if int(file_group_id) == 1:
                email_user.identification2=private_document
                email_user.save()
-               print ("SAVING")
             if int(file_group_id) == 2:
                email_user.senior_card2=private_document
                email_user.save()
-               print ("SAVING")
             
-            jsondata = {'status': 200, 'message': 'No Results',}
+            jsondata = {'status': 200, 'message': 'Results',}
         else:
            jsondata['status'] = 403
            jsondata['message'] = 'Access Forbidden'
@@ -281,10 +278,11 @@ def get_private_document(request, apikey):
         if common.api_allow(common.get_client_ip(request),apikey) is True:
             private_document_id = request.POST.get('private_document_id', None)
             private_document = models.PrivateDocument.objects.get(id=private_document_id)
-            print (private_document.upload.path)
+
+            #print (private_document.upload.path)
             with open(private_document.upload.path, "rb") as doc:
                  encoded_doc = base64.b64encode(doc.read())
-            print (encoded_doc)
+            #print (encoded_doc)
             jsondata = {'status': 200, 'message': 'Results','data': encoded_doc.decode(), 'filename': private_document.name, 'extension': private_document.extension}
         else:
            jsondata['status'] = 403

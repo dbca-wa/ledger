@@ -87,7 +87,7 @@ class Document(models.Model):
     def __str__(self):
         return self.name or self.filename
 
-upload_storage = FileSystemStorage(location=settings.LEDGER_PRIVATE_MEDIA_ROOT)
+upload_storage = FileSystemStorage(location=settings.LEDGER_PRIVATE_MEDIA_ROOT, base_url=settings.LEDGER_PRIVATE_MEDIA_URL)
 
 @python_2_unicode_compatible
 class PrivateDocument(models.Model):
@@ -110,7 +110,7 @@ class PrivateDocument(models.Model):
     def file_url(self):
          if self.extension is None:
                 self.extension = ''
-         return settings.PRIVATE_MEDIA_URL+str(self.pk)+'-file'+self.extension
+         return settings.LEDGER_PRIVATE_MEDIA_URL+str(self.pk)+'-file'+self.extension
 
     def __str__(self):
         if self.file_group:
