@@ -43,3 +43,9 @@ required environment variables at run time. Example content:
     EMAIL_INSTANCE='UAT' (DEV/TEST/UAT/PROD)
     NON_PROD_EMAIL='comma@separated.email,listfor@nonproduction.emails'
 
+
+# Setting up a Ledger GW Server
+
+Version 1 of ledger gw will run in the same database,  however going forward Ledger GW will be seperated from other ledger apps with connection to ledger via API's. 
+
+* Step 1
