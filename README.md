@@ -44,8 +44,16 @@ required environment variables at run time. Example content:
     NON_PROD_EMAIL='comma@separated.email,listfor@nonproduction.emails'
 
 
-# Setting up a Ledger GW Server
+# Setting up a Ledger GW Server 
 
 Version 1 of ledger gw will run in the same database,  however going forward Ledger GW will be seperated from other ledger apps with connection to ledger via API's. 
 
-* Step 1
+* Step 1: Clone this respository to your dev/uat/prod area.
+* Step 2: Create a virtualenv for the ledgergw app "virtualenv -p python3 venv"  inside the cloned respository
+* Step 3: activate environment source venv/bin/activate
+* Step 4: Install requirements.  "pip install -r requirements.txt"
+* Step 5: Setup .env file (link to same database as your app) 
+* Step 6: python manage_ledgergw.py runserver 0.0.0.0:9010 (port can be set to your preference for development) otherwise another webserver such gunicorn can be used.
+* Step 7: Access the django admin area on the port and ip.
+* Step 8: Under django admin goto apis.
+* Step 9: Click Add API and enter system name, api key will be automatically generated on save.  System ID optional. Allow IP's for developement should be 127.0.0.1/8 or for dev docker environments 172.17.0.0/8 or 172.10.0.0/8
