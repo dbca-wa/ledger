@@ -7,7 +7,7 @@ It provides authentication, address and online payments functionality.
 
 # Requirements
 
-- Python (2.7.x)
+- Python (3.6.x)
 - PostgreSQL (>=9.3)
 
 Python library requirements should be installed using `pip`:
