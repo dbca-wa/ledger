@@ -72,7 +72,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         'check_if_checkout_is_active',
         'check_basket_is_not_empty',
         'check_basket_is_valid',
-        'check_user_email_is_captured',
+    #    'check_user_email_is_captured',
         'check_shipping_data_is_captured'
     ]
 
@@ -83,6 +83,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
         return super(PaymentDetailsView, self).get_skip_conditions(request)
 
     def get(self, request, *args, **kwargs):
+        print ("GET")
+        print (PaymentDetailsView)
         if self.skip_preview_if_free(request) or self.skip_if_proxy():
              return self.handle_place_order_submission(request)
         if self.checkout_session.proxy() and not self.preview:
@@ -134,6 +136,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
         elif self.request.user.is_authenticated():
             user = self.request.user
 
+        # START - need to grab user from api after verifing API KEYS
+        user = EmailUser.objects.get(email='jason.moore@dbca.wa.gov.au')
+
+        # END - need to grab user from api after verifing API KEYS
+        print (user)
         if user:
             cards = user.stored_cards.all()
             if cards:
@@ -147,9 +154,28 @@ class PaymentDetailsView(CorePaymentDetailsView):
         ctx['billing_address_form'] = kwargs.get(
             'billing_address_form', forms.BillingAddressForm())
         ctx['amount_override'] = None
+
         if self.checkout_session.get_amount_override():
             ctx['amount_override'] =self.checkout_session.get_amount_override()
 
+        print ("COOKIE")
+        print (self.request.COOKIES.get('payment_api_wrapper'))
+        if self.checkout_session.get_session_type():
+           ctx['session_type'] = self.checkout_session.get_session_type()
+           
+        #print (request.COOKIES.get('logged_in_status'))
+        ctx['NO_HEADER'] = 'false'
+        ctx['PAYMENT_API_WRAPPER'] = 'false'
+
+        if self.request.COOKIES.get('no_header') == 'true':
+            ctx['NO_HEADER'] = 'true'
+
+        if self.request.COOKIES.get('payment_api_wrapper') == 'true':
+            self.template_name = "checkout/payment_details_api_wrapper.html"
+            self.checkout_session.set_guest_email('jason.moore@dbca.wa.gov.au') 
+            ctx['PAYMENT_API_WRAPPER'] = 'true'
+        print ("TR")
+        print (self.template_name)
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -157,7 +183,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # If it is valid, we render the preview screen with the forms hidden
         # within it.  When the preview is submitted, we pick up the 'action'
         # parameters and actually place the order.
+        print ("POST")
+        print (request.POST)
+
         if request.POST.get('action', '') == 'place_order':
+            print ("ledger --- place_order")
             if self.checkout_session.payment_method() == 'card':
                 return self.do_place_order(request)
             else:
@@ -287,11 +317,17 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         #Generate Invoice
                         logger.info('Order #%s: doInvoice with method: '+str(method), order_number)
                         invoice = self.doInvoice(order_number,total)
+
                         # Swap user if in session
                         if self.checkout_session.basket_owner():
                             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
                         else:
                             user = self.request.user
+                        
+                        # START - need to grab user from api after verifing API KEYS
+                        #user = EmailUser.objects.get(email='jason.moore@dbca.wa.gov.au')
+                        # END - need to grab user from api after verifing API KEYS
+                            
                         # Get the payment action for bpoint
                         card_method = self.checkout_session.card_method()
                         # Check if the user is paying using a stored card
@@ -393,6 +429,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
                          forms can be re-rendered correctly if payment fails.
         :order_kwargs: Additional kwargs to pass to the place_order method
         """
+
+        print ("SUBMITTING")
+        print (user)
         if payment_kwargs is None:
             payment_kwargs = {}
         if order_kwargs is None:
@@ -485,6 +524,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
         logger.info("Order #%s: payment successful, placing order",
                     order_number)
         try:
+            print ("USER PLACEMENT")
+            print (user)
             return self.handle_order_placement(
                 order_number, user, basket, shipping_address, shipping_method,
                 shipping_charge, billing_address, order_total, **order_kwargs)

@@ -1,0 +1,137 @@
+{% extends 'checkout/payment_details.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block layout %}
+{% block styles %}
+    {{ block.super }}
+    <style>
+        .card-logo{
+            width: 100px;
+            float: left;
+            margin: 5px;
+        }
+        .card-logo.disabled{
+            opacity: 0.4;
+        }
+        .blur-div{ 
+                -webkit-filter: blur(4px);
+                -moz-filter: blur(4px);
+                -o-filter: blur(4px);
+                -ms-filter: blur(4px);
+                filter: blur(4px); 
+                pointer-events: none;
+	}
+	.btn-payment-large {
+
+width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;
+
+	}
+        .right-column {
+	     min-height: 70%;  
+             border: 0px solid #000; 
+             background-color: #f9f9f9
+	}
+
+    </style>
+{% endblock %}
+
+{% block payment_details %}
+<div class='row'>
+    <div class="tab-content">
+        <div id="card" class="tab-pane fade in active">
+
+                <div class="col-lg-6" style='min-height: 70%; border: 0px solid #000; background-color: #FFF; '>
+			 <div style='padding: 20px'>
+
+                    <form id="stored_card_form" method="post" action="/api/process-payment" oldaction="{% url 'checkout:preview' %}" class="iihide form-stacked">
+			<input type="hidden" id='payment-csrfmiddlewaretoken' name="payment-csrfmiddlewaretoken" value="{{csrf_token}}">
+                        <input type="hidden" name="checkout_token" id='checkout_token' readonly value="True"/>
+                        <input type="hidden" name="payment_method" id='payment_method' readonly value="card"/>
+
+			<table style="width:100%;">
+		          <tr >
+				  <td style='padding: 5px;'><input  type="radio" name="card" value="new" checked="checked"/> Enter new card</td>
+                          </tr>
+
+                          {% for card in cards %}
+                              <tr>
+				      <td style='padding: 5px;'><input  type="radio" name="card" value="{{card.id}}" /> Use card ending {{card.last_digits}} with expiry {{card.expiry_date|date:'m/y'}} </td><td> <A href=''>Delete this card</a></td>
+			      </tr>
+
+
+			  {% endfor %}
+			</table>
+
+                        <fieldset  id="storedcard_fieldset" style='display: none'>
+                            <legend>Stored Cards</legend>
+                            <table style="width:20%;">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Ending</th>
+                                        <th>Expiry Date</th>
+                                        <th>Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+				 
+                                    {% for card in cards %}
+                                    <tr>
+                                        <td><input  type="radio" name="card-oild" value="{{card.id}}" selected/></td>
+                                        <td>{{card.last_digits}}</td>
+                                        <td>{{card.expiry_date|date:'m/Y'}}</td>
+                                        <td>{{card.get_card_type_display}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </fieldset>
+                        <div class="hide" id='store-card-pay-button'>
+                            <button type="button" id='pay-with-store-card' class="btn btn-primary pull-right btn-payment-large">{% trans "Pay" %}</button>
+                        </div>
+                    </form>
+		    <div id='card-wrapper' style='padding-top: 30px'> 
+                <form id="new_card_form" method="post" action="/api/process-payment" oldaction="{% url 'checkout:preview' %}" class="form-stacked">
+                    <input type="hidden" name="iiaction" value="place_order">
+		    <input type="hidden" name="payment-csrfmiddlewaretoken" value="{{csrf_token}}">
+                    <div class="clearfix">
+                        <img src="{% static 'payments/img/visa-mastercard-2021.png' %}">
+                    </div>
+
+                    {% include "partials/form_fields.html" with form=bankcard_form %}
+                    {% if store_card %}
+                    <div class="checkbox">
+                        <label><input type="checkbox" name="store_card" value="True"/>Store Card</label>
+                    </div>
+                    {% endif %}
+                    <input type="hidden" name="payment_method" readonly value="card"/>
+                    <div id="new-card-pay-button">
+                        <button type="button" id='pay-with-new-card'  style='width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;' class="btn btn-large btn-primary pull-right btn-payment-large">{% trans "Pay" %}</button>
+                    </div>
+                </form>
+		</div>
+	    </div>
+            </div>
+
+            <div class="col-lg-6 right-column" >
+		  <div style='padding: 20px'> 
+			  {% include "checkout/preview-basket.html" %}
+                  </div>
+            </div>
+
+
+        </div>
+    </div>
+</div> 
+{% endblock %}
+    {% block extrascripts %}
+
+    {% include "checkout/payment_details_api_wrapper_js.html" %}
+
+    {% endblock %}
+
+{% endblock %}
+
+
+

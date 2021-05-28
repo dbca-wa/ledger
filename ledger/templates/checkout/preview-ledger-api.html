@@ -1,0 +1,24 @@
+<BR><BR>
+<link rel="stylesheet" type="text/css" href="/static/oscar/css/styles.css">
+
+<div class='container-fluid page'>
+   <div class="page_inner">
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+	   {% include "partials/alert_messages.html" %}      
+    ALTER 
+    <button type='button' class="btn btn-primary btn-lg close-ledger-popup">Close</button>
+
+  </div>
+</div>
+
+	<script>
+        $('.close-ledger-popup').click(function() { 
+                 $('#ledger-payment-overtop').hide();
+		 $('#ledger-payment-overtop').hide();
+	});
+
+	</script>

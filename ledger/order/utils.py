@@ -19,6 +19,8 @@ class OrderCreator(CoreOrderCreator):
         Placing an order involves creating all the relevant models based on the
         basket and session data.
         """
+
+        print ("PLACING ORDER")
         if basket.is_empty:
             raise ValueError("Empty baskets cannot be submitted")
         if not order_number:

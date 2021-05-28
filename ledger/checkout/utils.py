@@ -20,6 +20,66 @@ from confy import env
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
 
+
+def create_basket_session_v2(emailuser_id, parameters):
+    print ("C1")
+    print (parameters)
+    if emailuser_id:
+        pass
+    else:
+        print ("USER IS NOT LOGGED IN")
+    user_obj = EmailUser.objects.get(id=int(emailuser_id))
+    print ("C1.1")
+    serializer = serializers.BasketSerializer(data=parameters)
+    print ("C1.2")
+    print (serializer.is_valid(raise_exception=True))
+    serializer.is_valid(raise_exception=True)
+    print ("C1.3")
+    custom = serializer.validated_data.get('custom_basket')
+    print ("C1.4")
+    booking_reference = None
+
+    if 'booking_reference' in parameters:
+        booking_reference = serializer.validated_data['booking_reference']
+    # validate product list
+    if custom:
+        product_serializer = serializers.CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'), many=True)
+    else:
+        product_serializer = serializers.CheckoutProductSerializer(data=serializer.initial_data.get('products'), many=True)
+
+    product_serializer.is_valid(raise_exception=True)
+    print ("C2")
+    # Cleaning up stale Baskets
+    #if request.user:
+    #   if request.user.__class__.__name__ == 'EmailUser':
+    if user_obj:
+          ba = Basket.objects.filter(owner=user_obj).exclude(status='Submitted')
+          for b in ba:
+              b.status='Frozen'
+              b.save()
+
+    print ("C3")
+    # validate basket
+    if serializer.validated_data.get('vouchers'):
+        if custom:
+            basket = createCustomBasket(serializer.validated_data['products'],
+                                        user_obj, serializer.validated_data['system'],
+                                        serializer.validated_data['vouchers'],True,booking_reference)
+        else:
+            basket = createBasket(serializer.validated_data['products'], user_obj,
+                                    serializer.validated_data['system'],
+                                    serializer.validated_data['vouchers'],True,booking_reference)
+    else:
+        if custom:
+            basket = createCustomBasket(serializer.validated_data['products'],
+                                        user_obj, serializer.validated_data['system'],None,True,booking_reference)
+        else:
+            basket = createBasket(serializer.validated_data['products'],
+                                    user_obj, serializer.validated_data['system'],None,True,booking_reference)
+    print ("C4")
+    return basket, BasketMiddleware().get_basket_hash(basket.id)
+
+
 # create a basket in Oscar.
 # a basket contains the system ID, list of product line items, vouchers, and not much else.
 def create_basket_session(request, parameters):
@@ -129,8 +189,10 @@ def create_checkout_session(request, parameters):
 
     session_data.set_last_check(serializer.validated_data['check_url'])
     session_data.set_amount_override(serializer.validated_data['amount_override']) 
-
-
+    if serializer.validated_data['session_type'] == 'ledger_api':
+        session_data.set_session_type(serializer.validated_data['session_type'])
+    else:
+        session_data.set_session_type('standard')
 # shortcut for finalizing a checkout session and creating an invoice.
 # equivalent to checking out with a deferred payment method (e.g. BPAY).
 # useful for internal booking methods being invoked from server-side.
@@ -293,6 +355,11 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def get_amount_override(self):
         return self._get('ledger','amount_override')
 
+    def set_session_type(self,text):
+        self._set('ledger','session_type',text)
+
+    def get_session_type(self):
+        return self._get('ledger','session_type')
 
 def calculate_excl_gst(amount):
     TWELVEPLACES = D(10) ** -12
