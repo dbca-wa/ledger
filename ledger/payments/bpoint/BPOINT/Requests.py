@@ -102,10 +102,14 @@ class TransactionRequest(CrnBlock, Request):
         return TransactionResponse(result)
         
 class Credentials(object):
-    def __init__(self, username, password, merchant_number):
+    def __init__(self, username, password, merchant_number, currency, biller_code, is_test, ois_id):
         self.username = username
         self.password = password
         self.merchant_number = merchant_number
+        self.currency = currency
+        self.biller_code = biller_code
+        self.is_test = is_test
+        self.ois_id = ois_id
         
 class SystemStatusRequest(Request):
     def __init__(self, credentials):

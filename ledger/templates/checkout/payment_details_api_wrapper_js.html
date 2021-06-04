@@ -1,5 +1,57 @@
+<style>
+#ledger-payment-loader {
+   top: 0px;
+   position: absolute;
+   width: 100%;
+   z-index: 11;
+   height: 100%;
+   background-color: rgba(0, 0, 0, 0.5);
+}
+
+.ledger-payment-loader-box-align {
+   position: fixed;
+   width: 100%;
+}
+
+.ledger-payment-loader-box {
+   margin-top: 100px;
+   width:300px;
+   background-color: #FFFFFF;
+   padding: 50px;
+   border: 3px solid #bfbfbf;
+}
+
+
+
+</style>
+
 <script>
-$(function(){
+var ledger = {
+showLoader: function() {
+      var page = document.getElementById('default');
+      var pageheight = page.parentElement.scrollHeight;
+      pageheight = pageheight + 20;
+      var div = document.createElement("div");
+      divhtml = "<div id='ledger-payment-loader' style='height:"+pageheight+"px'>";
+      divhtml += "<div class='ledger-payment-loader-box-align' >";
+      divhtml += " <center>";
+      divhtml += " <div class='ledger-payment-loader-box' >";
+      divhtml += "  <img  src='/static/ledger_api/images/ajax-loader-spinner.gif'><br><br>";
+      divhtml += "  <strong>PROCESSING PAYMENT</strong> ";
+      divhtml += "</div>";
+      divhtml += " </center>";
+      divhtml += "</div>";
+      div.innerHTML = divhtml;
+      div.id = "payment-loader-popup";
+      div.style.height = pageheight;
+      $("#ledger-payment-overtop").html(divhtml);
+      $("#ledger-payment-overtop").show();
+      $("#ledger-payment-overtop").css({height: pageheight});
+}
+
+
+}
+$(function() {
     var new_card_form = $('#new_card_form');
     var store_card_pay_button = $('#store-card-pay-button');
     var new_card_pay_button = $('#new-card-pay-button');
@@ -17,33 +69,39 @@ $(function(){
     }
 
 $("#pay-with-store-card").click(function() {
-var card = $('input[name=card]:checked').val();
-var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
-var checkout_token = $('#checkout_token').val();
-var payment_method = $('#payment_method').val();
+      ledger.showLoader();
 
-var data = {'card': card, 'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method };
+      var card = $('input[name=card]:checked').val();
+      var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
+      var checkout_token = $('#checkout_token').val();
+      var payment_method = $('#payment_method').val();
 
-$.ajax({
-  type: "POST",
-  url: '/api/process-payment',
-  data: data,
-  success: function( data, textStatus, jQxhr ) {
-	  $("#ledger-payment-overtop").html("<BR><BR>"+data);
-	  $("#ledger-payment-overtop").show();
-	  
-  },
-  error: function( jqXhr, textStatus, errorThrown ) {
-         console.log( errorThrown );
-  },
-  // dataType: 'text,' 
-});	
+      var data = {'card': card, 'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method };
+      
+      $.ajax({
+        type: "POST",
+        url: '/ledger-api/process-payment',
+        data: data,
+        success: function(data, textStatus, jQxhr) {
+      	  $("#ledger-payment-overtop").html("<BR><BR>"+data);
+      	  $("#ledger-payment-overtop").show();
+      	  
+        },
+        error: function( jqXhr, textStatus, errorThrown ) {
+               console.log( errorThrown );
+        },
+        // dataType: 'text,' 
+      });	
 
 
 });
 
 $("#pay-with-new-card").click(function() {
-alert('new');
+
+
+ledger.showLoader();
+
+
 var id_number = $('#id_number').val();
 var id_expiry_month_0 = $('#id_expiry_month_0').val();
 var id_expiry_month_1 = $('#id_expiry_month_1').val();
@@ -55,11 +113,16 @@ var payment_method = $('#payment_method').val();
 
 var data = {'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method, 'number': id_number, 'expiry_month_0': id_expiry_month_0, 'expiry_month_1': id_expiry_month_1, 'ccv': ccv };
 
+
+$('#id_number').val("");
+$('#id_expiry_month_0').val("");
+$('#id_expiry_month_1').val("");
+$('#id_ccv').val("");
 $.ajax({
   type: "POST",
-  url: '/api/process-payment',
+  url: '/ledger-api/process-payment',
   data: data,
-  success: function( data, textStatus, jQxhr ) {
+  success: function(data, textStatus, jQxhr) {
           $("#ledger-payment-overtop").html("<BR><BR>"+data);
           $("#ledger-payment-overtop").show();
 
@@ -71,8 +134,6 @@ $.ajax({
 });
 
 });
-
-	
 
 $("input[name='card']").change(function() {
 	if (this.value == 'new')  {

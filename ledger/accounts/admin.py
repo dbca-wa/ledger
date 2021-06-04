@@ -24,7 +24,7 @@ class EmailUserAdmin(UserAdmin):
     )
     fieldsets = (
         (None, {'fields': ('email',)}),
-        ('Personal info', {'fields': ('first_name', 'last_name','position_title', 'dob', 'identification','identification2','senior_card','senior_card2','title','character_flagged', 'character_comments', 'phone_number', 'mobile_number','residential_address','postal_address','postal_same_as_residential','billing_address','billing_same_as_residential' )}),
+        ('Personal info', {'fields': ('first_name', 'last_name','position_title', 'dob', 'identification','identification2','senior_card','senior_card2','title','character_flagged', 'character_comments','manager_name','manager_email', 'phone_number', 'mobile_number','residential_address','postal_address','postal_same_as_residential','billing_address','billing_same_as_residential' )}),
         ('Permissions', {'fields': (
             'is_active', 'is_staff', 'is_superuser', 'groups')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
@@ -51,7 +51,7 @@ class EmailUserAdmin(UserAdmin):
     list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_dummy')
     ordering = ('email',)
     search_fields = ('email', 'first_name', 'last_name', 'email')
-    readonly_fields = ('dummy_email','phone_number', 'mobile_number', 'position_title',)
+    readonly_fields = ('dummy_email','phone_number', 'mobile_number', 'position_title','manager_email','manager_name',)
 
     def is_dummy(self, o):
         return o.is_dummy_user

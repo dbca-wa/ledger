@@ -47,12 +47,27 @@ class OracleInterface(models.Model):
     method = models.CharField(max_length=30)
 
 class OracleInterfaceSystem(models.Model):
+    INTEGRATION_TYPE = (
+                        ("no_api", "NO API"),
+                        ("bpoint_api", "BPOINT API")
+    )
+
     system_id = models.CharField(max_length=10)
     system_name = models.CharField(max_length=128)
     enabled = models.BooleanField(default=False)
     deduct_percentage = models.BooleanField(default=False)
     source = models.CharField(max_length=30)
     method = models.CharField(max_length=30)
+    integration_type = models.CharField(max_length=20, choices=INTEGRATION_TYPE, default='no_api', null=True,blank=True) 
+    # specific for bpoint
+    bpoint_currency = models.CharField(max_length=5, default="AUD", null=True,blank=True)
+    bpoint_biller_code = models.CharField(max_length=256, default="", null=True,blank=True)
+    bpoint_username = models.CharField(max_length=256, default="", null=True,blank=True)
+    bpoint_password = models.CharField(max_length=256, default="", null=True,blank=True)
+    bpoint_merchant_num = models.CharField(max_length=256, default="", null=True,blank=True)
+    bpoint_test = models.NullBooleanField(default=True) 
+    # sage configuration will need to be created below.
+
 
     def __str__(self):
         return '{} - {}'.format(self.system_name, self.system_id)

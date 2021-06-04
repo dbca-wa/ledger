@@ -9,8 +9,8 @@ from ledger.payments.bpoint.BPOINT.API import (TransactionRequest,
 
 class Gateway(object):
 
-    def __init__(self,username,password,merchant_number):
-        self.credentials = Credentials(username,password,str(merchant_number))
+    def __init__(self,username,password,merchant_number,currency, biller_code, is_test,ois_id):
+        self.credentials = Credentials(username,password,str(merchant_number),currency, biller_code, is_test, ois_id)
 
     def _transaction(self,order_num,reference,action,amount,card_details,biller_code,_type,sub_type):
         '''Perform a transaction with BPOINT.
@@ -21,15 +21,23 @@ class Gateway(object):
             @param test: used to set the transaction as a test transaction
             so that it cannot be processed bpoint
         '''
+        print ("TRANSACTION - _transaction")
+        print (self.credentials.biller_code)
+        print (self.credentials.is_test)
+        print (self.credentials.currency)
+        print (self.credentials.merchant_number)
+        print (self.credentials.username)
+        print (self.credentials.password)
+
         req = None
         try:
             req = TransactionRequest(credentials=self.credentials)
             req.action=action
-            req.biller_code=biller_code
-            req.test_mode=settings.BPOINT_TEST
+            req.biller_code=self.credentials.biller_code
+            req.test_mode=self.credentials.is_test
             req.amount=amount
             req.card_details=card_details
-            req.currency=settings.BPOINT_CURRENCY
+            req.currency=self.credentials.currency
             req.type=_type
             req.crn1 = reference
             req.sub_type = sub_type

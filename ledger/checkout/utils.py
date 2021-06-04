@@ -24,10 +24,13 @@ selector = Selector()
 def create_basket_session_v2(emailuser_id, parameters):
     print ("C1")
     print (parameters)
+
     if emailuser_id:
         pass
     else:
+        print (parameters)
         print ("USER IS NOT LOGGED IN")
+
     user_obj = EmailUser.objects.get(id=int(emailuser_id))
     print ("C1.1")
     serializer = serializers.BasketSerializer(data=parameters)
@@ -153,23 +156,44 @@ def get_cookie_basket(cookie_key,request):
 # the checkout session contains all of the attributes about a purchase session (e.g. payment method,
 # shipping method, ID of the person performing the checkout)
 def create_checkout_session(request, parameters):
+    print ("CCC SSS")
+    #print (parameters['user_logged_in'])
     serializer = serializers.CheckoutSerializer(data=parameters)
+    print ("TEST")
     serializer.is_valid(raise_exception=True)
-
+    print ("CC END")
     session_data = CheckoutSessionData(request) 
     # reset method of payment when creating a new session
     session_data.pay_by(None)
-    
+    print ("CC 2") 
     session_data.use_system(serializer.validated_data['system'])
     session_data.charge_by(serializer.validated_data['card_method'])
     session_data.use_shipping_method(serializer.validated_data['shipping_method'])
     session_data.owned_by(serializer.validated_data['basket_owner'])
+
+    print ("CC 3")
     # FIXME: replace internal user ID with email address once lookup/alias issues sorted
     email = None
     if serializer.validated_data['basket_owner'] and request.user.is_anonymous():
         email = EmailUser.objects.get(id=serializer.validated_data['basket_owner']).email
+    print ("CC 4")
+    print (serializer.validated_data['basket_owner'])
+    if email is None: 
+        print ("CC 4.1")
+        if parameters['session_type'] == 'ledger_api':
+    #         print ("CC 4.2")
+             if parameters['user_logged_in']:
+                 email = EmailUser.objects.get(id=serializer.validated_data['user_logged_in']).email
+    #         print ("CC 4.3")
+    print ("CC 5")
     session_data.set_guest_email(email)
-
+    print ("BEFIN")
+    if parameters['user_logged_in'] is not None:
+        session_data.set_user_logged_in(parameters['user_logged_in'])
+    else:
+        session_data.set_user_logged_in(None)
+    print ("USER LOGGED IN")
+    print (parameters['user_logged_in']) 
     session_data.use_template(serializer.validated_data['template'])
 
     # fallback url?
@@ -348,7 +372,6 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def get_last_check(self):
         return self._get('ledger','last_check')
 
-
     def set_amount_override(self,text):
         self._set('ledger','amount_override',text)
 
@@ -360,6 +383,13 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def get_session_type(self):
         return self._get('ledger','session_type')
+
+    def set_user_logged_in(self, value):
+        return self._set('ledger','user_logged_in',value)
+
+    def get_user_logged_in(self):
+        return self._get('ledger','user_logged_in')
+
 
 def calculate_excl_gst(amount):
     TWELVEPLACES = D(10) ** -12
