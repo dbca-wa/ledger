@@ -179,8 +179,11 @@ def create_checkout_session(request, parameters):
                       email = EmailUser.objects.get(id=serializer.validated_data['user_logged_in']).email
     #              print ("CC 4.3")
     session_data.set_guest_email(email)
-    if parameters['user_logged_in'] is not None:
-        session_data.set_user_logged_in(parameters['user_logged_in'])
+    if 'user_logged_in' in parameters:
+        if parameters['user_logged_in'] is not None:
+            session_data.set_user_logged_in(parameters['user_logged_in'])
+        else:
+            session_data.set_user_logged_in(None
     else:
         session_data.set_user_logged_in(None)
     session_data.use_template(serializer.validated_data['template'])
