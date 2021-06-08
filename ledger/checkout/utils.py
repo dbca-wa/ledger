@@ -156,44 +156,33 @@ def get_cookie_basket(cookie_key,request):
 # the checkout session contains all of the attributes about a purchase session (e.g. payment method,
 # shipping method, ID of the person performing the checkout)
 def create_checkout_session(request, parameters):
-    print ("CCC SSS")
     #print (parameters['user_logged_in'])
     serializer = serializers.CheckoutSerializer(data=parameters)
-    print ("TEST")
     serializer.is_valid(raise_exception=True)
-    print ("CC END")
     session_data = CheckoutSessionData(request) 
     # reset method of payment when creating a new session
     session_data.pay_by(None)
-    print ("CC 2") 
     session_data.use_system(serializer.validated_data['system'])
     session_data.charge_by(serializer.validated_data['card_method'])
     session_data.use_shipping_method(serializer.validated_data['shipping_method'])
     session_data.owned_by(serializer.validated_data['basket_owner'])
 
-    print ("CC 3")
     # FIXME: replace internal user ID with email address once lookup/alias issues sorted
     email = None
     if serializer.validated_data['basket_owner'] and request.user.is_anonymous():
         email = EmailUser.objects.get(id=serializer.validated_data['basket_owner']).email
-    print ("CC 4")
-    print (serializer.validated_data['basket_owner'])
     if email is None: 
-        print ("CC 4.1")
-        if parameters['session_type'] == 'ledger_api':
-    #         print ("CC 4.2")
-             if parameters['user_logged_in']:
-                 email = EmailUser.objects.get(id=serializer.validated_data['user_logged_in']).email
-    #         print ("CC 4.3")
-    print ("CC 5")
+        if 'session_type' in parameters:
+             if parameters['session_type'] == 'ledger_api':
+    #              print ("CC 4.2")
+                  if parameters['user_logged_in']:
+                      email = EmailUser.objects.get(id=serializer.validated_data['user_logged_in']).email
+    #              print ("CC 4.3")
     session_data.set_guest_email(email)
-    print ("BEFIN")
     if parameters['user_logged_in'] is not None:
         session_data.set_user_logged_in(parameters['user_logged_in'])
     else:
         session_data.set_user_logged_in(None)
-    print ("USER LOGGED IN")
-    print (parameters['user_logged_in']) 
     session_data.use_template(serializer.validated_data['template'])
 
     # fallback url?
