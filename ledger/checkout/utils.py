@@ -183,7 +183,7 @@ def create_checkout_session(request, parameters):
         if parameters['user_logged_in'] is not None:
             session_data.set_user_logged_in(parameters['user_logged_in'])
         else:
-            session_data.set_user_logged_in(None
+            session_data.set_user_logged_in(None)
     else:
         session_data.set_user_logged_in(None)
     session_data.use_template(serializer.validated_data['template'])
