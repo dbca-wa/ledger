@@ -329,7 +329,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
     def handle_last_check(self,url):
         logger.info('checkout --> handle_last_check:'+str(url))
         try:
+            print ("handle_last_check")
+                    
+            print (url)
             res = requests.get(url,cookies=self.request.COOKIES, verify=False)
+            print (res)
             res.raise_for_status()
             response = json.loads(res.content.decode('utf-8')).get('status')
             if response != 'approved':
