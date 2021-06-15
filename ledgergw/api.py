@@ -220,11 +220,55 @@ def user_info(request, ledgeremail,apikey):
 
 
 
+@csrf_exempt
+def user_group_info(request, ledger_id,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    query_exists = False
+    ledger_user_json  = {}
+    filter_post = json.loads(request.POST['filter'])
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ledger_user = models.EmailUser.objects.filter(id=ledger_id)
+            if ledger_user.count() > 0:
+                    ledger_obj = ledger_user[0]
+                    ledger_user_group = []
+                    if len(filter_post) > 0: 
+                        if 'name' in filter_post:
+                            query = ledger_obj.groups.filter(name=filter_post['name'])
+                            for g in query:
+                                  ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
+                        if 'id' in filter_post:
+                            query = ledger_obj.groups.filter(id=int(filter_post['id']))
+                            for g in query:
+                                ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
+                        if 'name' in filter_post and 'id' in filter_post:
+                            query = ledger_obj.groups.filter(name=filter_post['name'], id=int(filter_post['id']))
+                            for g in query:
+                                ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
+                        query_exists = query.exists()
+
+                    else:
+                        for g in ledger_obj.groups.all():
+                             ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
+                    ledger_user_json['groups'] = ledger_user_group
+                    jsondata['groups'] = ledger_user_json
+                    jsondata['query_exists'] = query_exists
+                    jsondata['status'] = 200
+                    jsondata['message'] = 'User Found'
+            else:
+                jsondata['status'] = '404'
+                jsondata['message'] = 'User not found'
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    return HttpResponse(json.dumps(jsondata), content_type='application/json')
+
 
 def group_info(request, apikey):
     ledger_json  = {}
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
-
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             groups = Group.objects.all()
