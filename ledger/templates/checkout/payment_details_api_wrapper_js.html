@@ -21,8 +21,6 @@
    border: 3px solid #bfbfbf;
 }
 
-
-
 </style>
 
 <script>
@@ -98,9 +96,7 @@ $("#pay-with-store-card").click(function() {
 
 $("#pay-with-new-card").click(function() {
 
-
 ledger.showLoader();
-
 
 var id_number = $('#id_number').val();
 var id_expiry_month_0 = $('#id_expiry_month_0').val();
@@ -137,55 +133,21 @@ $.ajax({
 
 $("input[name='card']").change(function() {
 	if (this.value == 'new')  {
-            if (!store_card_pay_button.hasClass('hide')) {
-                   store_card_pay_button.addClass('hide');
-            }
-
-
-            if (new_card_pay_button.hasClass('hide')) {
-                    new_card_pay_button.removeClass('hide');
-            }
-            
-
+	    
+	    store_card_pay_button.hide();
+            new_card_pay_button.show();
 
             if (new_card_form.hasClass('blur-div')) {
 		    new_card_form.removeClass('blur-div');
 	    }
 
-            //if (new_card_form.hasClass('hide')) {
-            //                       new_card_form.removeClass('hide');
-            //                    }
-
-
         } else {
-
-            if (store_card_pay_button.hasClass('hide')) {
-                    store_card_pay_button.removeClass('hide');
-            }
-
-
-            if (!new_card_pay_button.hasClass('hide')) {
-                   new_card_pay_button.addClass('hide');
-            }
-
+             store_card_pay_button.show();
+             new_card_pay_button.hide();
 
              if (!new_card_form.hasClass('blur-div')) {
 	          new_card_form.addClass('blur-div');
              }
-
-
-
-
-            // if (!new_card_form.hasClass('hide')) {
-            //      new_card_form.addClass('hide');
-            //}
-
-
-
-
-            //if (!stored_card_form.hasClass('hide')) {
-            //   stored_card_form.addClass('hide');
-            //}
         }
 });
 

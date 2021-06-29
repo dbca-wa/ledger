@@ -4,7 +4,6 @@
 
 {% block layout %}
 {% block styles %}
-    {{ block.super }}
     <style>
         .card-logo{
             width: 100px;
@@ -39,9 +38,9 @@ width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;
 {% block payment_details %}
 <div class='row'>
     <div class="tab-content">
-        <div id="card" class="tab-pane fade in active">
-
-                <div class="col-lg-6" style='min-height: 70%; border: 0px solid #000; background-color: #FFF; '>
+        <div id="card" class="tab-pane active">
+		<div class='row'>
+                <div class="col-sm-6 col-lg-6" style='min-height: 70%; border: 0px solid #000; background-color: #FFF; '>
                     <div style='padding: 20px'>
 
                     <form id="stored_card_form" method="post" action="/ledger-api/process-payment" oldaction="{% url 'checkout:preview' %}" class="iihide form-stacked">
@@ -87,7 +86,7 @@ width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;
                                 </tbody>
                             </table>
                         </fieldset>
-                        <div class="hide" id='store-card-pay-button'>
+                        <div style='display:none' id='store-card-pay-button'>
                             <button type="button" id='pay-with-store-card' class="btn btn-primary pull-right btn-payment-large">{% trans "Pay" %}</button>
                         </div>
                     </form>
@@ -120,6 +119,7 @@ width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;
 			  {% include "checkout/preview-basket.html" %}
                   </div>
             </div>
+          </div>
         </div>
     </div>
 </div> 
