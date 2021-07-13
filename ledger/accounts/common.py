@@ -26,9 +26,9 @@ def get_department_user(email):
                 row = [{"pk":department_users[0].id,"name":department_users[0].get_full_name(),"preferred_name":department_users[0].first_name,"title":department_users[0].position_title,"email":department_users[0].email,"telephone":department_users[0].phone_number,"mobile_phone":department_users[0].mobile_number}]
                 return row
             else:
-                return None
+                return []
         else:
-            return None
+            return []
     except:
         raise
 
