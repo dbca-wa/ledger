@@ -21,6 +21,7 @@ class CashAdmin(admin.ModelAdmin):
         'region',
         'district',
     ]
+    raw_id_fields = ('invoice',)
 
 @admin.register(models.Invoice)
 class InvoiceAdmin(admin.ModelAdmin):

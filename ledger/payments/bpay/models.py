@@ -7,7 +7,16 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.core.validators import MinLengthValidator
 from django.core.exceptions import ValidationError
 from oscar.apps.order.models import Order
-import datetime
+from django.core.cache import cache
+from datetime import datetime 
+import hashlib
+
+
+
+change_hash = cache.get('BpayTransaction')
+if change_hash is None:
+     change_hash = hashlib.md5(datetime.now().strftime("%m/%d/%Y, %H:%M:%S").encode('utf-8')).hexdigest()
+     cache.set('BpayTransaction', change_hash,  86400)
 
 class BpayJobRecipient(models.Model):
     email = models.EmailField(unique=True)
@@ -125,6 +134,17 @@ class BpayTransaction(models.Model):
     class Meta:
         unique_together = ('crn', 'txn_ref', 'p_date')
         db_table = 'payments_bpaytransaction'
+
+    def save(self, *args, **kwargs):
+        super(BpayTransaction, self).save(*args, **kwargs)
+
+        cache.delete('BpayTransaction')
+        bt = BpayTransaction.objects.all().order_by('-id')[:1]
+        if bt.count() > 0:
+            bt[0].id
+            lastest_row_string = str(bt[0].id)
+            change_hash = hashlib.md5(lastest_row_string.encode('utf-8')).hexdigest()
+            cache.set('BpayTransaction', change_hash,  86400)
 
     @property
     def approved(self):
