@@ -11,12 +11,12 @@ from ledger.accounts.models import EmailUser
 from ledger.payments.emails import send_refund_email
 from django.core.cache import cache
 from confy import env
-from datetime import datetime
+import datetime
 import hashlib
 
 change_hash = cache.get('BpointTransaction')
 if change_hash is None:
-   change_hash = hashlib.md5(datetime.now().strftime("%m/%d/%Y, %H:%M:%S").encode('utf-8')).hexdigest()
+   change_hash = hashlib.md5(datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S").encode('utf-8')).hexdigest()
    cache.set('BpointTransaction', change_hash,  86400)
 
 class BpointTransaction(models.Model):
