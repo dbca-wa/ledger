@@ -9,6 +9,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import requests
 import json
+import codecs
 
 class Command(BaseCommand):
     help = 'Imports Active Directory Users into Ledger.'
@@ -23,7 +24,7 @@ class Command(BaseCommand):
             ACTIVE_DIRECTORY_JSON_URL=env('ACTIVE_DIRECTORY_JSON_URL',[])
             url = ACTIVE_DIRECTORY_JSON_URL 
             resp = requests.get(url, data ={})
-            data = resp.json() 
+            data =  json.loads(codecs.decode(resp.text.encode(), 'utf-8-sig'))
             row =0 
             noaccount=0
             updatedaccount=0
