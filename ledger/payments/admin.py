@@ -29,7 +29,8 @@ class InvoiceAdmin(admin.ModelAdmin):
     search_fields = ('reference',)
     list_filter = ('system'),    
     raw_id_fields = ('previous_invoice',)
-   
+    list_per_page = 30
+
 @admin.register(models.InvoiceBPAY)
 class InvoiceBpayAdmin(admin.ModelAdmin):
     pass
