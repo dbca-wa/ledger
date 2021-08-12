@@ -312,7 +312,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     phone_number = models.CharField(max_length=50, null=True, blank=True,
                                     verbose_name="phone number", help_text='')
     position_title = models.CharField(max_length=100, null=True, blank=True,
-                                    verbose_name="position title", help_text='')
+                                    verbose_name="position title", help_text='Automatically synced from AD,  please contact service desk to update.')
     mobile_number = models.CharField(max_length=50, null=True, blank=True,
                                      verbose_name="mobile number", help_text='')
     fax_number = models.CharField(max_length=50, null=True, blank=True,
