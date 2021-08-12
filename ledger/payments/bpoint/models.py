@@ -13,11 +13,9 @@ from django.core.cache import cache
 from confy import env
 import datetime
 import hashlib
+from ledger.payments import trans_hash
 
-change_hash = cache.get('BpointTransaction')
-if change_hash is None:
-   change_hash = hashlib.md5(datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S").encode('utf-8')).hexdigest()
-   cache.set('BpointTransaction', change_hash,  86400)
+change_hash = trans_hash.bpoint_transaction_hash()
 
 class BpointTransaction(models.Model):
     ACTION_TYPES = (

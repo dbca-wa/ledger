@@ -16,6 +16,7 @@ from ledger.payments.bpay.models import BpayTransaction
 from ledger.payments.bpoint.models import BpointTransaction, TempBankCard, BpointToken, UsedBpointToken
 from django.core.cache import cache
 import json
+from ledger.payments import trans_hash
 #from ledger.payments import trans_hash
 
 class Invoice(models.Model):
@@ -156,7 +157,7 @@ class Invoice(models.Model):
     def payment_status(self):
         ''' Payment status of the invoice.
         '''
-        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds()
+        amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds() 
 
         if amount_paid == decimal.Decimal('0') and self.amount > 0:
             return 'unpaid'
@@ -192,7 +193,7 @@ class Invoice(models.Model):
     def bpay_transactions_cache(self, p_instruction_code, bpay_type):
         amount = float('0.00')
         bpay_json = []
-        change_hash = cache.get('BpayTransaction')
+        change_hash = trans_hash.bpay_transaction_hash() 
         if change_hash is not None:
             change_invoice_hash = 'BpayTransaction:'+change_hash+':'+self.reference
             cih = cache.get(change_invoice_hash)
@@ -212,7 +213,7 @@ class Invoice(models.Model):
     def bpoint_transactions_cache(self, bpoint_action, response_code):
         amount = float('0.00')
         bpoint_json = []
-        change_hash = cache.get('BpointTransaction')
+        change_hash = trans_hash.bpoint_transaction_hash() #cache.get('BpointTransaction')
         if change_hash is not None:
             change_invoice_hash = 'BpointTransaction:'+change_hash+':'+self.reference
             cih = cache.get(change_invoice_hash)
@@ -234,7 +235,7 @@ class Invoice(models.Model):
         amount = float('0.00')
         cash_json = [] 
       
-        change_cash_hash = cache.get('CashTransaction')
+        change_cash_hash =  trans_hash.cash_transaction_hash() 
         if change_cash_hash is not None:
             change_cash_invoice_hash = 'CashTransaction:'+change_cash_hash+':'+self.reference
             ccih = cache.get(change_cash_invoice_hash)
@@ -278,7 +279,8 @@ class Invoice(models.Model):
         ''' Calcluate the total amount of bpoint payments and
             captures made less the reversals for this invoice.
         '''
-        payments = reversals = 0
+        payments = 0
+        reversals = 0
         payments = payments + self.bpoint_transactions_cache(['payment'],'0')
         payments = payments + self.bpoint_transactions_cache(['capture'],'0')
         reversals = self.bpoint_transactions_cache(['reversal'],'0')

@@ -143,7 +143,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 apikey = self.request.COOKIES['LEDGER_API_KEY']
                 if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
                        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(self.request),apikey) is True:
-                           print ("TRUE")
                            user = EmailUser.objects.get(id=int(self.checkout_session.get_user_logged_in()))
         if user:
             cards = user.stored_cards.all()
@@ -235,11 +234,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                              PAYMENT_INTERFACE_SYSTEM_ID = request.POST.get('PAYMENT_INTERFACE_SYSTEM_ID','')
                              ois = OracleInterfaceSystem.objects.get(id=int(PAYMENT_INTERFACE_SYSTEM_ID), system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
 
-                             print ("GATEWAY BPO")
-                             print (ois)
-                             print (bpoint_facade.gateway)
-                             print (bpoint_facade.gateway.credentials.username)
-                              
                              bpoint_facade.gateway = Gateway(
                                  ois.bpoint_username,
                                  ois.bpoint_password,
@@ -249,7 +243,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                  ois.bpoint_test,
                                  ois.id
                              )
-                             print (bpoint_facade.gateway.credentials.username) 
         # END GET CRIDENTIAL FROM MODEL
         #return self.render_payment_message(self.request, error=None,)
 
@@ -257,8 +250,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
                 messages.error(request, "Invalid submission")
-                print ("INVALID")
-                print (reverse('checkout:payment-details'))
                 if self.request.COOKIES.get('payment_api_wrapper') == 'true':
                           return self.render_payment_message(self.request, error=None,)
                           #HttpResponse("ERROR PLEASE CHECK")
@@ -329,11 +320,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
     def handle_last_check(self,url):
         logger.info('checkout --> handle_last_check:'+str(url))
         try:
-            print ("handle_last_check")
-                    
-            print (url)
             res = requests.get(url,cookies=self.request.COOKIES, verify=False)
-            print (res)
             res.raise_for_status()
             response = json.loads(res.content.decode('utf-8')).get('status')
             if response != 'approved':
@@ -489,8 +476,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
         :order_kwargs: Additional kwargs to pass to the place_order method
         """
 
-        print ("SUBMIT")
-        print (self.request)
         payment_api_wrapper = self.request.COOKIES.get('payment_api_wrapper','false')
 
 

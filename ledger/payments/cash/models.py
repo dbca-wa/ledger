@@ -7,6 +7,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from ledger.payments.invoice.models import Invoice
 from django.core.cache import cache
 from datetime import datetime
+from ledger.payments import trans_hash
 import hashlib
 
 DISTRICT_PERTH_HILLS = 'PHS'
@@ -72,6 +73,8 @@ REGION_CHOICES = (
     (REGION_WARREN,'Warren'),
     (REGION_SOUTH_COAST,'South Coast')
 )
+
+change_hash = trans_hash.cash_transaction_hash()
 
 change_cash_hash = cache.get('CashTransaction')
 if change_cash_hash is None:

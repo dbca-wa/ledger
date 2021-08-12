@@ -10,13 +10,9 @@ from oscar.apps.order.models import Order
 from django.core.cache import cache
 from datetime import datetime 
 import hashlib
+from ledger.payments import trans_hash
 
-
-
-change_hash = cache.get('BpayTransaction')
-if change_hash is None:
-     change_hash = hashlib.md5(datetime.now().strftime("%m/%d/%Y, %H:%M:%S").encode('utf-8')).hexdigest()
-     cache.set('BpayTransaction', change_hash,  86400)
+change_hash = trans_hash.bpay_transaction_hash()
 
 class BpayJobRecipient(models.Model):
     email = models.EmailField(unique=True)

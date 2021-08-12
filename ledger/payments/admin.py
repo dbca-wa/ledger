@@ -28,6 +28,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ('reference','order','payment_status','settlement_date','amount', 'system','created' )
     search_fields = ('reference',)
     list_filter = ('system'),    
+    raw_id_fields = ('previous_invoice',)
    
 @admin.register(models.InvoiceBPAY)
 class InvoiceBpayAdmin(admin.ModelAdmin):
@@ -43,7 +44,7 @@ class BpayTransactionAdmin(admin.ModelAdmin):
         'file',
         'p_date'
     )
-
+    readonly_fields = ('file',)
 @admin.register(models.BpayJobRecipient)
 class BpayJobRecipient(admin.ModelAdmin):
     pass
