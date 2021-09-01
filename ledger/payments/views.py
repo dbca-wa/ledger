@@ -12,6 +12,7 @@ from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.utils import checkURL
 from ledger.payments.cash.models import REGION_CHOICES
 #
+from oscar.apps.order.models import Order
 from ledger.payments.models import Invoice
 from ledger.payments.mixins import InvoiceOwnerMixin
 #
@@ -77,6 +78,39 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
         ctx['months'] = self.month_choices
         ctx['years'] = self.year_choices
         ctx['regions'] = list(REGION_CHOICES)
+
+        #invoices = []
+
+        #invoices_obj = Invoice.objects.filter(reference__in=self.request.GET.getlist('invoice')).values('created','text','amount','order_number','reference','system','token','voided','previous_invoice','settlement_date','payment_method').order_by('created')
+        #order_numbers = []
+        #for i in invoices_obj:
+        #    row = {'created': None, 'text': None, 'amount': None, 'order_number': None,'reference': None, 'system': None, 'token' : None, 'voided': None, 'previous_invoice': None,'settlement_date': None, 'payment_method': None, 'order': {}}
+        #    row['created'] = i['created']
+        #    row['text'] = i['text']
+        #    row['amount'] = i['amount']
+        #    row['order_number'] = i['order_number']
+        #    row['reference'] = i['reference']
+        #    row['system'] = i['system']
+        #    row['token'] = i['token']
+        #    row['voided'] = i['voided']
+        #    row['previous_invoice'] =  i['previous_invoice']
+        #    row['settlement_date'] = i['settlement_date']
+        #    row['payment_method'] = i['payment_method']
+        #    #row[''] =
+        #    #row[''] =
+        #    #row[''] =
+        #    #row[''] =
+        #    #row[''] =
+
+        #    print (i['order_number'])
+        #    #order_numbers.append(i.order_number)
+        #    order_obj = Order.objects.filter(number=i['order_number'])
+
+        #    row['order'] = order_obj[0]
+
+        #    invoices.append(row)
+        
+
         invoices = Invoice.objects.filter(reference__in=self.request.GET.getlist('invoice')).order_by('created')
         ctx['invoices'] = invoices
         if self.request.GET.get('amountProvided') == 'true':

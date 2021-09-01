@@ -9,7 +9,13 @@ from django.utils.encoding import python_2_unicode_compatible
 from oscar.apps.order.models import Order
 from ledger.accounts.models import EmailUser
 from ledger.payments.emails import send_refund_email
+from django.core.cache import cache
 from confy import env
+import datetime
+import hashlib
+from ledger.payments import trans_hash
+
+change_hash = trans_hash.bpoint_transaction_hash()
 
 class BpointTransaction(models.Model):
     ACTION_TYPES = (
@@ -70,7 +76,18 @@ class BpointTransaction(models.Model):
     
     def __unicode__(self):
         return self.txn_number
-    
+
+    def save(self, *args, **kwargs):
+        super(BpointTransaction, self).save(*args, **kwargs)
+        cache.delete('BpointTransaction')
+        bt = BpointTransaction.objects.all().order_by('-id')[:1]
+        if bt.count() > 0:
+            bt[0].id
+            lastest_row_string = str(bt[0].id)
+            change_hash = hashlib.md5(lastest_row_string.encode('utf-8')).hexdigest()
+            cache.set('BpointTransaction', change_hash,  86400)
+        
+
     @property
     def approved(self):
         return self.response_code == "0"

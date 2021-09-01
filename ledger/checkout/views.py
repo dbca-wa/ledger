@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.validators import URLValidator
 from django.utils import six
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponse, JsonResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.utils.translation import ugettext as _
 from django.template.loader import get_template
@@ -20,10 +20,14 @@ from oscar.core.loading import get_class, get_model, get_classes
 from oscar.apps.checkout import signals
 from oscar.apps.shipping.methods import NoShippingRequired
 #
-from ledger.payments.models import Invoice, BpointToken
+from ledger.payments.models import Invoice, BpointToken, OracleInterfaceSystem
 from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
 from ledger.payments.utils import isLedgerURL, systemid_check
+from ledger.api import models as ledgerapi_models
+from ledger.api import utils as ledgerapi_utils
+from ledger.payments.bpoint.gateway import Gateway
+
 
 Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -128,12 +132,18 @@ class PaymentDetailsView(CorePaymentDetailsView):
 
         ctx['store_card'] = True
         user = None
+        
         # only load stored cards if the user is an admin or has legitimately logged in
         if self.checkout_session.basket_owner() and is_payment_admin(self.request.user):
             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
         elif self.request.user.is_authenticated():
             user = self.request.user
-
+        elif self.checkout_session.get_user_logged_in():
+            if 'LEDGER_API_KEY' in self.request.COOKIES:
+                apikey = self.request.COOKIES['LEDGER_API_KEY']
+                if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+                       if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(self.request),apikey) is True:
+                           user = EmailUser.objects.get(id=int(self.checkout_session.get_user_logged_in()))
         if user:
             cards = user.stored_cards.all()
             if cards:
@@ -147,9 +157,24 @@ class PaymentDetailsView(CorePaymentDetailsView):
         ctx['billing_address_form'] = kwargs.get(
             'billing_address_form', forms.BillingAddressForm())
         ctx['amount_override'] = None
+
         if self.checkout_session.get_amount_override():
             ctx['amount_override'] =self.checkout_session.get_amount_override()
 
+        if self.checkout_session.get_session_type():
+           ctx['session_type'] = self.checkout_session.get_session_type()
+           
+        #print (request.COOKIES.get('logged_in_status'))
+        ctx['NO_HEADER'] = 'false'
+        ctx['PAYMENT_API_WRAPPER'] = 'false'
+
+        if self.request.COOKIES.get('no_header') == 'true':
+            ctx['NO_HEADER'] = 'true'
+
+        if self.request.COOKIES.get('payment_api_wrapper') == 'true':
+            self.template_name = "checkout/payment_details_api_wrapper.html"
+            #self.checkout_session.set_guest_email('jason.moore@dbca.wa.gov.au') 
+            ctx['PAYMENT_API_WRAPPER'] = 'true'
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -157,6 +182,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # If it is valid, we render the preview screen with the forms hidden
         # within it.  When the preview is submitted, we pick up the 'action'
         # parameters and actually place the order.
+
         if request.POST.get('action', '') == 'place_order':
             if self.checkout_session.payment_method() == 'card':
                 return self.do_place_order(request)
@@ -177,6 +203,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         self.checkout_session.permit_store_card(bool(store_card))
         # Get if user wants to checkout using a stored card
         checkout_token = request.POST.get('checkout_token',False)
+
         if checkout_token:
             self.checkout_session.checkout_using_token(request.POST.get('card',''))
 
@@ -198,18 +225,67 @@ class PaymentDetailsView(CorePaymentDetailsView):
     def do_place_order(self, request):
         # Helper method to check that the hidden forms wasn't tinkered
         # with.
+        if request.COOKIES.get('payment_api_wrapper') == 'true':
+            if 'LEDGER_API_KEY' in request.COOKIES:
+                apikey = request.COOKIES['LEDGER_API_KEY']
+                if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+                       if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+                             PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE = request.POST.get('PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE','')
+                             PAYMENT_INTERFACE_SYSTEM_ID = request.POST.get('PAYMENT_INTERFACE_SYSTEM_ID','')
+                             ois = OracleInterfaceSystem.objects.get(id=int(PAYMENT_INTERFACE_SYSTEM_ID), system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
+
+                             bpoint_facade.gateway = Gateway(
+                                 ois.bpoint_username,
+                                 ois.bpoint_password,
+                                 ois.bpoint_merchant_num,
+                                 ois.bpoint_currency,
+                                 ois.bpoint_biller_code,
+                                 ois.bpoint_test,
+                                 ois.id
+                             )
+        # END GET CRIDENTIAL FROM MODEL
+        #return self.render_payment_message(self.request, error=None,)
+
         if not self.checkout_session.checkout_token():
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
                 messages.error(request, "Invalid submission")
+                if self.request.COOKIES.get('payment_api_wrapper') == 'true':
+                          return self.render_payment_message(self.request, error=None,)
+                          #HttpResponse("ERROR PLEASE CHECK")
                 return HttpResponseRedirect(reverse('checkout:payment-details'))
 
-        # Attempt to submit the order, passing the bankcard object so that it
-        # gets passed back to the 'handle_payment' method below.
-        submission = self.build_submission()
-        if not self.checkout_session.checkout_token():
-            submission['payment_kwargs']['bankcard'] = bankcard_form.bankcard
-        return self.submit(**submission)
+
+        if self.request.COOKIES.get('payment_api_wrapper') == 'true':
+            try:
+                submission = self.build_submission()
+                if not self.checkout_session.checkout_token():
+                       submission['payment_kwargs']['bankcard'] = bankcard_form.bankcard
+                return self.submit(**submission)
+
+            except:
+                return self.render_payment_message(self.request, error="ERROR Taking payment",)
+
+        else:
+            # Attempt to submit the order, passing the bankcard object so that it
+            # gets passed back to the 'handle_payment' method below.
+            submission = self.build_submission()
+            if not self.checkout_session.checkout_token():
+                submission['payment_kwargs']['bankcard'] = bankcard_form.bankcard
+            return self.submit(**submission)
+
+    def render_payment_message(self, request, **kwargs):
+        """
+        Show the payment details page
+
+        This method is useful if the submission from the payment details view
+        is invalid and needs to be re-rendered with form errors showing.
+        """
+        self.preview = False
+        ctx = self.get_context_data(**kwargs)
+        #self.template_name = "checkout/payment_messgaes.html"
+        self.template_name = "checkout/preview-ledger-api.html"
+        return self.render_to_response(ctx)
 
     def doInvoice(self,order_number,total,**kwargs):
         method = self.checkout_session.bpay_method()
@@ -218,6 +294,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         icrn_format = self.checkout_session.icrn_format()
         # Generate the string to be used to generate the icrn
         crn_string = '{0}{1}'.format(systemid_check(system),order_number)
+
         if method == 'crn':
             return invoice_facade.create_invoice_crn(
                 order_number,
@@ -237,7 +314,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '',
                 self.checkout_session.payment_method() if self.checkout_session.payment_method() else None
             )
-
         else:
             raise ValueError('{0} is not a supported BPAY method.'.format(method))
 
@@ -287,11 +363,17 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         #Generate Invoice
                         logger.info('Order #%s: doInvoice with method: '+str(method), order_number)
                         invoice = self.doInvoice(order_number,total)
+
                         # Swap user if in session
                         if self.checkout_session.basket_owner():
                             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
                         else:
                             user = self.request.user
+                        
+                        # START - need to grab user from api after verifing API KEYS
+                        #user = EmailUser.objects.get(email='jason.moore@dbca.wa.gov.au')
+                        # END - need to grab user from api after verifing API KEYS
+                            
                         # Get the payment action for bpoint
                         card_method = self.checkout_session.card_method()
                         # Check if the user is paying using a stored card
@@ -393,6 +475,10 @@ class PaymentDetailsView(CorePaymentDetailsView):
                          forms can be re-rendered correctly if payment fails.
         :order_kwargs: Additional kwargs to pass to the place_order method
         """
+
+        payment_api_wrapper = self.request.COOKIES.get('payment_api_wrapper','false')
+
+
         if payment_kwargs is None:
             payment_kwargs = {}
         if order_kwargs is None:
@@ -453,8 +539,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
 
             # We assume that the details submitted on the payment details view
             # were invalid (eg expired bankcard).
-            return self.render_payment_details(
-                self.request, error=msg, **payment_kwargs)
+            if payment_api_wrapper == 'true':
+                return self.render_payment_message(self.request, error=msg,)
+            else:
+                return self.render_payment_details(self.request, error=msg, **payment_kwargs)
+
         except PaymentError as e:
             # A general payment error - Something went wrong which wasn't
             # anticipated.  Eg, the payment gateway is down (it happens), your
@@ -463,11 +552,14 @@ class PaymentDetailsView(CorePaymentDetailsView):
             # mail admins on an error as this issue warrants some further
             # investigation.
             msg = six.text_type(e)
-            logger.error("Order #%s: payment error (%s)", order_number, msg,
-                         exc_info=True)
+            logger.error("Order #%s: payment error (%s)", order_number, msg, exc_info=True)
             self.restore_frozen_basket()
-            return self.render_preview(
-                self.request, error=error_msg, **payment_kwargs)
+
+            if payment_api_wrapper == 'true':
+                return self.render_payment_message(self.request, error=error_msg,)         
+            else:
+                return self.render_preview(self.request, error=error_msg, **payment_kwargs)
+
         except Exception as e:
             # Unhandled exception - hopefully, you will only ever see this in
             # development...
@@ -476,14 +568,15 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 "Order #%s: unhandled exception while taking payment (%s)",
                 order_number, e, exc_info=True)
             self.restore_frozen_basket()
-            return self.render_preview(
-                self.request, error=error_msg, **payment_kwargs)
+            if payment_api_wrapper == 'true':
+                  return self.render_payment_message(self.request, error=error_msg,)
+            else:
+                  return self.render_preview(self.request, error=error_msg, **payment_kwargs)
 
         signals.post_payment.send_robust(sender=self, view=self)
 
         # If all is ok with payment, try and place order
-        logger.info("Order #%s: payment successful, placing order",
-                    order_number)
+        logger.info("Order #%s: payment successful, placing order", order_number)
         try:
             return self.handle_order_placement(
                 order_number, user, basket, shipping_address, shipping_method,
@@ -497,8 +590,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
             logger.error("Order #%s: unable to place order - %s",
                          order_number, msg, exc_info=True)
             self.restore_frozen_basket()
-            return self.render_preview(
-                self.request, error=msg, **payment_kwargs)
+
+            if payment_api_wrapper == 'true':
+                 return self.render_payment_message(self.request, error=msg,)
+            else:
+                 return self.render_preview(self.request, error=msg, **payment_kwargs)
 
 
 # =========

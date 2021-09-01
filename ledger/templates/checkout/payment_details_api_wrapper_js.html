@@ -1,0 +1,190 @@
+<style>
+#ledger-payment-loader {
+   top: 0px;
+   position: absolute;
+   width: 100%;
+   z-index: 11;
+   height: 100%;
+   background-color: rgba(0, 0, 0, 0.5);
+}
+
+.ledger-payment-loader-box-align {
+   position: fixed;
+   width: 100%;
+}
+
+.ledger-payment-loader-box {
+   margin-top: 100px;
+   width:300px;
+   background-color: #FFFFFF;
+   padding: 50px;
+   border: 3px solid #bfbfbf;
+}
+
+</style>
+
+<script>
+var ledger = {
+showLoader: function() {
+      var page = document.getElementById('default');
+      var pageheight = page.parentElement.scrollHeight;
+      pageheight = pageheight + 20;
+      var div = document.createElement("div");
+      divhtml = "<div id='ledger-payment-loader' style='height:"+pageheight+"px'>";
+      divhtml += "<div class='ledger-payment-loader-box-align' >";
+      divhtml += " <center>";
+      divhtml += " <div class='ledger-payment-loader-box' >";
+      divhtml += "  <img  src='/static/ledger_api/images/ajax-loader-spinner.gif'><br><br>";
+      divhtml += "  <strong>PROCESSING PAYMENT</strong> ";
+      divhtml += "</div>";
+      divhtml += " </center>";
+      divhtml += "</div>";
+      div.innerHTML = divhtml;
+      div.id = "payment-loader-popup";
+      div.style.height = pageheight;
+      $("#ledger-payment-overtop").html(divhtml);
+      $("#ledger-payment-overtop").show();
+      $("#ledger-payment-overtop").css({height: pageheight});
+}
+
+
+}
+$(function() {
+    var new_card_form = $('#new_card_form');
+    var store_card_pay_button = $('#store-card-pay-button');
+    var new_card_pay_button = $('#new-card-pay-button');
+
+    var stored_card_form = $('#stored_card_form');
+    var mastercard_regex = /^(((222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)\d+)|((5[1-6])\d+))$/;
+    var visa_regex = /^[4]{1}\d+$/;
+    // Reset Forms
+    function reset_forms() {
+        if (stored_card_form.length > 0){
+            stored_card_form[0].reset();
+        }
+        new_card_form[0].reset();
+        $('#use_stored').prop('checked',false);
+    }
+
+$("#pay-with-store-card").click(function() {
+      ledger.showLoader();
+
+      var card = $('input[name=card]:checked').val();
+      var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
+      var checkout_token = $('#checkout_token').val();
+      var payment_method = $('#payment_method').val();
+
+      var data = {'card': card, 'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method };
+      
+      $.ajax({
+        type: "POST",
+        url: '/ledger-api/process-payment',
+        data: data,
+        success: function(data, textStatus, jQxhr) {
+      	  $("#ledger-payment-overtop").html("<BR><BR>"+data);
+      	  $("#ledger-payment-overtop").show();
+      	  
+        },
+        error: function( jqXhr, textStatus, errorThrown ) {
+               console.log( errorThrown );
+        },
+        // dataType: 'text,' 
+      });	
+
+
+});
+
+$("#pay-with-new-card").click(function() {
+
+ledger.showLoader();
+
+var id_number = $('#id_number').val();
+var id_expiry_month_0 = $('#id_expiry_month_0').val();
+var id_expiry_month_1 = $('#id_expiry_month_1').val();
+var ccv = $('#id_ccv').val();
+
+var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
+var checkout_token = $('#checkout_token').val();
+var payment_method = $('#payment_method').val();
+
+var data = {'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method, 'number': id_number, 'expiry_month_0': id_expiry_month_0, 'expiry_month_1': id_expiry_month_1, 'ccv': ccv };
+
+
+$('#id_number').val("");
+$('#id_expiry_month_0').val("");
+$('#id_expiry_month_1').val("");
+$('#id_ccv').val("");
+$.ajax({
+  type: "POST",
+  url: '/ledger-api/process-payment',
+  data: data,
+  success: function(data, textStatus, jQxhr) {
+          $("#ledger-payment-overtop").html("<BR><BR>"+data);
+          $("#ledger-payment-overtop").show();
+
+  },
+  error: function( jqXhr, textStatus, errorThrown ) {
+         console.log( errorThrown );
+  },
+  // dataType: 'text,'
+});
+
+});
+
+$("input[name='card']").change(function() {
+	if (this.value == 'new')  {
+	    
+	    store_card_pay_button.hide();
+            new_card_pay_button.show();
+
+            if (new_card_form.hasClass('blur-div')) {
+		    new_card_form.removeClass('blur-div');
+	    }
+
+        } else {
+             store_card_pay_button.show();
+             new_card_pay_button.hide();
+
+             if (!new_card_form.hasClass('blur-div')) {
+	          new_card_form.addClass('blur-div');
+             }
+        }
+});
+
+
+//    $('#use_stored').click('on',function(){
+//        if (this.checked) {
+//            if (!new_card_form.hasClass('hide')) {
+//               new_card_form.addClass('hide');
+//            }
+//            if (stored_card_form.hasClass('hide')) {
+//               stored_card_form.removeClass('hide');
+//            }
+//        }
+//        else{
+//            if (new_card_form.hasClass('hide')) {
+//               new_card_form.removeClass('hide');
+//            }
+//            if (!stored_card_form.hasClass('hide')) {
+//               stored_card_form.addClass('hide');
+//            }
+//        }
+//    });
+    reset_forms();
+
+    $('#id_number').on('keydown keyup',function(e){
+        if(mastercard_regex.test(e.target.value)){
+            $('.mastercard').removeClass('disabled');
+            $('.visa').addClass('disabled');
+        }
+        else if (visa_regex.test(e.target.value)){
+            $('.mastercard').addClass('disabled');
+            $('.visa').removeClass('disabled');
+        }
+        else{
+            $('.mastercard').addClass('disabled');
+            $('.visa').addClass('disabled');
+        }
+    });
+});
+</script>

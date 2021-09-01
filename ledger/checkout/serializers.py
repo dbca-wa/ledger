@@ -76,6 +76,8 @@ class CheckoutSerializer(serializers.Serializer):
     invoice_text = serializers.CharField(required=False, default=None)
     check_url = serializers.URLField(required=False, default=None)
     amount_override=serializers.FloatField(required=False, default=None)
+    session_type = serializers.ChoiceField(choices=['standard', 'ledger_api'], default='standard')
+    user_logged_in = serializers.IntegerField(required=False, default=None, allow_null=True)
 
     def validate(self, data):
         if data['proxy'] and not data['basket_owner']:

@@ -22,7 +22,11 @@ class Facade(object):
         self.gateway = Gateway(
             bpoint_settings.BPOINT_USERNAME,
             bpoint_settings.BPOINT_PASSWORD,
-            bpoint_settings.BPOINT_MERCHANT_NUM
+            bpoint_settings.BPOINT_MERCHANT_NUM,
+            bpoint_settings.BPOINT_CURRENCY,
+            bpoint_settings.BPOINT_BILLER_CODE,
+            bpoint_settings.BPOINT_TEST,
+            None
         )
     
     def convert_amount(self,amount):
@@ -164,7 +168,6 @@ class Facade(object):
         # Check if the transaction was successful
         if not res.api_response.response_code == 0:
             raise UnableToTakePayment(res.api_response.response_text)
-
         return res
 
     def post_transaction(self, action,_type,sub_type,order_number=None,reference=None,total=None,bankcard=None,orig_txn_number=None,replay=False):

@@ -1,0 +1,37 @@
+<BR><BR>
+
+<div class='container-fluid page'>
+<div class="navbar navbar-static-top navbar-inverse nav-checkout payment-layer" style='margin-bottom: 0px; background-color: #FFF; border-radius: 4px 4px 0px 0px;'>
+    <ul class="nav navbar-nav">
+         <li class="step3">
+                    <span class="navbar-text" style='color: #000000;'>
+                        Payments 
+                    </span>
+         </li>
+    </ul>
+    <div style='padding: 15px;'>
+       <a class="close close-ledger-popup"  href="#">×</a>
+    </div>
+</div>
+
+   <div class="page_inner">
+	   
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+	   {% include "partials/alert_messages.html" %}     
+    
+    <button type='button' class="btn btn-primary btn-lg close-ledger-popup" style='display:none;'>Close</button>
+
+  </div>
+</div>
+
+	<script>
+        $('.close-ledger-popup').click(function() { 
+                 $('#ledger-payment-overtop').hide();
+		 $('#ledger-payment-overtop').hide();
+	});
+
+	</script>

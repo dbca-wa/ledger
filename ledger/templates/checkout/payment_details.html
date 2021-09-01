@@ -3,6 +3,7 @@
 {% load i18n %}
 
 {%block styles %}
+  
     {{ block.super}}
     <style>
         .card-logo{
@@ -16,6 +17,9 @@
     </style>
 {% endblock %}
 {% block payment_details %}
+
+
+
 <div clas="container">
     <!-- Pills -->
     <ul class="nav nav-pills nav-justified">
@@ -117,6 +121,6 @@
 {% endblock %}
 {% block extrascripts %}
     <script type="text/javascript" src="{% static 'payments/js/checkout.js'%}"></script>
-    
     {{ block.super }}
 {% endblock %}
+

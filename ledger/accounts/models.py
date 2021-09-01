@@ -312,7 +312,7 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     phone_number = models.CharField(max_length=50, null=True, blank=True,
                                     verbose_name="phone number", help_text='')
     position_title = models.CharField(max_length=100, null=True, blank=True,
-                                    verbose_name="position title", help_text='')
+                                    verbose_name="position title", help_text='Automatically synced from AD,  please contact service desk to update.')
     mobile_number = models.CharField(max_length=50, null=True, blank=True,
                                      verbose_name="mobile number", help_text='')
     fax_number = models.CharField(max_length=50, null=True, blank=True,
@@ -337,6 +337,9 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     character_comments = models.TextField(blank=True)
 
     documents = models.ManyToManyField(Document)
+  
+    manager_email=models.EmailField(unique=False, blank=True, null=True, verbose_name='Manager Email')
+    manager_name=models.CharField(max_length=128, blank=True, null=True, verbose_name='Manager Name')
 
     extra_data = JSONField(default=dict)
 
@@ -359,32 +362,39 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         post_clean.send(sender=self.__class__, instance=self)
 
     def save(self, *args, **kwargs):
+
         if not self.email:
             self.email = self.get_dummy_email()
         elif in_dbca_domain(self):
+            pass
             # checks and updates department user details from address book after every login
-            user_details = get_department_user_compact(self.email)
-            if user_details:
-                # check if keys can be found in ITAssets api - the response JSON sent by API may have have changed
-                if 'telephone' not in user_details or 'mobile_phone' not in user_details or 'title' not in user_details or 'location' not in user_details:
-                    logger.warn('Cannot find user details in ITAssets api call for user {}'.format(self.email))
+            # #####################
+            # Disabled as this has been moved to a management cron job.
+            ########################
+            #user_details = get_department_user_compact(self.email)
+            #if user_details:
+            #    # check if keys can be found in ITAssets api - the response JSON sent by API may have have changed
+            #    if 'telephone' not in user_details or 'mobile_phone' not in user_details or 'title' not in user_details or 'location' not in user_details:
+            #        logger.warn('Cannot find user details in ITAssets api call for user {}'.format(self.email))
 
-                # Only set the below fields if there is a value from address book (in ITAssets API). 
-                # This will allow fields in EmailUser object to be:
-                #   a. overridden whenever newer/updated fields (e.g. telephone number) are available in address book
-                #   b. if value for the field in address book empty/null, a previous value entered by user will not be overwritten with null
-                if user_details.get('telephone'):
-                    self.phone_number = user_details.get('telephone') 
-                if user_details.get('mobile_phone'):
-                    self.mobile_number = user_details.get('mobile_phone')
-                if user_details.get('title'):
-                    self.position_title = user_details.get('title')
-                if user_details.get('location', {}).get('fax'):
-                    self.fax_number = user_details.get('location', {}).get('fax')
+            #    # Only set the below fields if there is a value from address book (in ITAssets API). 
+            #    # This will allow fields in EmailUser object to be:
+            #    #   a. overridden whenever newer/updated fields (e.g. telephone number) are available in address book
+            #    #   b. if value for the field in address book empty/null, a previous value entered by user will not be overwritten with null
+            #    if user_details.get('telephone'):
+            #        self.phone_number = user_details.get('telephone') 
+            #    if user_details.get('mobile_phone'):
+            #        self.mobile_number = user_details.get('mobile_phone')
+            #    if user_details.get('title'):
+            #        self.position_title = user_details.get('title')
+            #    if user_details.get('location', {}).get('fax'):
+            #        self.fax_number = user_details.get('location', {}).get('fax')
 
-                self.is_staff = True
+            #    self.is_staff = True
 
-        self.email = self.email.lower()            
+        self.email = self.email.lower()
+        self.email = self.email.replace(" ", "")
+
         super(EmailUser, self).save(*args, **kwargs)
 
     def get_full_name(self):

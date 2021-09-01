@@ -5,6 +5,10 @@ from django.core.exceptions import ValidationError
 from ledger.payments.bpoint import settings as bpoint_settings
 from django.utils.encoding import python_2_unicode_compatible
 from ledger.payments.invoice.models import Invoice
+from django.core.cache import cache
+from datetime import datetime
+from ledger.payments import trans_hash
+import hashlib
 
 DISTRICT_PERTH_HILLS = 'PHS'
 DISTRICT_SWAN_COASTAL = 'SWC'
@@ -70,6 +74,13 @@ REGION_CHOICES = (
     (REGION_SOUTH_COAST,'South Coast')
 )
 
+change_hash = trans_hash.cash_transaction_hash()
+
+change_cash_hash = cache.get('CashTransaction')
+if change_cash_hash is None:
+   change_cash_hash = hashlib.md5(datetime.now().strftime("%m/%d/%Y, %H:%M:%S").encode('utf-8')).hexdigest()
+   cache.set('CashTransaction', change_cash_hash,  86400)
+
 class Region(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
@@ -115,8 +126,14 @@ class CashTransaction(models.Model):
     def save(self, *args, **kwargs):
         # Validations
         self.full_clean()
-
+        cache.delete('CashTransaction')
         super(CashTransaction, self).save(*args, **kwargs)
+        ct = CashTransaction.objects.all().order_by('-id')[:1]
+        if ct.count() > 0:
+            ct[0].id
+            lastest_cash_row_string = str(ct[0].id)
+            change_cash_hash = hashlib.md5(lastest_cash_row_string.encode('utf-8')).hexdigest()
+            cache.set('CashTransaction', change_cash_hash,  86400)
 
     def clean(self, *args, **kwargs):
         if not self.receipt and self.external:

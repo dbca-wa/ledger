@@ -3,7 +3,6 @@ import json
 from django.conf import settings
 from django.core.cache import cache
 
-
 def in_dbca_domain(user):
     domain = user.email.split('@')[1]
     if domain in settings.DEPT_DOMAINS:

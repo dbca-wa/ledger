@@ -3,8 +3,12 @@ from django.views.decorators.csrf import csrf_exempt
 from ledger.accounts import models
 from django.contrib.auth.models import Group
 from ledgergw import models as ledgergw_models
-from ledgergw import common
+from ledger.api import models as ledgerapi_models
+from ledger.api import utils as ledgerapi_utils
+#from ledgergw import common
 from django.db.models import Q
+from ledger.checkout import utils
+from oscar.apps.order.models import Order
 
 from django.core.files.base import ContentFile
 from django.utils.crypto import get_random_string
@@ -18,8 +22,8 @@ import ipaddress
 def user_info_search(request, apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
-    if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
-        if common.api_allow(common.get_client_ip(request),apikey) is True:
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             keyword = request.POST.get('keyword', '')
             jsondata = {'status': 200, 'message': 'No Results'}
             jsondata['users'] = [] 
@@ -80,6 +84,7 @@ def user_info_search(request, apikey):
                     jsondata['users'].append(ledger_user_json)
                     jsondata['status'] = 200
                     jsondata['message'] = 'Results'
+
         else:
             jsondata['status'] = 403
             jsondata['message'] = 'Access Forbidden'
@@ -92,8 +97,8 @@ def user_info_search(request, apikey):
 def user_info_id(request, userid,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
-    if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
-        if common.api_allow(common.get_client_ip(request),apikey) is True:
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
 
             ledger_user = models.EmailUser.objects.filter(id=int(userid))
             if ledger_user.count() > 0:
@@ -148,15 +153,20 @@ def user_info_id(request, userid,apikey):
 def user_info(request, ledgeremail,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
-    if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
-        if common.api_allow(common.get_client_ip(request),apikey) is True:
-
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ledgeremail=ledgeremail.lower()
+            ledgeremail=ledgeremail.replace(" ","")
             ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
             if ledger_user.count() == 0:
+                 first_name = request.POST.get('first_name','')
+                 last_name =  request.POST.get('last_name','')
+                 a = models.EmailUser.objects.create(email=ledgeremail,first_name=first_name,last_name=last_name)
+                 #a.save()
+                 #ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
+                 #ledger_user.save()
 
-                 a = models.EmailUser.objects.create(email=ledgeremail,first_name=request.POST['first_name'],last_name=request.POST['last_name'])
-                 ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
-                 ledger_user.save()
+
             if ledger_user.count() > 0:
                     ledger_obj = ledger_user[0]
                     ledger_user_json['ledgerid'] = ledger_obj.id
@@ -210,13 +220,57 @@ def user_info(request, ledgeremail,apikey):
 
 
 
+@csrf_exempt
+def user_group_info(request, ledger_id,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    query_exists = False
+    ledger_user_json  = {}
+    filter_post = json.loads(request.POST['filter'])
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ledger_user = models.EmailUser.objects.filter(id=ledger_id)
+            if ledger_user.count() > 0:
+                    ledger_obj = ledger_user[0]
+                    ledger_user_group = []
+                    if len(filter_post) > 0: 
+                        if 'name' in filter_post:
+                            query = ledger_obj.groups.filter(name=filter_post['name'])
+                            for g in query:
+                                  ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
+                        if 'id' in filter_post:
+                            query = ledger_obj.groups.filter(id=int(filter_post['id']))
+                            for g in query:
+                                ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
+                        if 'name' in filter_post and 'id' in filter_post:
+                            query = ledger_obj.groups.filter(name=filter_post['name'], id=int(filter_post['id']))
+                            for g in query:
+                                ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
+                        query_exists = query.exists()
+
+                    else:
+                        for g in ledger_obj.groups.all():
+                             ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
+                    ledger_user_json['groups'] = ledger_user_group
+                    jsondata['groups'] = ledger_user_json
+                    jsondata['query_exists'] = query_exists
+                    jsondata['status'] = 200
+                    jsondata['message'] = 'User Found'
+            else:
+                jsondata['status'] = '404'
+                jsondata['message'] = 'User not found'
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    return HttpResponse(json.dumps(jsondata), content_type='application/json')
+
 
 def group_info(request, apikey):
     ledger_json  = {}
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
-
-    if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
-        if common.api_allow(common.get_client_ip(request),apikey) is True:
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             groups = Group.objects.all()
             ledger_json['groups_list'] = []
             ledger_json['groups_id_map'] = {}
@@ -244,8 +298,8 @@ def group_info(request, apikey):
 def add_update_file_emailuser(request, apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
-    if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
-        if common.api_allow(common.get_client_ip(request),apikey) is True:
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             emailuser_id = request.POST.get('emailuser_id', '')
             file_group_id = request.POST.get('file_group_id', None)
             filebase64 = request.POST['filebase64']
@@ -274,8 +328,8 @@ def add_update_file_emailuser(request, apikey):
 def get_private_document(request, apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
-    if ledgergw_models.API.objects.filter(api_key=apikey,active=1).count():
-        if common.api_allow(common.get_client_ip(request),apikey) is True:
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             private_document_id = request.POST.get('private_document_id', None)
             private_document = models.PrivateDocument.objects.get(id=private_document_id)
 
@@ -292,26 +346,123 @@ def get_private_document(request, apikey):
 
 
 
-def ip_check(request):
-    ledger_json  = {}
-    ipaddress = common.get_client_ip(request)
-    jsondata = {'status': 200, 'ipaddress': str(ipaddress)}
+@csrf_exempt
+def create_basket_session(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            print ("API create_basket_session")
+            print (request.POST.get('parameters', "{}"))
+            parameters = json.loads(request.POST.get('parameters', "{}"))
+            emailuser_id = request.POST.get('emailuser_id', None)
+            print (parameters)
+            #parameters['system'] = '0019'
+            print (emailuser_id)
+            if parameters['custom_basket'] is True:
+                print ("CUSTOM BASKER TEYE")
+            basket, basket_hash = utils.create_basket_session_v2(emailuser_id,parameters)
+            print ("RESP")
+            print (basket.id)
+            print (basket,basket_hash)
+            jsondata['status'] = 200
+            jsondata['message'] = 'Success'
+            jsondata['data'] = {'basket_hash': basket_hash}
+            print (jsondata)
+            #ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
+            #if ledger_user.count() == 0:
+
+            #     a = models.EmailUser.objects.create(email=ledgeremail,first_name=request.POST['first_name'],last_name=request.POST['last_name'])
+            #     ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
+            #     ledger_user.save()
+            #else:
+            #    jsondata['status'] = '404'
+            #    jsondata['message'] = 'User not found'
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
     return HttpResponse(json.dumps(jsondata), content_type='application/json')
 
 
-#class PrivateDocument(models.Model):
-#
-#    FILE_GROUP = (
-#        (1,'Identification'),
-#        (2,'Senior Card'),
-#    )
-#
-#    upload = models.FileField(max_length=512, upload_to='uploads/%Y/%m/%d', storage=upload_storage)
-#    name = models.CharField(max_length=256)
-#    metadata = JSONField(null=True, blank=True)
-#    text_content = models.TextField(null=True, blank=True, editable=False)  # Text for indexing
-#    file_group = models.IntegerField(choices=FILE_GROUP, null=True, blank=True)
-#    file_group_ref_id = models.IntegerField(null=True, blank=True)
-#    extension = models.CharField(max_length=5, null=True, blank=True)
-#    created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-#
+@csrf_exempt
+def create_checkout_session(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            print ("API create_basket_session")
+            checkout_parameters = json.loads(request.POST.get('checkout_parameters', "{}"))
+            #emailuser_id = request.POST.get('emailuser_id', None)
+            print ("SESSION")
+            if 'checkout_data' in request.session:
+                print (request.session['checkout_data'])
+            print ("END SESSION")
+            print (checkout_parameters)
+            #parameters['system'] = '0019'
+            #print (emailuser_id)
+            resp = utils.create_checkout_session(request,checkout_parameters)
+            print ("COOKIES")
+            #basket, basket_hash = utils.create_checkout_session(request, parameters)
+            print ("SESSION 2")
+            if 'checkout_data' in request.session:
+               print (request.session['checkout_data'])
+            print ("RESP!")
+            print (resp)
+            jsondata['status'] = 200
+            jsondata['message'] = 'Success'
+            jsondata['data'] = {}
+            #jsondata['data'] = {'basket_hash': basket_hash}
+
+            #ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
+            #if ledger_user.count() == 0:
+
+            #     a = models.EmailUser.objects.create(email=ledgeremail,first_name=request.POST['first_name'],last_name=request.POST['last_name'])
+            #     ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
+            #     ledger_user.save()
+            #else:
+            #    jsondata['status'] = '404'
+            #    jsondata['message'] = 'User not found'
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    response.set_cookie('CookieTest', 'Testing',5)
+    return response
+
+
+@csrf_exempt
+def get_order_info(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            print ("API get_order_info")
+            data = json.loads(request.POST.get('data', "{}"))
+            order = Order.objects.get(basket__id=data['basket_id'])
+            order_obj = {}
+            order_obj['id'] = order.id
+            order_obj['number'] = order.number
+
+            jsondata['status'] = 200
+            jsondata['message'] = 'Success'
+            jsondata['data'] = {'order': order_obj}
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    response.set_cookie('CookieTest', 'Testing',5)
+    return response
+
+
+
+def ip_check(request):
+    ledger_json  = {}
+    ipaddress = ledgerapi_utils.get_client_ip(request)
+    jsondata = {'status': 200, 'ipaddress': str(ipaddress)}
+    return HttpResponse(json.dumps(jsondata), content_type='application/json')

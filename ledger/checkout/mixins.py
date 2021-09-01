@@ -4,6 +4,8 @@ from oscar.core.loading import get_class
 from ledger.payments.models import Invoice
 from django.http import HttpResponseRedirect
 from ledger.accounts.models import EmailUser
+from django.http import Http404, HttpResponse, JsonResponse, HttpResponseRedirect
+
 CoreOrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 
 class OrderPlacementMixin(CoreOrderPlacementMixin):
@@ -51,6 +53,7 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         return_url = self.checkout_session.return_url()
         return_preload_url = self.checkout_session.return_preload_url()
         force_redirect = self.checkout_session.force_redirect()
+        session_type = self.checkout_session.get_session_type()
 
         # Update the payments in the order lines
         invoice = Invoice.objects.get(order_number=order.number)
@@ -83,6 +86,9 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
 
         if not force_redirect:
             response = HttpResponseRedirect(self.get_success_url())
+        elif session_type == 'ledger_api':
+            return_url_success = '{}?invoice={}'.format(return_url, invoice.reference)
+            response = HttpResponse("<script> window.location='"+return_url_success+"';</script> <a href='"+return_url_success+"'> Redirecting please wait: "+return_url_success+"</a>")
         else:
             response = HttpResponseRedirect('{}?invoice={}'.format(return_url, invoice.reference))
 
