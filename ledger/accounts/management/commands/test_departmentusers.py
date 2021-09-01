@@ -12,7 +12,6 @@ class Command(BaseCommand):
         print (common.retrieve_department_users())
         print (common.get_department_user('jason.moore@dbca.wa.gov.au'))
         print (common.get_department_user('jason.moore'))
-        print (common.get_department_user('jason@austwa.com'))
 
 
 
