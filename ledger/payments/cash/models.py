@@ -132,7 +132,8 @@ class CashTransaction(models.Model):
         if ct.count() > 0:
             ct[0].id
             lastest_cash_row_string = str(ct[0].id)
-            change_cash_hash = hashlib.md5(lastest_cash_row_string.encode('utf-8')).hexdigest()
+            #change_cash_hash = hashlib.md5(lastest_cash_row_string.encode('utf-8')).hexdigest()
+            change_cash_hash = hashlib.md5(datetime.now().strftime("%m/%d/%Y, %H:%M:%S").encode('utf-8')).hexdigest()
             cache.set('CashTransaction', change_cash_hash,  86400)
 
     def clean(self, *args, **kwargs):

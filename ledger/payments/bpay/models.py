@@ -139,7 +139,8 @@ class BpayTransaction(models.Model):
         if bt.count() > 0:
             bt[0].id
             lastest_row_string = str(bt[0].id)
-            change_hash = hashlib.md5(lastest_row_string.encode('utf-8')).hexdigest()
+            #change_hash = hashlib.md5(lastest_row_string.encode('utf-8')).hexdigest()
+            change_hash = hashlib.md5(datetime.now().strftime("%m/%d/%Y, %H:%M:%S").encode('utf-8')).hexdigest()
             cache.set('BpayTransaction', change_hash,  86400)
 
     @property
