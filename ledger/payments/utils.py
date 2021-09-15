@@ -74,6 +74,7 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
             recipients = sys.recipients.all()
         except OracleInterfaceSystem.DoesNotExist:
             recipients = []
+        email_instance = env('EMAIL_INSTANCE','DEV')
         if not error_email:
             dt = datetime.datetime.strptime(trans_date,'%Y-%m-%d').strftime('%d/%m/%Y')
             _file = generateOracleParserFile(oracle_codes)
@@ -81,7 +82,8 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
                 'Oracle Interface for {} for transactions received on {}'.format(system_name,dt),
                 'Oracle Interface Summary File for {} for transactions received on {}'.format(system_name,dt),
                 settings.EMAIL_FROM,
-                to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
+                to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL],
+                headers={'System-Environment': email_instance}
             )
             email.attach('OracleInterface_{}.csv'.format(dt), _file.getvalue(), 'text/csv')
         else:
@@ -91,7 +93,8 @@ def sendInterfaceParserEmail(trans_date,oracle_codes,system_name,system_id,error
             email = EmailMessage(subject,
                 'There was an error in generating a summary report for the oracle interface parser for transactions processed on {}.Please refer to the following log output:\n\n\n{}'.format(today,error_string),
                 settings.EMAIL_FROM,
-                to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL]
+                to=[r.email for r in recipients]if recipients else [settings.NOTIFICATION_EMAIL],
+                headers={'System-Environment': email_instance}
             )
 
         email.send()
