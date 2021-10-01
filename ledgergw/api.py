@@ -9,6 +9,7 @@ from ledger.api import utils as ledgerapi_utils
 from django.db.models import Q
 from ledger.checkout import utils
 from oscar.apps.order.models import Order
+from ledger.payments.invoice.models import Invoice
 
 from django.core.files.base import ContentFile
 from django.utils.crypto import get_random_string
@@ -459,7 +460,68 @@ def get_order_info(request,apikey):
     response.set_cookie('CookieTest', 'Testing',5)
     return response
 
+@csrf_exempt
+def get_invoice_properties(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    invoice_json = {}
+    print ("API get_invoice_properties 1") 
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            print ("API get_invoice_properties 2")
+            data = json.loads(request.POST.get('data', "{}"))
+            print (data)
+            
+            if Invoice.objects.filter(id=data['invoice_id']).count() > 0:
+                 try:
+                       invoice = Invoice.objects.get(id=data['invoice_id'])
+                       invoice_obj = {}
+                       invoice_obj['id'] = invoice.id
+                       invoice_obj['text'] = invoice.text
+                       invoice_obj['amount'] = str(invoice.amount)
+                       invoice_obj['order_number'] = invoice.order_number
+                       invoice_obj['reference'] = invoice.reference
+                       invoice_obj['system'] = invoice.system
+                       invoice_obj['token'] = invoice.token
+                       invoice_obj['voided'] = invoice.voided
+                       invoice_obj['previous_invoice'] = invoice.previous_invoice
+                       invoice_obj['settlement_date'] = invoice.settlement_date
+                       invoice_obj['payment_method'] = invoice.payment_method
+                       invoice_obj['biller_code'] = invoice.biller_code
+                       invoice_obj['number'] = invoice.number
+                       if invoice.owner:
+                           invoice_obj['owner'] = invoice.owner.id
+                       else:
+                           invoice_obj['owner'] = None
+                       invoice_obj['refundable_amount'] = str(invoice.refundable_amount)
+                       invoice_obj['refundable'] = invoice.refundable
+                       invoice_obj['num_items'] = invoice.num_items
+                       #invoice_obj['linked_bpay_transactions'] = invoice.linked_bpay_transactions
 
+                       invoice_obj['payment_amount'] = str(invoice.payment_amount)
+                       invoice_obj['total_payment_amount'] = str(invoice.total_payment_amount)
+                       invoice_obj['refund_amount'] = str(invoice.refund_amount)
+                       invoice_obj['deduction_amount'] = str(invoice.deduction_amount)
+                       invoice_obj['transferable_amount'] = str(invoice.transferable_amount)
+                       invoice_obj['balance'] = str(invoice.balance)
+                       invoice_obj['payment_status'] = invoice.payment_status
+
+                       jsondata['status'] = 200
+                       jsondata['message'] = 'Success'
+                       jsondata['data'] = {'invoice': invoice_obj}
+                       print ("YES")
+                 except:
+                     print ("ERROR")
+            else:
+                 jsondata['status'] = 404
+                 jsondata['message'] = 'not found'
+                 jsondata['data'] = {'invoice': None}
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
 
 def ip_check(request):
     ledger_json  = {}
