@@ -43,6 +43,8 @@ class Invoice(models.Model):
     previous_invoice = models.ForeignKey('self',null=True,blank=True)
     settlement_date = models.DateField(blank=True, null=True)
     payment_method = models.SmallIntegerField(choices=PAYMENT_METHOD_CHOICES, default=0)
+    #payment_amount_cached = models.DecimalField(decimal_places=2,max_digits=12, default='0.00',)
+    #payment_status_cached = models.CharField(max_length=50,null=True,blank=True)
 
     def __unicode__(self):
         return 'Invoice #{0}'.format(self.reference)
@@ -158,15 +160,21 @@ class Invoice(models.Model):
         ''' Payment status of the invoice.
         '''
         amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds() 
-
+        pay_status = 'over_paid'
         if amount_paid == decimal.Decimal('0') and self.amount > 0:
-            return 'unpaid'
+            pay_status = 'unpaid'
         elif amount_paid < self.amount:
-            return 'partially_paid'
+            pay_status = 'partially_paid'
         elif amount_paid == self.amount:
-            return 'paid'
+            pay_status = 'paid'
         else:
-            return 'over_paid'
+            pay_status ='over_paid'
+
+        #if payment_status_cached != pay_status:
+        #    self.payment_status_cached  = pay_status
+        #    self.save()
+             
+        return pay_status
 
     @property
     def single_card_payment(self):
@@ -206,7 +214,7 @@ class Invoice(models.Model):
             else:
                 bpay_json = json.loads(cih)
             for cj in bpay_json:
-                if cj['p_instruction_code'] == p_instruction_code and bpay_type == cj['type']:
+                if cj['p_instruction_code'] == p_instruction_code and str(bpay_type) == cj['type']:
                      amount = amount + cj['amount']
         return decimal.Decimal('{0:.2f}'.format(amount))
 
