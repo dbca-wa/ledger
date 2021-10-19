@@ -112,6 +112,7 @@ def validate_datetime(_date,_time,with_seconds=False):
     '''Changing the date and time to UTC.
         Combining the date and time and converting it to UTC.
     '''
+    import datetime
     valid_time = valid_datetime = valid_date = None
     
     time_zone = pytz.timezone('Australia/Sydney')
@@ -335,6 +336,7 @@ def generateParserSummary(files):
     return contents
 
 def sendSummaryEmail(summary):
+    import datetime
     dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
     recipients = BpayJobRecipient.objects.all()
     email = EmailMessage(
@@ -347,6 +349,7 @@ def sendSummaryEmail(summary):
     email.send()
     
 def sendBillerCodeEmail(summaries,monthly=False):
+    import datetime
     emails = []
     dt = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
     for k,v in summaries.items():
