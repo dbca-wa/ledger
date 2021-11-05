@@ -46,6 +46,8 @@ class Command(BaseCommand):
                     amount = str(c.amount)[:-2]+'.'+str(c.amount)[-2:]
                     if c.action == 'refund':
                         bpoint_amount = bpoint_amount - c.amount
+                    elif c.action == 'reversal':
+                        bpoint_amount = bpoint_amount - c.amount
                     else:
                         bpoint_amount = bpoint_amount + c.amount
                     

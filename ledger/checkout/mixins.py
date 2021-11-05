@@ -87,7 +87,8 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         if not force_redirect:
             response = HttpResponseRedirect(self.get_success_url())
         elif session_type == 'ledger_api':
-            return_url_success = '{}?invoice={}'.format(return_url, invoice.reference)
+            #return_url_success = '{}?invoice={}'.format(return_url, invoice.reference)
+            return_url_success = '{}'.format(return_url)
             response = HttpResponse("<script> window.location='"+return_url_success+"';</script> <a href='"+return_url_success+"'> Redirecting please wait: "+return_url_success+"</a>")
         else:
             response = HttpResponseRedirect('{}?invoice={}'.format(return_url, invoice.reference))

@@ -1,0 +1,381 @@
+{% load static %} {% load dpaw_extras %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Payments - Department of Biodiversity, Conservation and Attractions</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" rel="stylesheet" ></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="/static/common/node_modules/bootstrap-icons/font/bootstrap-icons.css?ver=">
+    <script src="/static/common/node_modules/jquery/dist/jquery.min.js"></script>
+
+    <script src="/static/payments/js/ledger_payments.js"></script>
+    <script src="/static/payments/js/oracle_refund.js"></script>
+
+    <link rel="icon" href="//static.dpaw.wa.gov.au/images/favicon.svg" sizes="any" type="image/svg+xml" />
+
+    {% block extra_css %}
+    <style>
+        .voided_invoice {
+            -ms-transform: rotate(20deg);
+            -webkit-transform: rotate(20deg);
+            transform: rotate(13deg);
+            position: relative;
+            top: 137px;
+            opacity: 0.7;
+        }
+
+        .logo {
+            margin: 20px 0;
+        }
+        @media only screen and (min-width: 35.61111em) {
+             .status{
+                margin-top: 30px;
+             }
+         }
+    </style>
+    <script>
+	    ledger_payments.var.current_invoice_group_id = '{{ invoice_group_id }}';
+            ledger_payments.var.current_invoice_no = '{{ invoice_no }}';
+            ledger_payments.var.current_booking_reference = '{{ booking_reference }}';
+    
+            ledger_payments.var.csrf_token = '{{ csrf_token }}';
+            refund_booking.var.csrf_token = '{{ csrf_token }}';
+
+            refund_booking.var.api_url = '/ledger/payments/api/ledger/oracle-payment-transfer';
+            refund_booking.var.oracle_code_refund_allocation_pool = '{{ oracle_code_refund_allocation_pool }}';
+            ledger_payments.init();
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+              return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+    </script>
+
+    {% endblock %}
+</head>
+
+<body>
+
+<div class="modal fade" id="LoadingPopup" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="alert alert-danger" role="alert" id='popup-error' style='display:none'>
+
+        </div>
+        <div class='col-12'>
+            <center>
+             <br>
+             <br>
+
+                <div class="spinner-border text-primary" style='width: 8rem; height: 8rem' role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+            <div><h3>Please Wait</h3></div>
+             <br>
+             <br>
+            </center>
+        </div>
+
+
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="MessageBox" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="alert alert-danger" role="alert" id='popup-error' style='display:none'>
+
+        </div>
+        <div class='col-12'>
+            <center>
+            <i class="bi bi-x-circle-fill text-center" style='color: red; font-size: 100px;'></i>
+            <h2 id='error-title'>Error Message</h2>
+            <div id='error-message'>There was error processing your request.</div>
+            <br>
+            <button type="button" class="btn btn-primary" id='group-close-modal' data-bs-dismiss="modal">Close</button>
+
+                    <div class="spinner-border text-primary" role="status" style='display:none' id='peakgroup_progress_loader_create'>
+                  <span class="visually-hidden">Loading...</span>
+        </div>
+            <br>
+            <br>
+            </center>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #e3f2fd;">
+  <div class="container-fluid">
+    <img class="align-right" src="/static/ledger/images/logo-dbca.png" alt="Department of Parks and Wildlife" style='height:70px;'>
+    <a class="navbar-brand" href="#">Ledger Payments</a>
+   
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="#">Home</a>
+        </li>
+      </ul>
+      <form class="d-flex">
+        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-success" type="submit">Search</button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+
+<div class="container">
+
+    <div class="row">
+
+    <div class="col-12">
+<br>
+<div class="row">
+ <div class="col">
+    <div class="card text-white bg-success mb-3" style="max-width: 18rem;">
+      <div class="card-body">
+       <h5 class="card-title">Payment Gateway</h5>
+       <p class="card-text fs-2" id='total_payment_gateway'>$0.00</p>
+       <p class="card-text"><i class="bi bi-info-circle-fill"></i>&nbsp;<small class="">Total money received from bpoint minus refunds</small></p>
+    </div>
+   </div>
+</div>
+
+<div class="col">
+<div class="card text-white bg-danger mb-3" style="max-width: 18rem;">
+  <div class="card-body">
+    <h5 class="card-title">Unallocated Pool</h5>
+    <p class="card-text fs-2" id='total_unallocated'>$0.00</p>
+    <p class="card-text"><i class="bi bi-info-circle-fill"></i>&nbsp;<small class=""> Total money moved to the unallocated pool</small></p>
+  </div>
+</div>
+</div>
+</div>
+
+
+
+<div class="col-sm-12 col-md-12 col-lg-12">
+<br>
+
+<h4>How will the refund be completed?</h4>
+</div>
+<div class="col-sm-12 col-md-12 col-lg-12">
+     <div class="col-sm-12 col-md-12 col-lg-12">
+         <input type='radio' value='1' name='refund_method' > Refund via payment gateway (money will be refunded via credit card)
+     </div>
+     <div class="col-sm-12 col-md-12 col-lg-12" style='display:none'>
+        <input type='radio' value='2' name='refund_method' > DBCA Manual Refund (cheque, eftpos etc)
+     </div>
+     <div class="col-sm-12 col-md-12 col-lg-12">
+        <input type='radio' value='3' name='refund_method' > Refund via other means (money will be refunded via e.g. cheque and money in unallocated pool will be moved back into e.g. booking fee account)
+     </div>
+</div>
+<div class="col-sm-12 col-md-12 col-lg-12">
+        <BR>
+</div>
+
+<div class="card">
+	  <h5 class="card-header">Money Management</h5>
+	    <div class="card-body">
+
+<div id='from-money-booking-div'>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+               <br>
+               <h4>From Money Pool</h4>
+        </div>
+
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="from-money-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th style='width: 200px;'>Oracle Code</th>
+                  <th>Line Description</th>
+                  <th style='width: 100px;'>Amount</th>
+		  <th style='width: 10px;'><button id='from-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;"><i class="bi bi-plus-lg"></i></button></th>
+                </tr>
+        </thead>
+        <tbody>
+
+           <tr>
+                <td>{{ oracle_code_refund_allocation_pool }}</td>
+                <td><input style='width: 100%' type='hidden' id='unallocated-text' value="Unallocated Pool" class='form-control input-sm'>Unallocated Pool</td>
+                <td><div class='tooltip2'  align='left' style='display:flex;'>
+                                         
+                                         <span class="tooltiptext">Cannot be greater than the Unallocated Pool Amount</span>
+					 <span class='money_sign'>$</span>
+                                         <input style='width: 100px;' type='number' id='unallocated_pool_refund' step='0.01' class='form-control input-sm money' value='{{ invoice_line_items.total_booking_allocation_pool }}' onblur='refund_booking.money_update(this);'>
+
+                                                       </div>
+</td>
+                <td>&nbsp;</td>
+           </tr>
+
+        </tbody>
+        </table>
+               <div class="col-sm-12 col-md-12 col-lg-12">
+                   <span class="pull-right">
+                        <h3 id='total_from_money'>$0.00</h3>
+                   </span>
+               </div>
+        </div>
+	</div>
+
+        <div id='to-money-booking-div'>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+               <h4>To Money Pool</h4>
+        </div>
+	
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="to-money-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th style='width: 200px;'>Oracle Code</th>
+                  <th>Line Description</th>
+                  <th style='width: 100px;'>Amount</th>
+		  <th style='width: 10px;'><button id='to-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;"><i class="bi bi-plus-lg"></i></button></th>
+                </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+        </tr>
+
+        </tbody>
+
+        </table>
+               <div class="col-sm-12 col-md-12 col-lg-12">
+                   <span class="pull-right">
+                        <h3 id='total_to_money'>$0.00</h3>
+                   </span>
+               </div>
+        </div>
+        </div>
+
+        <div id='money-bpoint-div'>
+        <div class="col-sm-12 col-md-12 col-lg-12">
+               <h4>BPOINT Allocation</h4>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+
+        <table cellspacing="0" width="100%" id="money-bpoint-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+        <thead>
+                <tr>
+                  <th style='width: 150px;'>Txn Number</th>
+                  <th style='width: 100px;'>Amount</th>
+                </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+        </tr>
+
+        </tbody>
+        </table>
+               <div class="col-sm-12 col-md-12 col-lg-12">
+                   <span class="pull-right">
+                        <h3 id='total_bpoint_money'>$0.00</h3>
+                   </span>
+               </div>
+        </div>
+        </div>
+
+        <div class="col-sm-12 col-md-12 col-lg-12">
+                <br>
+                <br>
+                <span class="pull-right">
+                        <button id="refund-booking-wait" type="button" class="btn btn-warning btn-lg" target="_blank" style='display:none'>Please Wait</button>
+                        <button id="refund-booking" type="button" class="btn btn-primary btn-lg" target="_blank">Refund Booking</button>
+                </span>
+        </div>
+
+
+
+</div>
+</div>
+<br>
+
+
+
+<!-- information -->
+<div class="row">
+<div class="col-12">
+
+<div class="card">
+  <h5 class="card-header">Gateway Transaction</h5>
+  <div class="card-body">
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">TX No</th>
+      <th scope="col">Invoice</th>
+      <th scope="col">Action</th>
+      <th scope="col">Amount</th>
+      <th scope="col">Processed</th>
+    </tr>
+  </thead>
+  <tbody id='bpoint_tbody'>
+  </tbody>
+</table>
+
+
+  </div>
+</div>
+</div>
+
+</div>
+  <!-- Content here -->
+</div>
+
+<div class="col-12">
+<br>
+
+<div class="card">
+  <h5 class="card-header">Order history collated</h5>
+  <div class="card-body">
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Order No</th>
+      <th scope="col">Line Item (All Bookings)</th>
+      <th scope="col">Oracle Code</th>
+      <th scope="col">Price (inc tax)</th>
+      <th scope="col">Rolling Total</th>
+      <th scope="col">Order Date</th>
+    </tr>
+  </thead>
+  <tbody id='order_list'>
+  </tbody>
+</table>
+
+
+  </div>
+</div>
+
+
+
+</div>
+</body>
+
+</html>

@@ -10,7 +10,10 @@ from ledger.payments.api import (
                 BpayFileList,
                 ReportCreateView,
                 RegionViewSet,
-                ReportCreateAllocatedView
+                ReportCreateAllocatedView,
+                LedgerPayments,
+                CheckOracleCodeView,
+                RefundOracleView
                 )
 
 from ledger.payments.bpay.dashboard.app import application as bpay
@@ -30,6 +33,9 @@ router.register(r'^regions', RegionViewSet)
 
 api_patterns = [
     url(r'api/bpoint/payment$', BpointPaymentCreateView.as_view(), name='bpoint-payment'),
+    url(r'api/ledger/payments-info$', LedgerPayments, name='ledger-payment-information'),
+    url(r'api/ledger/oracle-codes-lookup$', CheckOracleCodeView, name='ledger-oracle-codes'),
+    url(r'api/ledger/oracle-payment-transfer$', RefundOracleView, name='ledger-oracle-refunds'),
     url(r'api/report-allocated$', ReportCreateAllocatedView.as_view(),name='ledger-report-allocated'),
     url(r'api/report$', ReportCreateView.as_view(),name='ledger-report'),
     url(r'api/', include(router.urls)),
@@ -45,5 +51,6 @@ urlpatterns = [
     #url(r'payments/invoice/payment/(?P<reference>\d+)',views.InvoicePaymentView.as_view(), name='invoice-payment'),
     url(r'payments/invoice/payment$',views.InvoicePaymentView.as_view(), name='invoice-payment'),
     url(r'payments/invoice/search$',views.InvoiceSearchView.as_view(), name='invoice-search'),
+    url(r'payments/oracle/payments$', views.OraclePayments.as_view(), name='oracle-payments'),
     url(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
 ]

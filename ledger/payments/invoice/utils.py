@@ -5,8 +5,10 @@ from oscar.core.loading import get_class, get_model
 from oscar.apps.order.utils import OrderCreator as CoreOrderCreator
 from oscar.apps.order import exceptions
 from oscar.apps.checkout.calculators import OrderTotalCalculator
+from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
 from ledger.payments.invoice import facade as invoice_facade
-from ledger.payments.utils import systemid_check, update_payments
+from ledger.payments.models import Invoice
+from ledger.payments.utils import systemid_check, update_payments, LinkedInvoiceCreate
 from decimal import Decimal
 import datetime
 
@@ -109,6 +111,8 @@ class CreateInvoiceBasket(CoreOrderCreator):
         basket.date_submitted = datetime.datetime.now()
         basket.save()
 
+        LinkedInvoiceCreate(invoice, basket.id)
+
         return order
 
     def create_line_models(self, order, basket_line, extra_line_fields=None,custom_ledger=False):
@@ -197,4 +201,22 @@ class CreateInvoiceBasket(CoreOrderCreator):
              invoice_text,
              self.payment_method,
         )
+
+
+def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=None):
+        basket_params = {
+            'products': lines,
+            'vouchers': [],
+            'system': settings.PS_PAYMENT_SYSTEM_ID,
+            'custom_basket': True,
+            'booking_reference': booking_reference,
+            'booking_reference_link': booking_reference_linked
+        }
+
+        basket, basket_hash = create_basket_session(request, basket_params)
+        ci = CreateInvoiceBasket()
+        order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Oracle Allocation Pools', )
+        new_invoice = Invoice.objects.get(order_number=order.number)
+        update_payments(new_invoice.reference)
+        return order
 

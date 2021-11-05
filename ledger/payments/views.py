@@ -52,6 +52,28 @@ class InvoiceSearchView(generic.TemplateView):
 
     template_name = 'dpaw_payments/invoice/invoice_search.html'
 
+class OraclePayments(generic.TemplateView):
+    template_name = 'dpaw_payments/oracle_payments.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(OraclePayments,self).get_context_data(**kwargs)
+        invoice_group_id = self.request.GET.get('invoice_group_id','');
+        invoice_no = self.request.GET.get('invoice_no','')
+        booking_reference = self.request.GET.get('booking_reference','')
+   #&current_invoice_no="+ledger_payments.var.current_invoice_no+"&current_booking_reference="+ledger_payments.var.current_booking_reference,
+
+        ctx['invoice_group_id'] = invoice_group_id
+        ctx['invoice_no'] = invoice_no
+        ctx['booking_reference'] = booking_reference
+        ctx['oracle_code_refund_allocation_pool'] =  settings.UNALLOCATED_ORACLE_CODE
+        self.get_booking_history(invoice_group_id)
+        return ctx
+
+    def get_booking_history(self, invoice_group_id):
+        print ("get_booking_history")
+        return
+
+
 class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
     template_name = 'dpaw_payments/invoice/payment.html'
     num_years = 10

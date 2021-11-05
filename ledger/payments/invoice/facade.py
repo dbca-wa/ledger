@@ -21,6 +21,10 @@ def create_invoice_crn(order_number, amount, crn_string, system, text, payment_m
         amount=amount,
         reference = getCRN(crn_string)
     )
+
+    print ("create_invoice_crn!!! <<- JASON")
+    print (inv)
+    
     if created:
         if payment_method:
             inv.payment_method = _get_payment_choice(payment_method)
