@@ -20,14 +20,14 @@ from oscar.core.loading import get_class, get_model, get_classes
 from oscar.apps.checkout import signals
 from oscar.apps.shipping.methods import NoShippingRequired
 #
-from ledger.payments.models import Invoice, BpointToken, OracleInterfaceSystem
+from ledger.payments.models import Invoice, BpointToken, OracleInterfaceSystem, LinkedInvoiceGroupIncrementer, LinkedInvoice
 from ledger.accounts.models import EmailUser
 from ledger.payments.facade import invoice_facade, bpoint_facade, bpay_facade
-from ledger.payments.utils import isLedgerURL, systemid_check
+from ledger.payments.utils import isLedgerURL, systemid_check, LinkedInvoiceCreate
 from ledger.api import models as ledgerapi_models
 from ledger.api import utils as ledgerapi_utils
 from ledger.payments.bpoint.gateway import Gateway
-
+from ledger.basket.models import Basket
 
 Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -182,7 +182,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # If it is valid, we render the preview screen with the forms hidden
         # within it.  When the preview is submitted, we pick up the 'action'
         # parameters and actually place the order.
-
         if request.POST.get('action', '') == 'place_order':
             if self.checkout_session.payment_method() == 'card':
                 return self.do_place_order(request)
@@ -215,7 +214,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 ctx = self.get_context_data(
                     bankcard_form=bankcard_form)
                 return self.render_to_response(ctx)
-
         # Render preview with bankcard hidden
         if self.checkout_session.payment_method() == 'card' and not checkout_token:
             return self.render_preview(request,bankcard_form=bankcard_form)
@@ -245,7 +243,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                              )
         # END GET CRIDENTIAL FROM MODEL
         #return self.render_payment_message(self.request, error=None,)
-
         if not self.checkout_session.checkout_token():
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
@@ -254,8 +251,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                           return self.render_payment_message(self.request, error=None,)
                           #HttpResponse("ERROR PLEASE CHECK")
                 return HttpResponseRedirect(reverse('checkout:payment-details'))
-
-
+ 
         if self.request.COOKIES.get('payment_api_wrapper') == 'true':
             try:
                 submission = self.build_submission()
@@ -273,7 +269,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             if not self.checkout_session.checkout_token():
                 submission['payment_kwargs']['bankcard'] = bankcard_form.bankcard
             return self.submit(**submission)
-
+         
     def render_payment_message(self, request, **kwargs):
         """
         Show the payment details page
@@ -287,16 +283,40 @@ class PaymentDetailsView(CorePaymentDetailsView):
         self.template_name = "checkout/preview-ledger-api.html"
         return self.render_to_response(ctx)
 
+    def createInvoiceLinks(self,invoice):
+        basket_id = self.checkout_session.get_submitted_basket_id()
+        LinkedInvoiceCreate(invoice, basket_id)
+        return
+
+        #basket_id = self.checkout_session.get_submitted_basket_id()
+        #basket = Basket.objects.get(id=basket_id)
+        #system_id = basket.system.replace("S","0")
+        #ois = OracleInterfaceSystem.objects.get(system_id=system_id)
+        #li = None
+        #lig = None
+
+        #if LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference, booking_reference_linked=basket.booking_reference_link).count(): 
+        #    print ("LinkedInvoice already exists, not dupilication")
+        #else:
+        #    if basket.booking_reference_link:
+        #        if len(basket.booking_reference_link) > 0:
+        #            li = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference_link)
+        #            if li.count() > 0:
+        #                lig = li[0].invoice_group_id
+        #    if lig is None:
+        #         lig = LinkedInvoiceGroupIncrementer.objects.create(system_identifier=ois)
+
+        #    lininv = LinkedInvoice.objects.create(invoice_reference=invoice.reference, system_identifier=ois,booking_reference=basket.booking_reference,booking_reference_linked=basket.booking_reference_link, invoice_group_id=lig)
+
     def doInvoice(self,order_number,total,**kwargs):
         method = self.checkout_session.bpay_method()
         system = self.checkout_session.system()
-
         icrn_format = self.checkout_session.icrn_format()
         # Generate the string to be used to generate the icrn
         crn_string = '{0}{1}'.format(systemid_check(system),order_number)
 
         if method == 'crn':
-            return invoice_facade.create_invoice_crn(
+            invoice = invoice_facade.create_invoice_crn(
                 order_number,
                 total.incl_tax,
                 crn_string,
@@ -304,8 +324,11 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '',
                 self.checkout_session.payment_method() if self.checkout_session.payment_method() else None
             )
+            self.createInvoiceLinks(invoice)
+            return invoice
+
         elif method == 'icrn':
-            return invoice_facade.create_invoice_icrn(
+            invoice = invoice_facade.create_invoice_icrn(
                 order_number,
                 total.incl_tax,
                 crn_string,
@@ -314,6 +337,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '',
                 self.checkout_session.payment_method() if self.checkout_session.payment_method() else None
             )
+            self.createInvoiceLinks(invoice)
+            return invoice
         else:
             raise ValueError('{0} is not a supported BPAY method.'.format(method))
 
@@ -363,7 +388,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         #Generate Invoice
                         logger.info('Order #%s: doInvoice with method: '+str(method), order_number)
                         invoice = self.doInvoice(order_number,total)
-
                         # Swap user if in session
                         if self.checkout_session.basket_owner():
                             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
@@ -507,7 +531,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # site.
         self.freeze_basket(basket)
         self.checkout_session.set_submitted_basket(basket)
-
+    
         # We define a general error message for when an unanticipated payment
         # error occurs.
         error_msg = _("A problem occurred while processing payment for this "
@@ -573,6 +597,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             else:
                   return self.render_preview(self.request, error=error_msg, **payment_kwargs)
 
+        logger.info("Order #%s: payment successful, PRE placing order", order_number)
         signals.post_payment.send_robust(sender=self, view=self)
 
         # If all is ok with payment, try and place order

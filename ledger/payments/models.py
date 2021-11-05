@@ -152,3 +152,15 @@ class TrackRefund(models.Model):
     type = models.SmallIntegerField(choices=REFUND_TYPES)
     refund_id = models.PositiveIntegerField()
     details = models.TextField()
+
+class LinkedInvoiceGroupIncrementer(models.Model):
+      system_identifier = models.ForeignKey(OracleInterfaceSystem)
+      created = models.DateTimeField(auto_now_add=True)
+
+class LinkedInvoice(models.Model):
+    invoice_reference = models.CharField(max_length=1000) 
+    system_identifier = models.ForeignKey(OracleInterfaceSystem)
+    booking_reference = models.CharField(max_length=1000)
+    booking_reference_linked = models.CharField(max_length=1000, null=True,blank=True)
+    invoice_group_id = models.ForeignKey(LinkedInvoiceGroupIncrementer)
+    created = models.DateTimeField(auto_now_add=True)

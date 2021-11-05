@@ -177,9 +177,29 @@ class BpointTransaction(models.Model):
 
     def refund(self,info,user,matched=True):
         from ledger.payments.facade import bpoint_facade 
-        from ledger.payments.models import TrackRefund, Invoice
+        from ledger.payments.models import TrackRefund, Invoice, OracleInterfaceSystem
+        from ledger.payments.bpoint.gateway import Gateway
+
+        print ("GATEWAY INFO")
+        print (bpoint_facade.gateway)
         LEDGER_REFUND_EMAIL = env('LEDGER_REFUND_EMAIL', False)
         LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE =env('LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE', '')
+        print ("CRN <!----")
+        crn_number = self.crn1[:4]
+
+        ois = OracleInterfaceSystem.objects.get(system_id=crn_number)
+        if ois.integration_type == 'bpoint_api':
+             print ("SETTING BPOINT GATEWAY") 
+             bpoint_facade.gateway = Gateway(
+                 ois.bpoint_username,
+                 ois.bpoint_password,
+                 ois.bpoint_merchant_num,
+                 ois.bpoint_currency,
+                 ois.bpoint_biller_code,
+                 ois.bpoint_test,
+                 ois.id
+             )
+
         with transaction.atomic():
             amount = info['amount']
             details = info['details']

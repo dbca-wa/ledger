@@ -22,9 +22,6 @@ selector = Selector()
 
 
 def create_basket_session_v2(emailuser_id, parameters):
-    print ("C1")
-    print (parameters)
-
     if emailuser_id:
         pass
     else:
@@ -32,18 +29,18 @@ def create_basket_session_v2(emailuser_id, parameters):
         print ("USER IS NOT LOGGED IN")
 
     user_obj = EmailUser.objects.get(id=int(emailuser_id))
-    print ("C1.1")
     serializer = serializers.BasketSerializer(data=parameters)
-    print ("C1.2")
-    print (serializer.is_valid(raise_exception=True))
     serializer.is_valid(raise_exception=True)
-    print ("C1.3")
     custom = serializer.validated_data.get('custom_basket')
-    print ("C1.4")
     booking_reference = None
+    booking_reference_link = None
 
     if 'booking_reference' in parameters:
         booking_reference = serializer.validated_data['booking_reference']
+
+    if 'booking_reference_link' in parameters:
+        booking_reference_link = serializer.validated_data['booking_reference_link']
+
     # validate product list
     if custom:
         product_serializer = serializers.CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'), many=True)
@@ -51,7 +48,6 @@ def create_basket_session_v2(emailuser_id, parameters):
         product_serializer = serializers.CheckoutProductSerializer(data=serializer.initial_data.get('products'), many=True)
 
     product_serializer.is_valid(raise_exception=True)
-    print ("C2")
     # Cleaning up stale Baskets
     #if request.user:
     #   if request.user.__class__.__name__ == 'EmailUser':
@@ -61,25 +57,23 @@ def create_basket_session_v2(emailuser_id, parameters):
               b.status='Frozen'
               b.save()
 
-    print ("C3")
     # validate basket
     if serializer.validated_data.get('vouchers'):
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
                                         user_obj, serializer.validated_data['system'],
-                                        serializer.validated_data['vouchers'],True,booking_reference)
+                                        serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link)
         else:
             basket = createBasket(serializer.validated_data['products'], user_obj,
                                     serializer.validated_data['system'],
-                                    serializer.validated_data['vouchers'],True,booking_reference)
+                                    serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link)
     else:
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
-                                        user_obj, serializer.validated_data['system'],None,True,booking_reference)
+                                        user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link)
         else:
             basket = createBasket(serializer.validated_data['products'],
-                                    user_obj, serializer.validated_data['system'],None,True,booking_reference)
-    print ("C4")
+                                    user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link)
     return basket, BasketMiddleware().get_basket_hash(basket.id)
 
 
@@ -90,13 +84,19 @@ def create_basket_session(request, parameters):
     serializer.is_valid(raise_exception=True)
     custom = serializer.validated_data.get('custom_basket')
     booking_reference = None
+    booking_reference_link = None
     if 'booking_reference' in parameters:
         booking_reference = serializer.validated_data['booking_reference']
+
+    if 'booking_reference_link' in parameters:
+        booking_reference_link = serializer.validated_data['booking_reference_link']
+
     # validate product list
     if custom:
         product_serializer = serializers.CheckoutCustomProductSerializer(data=serializer.initial_data.get('products'), many=True)
     else:
         product_serializer = serializers.CheckoutProductSerializer(data=serializer.initial_data.get('products'), many=True)
+
     product_serializer.is_valid(raise_exception=True)
     # Cleaning up stale Baskets
     if request.user:
@@ -110,18 +110,18 @@ def create_basket_session(request, parameters):
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
                                         request.user, serializer.validated_data['system'],
-                                        serializer.validated_data['vouchers'],True,booking_reference)
+                                        serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link)
         else:
             basket = createBasket(serializer.validated_data['products'], request.user,
                                     serializer.validated_data['system'],
-                                    serializer.validated_data['vouchers'],True,booking_reference)
+                                    serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link)
     else:
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
-                                        request.user, serializer.validated_data['system'],None,True,booking_reference)
+                                        request.user, serializer.validated_data['system'],None,True,booking_reference,booking_reference_link)
         else:
             basket = createBasket(serializer.validated_data['products'],
-                                    request.user, serializer.validated_data['system'],None,True,booking_reference)
+                                    request.user, serializer.validated_data['system'],None,True,booking_reference,booking_reference_link)
 
     return basket, BasketMiddleware().get_basket_hash(basket.id)
 
@@ -390,7 +390,7 @@ def calculate_excl_gst(amount):
     return result
 
 
-def createBasket(product_list, owner, system, vouchers=None, force_flush=True, booking_reference=None):
+def createBasket(product_list, owner, system, vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -422,11 +422,13 @@ def createBasket(product_list, owner, system, vouchers=None, force_flush=True, b
                 raise ValidationError('You have a basket that is not completed in system {}'.format(old_basket.system))
         else:
             basket = Basket()
+
         # Set the owner and strategy being used to create the basket
         if isinstance(owner, User):
             basket.owner = owner
         basket.system = system
         basket.booking_reference = booking_reference
+        basket.booking_reference_link = booking_reference_link
         basket.strategy = selector.strategy(user=owner)
         # Check if there are products to be added to the cart and if they are valid products
         if not product_list:
@@ -452,7 +454,7 @@ def createBasket(product_list, owner, system, vouchers=None, force_flush=True, b
         raise
 
 
-def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True, booking_reference=None):
+def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -492,6 +494,7 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         basket.system = system
         basket.strategy = selector.strategy(user=owner)
         basket.booking_reference = booking_reference
+        basket.booking_reference_link = booking_reference_link
         basket.custom_ledger = True
         # Check if there are products to be added to the cart and if they are valid products
         # EXAMPLE config for settings.py: os.environ['LEDGER_CUSTOM_PRODUCT_LIST'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code','line_status')"

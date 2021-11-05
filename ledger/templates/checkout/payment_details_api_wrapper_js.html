@@ -68,7 +68,7 @@ $(function() {
 
 $("#pay-with-store-card").click(function() {
       ledger.showLoader();
-
+      console.log("pay-with-store-card clicked");
       var card = $('input[name=card]:checked').val();
       var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
       var checkout_token = $('#checkout_token').val();

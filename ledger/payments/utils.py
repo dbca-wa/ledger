@@ -13,7 +13,8 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
 from six.moves.urllib.parse import urlparse
 #
-from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction
+from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction, OracleInterfaceSystem, LinkedInvoiceGroupIncrementer, LinkedInvoice
+#from ledger.payments.invoice import utils
 from oscar.apps.order.models import Order
 from ledger.basket.models import Basket
 from oscar.core.loading import get_class
@@ -827,3 +828,42 @@ def bpoint_integrity_checks_completed(bpoint_id,crn1):
     except:
         return False
 
+
+
+def LinkedInvoiceCreate(invoice, basket_id):
+        print ("CREATING INVOICE LINK")
+        basket = Basket.objects.get(id=basket_id)
+        system_id = basket.system.replace("S","0")
+        ois = OracleInterfaceSystem.objects.get(system_id=system_id)
+        li = None
+        lig = None
+
+        if LinkedInvoice.objects.filter(invoice_reference=invoice.reference,system_identifier=ois,booking_reference=basket.booking_reference, booking_reference_linked=basket.booking_reference_link).count():
+            print ("LinkedInvoice already exists, not dupilication")
+        else:
+            if basket.booking_reference_link:
+                if len(basket.booking_reference_link) > 0:
+                    li = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference_link)
+                    if li.count() > 0:
+                        lig = li[0].invoice_group_id
+            if lig is None:
+                 lig = LinkedInvoiceGroupIncrementer.objects.create(system_identifier=ois)
+
+            lininv = LinkedInvoice.objects.create(invoice_reference=invoice.reference, system_identifier=ois,booking_reference=basket.booking_reference,booking_reference_linked=basket.booking_reference_link, invoice_group_id=lig)
+
+
+#def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None):
+#        basket_params = {
+#            'products': lines,
+#            'vouchers': [],
+#            'system': settings.PS_PAYMENT_SYSTEM_ID,
+#            'custom_basket': True,
+#            'booking_reference': booking_reference
+#        }
+#        basket, basket_hash = create_basket_session(request, basket_params)
+#        ci = utils.CreateInvoiceBasket()
+#        order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Oracle Allocation Pools', )
+#        new_invoice = Invoice.objects.get(order_number=order.number)
+#        update_payments(new_invoice.reference)
+#        return order
+#

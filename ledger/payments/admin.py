@@ -134,3 +134,10 @@ class OracleInterfaceSystemAdmin(admin.ModelAdmin):
 @admin.register(models.OracleAccountCode)
 class OracleAccountCode(admin.ModelAdmin):
     list_display = ('active_receivables_activities',)
+
+
+@admin.register(models.LinkedInvoice)
+class LinkedInvoiceAdmin(admin.ModelAdmin):
+    list_display = ('invoice_reference','system_identifier','booking_reference','booking_reference_linked','invoice_group_id_id','created')
+
+
