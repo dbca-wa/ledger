@@ -837,19 +837,21 @@ def LinkedInvoiceCreate(invoice, basket_id):
         ois = OracleInterfaceSystem.objects.get(system_id=system_id)
         li = None
         lig = None
+    
+        if basket.booking_reference: 
+             if (basket.booking_reference) > 0:
+                  if LinkedInvoice.objects.filter(invoice_reference=invoice.reference,system_identifier=ois,booking_reference=basket.booking_reference, booking_reference_linked=basket.booking_reference_link).count():
+                      print ("LinkedInvoice already exists, not dupilication")
+                  else:
+                      if basket.booking_reference_link:
+                          if len(basket.booking_reference_link) > 0:
+                              li = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference_link)
+                              if li.count() > 0:
+                                  lig = li[0].invoice_group_id
+                      if lig is None:
+                           lig = LinkedInvoiceGroupIncrementer.objects.create(system_identifier=ois)
 
-        if LinkedInvoice.objects.filter(invoice_reference=invoice.reference,system_identifier=ois,booking_reference=basket.booking_reference, booking_reference_linked=basket.booking_reference_link).count():
-            print ("LinkedInvoice already exists, not dupilication")
-        else:
-            if basket.booking_reference_link:
-                if len(basket.booking_reference_link) > 0:
-                    li = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference_link)
-                    if li.count() > 0:
-                        lig = li[0].invoice_group_id
-            if lig is None:
-                 lig = LinkedInvoiceGroupIncrementer.objects.create(system_identifier=ois)
-
-            lininv = LinkedInvoice.objects.create(invoice_reference=invoice.reference, system_identifier=ois,booking_reference=basket.booking_reference,booking_reference_linked=basket.booking_reference_link, invoice_group_id=lig)
+                      lininv = LinkedInvoice.objects.create(invoice_reference=invoice.reference, system_identifier=ois,booking_reference=basket.booking_reference,booking_reference_linked=basket.booking_reference_link, invoice_group_id=lig)
 
 
 #def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None):
