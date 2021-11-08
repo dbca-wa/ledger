@@ -839,7 +839,7 @@ def LinkedInvoiceCreate(invoice, basket_id):
         lig = None
     
         if basket.booking_reference: 
-             if (basket.booking_reference) > 0:
+             if len(basket.booking_reference) > 0:
                   if LinkedInvoice.objects.filter(invoice_reference=invoice.reference,system_identifier=ois,booking_reference=basket.booking_reference, booking_reference_linked=basket.booking_reference_link).count():
                       print ("LinkedInvoice already exists, not dupilication")
                   else:
