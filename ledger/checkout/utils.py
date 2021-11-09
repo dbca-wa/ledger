@@ -166,7 +166,6 @@ def create_checkout_session(request, parameters):
     session_data.charge_by(serializer.validated_data['card_method'])
     session_data.use_shipping_method(serializer.validated_data['shipping_method'])
     session_data.owned_by(serializer.validated_data['basket_owner'])
-
     # FIXME: replace internal user ID with email address once lookup/alias issues sorted
     email = None
     if serializer.validated_data['basket_owner'] and request.user.is_anonymous():
@@ -174,10 +173,8 @@ def create_checkout_session(request, parameters):
     if email is None: 
         if 'session_type' in parameters:
              if parameters['session_type'] == 'ledger_api':
-    #              print ("CC 4.2")
                   if parameters['user_logged_in']:
                       email = EmailUser.objects.get(id=serializer.validated_data['user_logged_in']).email
-    #              print ("CC 4.3")
     session_data.set_guest_email(email)
     if 'user_logged_in' in parameters:
         if parameters['user_logged_in'] is not None:
@@ -214,7 +211,9 @@ def create_checkout_session(request, parameters):
 # useful for internal booking methods being invoked from server-side.
 def place_order_submission(request):
     from ledger.checkout.views import PaymentDetailsView
-    pdv = PaymentDetailsView(request=request, checkout_session=CheckoutSessionData(request))
+    cs = CheckoutSessionData(request)
+    pdv = PaymentDetailsView(request=request, checkout_session=cs)
+    pdv.get(request)
     result = pdv.handle_place_order_submission(request)
     return result
 

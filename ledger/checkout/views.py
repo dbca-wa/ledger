@@ -100,6 +100,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
 
     def skip_preview_if_free(self, request):
         if self.preview:
+
             # Check to see if payment is actually required for this order.
             shipping_address = self.get_shipping_address(request.basket)
             shipping_method = self.get_shipping_method(
@@ -115,6 +116,31 @@ class PaymentDetailsView(CorePaymentDetailsView):
                     tax=D('0.00')
                 )
             total = self.get_order_totals(request.basket, shipping_charge)
+            if total.excl_tax == D('0.00'):
+                self.checkout_session.is_free_basket(True)
+                return True
+        return False
+    def check_for_refund(self, request):
+        print ("skip_preview_if_refund")
+        
+        if self.preview:
+            # Check to see if payment is actually required for this order.
+            shipping_address = self.get_shipping_address(request.basket)
+            shipping_method = self.get_shipping_method(
+                request.basket, shipping_address)
+            if shipping_method:
+                shipping_charge = shipping_method.calculate(request.basket)
+            else:
+                # It's unusual to get here as a shipping method should be set by
+                # the time this skip-condition is called. In the absence of any
+                # other evidence, we assume the shipping charge is zero.
+                shipping_charge = prices.Price(
+                    currency=request.basket.currency, excl_tax=D('0.00'),
+                    tax=D('0.00')
+                )
+            total = self.get_order_totals(request.basket, shipping_charge)
+            print ("REFUND check")
+            print (total)
             if total.excl_tax == D('0.00'):
                 self.checkout_session.is_free_basket(True)
                 return True
@@ -501,7 +527,10 @@ class PaymentDetailsView(CorePaymentDetailsView):
         """
 
         payment_api_wrapper = self.request.COOKIES.get('payment_api_wrapper','false')
-
+        #basket.is_tax_known = True
+        #print ("BASKET LOADED SUBMIT")
+        #print (basket)
+        #print (basket.is_tax_known)
 
         if payment_kwargs is None:
             payment_kwargs = {}

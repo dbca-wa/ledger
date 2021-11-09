@@ -180,16 +180,12 @@ class BpointTransaction(models.Model):
         from ledger.payments.models import TrackRefund, Invoice, OracleInterfaceSystem
         from ledger.payments.bpoint.gateway import Gateway
 
-        print ("GATEWAY INFO")
-        print (bpoint_facade.gateway)
         LEDGER_REFUND_EMAIL = env('LEDGER_REFUND_EMAIL', False)
         LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE =env('LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE', '')
-        print ("CRN <!----")
         crn_number = self.crn1[:4]
 
         ois = OracleInterfaceSystem.objects.get(system_id=crn_number)
         if ois.integration_type == 'bpoint_api':
-             print ("SETTING BPOINT GATEWAY") 
              bpoint_facade.gateway = Gateway(
                  ois.bpoint_username,
                  ois.bpoint_password,
