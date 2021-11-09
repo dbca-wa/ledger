@@ -1,5 +1,5 @@
 import requests
-
+import json
 from oscar.core.loading import get_class
 from ledger.payments.models import Invoice
 from django.http import HttpResponseRedirect
@@ -83,16 +83,17 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
                 self.request.session._session_cache = self.request.session.load()
             except requests.exceptions.ConnectionError:
                 pass
-
+     
         if not force_redirect:
             response = HttpResponseRedirect(self.get_success_url())
         elif session_type == 'ledger_api':
+            print ('ledger_api')
             #return_url_success = '{}?invoice={}'.format(return_url, invoice.reference)
             return_url_success = '{}'.format(return_url)
-            response = HttpResponse("<script> window.location='"+return_url_success+"';</script> <a href='"+return_url_success+"'> Redirecting please wait: "+return_url_success+"</a>")
+            response = HttpResponse(json.dumps({'return_url': return_url_success}), content_type='application/json')
+            #response = HttpResponse("<script> window.location='"+return_url_success+"';</script> <a href='"+return_url_success+"'> Redirecting please wait: "+return_url_success+"</a>")
         else:
             response = HttpResponseRedirect('{}?invoice={}'.format(return_url, invoice.reference))
-
         self.send_signal(self.request, response, order)
 
         return response

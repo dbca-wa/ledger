@@ -22,9 +22,7 @@
                 pointer-events: none;
 	}
 	.btn-payment-large {
-
-width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;
-
+             width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;
 	}
         .right-column {
 	     min-height: 70%;  
@@ -43,13 +41,13 @@ width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;
                 <div class="col-sm-6 col-lg-6" style='min-height: 70%; border: 0px solid #000; background-color: #FFF; '>
                     <div style='padding: 20px'>
 
-                    <form id="stored_card_form" method="post" action="/ledger-api/process-payment" oldaction="{% url 'checkout:preview' %}" class="iihide form-stacked">
+                        <form id="stored_card_form" method="post" action="/ledger-api/process-payment" oldaction="{% url 'checkout:preview' %}" class="iihide form-stacked">
 			<input type="hidden" id='payment-csrfmiddlewaretoken' name="payment-csrfmiddlewaretoken" value="{{csrf_token}}">
                         <input type="hidden" name="checkout_token" id='checkout_token' readonly value="True"/>
                         <input type="hidden" name="payment_method" id='payment_method' readonly value="card"/>
 
 			<table style="width:100%;">
-		          <tr >
+		          <tr>
 				  <td style='padding: 5px;'><input  type="radio" name="card" value="new" checked="checked"/> Enter new card</td>
                           </tr>
 
@@ -114,7 +112,7 @@ width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;
 	    </div>
             </div>
 
-            <div class="col-lg-6 right-column" >
+            <div class="col-lg-6 right-column">
 		  <div style='padding: 20px'> 
 			  {% include "checkout/preview-basket.html" %}
                   </div>
