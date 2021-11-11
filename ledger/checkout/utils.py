@@ -22,6 +22,7 @@ selector = Selector()
 
 
 def create_basket_session_v2(emailuser_id, parameters):
+    print ("create_basket_session params v2")
     if emailuser_id:
         pass
     else:
@@ -80,6 +81,7 @@ def create_basket_session_v2(emailuser_id, parameters):
 # create a basket in Oscar.
 # a basket contains the system ID, list of product line items, vouchers, and not much else.
 def create_basket_session(request, parameters):
+    print ("create_basket_session params")
     serializer = serializers.BasketSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
     custom = serializer.validated_data.get('custom_basket')
@@ -158,8 +160,14 @@ def get_cookie_basket(cookie_key,request):
 def create_checkout_session(request, parameters):
     #print (parameters['user_logged_in'])
     serializer = serializers.CheckoutSerializer(data=parameters)
-    serializer.is_valid(raise_exception=True)
-    session_data = CheckoutSessionData(request) 
+    try:
+        serializer.is_valid(raise_exception=True)
+    except Exception as e:
+        raise ValidationError(str(e))
+    try:
+        session_data = CheckoutSessionData(request)
+    except Exception as e:
+        raise ValidationError(str(e))
     # reset method of payment when creating a new session
     session_data.pay_by(None)
     session_data.use_system(serializer.validated_data['system'])
@@ -174,7 +182,9 @@ def create_checkout_session(request, parameters):
         if 'session_type' in parameters:
              if parameters['session_type'] == 'ledger_api':
                   if parameters['user_logged_in']:
+                      print ("CRE SESS")
                       email = EmailUser.objects.get(id=serializer.validated_data['user_logged_in']).email
+                      print (email)
     session_data.set_guest_email(email)
     if 'user_logged_in' in parameters:
         if parameters['user_logged_in'] is not None:
@@ -184,7 +194,6 @@ def create_checkout_session(request, parameters):
     else:
         session_data.set_user_logged_in(None)
     session_data.use_template(serializer.validated_data['template'])
-
     # fallback url?
     session_data.return_to(serializer.validated_data['return_url'])
     session_data.return_preload_to(serializer.validated_data['return_preload_url'])
@@ -193,11 +202,9 @@ def create_checkout_session(request, parameters):
     session_data.return_email(serializer.validated_data['send_email'])
     session_data.is_proxy(serializer.validated_data['proxy'])
     session_data.checkout_using_token(serializer.validated_data['checkout_token'])
-
     session_data.bpay_using(serializer.validated_data['bpay_format'])
     session_data.icrn_using(serializer.validated_data['icrn_format'])
     session_data.bpay_by(serializer.validated_data['icrn_date'])
-
     session_data.set_invoice_text(serializer.validated_data['invoice_text'])
 
     session_data.set_last_check(serializer.validated_data['check_url'])

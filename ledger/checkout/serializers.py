@@ -53,7 +53,6 @@ class BasketSerializer(serializers.Serializer):
             raise serializers.ValidationError('The system ID should be 4 characters long')
         if not is_valid_system(value):
             raise serializers.ValidationError('The system ID is not valid')
-        
         return value
 
 
@@ -92,7 +91,6 @@ class CheckoutSerializer(serializers.Serializer):
             raise serializers.ValidationError('The system ID should be 4 characters long')
         if not is_valid_system(value):
             raise serializers.ValidationError('The system ID is not valid')
-
         return value
 
     def validate_template(self, value):

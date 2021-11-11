@@ -11,7 +11,6 @@ from ledger.urls import urlpatterns as ledger_patterns
 # URL Patterns
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-
     url(r'^ledgergw/remote/user/(?P<ledgeremail>.+)/(?P<apikey>.+)/', api.user_info),
     url(r'^ledgergw/remote/user-groups/(?P<ledger_id>[0-9]+)/(?P<apikey>.+)/', api.user_group_info),
     url(r'^ledgergw/remote/userid/(?P<userid>[0-9]+)/(?P<apikey>.+)/', api.user_info_id),
@@ -25,6 +24,7 @@ urlpatterns = [
     url(r'^ledgergw/remote/get-basket-total/(?P<apikey>.+)/', api.get_basket_total),
     url(r'^ledgergw/remote/get_order_info/(?P<apikey>.+)/', api.get_order_info),
     url(r'^ledgergw/remote/process_refund/(?P<apikey>.+)/', api.process_refund),
+    url(r'^ledgergw/remote/process-api-refund/(?P<apikey>.+)/', api.process_api_refund),
     url(r'^ledgergw/ip-check/', api.ip_check),
     url(r'^reports/$', views.ReportsView.as_view(), name='reports'),
     url(r'^logout/$', logout, name='logout' ),
