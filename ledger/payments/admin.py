@@ -140,4 +140,7 @@ class OracleAccountCode(admin.ModelAdmin):
 class LinkedInvoiceAdmin(admin.ModelAdmin):
     list_display = ('invoice_reference','system_identifier','booking_reference','booking_reference_linked','invoice_group_id_id','created')
 
+@admin.register(models.RefundFailed)
+class RefundFailedAdmin(admin.ModelAdmin):
+    list_display = ('invoice_group','booking_reference','invoice_reference','refund_amount','status','system_identifier','created','completed_date','completed_by')
 

@@ -59,7 +59,7 @@ $(function() {
     var visa_regex = /^[4]{1}\d+$/;
     // Reset Forms
     function reset_forms() {
-        if (stored_card_form.length > 0){
+        if (stored_card_form.length > 0) {
             stored_card_form[0].reset();
         }
         new_card_form[0].reset();
@@ -67,8 +67,6 @@ $(function() {
     }
 
 $("#process-refund").click(function() {
-
-      alert("PROCESS REFUND");
       ledger.showLoader();
       console.log("process-refund clicked");
       var card = $('input[name=card]:checked').val();

@@ -17,13 +17,14 @@ from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollectio
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
-from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode
+from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode, RefundFailed, OracleInterfaceSystem
 from ledger.payments.utils import systemid_check, update_payments
 from ledger.payments.invoice import utils as invoice_utils
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv, generate_items_csv_allocated
 from ledger.payments.emails import send_refund_email
 from ledger.payments import helpers
+from django.db.models import Q
 
 from ledger.accounts.models import EmailUser
 from ledger.order import models as order_model 
@@ -31,6 +32,7 @@ from oscar.apps.order.models import Order
 from oscar.apps.payment import forms
 from decimal import Decimal
 from confy import env
+from datetime import datetime
 import traceback
 import six
 
@@ -846,106 +848,127 @@ class ReportCreateAllocatedView(views.APIView):
 #######################################################
 
 def LedgerPayments(request, *args, **kwargs):
-    invoice_group_id = request.GET.get('invoice_group_id','')
+    invoice_group_id = request.GET.get('invoice_group_id',None)
     invoice_no = request.GET.get('invoice_no','')
     booking_reference = request.GET.get('booking_reference','')
 
     data = {"status": 403, "data": {}} 
-
+    
     if helpers.is_payment_admin(request.user) is True:
         exists = False
-        if len(invoice_group_id) > 0:
-            pass
-        elif len(invoice_no) > 0:
+        #if invoice_group_id: 
+        #    if len(invoice_group_id) > 0:
+        #       pass
+
+        if len(invoice_no) > 0:
             link_res = LinkedInvoice.objects.filter(invoice_reference=invoice_no)
             if link_res.count() > 0:
-                invoice_group_id = link_res[0].invoice_group_id
+                invoice_group_id = link_res[0].invoice_group_id.id
         elif len(booking_reference) > 0:
             link_res = LinkedInvoice.objects.filter(booking_reference=booking_reference)
             if link_res.count() > 0:
-                invoice_group_id = link_res[0].invoice_group_id
+                invoice_group_id = link_res[0].invoice_group_id.id
 
+        if invoice_group_id:
+                if int(invoice_group_id) > 0:
+                     linkinv = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id)
+                     if linkinv.count() > 0:
+                         latest_li = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id).order_by('-created')[0]
+                         linked_payments = []
+                         invoices = []
+                         orders = []
+                         for li in linkinv:
+                             invoices.append(li.invoice_reference)
+                             linked_payments.append({'id': li.id, 'invoice_reference': li.invoice_reference, 'system_identifier_id': li.system_identifier.id, 'system_identifier_system': li.system_identifier.system_id, 'booking_reference': li.booking_reference, 'booking_reference_linked': li.booking_reference_linked, 'invoice_group_id': li.invoice_group_id.id})
+                         invs = Invoice.objects.filter(reference__in=invoices)
+                         for i in invs:
+                             orders.append(i.order_number)
+                         invoice_orders = Order.objects.filter(number__in=orders)
+                         order_array = []
+                         order_obj = order_model.Line.objects.filter(order__number__in=orders).order_by('order__date_placed')
+                         rolling_total = Decimal('0.00')
+                         total_unallocated = Decimal('0.00')
 
-        linkinv = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id)
-        if linkinv.count() > 0:
-            latest_li = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id).order_by('-created')[0]
-            linked_payments = []
-            invoices = []
-            orders = []
-            for li in linkinv:
-                invoices.append(li.invoice_reference)
-                linked_payments.append({'id': li.id, 'invoice_reference': li.invoice_reference, 'system_identifier_id': li.system_identifier.id, 'system_identifier_system': li.system_identifier.system_id, 'booking_reference': li.booking_reference, 'booking_reference_linked': li.booking_reference_linked, 'invoice_group_id': li.invoice_group_id.id})
-            invs = Invoice.objects.filter(reference__in=invoices)
-            for i in invs:
-                orders.append(i.order_number)
-            invoice_orders = Order.objects.filter(number__in=orders)
-            order_array = []
-            order_obj = order_model.Line.objects.filter(order__number__in=orders).order_by('order__date_placed')
-            rolling_total = Decimal('0.00')
-            total_unallocated = Decimal('0.00')
+                         oracle_code_totals = {}
+                         data['data']['oracle_code_totals'] = {}
+                         for o in order_obj:
+                             if o.oracle_code == 'NNP449 GST':
+                                 total_unallocated = total_unallocated + o.line_price_incl_tax
+                             rolling_total = rolling_total + o.line_price_incl_tax
+                             row = {'id': o.id, 'order_number': o.order.number, 'title': o.title, 'line_price_incl_tax': str(o.line_price_incl_tax), 'oracle_code': o.oracle_code, 'rolling_total': str(rolling_total), 'order_date': o.order.date_placed.strftime("%d/%m/%Y %H:%M:%S")}
+                             order_array.append(row)
 
-            oracle_code_totals = {}
-            data['data']['oracle_code_totals'] = {}
-            for o in order_obj:
-                if o.oracle_code == 'NNP449 GST':
-                    total_unallocated = total_unallocated + o.line_price_incl_tax
-                rolling_total = rolling_total + o.line_price_incl_tax
-                row = {'id': o.id, 'order_number': o.order.number, 'title': o.title, 'line_price_incl_tax': str(o.line_price_incl_tax), 'oracle_code': o.oracle_code, 'rolling_total': str(rolling_total), 'order_date': o.order.date_placed.strftime("%d/%m/%Y %H:%M:%S")}
-                order_array.append(row)
+                             if o.oracle_code not in oracle_code_totals:
+                                 print ("NOT IN")
+                                 oracle_code_totals[o.oracle_code] = Decimal('0.00')
+                             oracle_code_totals[o.oracle_code] = oracle_code_totals[o.oracle_code] + o.line_price_incl_tax 
 
-                if o.oracle_code not in oracle_code_totals:
-                    print ("NOT IN")
-                    oracle_code_totals[o.oracle_code] = Decimal('0.00')
-                oracle_code_totals[o.oracle_code] = oracle_code_totals[o.oracle_code] + o.line_price_incl_tax 
+                         for cct in oracle_code_totals.keys():
+                             data['data']['oracle_code_totals'][cct] = str(oracle_code_totals[cct])
 
-            print (oracle_code_totals)            
-            for cct in oracle_code_totals.keys():
-                data['data']['oracle_code_totals'][cct] = str(oracle_code_totals[cct])
+                         bp_array = []
+                         bp_txn_refund_hash = {}
+                         bp_trans = BpointTransaction.objects.filter(crn1__in=invoices)
+                         for bp in bp_trans:
+                             if bp.original_txn not in bp_txn_refund_hash:
+                                   bp_txn_refund_hash[bp.original_txn] = Decimal('0.00')
+                             if bp.action == 'refund':
+                                 bp_txn_refund_hash[bp.original_txn] = bp_txn_refund_hash[bp.original_txn] + bp.amount
 
-            bp_array = []
-            bp_txn_refund_hash = {}
-            bp_trans = BpointTransaction.objects.filter(crn1__in=invoices)
-            for bp in bp_trans:
-                if bp.original_txn not in bp_txn_refund_hash:
-                      bp_txn_refund_hash[bp.original_txn] = Decimal('0.00')
-                if bp.action == 'refund':
-                    bp_txn_refund_hash[bp.original_txn] = bp_txn_refund_hash[bp.original_txn] + bp.amount
+                         total_gateway_amount = Decimal('0.00')
+                         for bp in bp_trans:
+                             if bp.action == 'refund':
+                                 total_gateway_amount = total_gateway_amount - bp.amount
+                             else:
+                                 total_gateway_amount = total_gateway_amount + bp.amount
 
-            total_gateway_amount = Decimal('0.00')
-            for bp in bp_trans:
-                if bp.action == 'refund':
-                    total_gateway_amount = total_gateway_amount - bp.amount
-                else:
-                    total_gateway_amount = total_gateway_amount + bp.amount
+                             row = {}
+                             row['id'] = bp.id
+                             row['crn1'] = bp.crn1
+                             row['txnnumber'] = bp.txn_number
+                             row['original_txn'] = bp.original_txn
+                             row['amount'] = str(bp.amount)
+                             row['response_code'] = bp.response_code
+                             row['action'] = bp.action
+                             row['processed'] = bp.processed.strftime("%d/%m/%Y %H:%M:%S")
+                             row['response_txt'] = bp.response_txt
+                             if bp.action == 'payment':
+                                row['amount_refunded'] = '0.00'
+                                if bp.txn_number in bp_txn_refund_hash:
+                                    row['amount_refunded'] = str(bp_txn_refund_hash[bp.txn_number])
+                             bp_array.append(row)
+                         
+                         data['data']['linked_payments'] = linked_payments
+                         data['data']['total_gateway_amount'] = str(total_gateway_amount)
+                         data['data']['total_unallocated'] = str(total_unallocated)
+                         #data['data']['oracle_code_totals']  
+                         data['data']['order'] = order_array
+                         data['data']['bpoint'] = bp_array
+                         data['data']['booking_reference'] = latest_li.booking_reference
+                         data['data']['booking_reference_linked'] = latest_li.booking_reference_linked
+                         data['status'] = 200
+                         exists = True
+                     else:
+                         data['status'] = 404
+                         data['message'] =  "No records found"
+                         data['data']['linked_payments'] = []
+                         data['data']['total_gateway_amount'] = '0.00'
+                         data['data']['total_unallocated'] = '0.00'
+                         data['data']['order'] = []
+                         data['data']['bpoint'] = []
+                         data['data']['booking_reference'] = ''
+                         data['data']['booking_reference_linked'] = ''
 
-                row = {}
-                row['id'] = bp.id
-                row['crn1'] = bp.crn1
-                row['txnnumber'] = bp.txn_number
-                row['original_txn'] = bp.original_txn
-                row['amount'] = str(bp.amount)
-                row['response_code'] = bp.response_code
-                row['action'] = bp.action
-                row['processed'] = bp.processed.strftime("%d/%m/%Y %H:%M:%S")
-                row['response_txt'] = bp.response_txt
-                if bp.action == 'payment':
-                   row['amount_refunded'] = '0.00'
-                   if bp.txn_number in bp_txn_refund_hash:
-                       row['amount_refunded'] = str(bp_txn_refund_hash[bp.txn_number])
-                
-                bp_array.append(row)
-            
-            
-            data['data']['linked_payments'] = linked_payments
-            data['data']['total_gateway_amount'] = str(total_gateway_amount)
-            data['data']['total_unallocated'] = str(total_unallocated)
-            #data['data']['oracle_code_totals']  
-            data['data']['order'] = order_array
-            data['data']['bpoint'] = bp_array
-            data['data']['booking_reference'] = latest_li.booking_reference
-            data['data']['booking_reference_linked'] = latest_li.booking_reference_linked
-            data['status'] = 200
-            exists = True
+        else:
+            data['status'] = 404
+            data['message'] =  "No records found"
+            data['data']['linked_payments'] = []
+            data['data']['total_gateway_amount'] = '0.00'
+            data['data']['total_unallocated'] = '0.00'
+            data['data']['order'] = []
+            data['data']['bpoint'] = []
+            data['data']['booking_reference'] = ''
+            data['data']['booking_reference_linked'] = ''
 
     return HttpResponse(json.dumps(data), content_type='application/json')
 
@@ -958,6 +981,60 @@ def CheckOracleCodeView(request, *args, **kwargs):
            else:
                  json_obj = {'found': False, 'code': oracle_code}
            return HttpResponse(json.dumps(json_obj), content_type='application/json')
+        except Exception as e:
+           print(traceback.print_exc())
+           raise
+
+def FailedTransactionCompleted(request, *args, **kwargs):
+    if helpers.is_payment_admin(request.user) is True:
+        try:
+            rfid = kwargs['rfid']
+            rf = RefundFailed.objects.get(id=rfid)
+            rf.status = 1
+            rf.completed_date = datetime.now() 
+            rf.completed_by = request.user
+            rf.save()
+
+            return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')
+        except Exception as e:
+            print(traceback.print_exc())
+            return HttpResponse(json.dumps({'status': 500, 'message': 'error'}), content_type='application/json', status=500)
+            raise
+
+def FailedTransactions(request, *args, **kwargs):
+    if helpers.is_payment_admin(request.user) is True:
+        try:
+            query = Q()
+            pagestart = int(request.GET.get('pagestart',0))
+            pageend = int(request.GET.get('pageend',10))
+            status = request.GET.get('status','')
+            system = request.GET.get('system','')
+            keyword = request.GET.get('keyword','')
+         
+            if len(status) > 0:
+                query &= Q(status=status)
+            if len(system) > 0:
+                query &= Q(system_identifier__system_id=system)
+            if len(keyword) > 0:
+                query &= Q(Q(booking_reference=keyword) | Q(invoice_reference=keyword))
+            print (query)
+            rf_array = {'status': 404, 'data': {'rows': [], 'totalrows': 0}}  
+            rf = RefundFailed.objects.filter(query)[pagestart:pageend]
+            rf_array['data']['totalrows'] = RefundFailed.objects.filter(query).count() 
+
+            for r in rf: 
+                row = {}
+                row['id'] = r.id
+                row['invoice_group_id'] = r.invoice_group.id
+                row['booking_reference'] = r.booking_reference
+                row['invoice_reference'] = r.invoice_reference
+                row['refund_amount'] = str(r.refund_amount)
+                row['status'] = r.status
+                row['status_name'] = r.get_status_display()
+                row['system_identifier'] = r.system_identifier.system_id
+                row['created'] = r.created.strftime('%d/%m/%Y %H:%M:%S')
+                rf_array['data']['rows'].append(row)
+            return HttpResponse(json.dumps(rf_array), content_type='application/json')
         except Exception as e:
             print(traceback.print_exc())
             raise
@@ -1066,6 +1143,7 @@ def RefundOracleView(request, *args, **kwargs):
 
         except Exception as e:
            print ("ERROR Making Oracle Refund Move")
-           print(traceback.print_exc())
+           print (traceback.print_exc())
            raise
+
 

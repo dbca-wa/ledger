@@ -9,6 +9,7 @@ from ledger.api import utils as ledgerapi_utils
 from django.db.models import Q
 from ledger.checkout import utils
 from ledger.payments import utils as payments_utils
+from ledger.payments.invoice import utils as utils_ledger_payment_invoice
 from oscar.apps.order.models import Order
 from ledger.payments.invoice.models import Invoice
 from ledger.payments import models as payment_models
@@ -360,12 +361,10 @@ def create_basket_session(request,apikey):
             print ("API create_basket_session")
             parameters = json.loads(request.POST.get('parameters', "{}"))
             emailuser_id = request.POST.get('emailuser_id', None)
-            #parameters['system'] = '0019'
             basket, basket_hash = utils.create_basket_session_v2(emailuser_id,parameters)
             jsondata['status'] = 200
             jsondata['message'] = 'Success'
             jsondata['data'] = {'basket_hash': basket_hash}
-            print (jsondata)
             #ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
             #if ledger_user.count() == 0:
 
@@ -392,7 +391,6 @@ def create_checkout_session(request,apikey):
             print ("API create_basket_session")
             checkout_parameters = json.loads(request.POST.get('checkout_parameters', "{}"))
             #emailuser_id = request.POST.get('emailuser_id', None)
-            #parameters['system'] = '0019'
             #print (emailuser_id)
             resp = utils.create_checkout_session(request,checkout_parameters)
             #basket, basket_hash = utils.create_checkout_session(request, parameters)
@@ -578,46 +576,84 @@ def get_basket_total(request,apikey):
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response
 
-def process_refund(request,apikey):
+@csrf_exempt
+def process_api_refund(request,apikey):
+    print ("process_api_refund 1")
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     invoice_json = {}
     basket =None
     failed_refund = False
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
-        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
-            data = json.loads(request.POST.get('data', "{}"))
-            basket_hash = request.COOKIES.get('ledgergw_basket','')
-            basket_hash_split = basket_hash.split("|")
-            basket_obj = basket_models.Basket.objects.filter(id=basket_hash_split[0])
-            basket_total = basket_totals(basket_hash_split[0])
+         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+             data = json.loads(request.POST.get('data', "{}")) 
+             basket_params = json.loads(request.POST.get("basket_parameters","{}"))
+             customer_id = json.loads(request.POST.get("customer_id", None))
+             return_url = request.POST.get("return_url", None)
+             return_preload_url = request.POST.get("return_preload_url", None)
+             user_logged_in  = request.POST.get("user_logged_in", None)
+
+             customer = models.EmailUser.objects.get(id=customer_id)
+             basket, basket_hash = utils.create_basket_session_v2(customer_id, basket_params)
+             basket_obj = basket_models.Basket.objects.filter(id=basket.id)
+             request.basket = basket_obj[0]
+             system_id = basket.system.replace('S','0')
+             booking_reference = basket.booking_reference_link
+             basket_total = basket_totals(basket.id)
+             # create checkout session
+
+             checkout_params = {
+                 'system': basket.system,
+                 'fallback_url': request.build_absolute_uri('/'),
+                 'return_url': return_url,
+                 'return_preload_url': return_preload_url,
+                 'force_redirect': True,
+                 'proxy':  False,
+                 'invoice_text': "Refund via system",
+                 'session_type' : 'ledger_api',
+                 'user_logged_in' : int(user_logged_in)
+                 #'amount_override': float('1.00')
+             }
+             resp = utils.create_checkout_session(request,checkout_params)
+             jsondata = process_refund_from_basket(request,basket_obj)
+         else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+
+
+def process_refund_from_basket(request,basket_obj):
+            jsondata = {'status': 404, 'message': 'No basket'}
             linked_payment_data = None
+            basket_total = Decimal('0.00')
+            basket = None 
             if basket_obj.count() > 0:
                 basket=basket_obj[0]
+                basket_total = basket_totals(basket.id)
                 basket.save()
                 system_id = basket_obj[0].system.replace('S','0')
                 booking_reference = basket_obj[0].booking_reference_link
                 linked_payment_data = get_linked_invoice_data_by_booking_reference(booking_reference,system_id)
-            basket_total_positive = basket_total - basket_total - basket_total 
+            basket_total_positive = basket_total - basket_total - basket_total
             refund_tx_pool = {}
             #basket_total_positive = Decimal('730.00')
-
             if basket_total_positive > Decimal(linked_payment_data['total_available']):
                 print ("ERROR,  Not enough funds")
                 return
             for tx in linked_payment_data['txn_pool']:
                 txn_avail = linked_payment_data['txn_pool'][tx] - basket_total_positive
-                if txn_avail > 0:
+                if txn_avail >= 0:
                     refund_tx_pool[tx] = basket_total_positive
-                    basket_total_positive = basket_total_positive - basket_total_positive 
+                    basket_total_positive = basket_total_positive - basket_total_positive
                 if txn_avail < 0:
                     refund_tx_pool[tx] = (txn_avail + basket_total_positive)
                     basket_total_positive =  txn_avail - txn_avail - txn_avail
-
-
-            # Prepare to send transactions to bpoint        
+            # Prepare to send transactions to bpoint
             for tx in refund_tx_pool:
                 if refund_tx_pool[tx] > 0:
-                      print ('refunding for txpool --> '+tx+' with amount '+str(refund_tx_pool[tx]))                      
+                      print ('refunding for txpool --> '+tx+' with amount '+str(refund_tx_pool[tx]))
                       b_total =  Decimal('{:.2f}'.format(float(refund_tx_pool[tx])))
                       info = {'amount': Decimal('{:.2f}'.format(float(refund_tx_pool[tx]))), 'details' : 'Refund via system'}
                       try:
@@ -657,6 +693,95 @@ def process_refund(request,apikey):
                           jsondata['status'] = 200
                           jsondata['message'] = 'success'
                           jsondata['order_response'] = json.loads(order_response.content.decode("utf-8"))
+                          #return order_response
+                      else:
+                         jsondata['status'] = 500
+                         jsondata['message'] = 'error'
+                         jsondata['order_response'] = {}
+                      return jsondata
+
+
+
+def process_refund(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    invoice_json = {}
+    basket =None
+    failed_refund = False
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            basket_hash = request.COOKIES.get('ledgergw_basket','')
+            basket_hash_split = basket_hash.split("|")
+            basket_obj = basket_models.Basket.objects.filter(id=basket_hash_split[0])
+            jsondata = process_refund_from_basket(request,basket_obj)
+            #return resp
+            #linked_payment_data = None
+            #if basket_obj.count() > 0:
+            #    basket=basket_obj[0]
+            #    basket.save()
+            #    system_id = basket_obj[0].system.replace('S','0')
+            #    booking_reference = basket_obj[0].booking_reference_link
+            #    linked_payment_data = get_linked_invoice_data_by_booking_reference(booking_reference,system_id)
+            #basket_total_positive = basket_total - basket_total - basket_total 
+            #refund_tx_pool = {}
+            ##basket_total_positive = Decimal('730.00')
+
+            #if basket_total_positive > Decimal(linked_payment_data['total_available']):
+            #    print ("ERROR,  Not enough funds")
+            #    return
+            #for tx in linked_payment_data['txn_pool']:
+            #    txn_avail = linked_payment_data['txn_pool'][tx] - basket_total_positive
+            #    if txn_avail > 0:
+            #        refund_tx_pool[tx] = basket_total_positive
+            #        basket_total_positive = basket_total_positive - basket_total_positive 
+            #    if txn_avail < 0:
+            #        refund_tx_pool[tx] = (txn_avail + basket_total_positive)
+            #        basket_total_positive =  txn_avail - txn_avail - txn_avail
+
+
+            ## Prepare to send transactions to bpoint        
+            #for tx in refund_tx_pool:
+            #    if refund_tx_pool[tx] > 0:
+            #          print ('refunding for txpool --> '+tx+' with amount '+str(refund_tx_pool[tx]))                      
+            #          b_total =  Decimal('{:.2f}'.format(float(refund_tx_pool[tx])))
+            #          info = {'amount': Decimal('{:.2f}'.format(float(refund_tx_pool[tx]))), 'details' : 'Refund via system'}
+            #          try:
+            #             bpoint_obj = payment_bpoint_models.BpointTransaction.objects.filter(txn_number=tx)
+            #             if bpoint_obj.count() > 0:
+            #                  bpoint = bpoint_obj[0]
+            #                  refund = bpoint.refund(info,basket.owner)
+            #                  invoice = Invoice.objects.get(reference=bpoint.crn1)
+            #                  payments_utils.update_payments(invoice.reference)
+            #          except Exception as e:
+            #             print (e)
+            #             failed_refund = True
+            #             #booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
+            #             #for bi in booking_invoice:
+            #             #    invoice = Invoice.objects.get(reference=bi.invoice_reference)
+            #             #RefundFailed.objects.create(booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0)
+            #          order_response = None
+            #          try:
+            #              order_response = utils.place_order_submission(request)
+            #          except Exception as e:
+            #              print ("ORDER RESPONSE EXCEPTION")
+            #              print (e)
+
+            #          new_order = Order.objects.get(basket=basket)
+            #          new_invoice = Invoice.objects.get(order_number=new_order.number)
+            #          new_invoice.settlement_date = None
+            #          new_invoice.save()
+            #          if refund:
+            #               invoice.voided = True
+            #               invoice.save()
+            #               bpoint_refund = payment_bpoint_models.BpointTransaction.objects.get(txn_number=refund.txn_number)
+            #               bpoint_refund.crn1 = new_invoice.reference
+            #               bpoint_refund.save()
+            #               payments_utils.update_payments(invoice.reference)
+            #          payments_utils.update_payments(new_invoice.reference)
+            #          if order_response:
+            #              jsondata['status'] = 200
+            #              jsondata['message'] = 'success'
+            #              jsondata['order_response'] = json.loads(order_response.content.decode("utf-8"))
                       #return order_response
             #basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
 

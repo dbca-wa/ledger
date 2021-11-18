@@ -142,12 +142,14 @@ class CheckoutSessionMixin(CoreCheckoutSessionMixin):
         shipping_method = self.get_shipping_method(
             basket, shipping_address)
         billing_address = self.get_billing_address(shipping_address)
+
         if not shipping_method:
             total = shipping_charge = None
         else:
             shipping_charge = shipping_method.calculate(basket)
             total = self.get_order_totals(
                 basket, shipping_charge=shipping_charge)
+
         submission = {
             'user': self.request.user,
             'basket': basket,
@@ -169,11 +171,12 @@ class CheckoutSessionMixin(CoreCheckoutSessionMixin):
 
         # Allow overrides to be passed in
         submission.update(kwargs)
-
+        
         # Set guest email after overrides as we need to update the order_kwargs
         # entry.
         if (not submission['user'].is_authenticated() and
                 'guest_email' not in submission['order_kwargs']):
             email = self.checkout_session.get_guest_email()
             submission['order_kwargs']['guest_email'] = email
+
         return submission

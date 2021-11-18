@@ -13,7 +13,9 @@ from ledger.payments.api import (
                 ReportCreateAllocatedView,
                 LedgerPayments,
                 CheckOracleCodeView,
-                RefundOracleView
+                RefundOracleView,
+                FailedTransactions,
+                FailedTransactionCompleted
                 )
 
 from ledger.payments.bpay.dashboard.app import application as bpay
@@ -36,6 +38,8 @@ api_patterns = [
     url(r'api/ledger/payments-info$', LedgerPayments, name='ledger-payment-information'),
     url(r'api/ledger/oracle-codes-lookup$', CheckOracleCodeView, name='ledger-oracle-codes'),
     url(r'api/ledger/oracle-payment-transfer$', RefundOracleView, name='ledger-oracle-refunds'),
+    url(r'api/ledger/failed-transactions$', FailedTransactions, name='failed-transactions'),
+    url(r'api/ledger/failed-transaction-complete/(?P<rfid>\d+)/$', FailedTransactionCompleted, name='failed-transaction-completed'),
     url(r'api/report-allocated$', ReportCreateAllocatedView.as_view(),name='ledger-report-allocated'),
     url(r'api/report$', ReportCreateView.as_view(),name='ledger-report'),
     url(r'api/', include(router.urls)),
@@ -54,4 +58,5 @@ urlpatterns = [
     url(r'payments/invoice/search$',views.InvoiceSearchView.as_view(), name='invoice-search'),
     url(r'payments/oracle/payments$', views.OraclePayments.as_view(), name='oracle-payments'),
     url(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
+    url(r'payments/oracle/failed-transactions$', views.FailedTransaction.as_view(), name='failed-transactions')
 ]
