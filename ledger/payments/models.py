@@ -8,6 +8,7 @@ from ledger.payments.bpay.models import BpayTransaction, BpayFile, BillerCodeRec
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction
+from ledger.accounts.models import EmailUser
 
 # Oracle Integration
 # ======================================
@@ -164,3 +165,22 @@ class LinkedInvoice(models.Model):
     booking_reference_linked = models.CharField(max_length=1000, null=True,blank=True)
     invoice_group_id = models.ForeignKey(LinkedInvoiceGroupIncrementer)
     created = models.DateTimeField(auto_now_add=True)
+
+class RefundFailed(models.Model):
+
+    STATUS = (
+        (0, 'Pending'),
+        (1, 'Refund Completed'),
+    )
+
+    invoice_group = models.ForeignKey(LinkedInvoiceGroupIncrementer, related_name='refund_failed_invoice_group')
+    booking_reference = models.CharField(max_length=1000)
+    invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
+    refund_amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    status = models.SmallIntegerField(choices=STATUS, default=0)
+    basket_json = JSONField(null=True,blank=True)
+    system_identifier = models.ForeignKey(OracleInterfaceSystem)
+    created = models.DateTimeField(auto_now_add=True)
+    completed_date = models.DateTimeField(null=True, blank=True)
+    completed_by = models.ForeignKey(EmailUser, blank=True, null=True)
+

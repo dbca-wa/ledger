@@ -17,13 +17,14 @@ from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollectio
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
-from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode
+from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode, RefundFailed, OracleInterfaceSystem
 from ledger.payments.utils import systemid_check, update_payments
 from ledger.payments.invoice import utils as invoice_utils
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv, generate_items_csv_allocated
 from ledger.payments.emails import send_refund_email
 from ledger.payments import helpers
+from django.db.models import Q
 
 from ledger.accounts.models import EmailUser
 from ledger.order import models as order_model 
@@ -31,6 +32,7 @@ from oscar.apps.order.models import Order
 from oscar.apps.payment import forms
 from decimal import Decimal
 from confy import env
+from datetime import datetime
 import traceback
 import six
 
@@ -898,7 +900,6 @@ def LedgerPayments(request, *args, **kwargs):
                     oracle_code_totals[o.oracle_code] = Decimal('0.00')
                 oracle_code_totals[o.oracle_code] = oracle_code_totals[o.oracle_code] + o.line_price_incl_tax 
 
-            print (oracle_code_totals)            
             for cct in oracle_code_totals.keys():
                 data['data']['oracle_code_totals'][cct] = str(oracle_code_totals[cct])
 
@@ -932,9 +933,7 @@ def LedgerPayments(request, *args, **kwargs):
                    row['amount_refunded'] = '0.00'
                    if bp.txn_number in bp_txn_refund_hash:
                        row['amount_refunded'] = str(bp_txn_refund_hash[bp.txn_number])
-                
                 bp_array.append(row)
-            
             
             data['data']['linked_payments'] = linked_payments
             data['data']['total_gateway_amount'] = str(total_gateway_amount)
@@ -946,7 +945,6 @@ def LedgerPayments(request, *args, **kwargs):
             data['data']['booking_reference_linked'] = latest_li.booking_reference_linked
             data['status'] = 200
             exists = True
-
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 def CheckOracleCodeView(request, *args, **kwargs):
@@ -958,6 +956,61 @@ def CheckOracleCodeView(request, *args, **kwargs):
            else:
                  json_obj = {'found': False, 'code': oracle_code}
            return HttpResponse(json.dumps(json_obj), content_type='application/json')
+        except Exception as e:
+           print(traceback.print_exc())
+           raise
+
+def FailedTransactionCompleted(request, *args, **kwargs):
+    if helpers.is_payment_admin(request.user) is True:
+        try:
+            rfid = kwargs['rfid']
+            rf = RefundFailed.objects.get(id=rfid)
+            rf.status = 1
+            rf.completed_date = datetime.now() 
+            rf.completed_by = request.user
+            rf.save()
+
+            return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')
+        except Exception as e:
+            print(traceback.print_exc())
+            return HttpResponse(json.dumps({'status': 500, 'message': 'error'}), content_type='application/json', status=500)
+            raise
+
+
+def FailedTransactions(request, *args, **kwargs):
+    if helpers.is_payment_admin(request.user) is True:
+        try:
+            query = Q()
+            pagestart = int(request.GET.get('pagestart',0))
+            pageend = int(request.GET.get('pageend',10))
+            status = request.GET.get('status','')
+            system = request.GET.get('system','')
+            keyword = request.GET.get('keyword','')
+         
+            if len(status) > 0:
+                query &= Q(status=status)
+            if len(system) > 0:
+                query &= Q(system_identifier__system_id=system)
+            if len(keyword) > 0:
+                query &= Q(Q(booking_reference=keyword) | Q(invoice_reference=keyword))
+            print (query)
+            rf_array = {'status': 404, 'data': {'rows': [], 'totalrows': 0}}  
+            rf = RefundFailed.objects.filter(query)[pagestart:pageend]
+            rf_array['data']['totalrows'] = RefundFailed.objects.filter(query).count() 
+
+            for r in rf: 
+                row = {}
+                row['id'] = r.id
+                row['invoice_group_id'] = r.invoice_group.id
+                row['booking_reference'] = r.booking_reference
+                row['invoice_reference'] = r.invoice_reference
+                row['refund_amount'] = str(r.refund_amount)
+                row['status'] = r.status
+                row['status_name'] = r.get_status_display()
+                row['system_identifier'] = r.system_identifier.system_id
+                row['created'] = r.created.strftime('%d/%m/%Y %H:%M:%S')
+                rf_array['data']['rows'].append(row)
+            return HttpResponse(json.dumps(rf_array), content_type='application/json')
         except Exception as e:
             print(traceback.print_exc())
             raise
@@ -1066,6 +1119,7 @@ def RefundOracleView(request, *args, **kwargs):
 
         except Exception as e:
            print ("ERROR Making Oracle Refund Move")
-           print(traceback.print_exc())
+           print (traceback.print_exc())
            raise
+
 

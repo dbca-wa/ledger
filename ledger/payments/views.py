@@ -16,6 +16,7 @@ from oscar.apps.order.models import Order
 from ledger.payments.models import Invoice
 from ledger.payments.mixins import InvoiceOwnerMixin
 from ledger.basket import models as basket_models
+from ledger.payments import models as payments_models
 #
 from confy import env
 #
@@ -25,7 +26,6 @@ class InvoicePDFView(InvoiceOwnerMixin,generic.View):
         invoice = get_object_or_404(Invoice, reference=self.kwargs['reference'])
         response = HttpResponse(content_type='application/pdf')
         response.write(create_invoice_pdf_bytes('invoice.pdf',invoice))
-
         return response
 
     def get_object(self):
@@ -130,9 +130,7 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
         #    order_obj = Order.objects.filter(number=i['order_number'])
 
         #    row['order'] = order_obj[0]
-
         #    invoices.append(row)
-        
 
         invoices = Invoice.objects.filter(reference__in=self.request.GET.getlist('invoice')).order_by('created')
         ctx['invoices'] = invoices
@@ -158,7 +156,6 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
             except TemplateDoesNotExist as e:
                 pass
         return ctx
-
 
 class RefundPaymentView(generic.TemplateView):
     template_name = 'checkout/refund_payment_api_wrapper.html'
@@ -266,5 +263,21 @@ class RefundPaymentView(generic.TemplateView):
          #else:
          #    return HttpResponseRedirect(reverse('home'))
 
+
+
+class FailedTransaction(generic.TemplateView):
+    template_name = 'dpaw_payments/failed_transaction.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(FailedTransaction,self).get_context_data(**kwargs)
+        system_id = self.request.GET.get('system_id','')
+        ctx['oracle_systems'] = payments_models.OracleInterfaceSystem.objects.all()
+        ctx['system_id'] = system_id
+        #self.get_booking_history(invoice_group_id)
+        return ctx
+
+    #def get_booking_history(self, invoice_group_id):
+   #     print ("get_booking_history")
+   #     return
 
 
