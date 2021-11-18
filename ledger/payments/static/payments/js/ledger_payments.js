@@ -53,6 +53,12 @@ var ledger_payments = {
 		      refund_booking.re_init();
 
 		      $('#LoadingPopup').modal('hide');
+
+		      if (data.status == 404 ) {
+			  $('#oracle-payments-data-error-message').html(data.message);
+			  $('#oracle-payments-data').hide();
+			  $('#oracle-payments-data-error').show();
+		      }
 		      // refund_booking.init();
 		      console.log(data);
              },
