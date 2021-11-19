@@ -667,7 +667,6 @@ def process_refund_from_basket(request,basket_obj):
                          if bpoint_obj.count() > 0:
                               bpoint = bpoint_obj[0]
                               invoice_reference=bpoint.crn1
-                              raise 
                               refund = bpoint.refund(info,basket.owner)
                               invoice_reference=bpoint.crn1
                               invoice = Invoice.objects.get(reference=bpoint.crn1)
