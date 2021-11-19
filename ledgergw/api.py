@@ -628,7 +628,9 @@ def process_refund_from_basket(request,basket_obj):
             jsondata = {'status': 404, 'message': 'No basket'}
             linked_payment_data = None
             basket_total = Decimal('0.00')
-            basket = None 
+            basket = None
+            system_id = None
+            booking_reference = None
             if basket_obj.count() > 0:
                 basket=basket_obj[0]
                 basket_total = basket_totals(basket.id)
@@ -656,16 +658,34 @@ def process_refund_from_basket(request,basket_obj):
                       print ('refunding for txpool --> '+tx+' with amount '+str(refund_tx_pool[tx]))
                       b_total =  Decimal('{:.2f}'.format(float(refund_tx_pool[tx])))
                       info = {'amount': Decimal('{:.2f}'.format(float(refund_tx_pool[tx]))), 'details' : 'Refund via system'}
+                      invoice_reference=None
+                      refund = None
+                      invoice_reference=None
+                      bpoint_obj=None
                       try:
                          bpoint_obj = payment_bpoint_models.BpointTransaction.objects.filter(txn_number=tx)
                          if bpoint_obj.count() > 0:
                               bpoint = bpoint_obj[0]
+                              invoice_reference=bpoint.crn1
+                              raise 
                               refund = bpoint.refund(info,basket.owner)
+                              invoice_reference=bpoint.crn1
                               invoice = Invoice.objects.get(reference=bpoint.crn1)
                               payments_utils.update_payments(invoice.reference)
                       except Exception as e:
+                         print ("EXCEPTION")
                          print (e)
                          failed_refund = True
+                         system = payment_models.OracleInterfaceSystem.objects.get(system_id=system_id)
+                         li = payment_models.LinkedInvoice.objects.filter(booking_reference=booking_reference,system_identifier=system)
+                         payment_models.RefundFailed.objects.create(invoice_group=li[0].invoice_group_id,
+                                                                    booking_reference=booking_reference,
+                                                                    invoice_reference=invoice_reference,
+                                                                    refund_amount=Decimal(refund_tx_pool[tx]),
+                                                                    status=0,
+                                                                    basket_json="{}",
+                                                                    system_identifier=system,
+                                                                   )
                          #booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
                          #for bi in booking_invoice:
                          #    invoice = Invoice.objects.get(reference=bi.invoice_reference)
