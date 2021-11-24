@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^ledgergw/remote/get-basket-total/(?P<apikey>.+)/', api.get_basket_total),
     url(r'^ledgergw/remote/get_order_info/(?P<apikey>.+)/', api.get_order_info),
     url(r'^ledgergw/remote/process_refund/(?P<apikey>.+)/', api.process_refund),
+    url(r'^ledgergw/remote/process_zero/(?P<apikey>.+)/', api.process_zero),
     url(r'^ledgergw/remote/process-api-refund/(?P<apikey>.+)/', api.process_api_refund),
     url(r'^ledgergw/ip-check/', api.ip_check),
     url(r'^reports/$', views.ReportsView.as_view(), name='reports'),

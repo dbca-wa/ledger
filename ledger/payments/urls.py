@@ -50,6 +50,7 @@ urlpatterns = [
     url(r'checkout/dashboard/payments/invoices/', include(invoice_dash.urls)),
     url(r'checkout/dashboard/payments/', include(bpoint_dash.urls)),
     url(r'checkout/checkout/payment-refund/', views.RefundPaymentView.as_view(),name='ledger-payment-refund'), 
+    url(r'checkout/checkout/payment-zero/', views.ZeroPaymentView.as_view(), name='ledger-payment-refund'),
     url(r'payments/', include(api_patterns)),
     url(r'payments/invoice/(?P<reference>\d+)',views.InvoiceDetailView.as_view(), name='invoice-detail'),
     url(r'payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
