@@ -1,4 +1,4 @@
-Django==1.11.29
+Django==2.2.24
 django-extensions==1.9.8
 git+https://github.com/dbca-wa/dpaw-utils.git@0.4.2#egg=dpaw-utils
 git+https://github.com/django-oscar/django-oscar.git@8a3288da439cc2a878f44ae5c5101043e658d2a2#egg=django-oscar
@@ -7,7 +7,7 @@ git+https://github.com/scottp-dpaw/social-core.git@email_fix#egg=social-auth-cor
 webtemplate-dbca==0.6.0
 coverage==4.3.1
 coveralls==1.1
-reportlab==3.5.26
+reportlab==3.5.55
 #django_bootstrap3==7.1.0
 django_bootstrap3==12.0.3
 django-braces>=1.8.1
@@ -25,7 +25,7 @@ datapackage==0.8.1
 jsontableschema==0.10.1
 python-dateutil==2.6.1
 py4j==0.10.2.1
-djangorestframework==3.5.0
+djangorestframework==3.11.2
 djangorestframework-gis==0.11
 djangorestframework-csv==2.0.0
 pycountry==17.1.8
@@ -43,7 +43,7 @@ djangorestframework-datatables==0.4.0
 django-confy==1.0.4
 xlwt==1.3.0
 xlsxwriter==1.1.2
-gunicorn==19.9.0
+gunicorn==19.10.0
 dj-static==0.0.6
 mixer==6.1.3
 django-dirtyfields==1.3.1
