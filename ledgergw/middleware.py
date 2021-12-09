@@ -4,7 +4,7 @@ import datetime
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils import timezone
-from mooring.models import Booking, AdmissionsBooking
+#from mooring.models import Booking, AdmissionsBooking
 
 CHECKOUT_PATH = re.compile('^/ledger/checkout/checkout')
 
@@ -57,3 +57,14 @@ class BookingTimerMiddleware(object):
                 return
             return HttpResponseRedirect(reverse('public_make_booking'))
         return
+
+class CacheControlMiddleware(object):
+    def process_response(self, request, response):
+        if request.path[:5] == '/api/' or request.path == '/':
+            response['Cache-Control'] = 'private, no-store'
+        elif request.path[:8] == '/static/':
+            response['Cache-Control'] = 'public, max-age=86400'
+        else:
+            response['Cache-Control'] = 'private, no-store'
+        return response
+

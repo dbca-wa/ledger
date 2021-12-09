@@ -20,6 +20,8 @@ INSTALLED_APPS += [
 ]
 
 MIDDLEWARE_CLASSES += [
+        'ledgergw.middleware.CacheControlMiddleware',
+        'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 # maximum number of days allowed for a booking

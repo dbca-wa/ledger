@@ -11,3 +11,5 @@ class FirstTimeNagScreenMiddleware(object):
                 path_logout = reverse('accounts:logout')
                 if request.path not in (path_ft, path_logout):
                     return redirect(reverse('accounts:first_time')+"?next="+urlquote_plus(request.get_full_path()))
+
+
