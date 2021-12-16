@@ -21,17 +21,18 @@
             {{ error }}
         </div>
     {% endif %}
-	   {% include "partials/alert_messages.html" %}     
+
+    {% include "partials/alert_messages.html" %}     
     
     <button type='button' class="btn btn-primary btn-lg close-ledger-popup" style='display:none;'>Close</button>
 
   </div>
 </div>
 
-	<script>
-        $('.close-ledger-popup').click(function() { 
-                 $('#ledger-payment-overtop').hide();
-		 $('#ledger-payment-overtop').hide();
-	});
+<script>
+$('.close-ledger-popup').click(function() { 
+         $('#ledger-payment-overtop').hide();
+	 $('#ledger-payment-overtop').hide();
+});
 
-	</script>
+</script>

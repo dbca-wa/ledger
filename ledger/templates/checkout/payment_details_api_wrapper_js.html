@@ -187,7 +187,12 @@ $.ajax({
   url: '/ledger-api/process-payment',
   data: data,
   success: function(data, textStatus, jQxhr) {
-          $("#ledger-payment-overtop").html("<BR><BR>"+data);
+          try {
+          var data_json = JSON.parse(data);
+              window.location=data_json['return_url'];
+          } catch(err) {
+             $("#ledger-payment-overtop").html("<BR><BR>"+data);
+          }
           $("#ledger-payment-overtop").show();
 
   },
