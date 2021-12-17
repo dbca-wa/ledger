@@ -205,7 +205,7 @@ class Facade(object):
 
     def store_token(self, user,token,masked_card,expiry_date,card_type,system_id):
 
-        bt = BpointToken.objects.filter(user=user,masked_card=masked_card,expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date(),card_type=card_type)#,system_id=system_id)
+        bt = BpointToken.objects.filter(user=user,masked_card=masked_card,expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date(),card_type=card_type,system_id=system_id)
         if bt.count() > 0:
             for b in bt:
                 b.delete()
@@ -226,8 +226,6 @@ class Facade(object):
             Used to create a token and store it against a
             user when checking out
         '''
-        print ("CREATE TOKEN")
-        print (store_card)
         resp =  self.request_token(reference,bankcard)
 
         if store_card:
