@@ -203,9 +203,9 @@ class Facade(object):
         except Exception:
             raise
 
-    def store_token(self, user,token,masked_card,expiry_date,card_type):
+    def store_token(self, user,token,masked_card,expiry_date,card_type,system_id):
 
-        bt = BpointToken.objects.filter(user=user,masked_card=masked_card,expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date(),card_type=card_type)
+        bt = BpointToken.objects.filter(user=user,masked_card=masked_card,expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date(),card_type=card_type)#,system_id=system_id)
         if bt.count() > 0:
             for b in bt:
                 b.delete()
@@ -216,16 +216,20 @@ class Facade(object):
             DVToken=token,
             masked_card=masked_card,
             expiry_date=datetime.datetime.strptime(expiry_date, '%m%y').date(),
-            card_type=card_type
+            card_type=card_type,
+            system_id=system_id
         )
         return token
 
-    def create_token(self,user,reference,bankcard=None,store_card=False):
+    def create_token(self,user,reference,bankcard=None,store_card=False,system_id=None):
         ''' Create a token on checkout
             Used to create a token and store it against a
             user when checking out
         '''
+        print ("CREATE TOKEN")
+        print (store_card)
         resp =  self.request_token(reference,bankcard)
+
         if store_card:
             try:
                 self.store_token(
@@ -233,7 +237,8 @@ class Facade(object):
                     resp.dvtoken,
                     bankcard.obfuscated_number,
                     resp.card_details.expiry_date,
-                    resp.card_type
+                    resp.card_type,
+                    system_id
                 )
             except IntegrityError as e:
                 if 'unique constraint' in e.message:

@@ -170,13 +170,16 @@ var id_number = $('#id_number').val();
 var id_expiry_month_0 = $('#id_expiry_month_0').val();
 var id_expiry_month_1 = $('#id_expiry_month_1').val();
 var ccv = $('#id_ccv').val();
+var store_card = $("input[name=store_card]").is(":checked");
 
 var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
 var checkout_token = $('#checkout_token').val();
 var payment_method = $('#payment_method').val();
 
-var data = {'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method, 'number': id_number, 'expiry_month_0': id_expiry_month_0, 'expiry_month_1': id_expiry_month_1, 'ccv': ccv };
-
+var data = {'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method, 'number': id_number, 'expiry_month_0': id_expiry_month_0, 'expiry_month_1': id_expiry_month_1, 'ccv': ccv};
+if (store_card == true) {
+   data['store_card'] = true;
+}
 
 $('#id_number').val("");
 $('#id_expiry_month_0').val("");

@@ -263,14 +263,16 @@ class BpointToken(models.Model):
         ('MC','MasterCard'),
         ('VC','Visa')
     )
+
     user = models.ForeignKey(EmailUser, related_name='stored_cards')
     DVToken = models.CharField(max_length=128)
     masked_card = models.CharField(max_length=50)
     expiry_date = models.DateField()
     card_type = models.CharField(max_length=2, choices=CARD_TYPES, blank=True, null=True)
+    system_id = models.CharField(max_length=10, blank=True, null=True) # unable to use forigenkey to OracleInterfaceSystem due module loop.
 
     class Meta:
-        unique_together = ('user', 'masked_card','expiry_date','card_type')
+        unique_together = ('user', 'masked_card','expiry_date','card_type','system_id')
         db_table = 'payments_bpointtoken'
 
     @property

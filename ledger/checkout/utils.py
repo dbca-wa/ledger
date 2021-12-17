@@ -182,9 +182,7 @@ def create_checkout_session(request, parameters):
         if 'session_type' in parameters:
              if parameters['session_type'] == 'ledger_api':
                   if parameters['user_logged_in']:
-                      print ("CRE SESS")
                       email = EmailUser.objects.get(id=serializer.validated_data['user_logged_in']).email
-                      print (email)
     session_data.set_guest_email(email)
     if 'user_logged_in' in parameters:
         if parameters['user_logged_in'] is not None:
