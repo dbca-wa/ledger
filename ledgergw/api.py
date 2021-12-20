@@ -17,6 +17,7 @@ from ledger.payments.bpoint import models as payment_bpoint_models
 from ledger.basket import models as basket_models
 from django.core.files.base import ContentFile
 from django.utils.crypto import get_random_string
+from ledger.payments.models import Invoice, BpointToken
 from decimal import Decimal
 import base64
 
@@ -613,6 +614,7 @@ def process_api_refund(request,apikey):
                  'user_logged_in' : int(user_logged_in)
                  #'amount_override': float('1.00')
              }
+
              resp = utils.create_checkout_session(request,checkout_params)
              jsondata = process_refund_from_basket(request,basket_obj)
          else:
@@ -622,7 +624,6 @@ def process_api_refund(request,apikey):
         pass
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response
-
 
 def process_refund_from_basket(request,basket_obj):
             jsondata = {'status': 404, 'message': 'No basket'}
@@ -747,8 +748,6 @@ def process_zero(request,apikey):
                jsondata['status'] = 500
                jsondata['message'] = 'error'
                jsondata['order_response'] = {}
-
-
             #jsondata = process_refund_from_basket(request,basket_obj)
 
         else:
@@ -758,6 +757,66 @@ def process_zero(request,apikey):
         pass
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response
+
+def delete_card_token(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    invoice_json = {}
+    basket =None
+    failed_refund = False
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            card_token_id = request.POST.get('card_token_id', None)
+            user_logged_in = request.POST.get('user_logged_in', None)
+            PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE = request.POST.get('PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE',None)
+            email_user_obj = models.EmailUser.objects.filter(id=int(user_logged_in))
+            user = None
+            if email_user_obj.count() > 0:
+                user=email_user_obj[0]
+            
+            bt = BpointToken.objects.filter(user=user,id=int(card_token_id),system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
+            if bt.count() > 0:
+                for b in bt:
+                    b.delete()
+                jsondata['status'] = 200
+                jsondata['message'] = 'success'
+
+             
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+             
+
+def get_card_tokens_for_user(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    
+    basket =None
+    failed_refund = False
+    card_tokens = []
+
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            user_logged_in = request.POST.get('user_logged_in', None)
+            PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE = request.POST.get('PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE',None)
+            email_user_obj = models.EmailUser.objects.filter(id=int(user_logged_in))
+            user = None
+            if email_user_obj.count() > 0:
+                user=email_user_obj[0]
+
+            bt = BpointToken.objects.filter(user=user,system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
+            if bt.count() > 0:
+                for b in bt:
+                    card_tokens.append({'id' : b.id,  'last_digits' : b.last_digits,'expiry_date' : b.expiry_date.strftime("%m/%y"), 'card_type' : b.get_card_type_display()})
+
+            jsondata['card_tokens'] = card_tokens
+            jsondata['status'] = 200
+            jsondata['message'] = 'success'
+
+
+ 
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+
 
 def process_refund(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}

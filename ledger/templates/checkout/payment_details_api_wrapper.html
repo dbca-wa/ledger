@@ -47,17 +47,20 @@
                         <input type="hidden" name="payment_method" id='payment_method' readonly value="card"/>
 
 			<table style="width:100%;">
+		          <tbody>
 		          <tr>
 				  <td style='padding: 5px;'><input  type="radio" name="card" value="new" checked="checked"/> Enter new card</td>
                           </tr>
+			  </tbody>
+			  <tbody id='cardtokens'>
 
                           {% for card in cards %}
                               <tr>
-				      <td style='padding: 5px;'><input  type="radio" name="card" value="{{card.id}}" /> Use card ending {{card.last_digits}} with expiry {{card.expiry_date|date:'m/y'}} </td><td> <A href=''>Delete this card</a></td>
+				      <td style='padding: 5px;'><input  type="radio" name="card" value="{{card.id}}" /> Use card ending {{card.last_digits}} with expiry {{card.expiry_date|date:'m/y'}} </td><td> <A href='javascript:void(0);' onclick="ledger.deleteCardToken('{{ card.id }}');">Delete this card</a></td>
 			      </tr>
-
-
 			  {% endfor %}
+			  <tbody>
+
 			</table>
 
                         <fieldset  id="storedcard_fieldset" style='display: none'>

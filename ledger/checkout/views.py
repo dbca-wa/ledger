@@ -156,6 +156,10 @@ class PaymentDetailsView(CorePaymentDetailsView):
         method = self.checkout_session.payment_method()
         custom_template = self.checkout_session.custom_template()
 
+        system_id = self.checkout_session.system()
+        system_id_zeroed=system_id.replace('S','0')
+
+
         ctx['store_card'] = True
         user = None
         
@@ -171,7 +175,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(self.request),apikey) is True:
                            user = EmailUser.objects.get(id=int(self.checkout_session.get_user_logged_in()))
         if user:
-            cards = user.stored_cards.all()
+            cards = user.stored_cards.all().filter(system_id=system_id_zeroed)
             if cards:
                 ctx['cards'] = cards
 
@@ -396,6 +400,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
         Make submission
         """
         logger.info('Order #%s: handling payment', order_number)
+        system_id = self.checkout_session.system()
+        system_id_zeroed=system_id.replace('S','0')
+
         # Using preauth here (two-stage model). You could use payment to
         # perform the preauth and capture in one step.
         with transaction.atomic():
@@ -415,6 +422,16 @@ class PaymentDetailsView(CorePaymentDetailsView):
                         logger.info('Order #%s: doInvoice with method: '+str(method), order_number)
                         invoice = self.doInvoice(order_number,total)
                         # Swap user if in session
+                        if 'LEDGER_API_KEY' in self.request.COOKIES:
+                            apikey = self.request.COOKIES['LEDGER_API_KEY']
+                            if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+                                   if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(self.request),apikey) is True:
+                                       user_logged_in = EmailUser.objects.get(id=int(self.checkout_session.get_user_logged_in()))
+                            else:
+                                user_logged_in = self.request.user
+                        else:
+                             user_logged_in = self.request.user
+
                         if self.checkout_session.basket_owner():
                             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
                         else:
@@ -447,7 +464,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                             # Store card if user wants to store card
                             if self.checkout_session.store_card():
                                 logger.info('Order #%s: self.checkout_session.store_card '+str(method), order_number)
-                                resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'],True)
+                                resp = bpoint_facade.create_token(user_logged_in,invoice.reference,kwargs['bankcard'],True,system_id_zeroed)
                                 if self.checkout_session.invoice_association():
                                     invoice.token = resp
                                     invoice.save()
@@ -463,7 +480,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
                                 logger.info('Order #%s: self.checkout_session.store_card:else: '+str(method), order_number)
                                 if self.checkout_session.invoice_association():
                                     logger.info('Order #%s: self.checkout_session.invoice_association '+str(method), order_number)
-                                    resp = bpoint_facade.create_token(user,invoice.reference,kwargs['bankcard'])
+                                    resp = bpoint_facade.create_token(user_logged_in,invoice.reference,kwargs['bankcard'],False,system_id_zeroed)
                                     invoice.token = resp
                                     invoice.save()
                                 else:

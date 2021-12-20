@@ -23,6 +23,8 @@ urlpatterns = [
     url(r'^ledgergw/remote/get-invoice/(?P<apikey>.+)/', api.get_invoice_properties),
     url(r'^ledgergw/remote/get-basket-total/(?P<apikey>.+)/', api.get_basket_total),
     url(r'^ledgergw/remote/get_order_info/(?P<apikey>.+)/', api.get_order_info),
+    url(r'^ledgergw/remote/delete-card-token/(?P<apikey>.+)/', api.delete_card_token),
+    url(r'^ledgergw/remote/get-card-tokens/(?P<apikey>.+)/', api.get_card_tokens_for_user),
     url(r'^ledgergw/remote/process_refund/(?P<apikey>.+)/', api.process_refund),
     url(r'^ledgergw/remote/process_zero/(?P<apikey>.+)/', api.process_zero),
     url(r'^ledgergw/remote/process-api-refund/(?P<apikey>.+)/', api.process_api_refund),

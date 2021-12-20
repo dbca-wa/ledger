@@ -25,30 +25,105 @@
 
 <script>
 var ledger = {
-showLoader: function() {
-      var page = document.getElementById('default');
-      var pageheight = page.parentElement.scrollHeight;
-      pageheight = pageheight + 20;
-      var div = document.createElement("div");
-      divhtml = "<div id='ledger-payment-loader' style='height:"+pageheight+"px'>";
-      divhtml += "<div class='ledger-payment-loader-box-align' >";
-      divhtml += " <center>";
-      divhtml += " <div class='ledger-payment-loader-box' >";
-      divhtml += "  <img  src='/static/ledger_api/images/ajax-loader-spinner.gif'><br><br>";
-      divhtml += "  <strong>PROCESSING PAYMENT</strong> ";
-      divhtml += "</div>";
-      divhtml += " </center>";
-      divhtml += "</div>";
-      div.innerHTML = divhtml;
-      div.id = "payment-loader-popup";
-      div.style.height = pageheight;
-      $("#ledger-payment-overtop").html(divhtml);
-      $("#ledger-payment-overtop").show();
-      $("#ledger-payment-overtop").css({height: pageheight});
-}
+      showLoader: function() {
+          var page = document.getElementById('default');
+          var pageheight = page.parentElement.scrollHeight;
+          pageheight = pageheight + 20;
+          var div = document.createElement("div");
+          divhtml = "<div id='ledger-payment-loader' style='height:"+pageheight+"px'>";
+          divhtml += "<div class='ledger-payment-loader-box-align' >";
+          divhtml += " <center>";
+          divhtml += " <div class='ledger-payment-loader-box' >";
+          divhtml += "  <img  src='/static/ledger_api/images/ajax-loader-spinner.gif'><br><br>";
+          divhtml += "  <strong>PROCESSING PAYMENT</strong> ";
+          divhtml += "</div>";
+          divhtml += " </center>";
+          divhtml += "</div>";
+          div.innerHTML = divhtml;
+          div.id = "payment-loader-popup";
+          div.style.height = pageheight;
+          $("#ledger-payment-overtop").html(divhtml);
+          $("#ledger-payment-overtop").show();
+          $("#ledger-payment-overtop").css({height: pageheight});
+      },
+      cardSelection: function(element) {
+        var new_card_form = $('#new_card_form');
+        var store_card_pay_button = $('#store-card-pay-button');
+        var new_card_pay_button = $('#new-card-pay-button');
+
+        var stored_card_form = $('#stored_card_form');
 
 
+        if (element.value == 'new')  {
+
+            store_card_pay_button.hide();
+            new_card_pay_button.show();
+
+            if (new_card_form.hasClass('blur-div')) {
+                    new_card_form.removeClass('blur-div');
+            }
+
+        } else {
+             store_card_pay_button.show();
+             new_card_pay_button.hide();
+
+             if (!new_card_form.hasClass('blur-div')) {
+                  new_card_form.addClass('blur-div');
+             } 
+        }
+      },
+      deleteCardToken: function(card_token_id) {
+          var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
+
+	  data = {'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken}
+          $.ajax({
+            type: "POST",
+            url: '/ledger-api/delete-card-token/'+card_token_id+'/',
+            data: data,
+            success: function(data, textStatus, jQxhr) {
+                  ledger.getCardTokens();
+            },
+            error: function( jqXhr, textStatus, errorThrown ) {
+                   console.log( errorThrown );
+            },
+            // dataType: 'text,'
+          });
+      },
+      getCardTokens:function() {
+
+          var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
+
+          data = {'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken}
+          $.ajax({
+            type: "POST",
+            url: '/ledger-api/get-card-tokens',
+            data: data,
+            success: function(data, textStatus, jQxhr) {
+	             var cardtokens_html = ""; 
+                     var token_id = "";
+
+                            for (let i = 0; i < data['card_tokens'].length; i++) {
+                              cardtokens_html+= "<tr>";
+                              token_id = "'"+data['card_tokens'][i]['id']+"'";
+                              cardtokens_html+= '<td style="padding: 5px;"><input  type="radio" name="card" value="'+token_id+'" /> Use card ending '+data['card_tokens'][i]['last_digits']+' with expiry '+data['card_tokens'][i]['expiry_date']+'</td><td> <A href="javascript:void(0);" onclick="ledger.deleteCardToken('+token_id+');">Delete this card</a></td>';
+                              cardtokens_html+= "</tr>";
+                            }
+                            $('#cardtokens').html(cardtokens_html);
+                            $("input[name='card']").change(function() {
+                                    var element = this;
+                                    ledger.cardSelection(element);
+                            });
+
+            },
+            error: function( jqXhr, textStatus, errorThrown ) {
+                   console.log( errorThrown );
+            },
+            // dataType: 'text,'
+          });
+
+      }
 }
+
 $(function() {
     var new_card_form = $('#new_card_form');
     var store_card_pay_button = $('#store-card-pay-button');
@@ -68,7 +143,7 @@ $(function() {
 
 $("#process-zero").click(function() {
       ledger.showLoader();
-      console.log("processi-zero clicked");
+      console.log("process-zero clicked");
       var card = $('input[name=card]:checked').val();
       var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
       var checkout_token = $('#checkout_token').val();
@@ -170,13 +245,16 @@ var id_number = $('#id_number').val();
 var id_expiry_month_0 = $('#id_expiry_month_0').val();
 var id_expiry_month_1 = $('#id_expiry_month_1').val();
 var ccv = $('#id_ccv').val();
+var store_card = $("input[name=store_card]").is(":checked");
 
 var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
 var checkout_token = $('#checkout_token').val();
 var payment_method = $('#payment_method').val();
 
-var data = {'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method, 'number': id_number, 'expiry_month_0': id_expiry_month_0, 'expiry_month_1': id_expiry_month_1, 'ccv': ccv };
-
+var data = {'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method, 'number': id_number, 'expiry_month_0': id_expiry_month_0, 'expiry_month_1': id_expiry_month_1, 'ccv': ccv};
+if (store_card == true) {
+   data['store_card'] = true;
+}
 
 $('#id_number').val("");
 $('#id_expiry_month_0').val("");
@@ -207,23 +285,9 @@ $.ajax({
 
 
 $("input[name='card']").change(function() {
-	if (this.value == 'new')  {
-	    
-	    store_card_pay_button.hide();
-            new_card_pay_button.show();
+        var element = this;
+        ledger.cardSelection(element);
 
-            if (new_card_form.hasClass('blur-div')) {
-		    new_card_form.removeClass('blur-div');
-	    }
-
-        } else {
-             store_card_pay_button.show();
-             new_card_pay_button.hide();
-
-             if (!new_card_form.hasClass('blur-div')) {
-	          new_card_form.addClass('blur-div');
-             }
-        }
 });
 
 
