@@ -1,3 +1,5 @@
+{% extends "dpaw_payments/base.html" %}
+
 {% load static %} {% load dpaw_extras %}
 <!DOCTYPE html>
 <html>
@@ -40,6 +42,7 @@
          }
     </style>
     <script>
+	    {% block "script-top" %}
 	    ledger_payments.var.current_invoice_group_id = '{{ invoice_group_id }}';
             ledger_payments.var.current_invoice_no = '{{ invoice_no }}';
             ledger_payments.var.current_booking_reference = '{{ booking_reference }}';
@@ -54,12 +57,14 @@
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
               return new bootstrap.Tooltip(tooltipTriggerEl)
             })
+            {% endblock %}
     </script>
 
     {% endblock %}
 </head>
 
 <body>
+	{% block "body-content" %}
 
 <div class="modal fade" id="LoadingPopup" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog modal-sm">
@@ -89,7 +94,6 @@
   </div>
 </div>
 
-
 <div class="modal fade" id="MessageBox" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -118,27 +122,6 @@
 </div>
 
 
-<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #e3f2fd;">
-  <div class="container-fluid">
-    <img class="align-right" src="/static/ledger/images/logo-dbca.png" alt="Department of Parks and Wildlife" style='height:70px;'>
-    <a class="navbar-brand" href="#">Ledger Payments</a>
-   
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Home</a>
-        </li>
-      </ul>
-      <form class="d-flex">
-        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-        <button class="btn btn-outline-success" type="submit">Search</button>
-      </form>
-    </div>
-  </div>
-</nav>
 <div class="container" id='oracle-payments-data-error' style='display:none'>
 	<BR><BR>
 
@@ -379,6 +362,8 @@
 
 
 </div>
+{% endblock %}
+
 </body>
 
 </html>

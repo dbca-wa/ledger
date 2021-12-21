@@ -203,11 +203,11 @@ class CreateInvoiceBasket(CoreOrderCreator):
         )
 
 
-def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=None):
+def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=None, system_id=None):
         basket_params = {
             'products': lines,
             'vouchers': [],
-            'system': settings.PS_PAYMENT_SYSTEM_ID,
+            'system': system_id,
             'custom_basket': True,
             'booking_reference': booking_reference,
             'booking_reference_link': booking_reference_linked
@@ -215,6 +215,8 @@ def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=N
 
         basket, basket_hash = create_basket_session(request, basket_params)
         ci = CreateInvoiceBasket()
+        if system_id:
+            ci.system = system_id
         order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Oracle Allocation Pools', )
         new_invoice = Invoice.objects.get(order_number=order.number)
         update_payments(new_invoice.reference)

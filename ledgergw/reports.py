@@ -6,9 +6,7 @@ from wsgiref.util import FileWrapper
 from django.utils import timezone
 from django.core.mail import EmailMessage 
 from django.conf import settings
-from mooring.models import Booking, BookingInvoice, OutstandingBookingRecipient, BookingHistory, AdmissionsBooking, AdmissionsBookingInvoice
 from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction,Invoice, TrackRefund
-from mooring import models
 from datetime import timedelta
 from django.db.models import Q, Min
 
@@ -211,8 +209,93 @@ def mooring_booking_departure(start,end):
     except:
         raise
 
+def booking_refunds(start, end, system_id):
+    try:
+        bpoint, cash = [], []
+        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end, action='refund', response_code=0)])
+        cash.extend([x for x in CashTransaction.objects.filter(created__gte=start, created__lte=end, type='refund')])
 
-def booking_refunds(start,end):
+        strIO = StringIO()
+        fieldnames = ['Confirmation Number', 'Name', 'Type', 'Amount', 'Oracle Code', 'Date', 'Refunded By', 'Reason', 'Invoice']
+        writer = csv.writer(strIO)
+        writer.writerow(fieldnames)
+
+        # Get the required invoices
+        for e in cash:
+            invoice = None
+            if e.invoice.system == system_id:
+                try:
+                    #booking = BookingInvoice.objects.get(invoice_reference=e.invoice.reference).booking
+                    invoice = e.invoice
+                except Exception as e:
+                    pass
+                for line in invoice.order.lines.all():
+                    for k, v in line.refund_details['cash'].items():
+                        if k == str(e.id):
+                            track = None
+                            try:
+                                track = TrackRefund.objects.get(type=1, refund_id=k)
+                            except TrackRefund.DoesNotExist:
+                                pass
+                            name = ''
+                            reason = ''
+                            if track:
+                                name = track.user.get_full_name() if track.user.get_full_name() else track.user.email
+                                reason = track.details
+                            if booking:
+                                b_name = '{} {}'.format('', '')
+                                #b_name = '{} {}'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''))
+                                writer.writerow([booking.confirmation_number, b_name, 'Manual', v, line.oracle_code, e.created.strftime('%d/%m/%Y'), name, reason, invoice.reference])
+                            else:
+                                writer.writerow(['', '', 'Manual', v, line.oracle_code, e.created.strftime('%d/%m/%Y'), name, invoice.reference])
+        for b in bpoint:
+            booking, invoice = None, None
+            try:
+                invoice = Invoice.objects.get(reference=b.crn1)
+                print ("SYSTEM ID")
+                print (system_id)
+                if invoice.system == system_id:
+                    #try:
+                    #    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
+                    #except BookingInvoice.DoesNotExist:
+                    #    pass
+                    for line in invoice.order.lines.all():
+                        for k, v in line.refund_details['card'].items():
+                            if k == str(b.id):
+                                track = None
+                                try:
+                                    track = TrackRefund.objects.get(type=2, refund_id=k)
+                                except TrackRefund.DoesNotExist:
+                                    pass
+                                name = ''
+                                reason = ''
+                                if track:
+                                    name = track.user.get_full_name() if track.user.get_full_name() else track.user.email
+                                    reason = track.details
+                                ####
+                                booking = None
+                                ####
+                                if booking:
+                                    b_name = '{} {}'.format('test', 'fixme')
+                                    #b_name = '{} {}'.format(booking.details.get('first_name', ''), booking.details.get('last_name', ''))
+                                    writer.writerow([booking.confirmation_number, b_name, 'Card', v, line.oracle_code, b.created.strftime('%d/%m/%Y'), name, reason, invoice.reference])
+                                else:
+                                    writer.writerow(['', '', 'Card', v, line.oracle_code, b.created.strftime('%d/%m/%Y'), name, invoice.reference])
+
+            except Invoice.DoesNotExist:
+                pass
+            except Invoice.DoesNotExist:
+                pass
+
+        strIO.flush()
+        strIO.seek(0)
+        return strIO
+    except BaseException:
+        raise
+
+
+
+def booking_refunds_old(start,end, system):
     try:
         bpoint, cash = [], []
         bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date__gte=start, settlement_date__lte=end,action='refund',response_code=0)])
@@ -225,12 +308,12 @@ def booking_refunds(start,end):
 
         # Get the required invoices
         for e in cash:
-            booking, invoice = None, None
-            if e.invoice.system == '0516':
+            invoice = None
+            if e.invoice.system == system:
                 try:
-                    booking = BookingInvoice.objects.get(invoice_reference=e.invoice.reference).booking
+                    #linked_invoice = LinkedInvoice.objects.get(invoice_reference=e.invoice.reference)
                     invoice = e.invoice
-                except BookingInvoice.DoesNotExist:
+                except LinkedInvoice.DoesNotExist:
                     pass
                     #raise ValidationError('Couldn\'t find a booking matched to invoice reference {}'.format(e.invoice.reference))
                 for line in invoice.order.lines.all():
@@ -246,9 +329,9 @@ def booking_refunds(start,end):
                             if track:
                                 name = track.user.get_full_name() if track.user.get_full_name() else track.user.email
                                 reason = track.details
-                            if booking:
-                                b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-                                writer.writerow([booking.confirmation_number,b_name,'Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,reason,invoice.reference])
+                            #if booking:
+                            #    b_name = '{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
+                            #    writer.writerow([booking.confirmation_number,b_name,'Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,reason,invoice.reference])
                             else:
                                 writer.writerow(['','','Manual',v,line.oracle_code,e.created.strftime('%d/%m/%Y'),name,invoice.reference])
 
@@ -302,56 +385,50 @@ def booking_refunds(start,end):
     except:
         raise
 
-def booking_bpoint_settlement_report(_date):
+def booking_bpoint_settlement_report(_date,system):
     try:
         bpoint, cash = [], []
-        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date=_date,response_code=0,crn1__startswith='0516').exclude(crn1__endswith='_test')])
-        cash = CashTransaction.objects.filter(created__date=_date,invoice__reference__startswith='0516').exclude(type__in=['move_out','move_in'])
+        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date=_date,response_code=0,crn1__startswith=system).exclude(crn1__endswith='_test')])
+        cash = CashTransaction.objects.filter(created__date=_date,invoice__reference__startswith=system).exclude(type__in=['move_out','move_in'])
 
         strIO = StringIO()
         fieldnames = ['Payment Date','Settlement Date','Confirmation Number','Name','Type','Amount','Invoice']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
-
+        print ("SET 1")
         for b in bpoint:
             booking, invoice = None, None
             try:
                 invoice = Invoice.objects.get(reference=b.crn1)
-                try:
-                    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
-                except BookingInvoice.DoesNotExist:
-                    pass
+                #try:
+                #    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
+                #except BookingInvoice.DoesNotExist:
+                #    pass
                     
-                if booking:
-                    b_name = u'{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-                    created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),booking.confirmation_number,b_name.encode('utf-8'),str(b.action),b.amount,invoice.reference])
-                else:
-                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])
+                #if booking:
+                b_name = u'{} {}'.format('First NAME' ,'Last NAME')
+                created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
+                writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'BOOKIGN CONFIURMATION NUMBER',b_name.encode('utf-8'),str(b.action),b.amount,invoice.reference])
+                #else:
+                #    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
                 pass
-
+        print ("SET 2")
         for b in cash:
             booking, invoice = None, None
             try:
                 invoice = b.invoice 
-                try:
-                    booking = BookingInvoice.objects.get(invoice_reference=invoice.reference).booking
-                except BookingInvoice.DoesNotExist:
-                    pass
                     
-                if booking:
-                    b_name = u'{} {}'.format(booking.details.get('first_name',''),booking.details.get('last_name',''))
-                    created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-                    writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),booking.confirmation_number,b_name.encode('utf-8'),str(b.type),b.amount,invoice.reference])
-                else:
-                    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),'','',str(b.type),b.amount,invoice.reference])
+                b_name = u'{} {}'.format('First NAME 1','Last NAME 2')
+                created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
+                writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),'BOOKIGN CONFIURMATION NUMBER',b_name.encode('utf-8'),str(b.type),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
                 pass
 
         strIO.flush()
         strIO.seek(0)
         return strIO
+        print ("SET 3")
     except:
         raise
 
