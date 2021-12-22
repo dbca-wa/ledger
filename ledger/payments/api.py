@@ -18,7 +18,7 @@ from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
 from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode, RefundFailed, OracleInterfaceSystem
-from ledger.payments.utils import systemid_check, update_payments
+from ledger.payments.utils import systemid_check, update_payments 
 from ledger.payments.invoice import utils as invoice_utils
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv, generate_items_csv_allocated
@@ -1057,6 +1057,11 @@ def RefundOracleView(request, *args, **kwargs):
                 bpoint_trans_split_json = json.loads(bpoint_trans_split)
                 failed_refund = False
 
+                system_id = None
+                li = LinkedInvoice.objects.filter(booking_reference=booking_reference)
+                if li.count() > 0:
+                     system_id = li[0].system_identifier.system_id 
+
                 json_obj = {'found': False, 'code': money_from, 'money_to': money_to, 'failed_refund': failed_refund}
                 if len(booking_reference_linked) > 0:
                     pass
@@ -1077,7 +1082,7 @@ def RefundOracleView(request, *args, **kwargs):
                              lines.append({'ledger_description':str("Temp fund transfer "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":Decimal('{:.2f}'.format(float(bp_txn['line-amount']))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
 
 
-                    order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=booking_reference_linked)
+                    order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=booking_reference_linked,system_id=system_id)
                     new_invoice = Invoice.objects.get(order_number=order.number)
                     update_payments(new_invoice.reference)
 
@@ -1110,7 +1115,7 @@ def RefundOracleView(request, *args, **kwargs):
                                 bpoint_failed_amount = Decimal(bp_txn['line-amount'])
                                 lines = []
                                 lines.append({'ledger_description':str("Refund failed for txn "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":'0.00',"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
-                            order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=booking_reference_linked)
+                            order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=booking_reference_linked, system_id=system_id)
                             new_invoice = Invoice.objects.get(order_number=order.number)
 
                             if refund:
@@ -1131,7 +1136,7 @@ def RefundOracleView(request, *args, **kwargs):
 
                     for mt in money_to_json:
                         lines.append({'ledger_description':mt['line-text'],"quantity":1,"price_incl_tax":mt['line-amount'],"oracle_code":mt['oracle-code'], 'line_status': 1})
-                    order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None,  booking_reference_linked=booking_reference_linked)
+                    order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None,  booking_reference_linked=booking_reference_linked, system_id=system_id)
                     new_invoice = Invoice.objects.get(order_number=order.number)
                     update_payments(new_invoice.reference)
 

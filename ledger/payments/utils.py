@@ -471,14 +471,20 @@ def oracle_parser_on_invoice(date,system,system_name,override=False):
 
 
 def update_payments(invoice_reference):
-
-
     UPDATE_PAYMENT_ALLOCATION = env('UPDATE_PAYMENT_ALLOCATION', False)
+
+    system_id = invoice_reference[:4]
+    ois = OracleInterfaceSystem.objects.filter(system_id=system_id)
+    if ois.count() > 0:
+         if ois[0].integration_type == 'bpoint_api':
+             if ois[0].oracle_calculation == 'version_2':
+                     UPDATE_PAYMENT_ALLOCATION = True             
+
+
     if UPDATE_PAYMENT_ALLOCATION is True:
         # New functionality to assign payments to relevant line items ensuring payments, refunds and booking changes are allocated to the correct oracle codes.
         update_payments_allocation(invoice_reference)
     else:
-
         with transaction.atomic():
             try:
                 i = None

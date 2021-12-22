@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from ledger.accounts import models
 from django.contrib.auth.models import Group
 from ledgergw import models as ledgergw_models
+from ledgergw import reports
 from ledger.api import models as ledgerapi_models
 from ledger.api import utils as ledgerapi_utils
 #from ledgergw import common
@@ -18,9 +19,17 @@ from ledger.basket import models as basket_models
 from django.core.files.base import ContentFile
 from django.utils.crypto import get_random_string
 from ledger.payments.models import Invoice, BpointToken
+from rest_framework.response import Response
+from rest_framework import viewsets, serializers, status, generics, views
+from rest_framework.renderers import JSONRenderer
 from decimal import Decimal
+from ledgergw.serialisers import ReportSerializer, SettlementReportSerializer, OracleSerializer
+from ledgergw import utils as ledgergw_utils
+from django.http import HttpResponse
+from wsgiref.util import FileWrapper
+from django.core.exceptions import ValidationError
 import base64
-
+import traceback
 import json
 import ipaddress
 
@@ -917,4 +926,91 @@ def ip_check(request):
     ledger_json  = {}
     ipaddress = ledgerapi_utils.get_client_ip(request)
     jsondata = {'status': 200, 'ipaddress': str(ipaddress)}
-    return HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return HTtpResponse(json.dumps(jsondata), content_type='application/json')
+
+
+class SettlementReportView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self, request, format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            # parse and validate data
+            system = request.GET.get('system')
+            report = None
+            data = {
+                "date": request.GET.get('date'),
+            }
+            serializer = SettlementReportSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            filename = 'Settlement Report-{}'.format(str(serializer.validated_data['date']))
+            # Generate Report
+            report = reports.booking_bpoint_settlement_report(serializer.validated_data['date'],system)
+            if report:
+                response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                return response
+            else:
+                raise serializers.ValidationError('No report was generated.')
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+
+
+class RefundsReportView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self, request, format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            # parse and validate data
+            report = None
+            system = request.GET.get('system')
+            data = {
+                "start": request.GET.get('start'),
+                "end": request.GET.get('end'),
+            }
+            serializer = ReportSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            filename = 'Refunds Report-{}-{}'.format(str(serializer.validated_data['start']), str(serializer.validated_data['end']))
+            # Generate Report
+            report = reports.booking_refunds(serializer.validated_data['start'], serializer.validated_data['end'],system)
+            if report:
+                response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                return response
+            else:
+                raise serializers.ValidationError('No report was generated.')
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            print (e)
+            traceback.print_exc()
+
+
+class OracleJob(views.APIView):
+    renderer_classes = [JSONRenderer, ]
+
+    def get(self, request, format=None):
+        try:
+            system = request.GET.get('system')
+            data = {
+                "date": request.GET.get("date"),
+                "override": request.GET.get("override")
+            }
+            
+            serializer = OracleSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            ledgergw_utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'), serializer.validated_data['override'], system)
+            data = {'successful': True}
+            return Response(data)
+        except serializers.ValidationError:
+            print(traceback.print_exc())
+            raise
+        except ValidationError as e:
+            raise serializers.ValidationError(repr(e.error_dict))
+        except Exception as e:
+            print(traceback.print_exc())
+            raise serializers.ValidationError(str(e[0]))
+
