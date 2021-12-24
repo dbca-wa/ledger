@@ -28,6 +28,8 @@ urlpatterns = [
     url(r'^ledgergw/remote/process_refund/(?P<apikey>.+)/', api.process_refund),
     url(r'^ledgergw/remote/process_zero/(?P<apikey>.+)/', api.process_zero),
     url(r'^ledgergw/remote/process-api-refund/(?P<apikey>.+)/', api.process_api_refund),
+    url(r'^ledgergw/remote/oracle-interface-system/(?P<apikey>.+)/', api.oracle_interface_system),
+    url(r'^ledgergw/invoice-pdf/(?P<api_key>\w+)/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
     url(r'^api/reports/refunds$', api.RefundsReportView.as_view(), name='refunds-report'),
     url(r'^api/reports/settlements$', api.SettlementReportView.as_view(), name='settlements-report'),
     url(r'^api/oracle_job$', api.OracleJob.as_view(), name='get-oracle'),

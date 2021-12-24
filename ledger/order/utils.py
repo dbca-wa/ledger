@@ -36,7 +36,7 @@ class OrderCreator(CoreOrderCreator):
             print ("There is already an order with number "+str(order_number))
             order = Order.objects.get(number=order_number)
             return order
-        #    raise ValueError("There is already an order with number "+str(order_number))
+        #   raise ValueError("There is already an order with number "+str(order_number))
 
         # Ok - everything seems to be in order, let's place the order
         order = self.create_order_model(
@@ -75,7 +75,6 @@ class OrderCreator(CoreOrderCreator):
         # Send signal for analytics to pick up, but only if we aren't in a transaction block
         if transaction.get_autocommit():
             order_placed.send(sender=self, order=order, user=user)
-
         return order    
 
     def create_line_models(self, order, basket_line, extra_line_fields=None,custom_ledger=False):

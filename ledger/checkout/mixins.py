@@ -24,7 +24,6 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         swap_user = None
         try:
             swap_user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
-
         except:
             pass
         if swap_user:

@@ -435,10 +435,17 @@ def get_order_info(request,apikey):
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             print ("API get_order_info")
             data = json.loads(request.POST.get('data', "{}"))
-            order = Order.objects.get(basket__id=data['basket_id'])
+            if 'basket_id' in data:
+               order = Order.objects.get(basket__id=data['basket_id'])
+            if 'number' in data:
+               order = Order.objects.get(number=data['number'])
             order_obj = {}
             order_obj['id'] = order.id
             order_obj['number'] = order.number
+            #order_obj['owner'] = order.owner
+            order_obj['user_id'] = None
+            if order.user:
+                 order_obj['user_id'] = order.user.id
 
             jsondata['status'] = 200
             jsondata['message'] = 'Success'
@@ -452,7 +459,38 @@ def get_order_info(request,apikey):
     response.set_cookie('CookieTest', 'Testing',5)
     return response
 
-#get_basket_total
+
+
+#is = ledger_payments_models.OracleInterfaceSystem.objects.filter(system_id=system_id_zeroed,enabled=True),
+
+@csrf_exempt
+def oracle_interface_system(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            data = json.loads(request.POST.get('data', "{}"))
+            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system_id_zeroed,enabled=True)
+            if ois.count() > 0:
+                ois_obj['system_id'] = ois[0].system_id
+                ois_obj['system_name'] = ois[0].system_name
+                ois_obj['enabled'] = ois[0].enabled
+                ois_obj['integration_type'] = ois[0].integration_type
+
+            jsondata['status'] = 200
+            jsondata['message'] = 'Success'
+            jsondata['data'] = {'ois': ois_obj}
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    response.set_cookie('CookieTest', 'Testing',5)
+    return response
+
+
 @csrf_exempt
 def get_invoice_properties(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
