@@ -16,6 +16,7 @@ from ledger.payments.invoice.models import Invoice
 from ledger.payments import models as payment_models
 from ledger.payments.bpoint import models as payment_bpoint_models
 from ledger.basket import models as basket_models
+from ledger.order import models as order_models
 from django.core.files.base import ContentFile
 from django.utils.crypto import get_random_string
 from ledger.payments.models import Invoice, BpointToken
@@ -459,6 +460,49 @@ def get_order_info(request,apikey):
     response.set_cookie('CookieTest', 'Testing',5)
     return response
 
+@csrf_exempt
+def get_order_lines(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            print ("API get_order_line")
+            data = json.loads(request.POST.get('data', "{}"))
+            order = []
+            order_obj = []
+
+            if 'number' in data:
+                order_info = order_models.Order.objects.filter(number=data['number'])
+                if order_info.count() > 0:
+                     order = order_models.Line.objects.filter(order=order_info[0])#,oracle_code=data['oracle_code'])
+
+            if 'order_id' in data:
+                order = order_models.Line.objects.filter(order_id=data['order_id'])
+            for o in order:
+               row = {}
+               row['id'] = o.id
+               row['title'] = o.title
+               row['oracle_code'] = o.oracle_code
+               row['quantity'] = o.quantity
+               row['price_incl_tax'] = str(o.line_price_incl_tax)
+               row['price_excl_tax'] = str(o.line_price_excl_tax)
+               row['paid'] = str(o.paid)
+               row['unit_price_incl_tax'] = str(o.unit_price_incl_tax)
+               row['unit_price_excl_tax'] = str(o.unit_price_excl_tax)
+
+               order_obj.append(row)
+            jsondata['status'] = 200
+            jsondata['message'] = 'Success'
+            jsondata['data'] = {'orderlines': order_obj}
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    response.set_cookie('CookieTest', 'Testing',5)
+    return response
+
 
 
 #is = ledger_payments_models.OracleInterfaceSystem.objects.filter(system_id=system_id_zeroed,enabled=True),
@@ -514,7 +558,7 @@ def get_invoice_properties(request,apikey):
                        invoice_obj['token'] = invoice.token
                        invoice_obj['voided'] = invoice.voided
                        invoice_obj['previous_invoice'] = invoice.previous_invoice
-                       invoice_obj['settlement_date'] = invoice.settlement_date
+                       invoice_obj['settlement_date'] = invoice.settlement_date.strftime('%d/%m/%Y')
                        invoice_obj['payment_method'] = invoice.payment_method
                        invoice_obj['biller_code'] = invoice.biller_code
                        invoice_obj['number'] = invoice.number
@@ -539,7 +583,8 @@ def get_invoice_properties(request,apikey):
                        jsondata['message'] = 'Success'
                        jsondata['data'] = {'invoice': invoice_obj}
                        print ("YES")
-                 except:
+                 except Exception as e:
+                     print (e)
                      print ("ERROR")
             else:
                  jsondata['status'] = 404
