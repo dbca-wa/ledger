@@ -177,6 +177,16 @@ class ZeroPaymentView(generic.TemplateView):
          basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
          return render(request, self.template_name, {'basket': basket})
 
+class NoPaymentView(generic.TemplateView):
+    template_name = 'checkout/no_payment_api_wrapper.html'
+
+    def get(self, request, *args, **kwargs):
+         basket = None
+         basket_hash = request.COOKIES.get('ledgergw_basket','')
+         basket_hash_split = basket_hash.split("|")
+         basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
+         return render(request, self.template_name, {'basket': basket})
+
 class FailedTransaction(generic.TemplateView):
     template_name = 'dpaw_payments/failed_transaction.html'
 

@@ -514,7 +514,10 @@ class CashViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             raise
         except ValidationError as e:
-            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
+            if '__all__' in e.error_dict:
+                raise serializers.ValidationError(str(e.error_dict['__all__'][0]).replace('[','').replace(']',''))
+            else:
+                raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             raise serializers.ValidationError(str(e[0]))
 

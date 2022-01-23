@@ -321,10 +321,16 @@ var refund_booking =  {
 
                              // async: false,
                              error: function(data) {
-                                   $('#notification-body').html("There was a system error, attempting to process your request please try again later.");
-                                   $('.modal-backdrop').show();
-                                   $('#notification-box').show();
-                                   ledger_payments.load_payment_info();
+				   var error_text = "There was a system error, attempting to process your request please try again later.";
+				   if ('responseText' in data) {
+                                         error_text = data.responseText;
+				   } else {
+
+				   }
+                                   
+				   $("#MessageBox").modal("show");
+                                   $('#error-message').html(error_text);
+                                   setTimeout("ledger_payments.load_payment_info();",500);
                              },
                              dataType: 'json',
                              success: function(data, textStatus, xhr) {
