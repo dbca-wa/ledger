@@ -823,8 +823,41 @@ def process_zero(request,apikey):
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             data = json.loads(request.POST.get('data', "{}"))
             basket_hash = request.COOKIES.get('ledgergw_basket','')
-            print ("BASKETHASH ZERO")
-            print (basket_hash)
+            basket_hash_split = basket_hash.split("|")
+            basket_obj = basket_models.Basket.objects.filter(id=basket_hash_split[0])
+            order_response = utils.place_order_submission(request)
+            new_order = Order.objects.get(basket=basket_obj)
+            new_invoice = Invoice.objects.get(order_number=new_order.number)
+
+            if order_response:
+                jsondata['status'] = 200
+                jsondata['message'] = 'success'
+                jsondata['order_response'] = json.loads(order_response.content.decode("utf-8"))
+                #return order_response
+            else:
+               jsondata['status'] = 500
+               jsondata['message'] = 'error'
+               jsondata['order_response'] = {}
+            #jsondata = process_refund_from_basket(request,basket_obj)
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+
+
+def process_no(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    invoice_json = {}
+    basket =None
+    failed_refund = False
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            basket_hash = request.COOKIES.get('ledgergw_basket','')
             basket_hash_split = basket_hash.split("|")
             basket_obj = basket_models.Basket.objects.filter(id=basket_hash_split[0])
             order_response = utils.place_order_submission(request)

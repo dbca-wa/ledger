@@ -141,6 +141,38 @@ $(function() {
         $('#use_stored').prop('checked',false);
     }
 
+$("#process-no").click(function() {
+      ledger.showLoader();
+      console.log("process-no clicked");
+      var card = $('input[name=card]:checked').val();
+      var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
+      var checkout_token = $('#checkout_token').val();
+      var payment_method = $('#payment_method').val();
+
+      var data = {'card': card, 'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method };
+
+      $.ajax({
+        type: "POST",
+        url: '/ledger-api/process-no',
+        data: data,
+        success: function(data, textStatus, jQxhr) {
+          try {
+          // var data_json = JSON.parse(data);
+              window.location=data['order_response']['return_url'];
+          } catch(err) {
+             $("#ledger-payment-overtop").html("<BR><BR>"+data);
+          }
+          $("#ledger-payment-overtop").show();
+
+        },
+        error: function( jqXhr, textStatus, errorThrown ) {
+               console.log( errorThrown );
+        },
+        // dataType: 'text,'
+      });
+});
+
+
 $("#process-zero").click(function() {
       ledger.showLoader();
       console.log("process-zero clicked");

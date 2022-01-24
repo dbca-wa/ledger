@@ -28,6 +28,7 @@ urlpatterns = [
     url(r'^ledgergw/remote/get-card-tokens/(?P<apikey>.+)/', api.get_card_tokens_for_user),
     url(r'^ledgergw/remote/process_refund/(?P<apikey>.+)/', api.process_refund),
     url(r'^ledgergw/remote/process_zero/(?P<apikey>.+)/', api.process_zero),
+    url(r'^ledgergw/remote/process_no/(?P<apikey>.+)/', api.process_no),
     url(r'^ledgergw/remote/process-api-refund/(?P<apikey>.+)/', api.process_api_refund),
     url(r'^ledgergw/remote/oracle-interface-system/(?P<apikey>.+)/', api.oracle_interface_system),
     url(r'^ledgergw/invoice-pdf/(?P<api_key>\w+)/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
