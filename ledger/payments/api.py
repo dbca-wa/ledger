@@ -514,7 +514,10 @@ class CashViewSet(viewsets.ModelViewSet):
         except serializers.ValidationError:
             raise
         except ValidationError as e:
-            raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
+            if '__all__' in e.error_dict:
+                raise serializers.ValidationError(str(e.error_dict['__all__'][0]).replace('[','').replace(']',''))
+            else:
+                raise serializers.ValidationError(str(''.join(e.error_dict.values()[0][0])))
         except Exception as e:
             raise serializers.ValidationError(str(e[0]))
 
@@ -876,6 +879,7 @@ def LedgerPayments(request, *args, **kwargs):
                          latest_li = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id).order_by('-created')[0]
                          linked_payments = []
                          invoices = []
+                         invoices_data = []
                          orders = []
                          for li in linkinv:
                              invoices.append(li.invoice_reference)
@@ -883,6 +887,7 @@ def LedgerPayments(request, *args, **kwargs):
                          invs = Invoice.objects.filter(reference__in=invoices)
                          for i in invs:
                              orders.append(i.order_number)
+                             invoices_data.append({'invoice_reference': i.reference, 'payment_status': str(i.payment_status), 'balance': str(i.balance)})
                          invoice_orders = Order.objects.filter(number__in=orders)
                          order_array = []
                          order_obj = order_model.Line.objects.filter(order__number__in=orders).order_by('order__date_placed')
@@ -899,7 +904,6 @@ def LedgerPayments(request, *args, **kwargs):
                              order_array.append(row)
 
                              if o.oracle_code not in oracle_code_totals:
-                                 print ("NOT IN")
                                  oracle_code_totals[o.oracle_code] = Decimal('0.00')
                              oracle_code_totals[o.oracle_code] = oracle_code_totals[o.oracle_code] + o.line_price_incl_tax 
 
@@ -937,13 +941,69 @@ def LedgerPayments(request, *args, **kwargs):
                                 if bp.txn_number in bp_txn_refund_hash:
                                     row['amount_refunded'] = str(bp_txn_refund_hash[bp.txn_number])
                              bp_array.append(row)
-                         
+
+
+                         cash_array = []
+                         cash_array_invoices = {}
+                         cash_txn_refund_hash = {}
+                         cash_trans = CashTransaction.objects.filter(invoice__in=invs)
+                         for c in cash_trans:
+                             if c.id not in cash_txn_refund_hash:
+                                 cash_txn_refund_hash[c.id] = Decimal('0.00')
+                             if c.type == 'refund':
+                                 cash_txn_refund_hash[c.id] = cash_txn_refund_hash[c.id] + c.amount
+                        
+                         total_cash_amount = Decimal('0.00')
+                         for ch in cash_trans:
+                             if ch.type  == 'refund':
+                                   total_cash_amount = total_cash_amount - ch.amount
+                             elif ch.type == 'payment':
+                                   total_cash_amount = total_cash_amount + ch.amount
+
+                             row = {}
+                             row['id'] = ch.id
+                             row['invoice_reference'] = ch.invoice.reference
+                             row['amount'] = str(ch.amount)
+                             row['action'] = ch.type
+                             row['source'] = ch.source
+                             row['receipt'] = ch.receipt
+                             row['details'] = ch.details
+                             row['created'] = ch.created.strftime("%d/%m/%Y %H:%M:%S")
+                             
+                             if ch.type == 'payment':
+                                  row['amount_refunded'] = '0.00'
+                                  if ch.id in cash_txn_refund_hash:
+                                      row['amount_refunded'] = str(cash_txn_refund_hash[ch.id])
+                             cash_array.append(row)
+
+                         # cash group by invoice
+                         for ch in cash_trans:
+                             if ch.invoice.reference not in cash_array_invoices:
+                                   cash_array_invoices[ch.invoice.reference] = Decimal('0.00')
+
+                             if ch.type  == 'refund':
+                                  cash_array_invoices[ch.invoice.reference] = cash_array_invoices[ch.invoice.reference] - ch.amount
+                             if ch.type  == 'payment':
+                                  cash_array_invoices[ch.invoice.reference] = cash_array_invoices[ch.invoice.reference] + ch.amount
+
+                         cai = []
+                         # convert decimal money to string for json dump    
+                         for ca in cash_array_invoices.keys():
+                               row = {}
+                               row['invoice_reference'] = ca
+                               row['amount'] = str(cash_array_invoices[ca])
+                               cai.append(row)
+
                          data['data']['linked_payments'] = linked_payments
                          data['data']['total_gateway_amount'] = str(total_gateway_amount)
+                         data['data']['total_cash_amount'] = str(total_cash_amount)
                          data['data']['total_unallocated'] = str(total_unallocated)
                          #data['data']['oracle_code_totals']  
                          data['data']['order'] = order_array
                          data['data']['bpoint'] = bp_array
+                         data['data']['cash'] = cash_array
+                         data['data']['cash_on_invoices'] = cai
+                         data['data']['invoices_data'] = invoices_data
                          data['data']['booking_reference'] = latest_li.booking_reference
                          data['data']['booking_reference_linked'] = latest_li.booking_reference_linked
                          data['status'] = 200

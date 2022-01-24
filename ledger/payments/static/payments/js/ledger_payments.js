@@ -23,6 +23,8 @@ var ledger_payments = {
              success: function(data) {
 		        var orderdata = "";
 		        var bpointdata = "";
+		        var cashdata = "";
+
                         if (data.data.order.length > 0) {
                              for (let i = 0; i < data.data.order.length; i++) {
                                     var line_price_incl_tax_color = '#bb2d3b';
@@ -39,14 +41,23 @@ var ledger_payments = {
                                      bpointdata+= "<tr><td>"+data.data.bpoint[i].txnnumber+"</td><td>"+data.data.bpoint[i].crn1+"</td><td>"+data.data.bpoint[i].action+"</td><td>$"+data.data.bpoint[i].amount+"</td><td>"+data.data.bpoint[i].processed+"</td></tr>";
 				     console.log(data.data.bpoint[i]);
 			     }
+
+			     for (let i = 0; i < data.data.cash.length; i++) {
+				     cashdata+= "<tr><td>"+data.data.cash[i].id+"</td><td>"+data.data.cash[i].invoice_reference+"</td><td>"+data.data.cash[i].action+"</td><td>$"+data.data.cash[i].amount+"</td><td>"+data.data.cash[i].created+"</td></tr>";
+			     }
 		      }
 
 		      $('#order_list').html(orderdata);
 		      $('#bpoint_tbody').html(bpointdata);
+		      $('#cash_tbody').html(cashdata);
 		      $('#total_payment_gateway').html('$&nbsp;'+data.data.total_gateway_amount);
+		      $('#total_cash_payment').html('$&nbsp;'+data.data.total_cash_amount);
 		      $('#total_unallocated').html('$&nbsp;'+data.data.total_unallocated);
 
                       refund_booking.var.bpoint_trans_totals = data.data.bpoint;
+		      refund_booking.var.cash_trans_totals = data.data.cash;
+		      refund_booking.var.cash_on_invoices = data.data.cash_on_invoices;
+		      refund_booking.var.invoices_data = data.data.invoices_data;
 		      refund_booking.var.unique_oracle_code_on_booking = data.data.oracle_code_totals; 
 		      refund_booking.var.booking_reference = data.data.booking_reference;
 		      refund_booking.var.booking_reference_linked = data.data.booking_reference_linked;

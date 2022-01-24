@@ -298,7 +298,6 @@
                                      reports.var.oracle_override = false;
                                   }
                                 });
-
                         },
                         getBookingSettlementsReport() {
                             var settlement_date = reports.var.bookingSettlementsDatePicker.data("DateTimePicker").date().format('DD/MM/YYYY');
@@ -335,7 +334,6 @@
                                 if (oracle_date.length > 0) { 
 				      $('#LoadingPopup').modal('show');
                                       var report_url = reports.var.oracle_job_url+"?system="+reports.var.system_id+"&date="+oracle_date+"&override="+reports.var.oracle_override;
-
                                       $.ajax({
                                           url: report_url,
                                           method: 'GET',
