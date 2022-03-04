@@ -23,7 +23,6 @@ class ReportsView(LoginRequiredMixin, TemplateView):
              context['system_id_exists'] = True
         return context
 
-
 class InvoicePDFView(View):
 
     def get(self, request, *args, **kwargs):

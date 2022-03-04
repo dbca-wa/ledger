@@ -29,6 +29,7 @@ from ledgergw import utils as ledgergw_utils
 from django.http import HttpResponse
 from wsgiref.util import FileWrapper
 from django.core.exceptions import ValidationError
+from datetime import datetime
 import base64
 import traceback
 import json
@@ -109,6 +110,93 @@ def user_info_search(request, apikey):
         pass
     return HttpResponse(json.dumps(jsondata), content_type='application/json')
 
+@csrf_exempt
+def update_user_info_id(request, userid,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    post_list = list(request.POST)
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ledger_user = models.EmailUser.objects.filter(id=int(userid))
+            if ledger_user.count() > 0:
+                ledger_obj = ledger_user[0]
+                residential_address_obj = {}
+                postal_address_obj = {}
+                if 'residential_address' in post_list:
+                    residential_address_obj = json.loads(request.POST.get('residential_address'))
+                if 'postal_address' in post_list:
+                    postal_address_obj = json.loads(request.POST.get('postal_address'))
+                    
+
+                if 'dob' in post_list:
+                    dob = request.POST.get('dob')
+                    date_dob = datetime.strptime(dob, '%d/%m/%Y').date()
+                    ledger_obj.dob = date_dob
+
+                if ledger_obj.residential_address is None:
+                    residential_address =  models.Address.objects.create(user=ledger_obj,
+                                              line1=residential_address_obj['residential_line1'],
+                                              locality=residential_address_obj['residential_locality'],
+                                              state=residential_address_obj['residential_state'],
+                                              postcode=residential_address_obj['residential_postcode'],
+                                              country=residential_address_obj['residential_country'],
+                                             )
+                    ledger_obj.residential_address = residential_address
+                else:
+                    if 'residential_line1' in residential_address_obj:
+                           ledger_obj.residential_address.line1 =residential_address_obj['residential_line1']
+                    if 'residential_locality' in residential_address_obj:
+                           ledger_obj.residential_address.locality = residential_address_obj['residential_locality']
+                    if 'residential_state' in residential_address_obj:
+                           ledger_obj.residential_address.state = residential_address_obj['residential_state']
+                    if 'residential_postcode' in residential_address_obj:
+                           ledger_obj.residential_address.postcode = residential_address_obj['residential_postcode']
+                    if 'residential_country' in residential_address_obj:
+                           ledger_obj.residential_address.country = residential_address_obj['residential_country']
+                    ledger_obj.residential_address.save()
+
+                if ledger_obj.postal_address is None:
+                    postal_address =  models.Address.objects.create(user=ledger_obj,
+                                              line1=request.POST.get('postal_line1'),
+                                              locality=request.POST.get('postal_locality'),
+                                              state=request.POST.get('postal_state'),
+                                              postcode=request.POST.get('postal_postcode'),
+                                              country=request.POST.get('postal_country'),
+                                             )
+                    ledger_obj.postal_address = postal_address
+                else:
+                    if 'postal_line1' in postal_address_obj:
+                        ledger_obj.postal_address.line1 =postal_address_obj['postal_line1']
+                    if 'postal_locality' in postal_address_obj:
+                           ledger_obj.postal_address.locality = postal_address_obj['postal_locality']
+                    if 'postal_state' in postal_address_obj:
+                           ledger_obj.postal_address.state = postal_address_obj['postal_state']
+                    if 'postal_postcode' in postal_address_obj:
+                           ledger_obj.postal_address.postcode = postal_address_obj['postal_postcode']
+                    if 'postal_country' in postal_address_obj:
+                           ledger_obj.postal_address.country = postal_address_obj['postal_country']
+                    if 'postal_same_as_residential' in postal_address_obj:
+                           ledger_obj.postal_same_as_residential = postal_address_obj['postal_same_as_residential']
+                    ledger_obj.postal_address.save()
+                if 'phone_number' in post_list:
+                    ledger_obj.phone_number = request.POST.get('phone_number')
+
+                if 'mobile_number' in post_list:
+                    ledger_obj.mobile_number = request.POST.get('mobile_number')
+
+                ledger_obj.save()
+                #jsondata['user'] = ledger_user_json
+                jsondata['status'] = 200
+                jsondata['message'] = 'User updated'
+            else:
+                jsondata['status'] = '404'
+                jsondata['message'] = 'User not found'
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    return HttpResponse(json.dumps(jsondata), content_type='application/json')
 
 @csrf_exempt
 def user_info_id(request, userid,apikey):
@@ -130,7 +218,7 @@ def user_info_id(request, userid,apikey):
                     ledger_user_json['date_joined'] = ledger_obj.date_joined.strftime('%d/%m/%Y %H:%M')
                     ledger_user_json['title'] = ledger_obj.title
                     if ledger_obj.dob:
-                        ledger_user_json['dob'] = ledger_obj.dob.strftime('%d/%m/%Y %H:%M')
+                        ledger_user_json['dob'] = ledger_obj.dob.strftime('%d/%m/%Y')
                     else:
                         ledger_user_json['dob'] = None
                     ledger_user_json['phone_number'] = ledger_obj.phone_number
@@ -148,6 +236,46 @@ def user_info_id(request, userid,apikey):
                         ledger_user_json['fullnamedob'] = ledger_obj.get_full_name_dob()
                     else:
                         ledger_user_json['fullnamedob'] = None
+                    ledger_user_json['residential_address'] =  {}
+                    ledger_user_json['residential_address']['line1'] = ""
+                    ledger_user_json['residential_address']['line2'] = ""
+                    ledger_user_json['residential_address']['line3'] = ""
+                    ledger_user_json['residential_address']['locality'] = ""
+                    ledger_user_json['residential_address']['state'] = ""
+                    ledger_user_json['residential_address']['country'] = ""
+                    ledger_user_json['residential_address']['postcode'] = ""
+                    if ledger_obj.residential_address:
+                         ledger_user_json['residential_address']['line1'] = ledger_obj.residential_address.line1
+                         ledger_user_json['residential_address']['line2'] = ledger_obj.residential_address.line2
+                         ledger_user_json['residential_address']['line3'] = ledger_obj.residential_address.line3
+                         ledger_user_json['residential_address']['locality'] = ledger_obj.residential_address.locality
+                         ledger_user_json['residential_address']['state'] = ledger_obj.residential_address.state
+                         if ledger_obj.residential_address.country:
+                             ledger_user_json['residential_address']['country'] = ledger_obj.residential_address.country.code
+                         ledger_user_json['residential_address']['postcode'] = ledger_obj.residential_address.postcode
+
+                    ledger_user_json['postal_address'] = {}
+                    ledger_user_json['postal_address']['line1'] = ""
+                    ledger_user_json['postal_address']['line2'] = ""
+                    ledger_user_json['postal_address']['line3'] = ""
+                    ledger_user_json['postal_address']['locality'] = ""
+                    ledger_user_json['postal_address']['state'] = ""
+                    ledger_user_json['postal_address']['country'] = ""
+                    ledger_user_json['postal_address']['postcode'] = ""
+
+                    if ledger_obj.postal_address:
+                         ledger_user_json['postal_address']['line1'] = ledger_obj.postal_address.line1
+                         ledger_user_json['postal_address']['line2'] = ledger_obj.postal_address.line2
+                         ledger_user_json['postal_address']['line3'] = ledger_obj.postal_address.line3
+                         ledger_user_json['postal_address']['locality'] = ledger_obj.postal_address.locality
+                         ledger_user_json['postal_address']['state'] = ledger_obj.postal_address.state
+                         ledger_user_json['postal_address']['country'] = ""
+                         if ledger_obj.postal_address.country:
+                             ledger_user_json['postal_address']['country'] = ledger_obj.postal_address.country.code
+                         ledger_user_json['postal_address']['postcode'] = ledger_obj.postal_address.postcode
+                    ledger_user_json['postal_same_as_residential'] = ledger_obj.postal_same_as_residential
+                         
+
                     # Groups
                     ledger_user_group = []
                     for g in ledger_obj.groups.all():
@@ -165,6 +293,7 @@ def user_info_id(request, userid,apikey):
     else:
         pass
     return HttpResponse(json.dumps(jsondata), content_type='application/json')
+
 
 @csrf_exempt
 def user_info(request, ledgeremail,apikey):
@@ -204,6 +333,10 @@ def user_info(request, ledgeremail,apikey):
                     ledger_user_json['mobile_number'] = ledger_obj.mobile_number
                     ledger_user_json['fax_number'] = ledger_obj.fax_number
                     ledger_user_json['organisation'] = ledger_obj.organisation
+                    #ledger_user_json['residential_address'] =  {}
+                    #if ledger_obj.residential_address:
+                    #     ledger_user_json['residential_address']['line1'] = ledger_obj.residential_address.line1 
+
                     #ledger_user_json['residential_address'] = ledger_obj.residential_address
                     #ledger_user_json['postal_address'] = ledger_obj.postal_address
                     #ledger_user_json['billing_address'] = ledger_obj.billing_address
@@ -1129,4 +1262,14 @@ class OracleJob(views.APIView):
         except Exception as e:
             print(traceback.print_exc())
             raise serializers.ValidationError(str(e[0]))
+
+
+def get_countries(request):
+     resp = {'status': 404, 'data': {}, 'message': ''}
+     countries_list = []
+     countries = models.Country.objects.all() 
+     for c in countries:
+         countries_list.append({'country_name' : c.printable_name, 'country_code' : c.iso_3166_1_a2 })
+     resp['data'] = countries_list
+     return HttpResponse(json.dumps(resp), content_type='application/json')
 

@@ -11,9 +11,11 @@ from ledger.urls import urlpatterns as ledger_patterns
 # URL Patterns
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^ledgergw/public/api/get-countries',api.get_countries),
     url(r'^ledgergw/remote/user/(?P<ledgeremail>.+)/(?P<apikey>.+)/', api.user_info),
     url(r'^ledgergw/remote/user-groups/(?P<ledger_id>[0-9]+)/(?P<apikey>.+)/', api.user_group_info),
     url(r'^ledgergw/remote/userid/(?P<userid>[0-9]+)/(?P<apikey>.+)/', api.user_info_id),
+    url(r'^ledgergw/remote/update-userid/(?P<userid>[0-9]+)/(?P<apikey>.+)/', api.update_user_info_id),
     url(r'^ledgergw/remote/user-search/(?P<apikey>.+)/', api.user_info_search),
     url(r'^ledgergw/remote/groups/(?P<apikey>.+)/', api.group_info),
     url(r'^ledgergw/remote/documents/update/(?P<apikey>.+)/', api.add_update_file_emailuser),
