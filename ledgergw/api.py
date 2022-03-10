@@ -640,6 +640,25 @@ def get_order_lines(request,apikey):
 
 #is = ledger_payments_models.OracleInterfaceSystem.objects.filter(system_id=system_id_zeroed,enabled=True),
 
+def get_failed_refund_totals(request,apikey,system_id):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            total_fr = payment_models.RefundFailed.objects.filter(system_identifier__system_id=system_id).count()
+            jsondata['status'] = 200
+            jsondata['message'] = 'Success'
+            jsondata['data'] = {'total_failed': total_fr}
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    response.set_cookie('CookieTest', 'Testing',5)
+    return response
+
 @csrf_exempt
 def oracle_interface_system(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}

@@ -33,13 +33,14 @@ urlpatterns = [
     url(r'^ledgergw/remote/process_no/(?P<apikey>.+)/', api.process_no),
     url(r'^ledgergw/remote/process-api-refund/(?P<apikey>.+)/', api.process_api_refund),
     url(r'^ledgergw/remote/oracle-interface-system/(?P<apikey>.+)/', api.oracle_interface_system),
+    url(r'^ledgergw/remote/get_failed_refund_totals/(?P<apikey>.+)/(?P<system_id>\d+)/', api.get_failed_refund_totals),
     url(r'^ledgergw/invoice-pdf/(?P<api_key>\w+)/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
     url(r'^api/reports/refunds$', api.RefundsReportView.as_view(), name='refunds-report'),
     url(r'^api/reports/settlements$', api.SettlementReportView.as_view(), name='settlements-report'),
     url(r'^api/oracle_job$', api.OracleJob.as_view(), name='get-oracle'),
     url(r'^ledgergw/ip-check/', api.ip_check),
     url(r'^reports/$', views.ReportsView.as_view(), name='reports'),
-    url(r'^logout/$', logout, name='logout' ),
+    url(r'^logout/$', logout, name='logout'),
 ] + ledger_patterns 
 
 
