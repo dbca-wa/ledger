@@ -8,13 +8,14 @@
         
         {% endblock %}
 
-        <h2>Order Information</h2>
+        <h2 style='margin-left:2px'>Order Information</h2>
+	<br>
     </div>
     <div class="basket-title">
-        <div class="row">
-            <p class="col-sm-9 h4">Item</p>
-            <p class="col-sm-1 h4 align-center">Quantity</p>
-            <p class="col-sm-2 h4 align-right">Total</p>
+        <div class="row" style='border-bottom: 3px solid #000000; margin-bottom: 12px; margin-left: 2px; margin-right: 2px;'>
+            <p class="col-sm-8 h5" style='font-size: 19px'>Item</p>
+            <p class="col-sm-2 h5 align-center" style='font-size: 19px'>Quantity</p>
+            <p class="col-sm-2 h5 align-right" style='font-size: 19px'>Total</p>
         </div>
     </div>
     
@@ -58,13 +59,11 @@
     {% else %}
         {% for line in basket.all_lines %}
             <div class="basket-items">
-                <div class="row">
-                    <div class="col-sm-2">
+                <div class="row" style='margin-left:2px;'>
+                    <div class="col-sm-8">
+                        <h3 style='font-size: 19px; font-weight: normal;'>{{ line.ledger_description }}</a></h3>
                     </div>
-                    <div class="col-sm-7">
-                        <h3>{{ line.ledger_description }}</a></h3>
-                    </div>
-                    <div class="col-sm-1 align-center">
+                    <div class="col-sm-2 align-center">
                         {{ line.quantity }}
                     </div>
                     <div class="col-sm-2 align-right">
@@ -80,12 +79,12 @@
             </div>
         {% endfor %}
     {% endif %}
-
+    <BR><BR>
     <div class="row">
         <div class="col-sm-6">&nbsp;</div>
         <div class="col-sm-6">
             <div class="sub-header">
-                <h2>{% trans 'Totals' %}</h2>
+                <h3>&nbsp;{% trans 'Totals' %}</h3>
             </div>
             {% include 'basket/partials/basket_totals.html' %}
         </div>
