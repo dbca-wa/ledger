@@ -3,7 +3,7 @@ import base64
 import mimetypes
 
 filename="./base64file.pdf"
-api_key='QYJVB595A6VLM4O50L9KMD7GXET2FS3IOP1WW30KBFI8K50KEPA56H08VYTU4SV0BWD4GLU6MPYGS9MBRZQWV70Y46XZUQUW2K8Y'
+api_key='<api_key>'
 url = 'http://172.17.0.3:9002/ledgergw/remote/documents/update/'+api_key+'/'
 
 text_file = open(filename, "r")
