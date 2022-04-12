@@ -1,4 +1,4 @@
-Django==1.11.29
+Django==2.2.28
 django-extensions==1.9.8
 git+https://github.com/dbca-wa/dpaw-utils.git@0.4.2#egg=dpaw-utils
 git+https://github.com/django-oscar/django-oscar.git@8a3288da439cc2a878f44ae5c5101043e658d2a2#egg=django-oscar
