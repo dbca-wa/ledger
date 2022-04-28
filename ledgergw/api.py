@@ -876,6 +876,7 @@ def process_refund_from_basket(request,basket_obj):
             basket = None
             system_id = None
             booking_reference = None
+
             if basket_obj.count() > 0:
                 basket=basket_obj[0]
                 basket_total = basket_totals(basket.id)
@@ -942,6 +943,8 @@ def process_refund_from_basket(request,basket_obj):
                           print (e)
 
                       new_order = Order.objects.get(basket=basket)
+                      new_order.user = basket.owner
+                      new_order.save()
                       new_invoice = Invoice.objects.get(order_number=new_order.number)
                       new_invoice.settlement_date = None
                       new_invoice.save()
@@ -957,11 +960,13 @@ def process_refund_from_basket(request,basket_obj):
                           jsondata['status'] = 200
                           jsondata['message'] = 'success'
                           jsondata['order_response'] = json.loads(order_response.content.decode("utf-8"))
+                          jsondata['data'] = {'invoice_reference': new_invoice.reference}
                           #return order_response
                       else:
                          jsondata['status'] = 500
                          jsondata['message'] = 'error'
                          jsondata['order_response'] = {}
+                         jsondata['data'] = {}
                       return jsondata
 
 
