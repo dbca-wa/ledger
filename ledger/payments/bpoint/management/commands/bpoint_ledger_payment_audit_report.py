@@ -7,8 +7,9 @@ from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from django.conf import settings
 from datetime import timedelta, datetime
 from ledger.payments.bpoint.facade import Facade
-from ledger.payments.models import OracleInterfaceSystem, OracleInterface 
+from ledger.payments.models import OracleInterfaceSystem, OracleInterface, OracleParser, OracleParserInvoice 
 from ledger.emails.emails import sendHtmlEmail
+import json
 
 class Command(BaseCommand):
     help = 'Check for payment which have been completed but are missing a booking.'
@@ -26,7 +27,7 @@ class Command(BaseCommand):
            SYSTEM_ID = ''
            if settings.PS_PAYMENT_SYSTEM_ID:
                   SYSTEM_ID = settings.PS_PAYMENT_SYSTEM_ID.replace("S","0")
-                  
+           SYSTEM_ID='0516'       
            yesterday = datetime.today() - timedelta(days=1)
            settlement_date_search = yesterday.strftime("%Y%m%d")
            if options['settlement_date']:
@@ -34,11 +35,30 @@ class Command(BaseCommand):
            settlement_date_search_obj = datetime.strptime(settlement_date_search, '%Y%m%d')
 
            print ("Checking :"+settlement_date_search)
+           # Calculate Oracle Parse Data
+           parser_invoice_totals = {}
+           op = OracleParser.objects.filter(date_parsed=settlement_date_search_obj)
+           if op.count() > 0:
+                opi = OracleParserInvoice.objects.filter(parser=op)
+
+                for entry in opi:
+                    parser_invoice_totals[entry.reference] = float('0.00')
+                    entrydetails = json.loads(entry.details)
+                    parser_amount = float('0.00')
+                    for t in entrydetails:
+                        parser_amount = float(entrydetails[t]['order'])
+                        parser_invoice_totals[entry.reference] = parser_invoice_totals[entry.reference] +  parser_amount
+                    #print (parser_invoice_totals)
+                    #print (entrydetails[t])
+                    #print (parser_amount)
+           #os.exit()
+           # Retreive BPOINT data
            bpoint_facade = Facade()
            b = bpoint_facade.fetch_transaction_by_settlement_date(settlement_date_search)
            ledger_payment_amount = 0
            bpoint_amount = 0
            bpoint_amount_nice = 0
+           oracle_parser_amount = float('0.00')
            recordcount = 0
            duplicate_check_array =[]
            for c in b:
@@ -65,7 +85,13 @@ class Command(BaseCommand):
                     is_dupe = False
                     if c.crn1 in duplicate_check_array:
                         is_dupe = True
-                    rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action, 'amount': amount, 'bpoint_amount': bpoint_amount_nice, 'ledger_payment_amount': ledger_payment_amount, 'bp_lpb_diff': bp_lpb_diff ,'ledger_payment_settlement_date': ledger_payment_settlement_date, 'is_dupe': is_dupe})
+
+                    if c.crn1 in parser_invoice_totals:
+                        oracle_parser_amount = float(oracle_parser_amount) + float(parser_invoice_totals[c.crn1])
+
+                    #print ("CALC")
+                    #print (oracle_parser_amount)
+                    rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action, 'amount': amount, 'bpoint_amount': bpoint_amount_nice, 'ledger_payment_amount': ledger_payment_amount, 'bp_lpb_diff': bp_lpb_diff ,'ledger_payment_settlement_date': ledger_payment_settlement_date, 'is_dupe': is_dupe, 'oracle_parser_amount': oracle_parser_amount})
                     duplicate_check_array.append(c.crn1)
                     recordcount=recordcount + 1
 

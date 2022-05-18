@@ -72,6 +72,7 @@ Compares Bpoint transactions with ledger payment transaction data.  <br>
 		<th class='tableth'>Amount</th>
 		<th class='tableth'>Bpoint Audit Amount</th>
 		<th class='tableth'>Ledger Audit Amount</th>
+		<th class='tableth'>Ledger Oracle Amount</th>
 		<th class='tableth'>Diffrence</th>
 	</tr>	
   {% for r in rows %}
@@ -85,6 +86,7 @@ Compares Bpoint transactions with ledger payment transaction data.  <br>
 	   <td class='tabletd'>${{ r.amount }}</td>
 	   <td class='tabletd'>${{ r.bpoint_amount }}</td>
 	   <td class='tabletd'>${{ r.ledger_payment_amount }}</td>
+	   <td class='tabletd'>${{ r.oracle_parser_amount  }}</td>
 	   <td class='tabletd' {% if r.bp_lpb_diff > 0 %}bgcolor='red'{% endif %} align='center'>${{ r.bp_lpb_diff }}</td>
   </tr>
   {% endfor %}
