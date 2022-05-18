@@ -27,7 +27,6 @@ class Command(BaseCommand):
            SYSTEM_ID = ''
            if settings.PS_PAYMENT_SYSTEM_ID:
                   SYSTEM_ID = settings.PS_PAYMENT_SYSTEM_ID.replace("S","0")
-           #SYSTEM_ID='0516'       
            yesterday = datetime.today() - timedelta(days=1)
            settlement_date_search = yesterday.strftime("%Y%m%d")
            if options['settlement_date']:
