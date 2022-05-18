@@ -27,7 +27,7 @@ class Command(BaseCommand):
            SYSTEM_ID = ''
            if settings.PS_PAYMENT_SYSTEM_ID:
                   SYSTEM_ID = settings.PS_PAYMENT_SYSTEM_ID.replace("S","0")
-           SYSTEM_ID='0516'       
+           #SYSTEM_ID='0516'       
            yesterday = datetime.today() - timedelta(days=1)
            settlement_date_search = yesterday.strftime("%Y%m%d")
            if options['settlement_date']:
@@ -46,9 +46,10 @@ class Command(BaseCommand):
                     entrydetails = json.loads(entry.details)
                     parser_amount = float('0.00')
                     for t in entrydetails:
-                        if 'order' in entrydetails[t]:
-                          parser_amount = float(entrydetails[t]['order'])
-                          parser_invoice_totals[entry.reference] = parser_invoice_totals[entry.reference] +  parser_amount
+                        if entry.reference[:4] == SYSTEM_ID:
+                           if 'order' in entrydetails[t]:
+                              parser_amount = float(entrydetails[t]['order'])
+                              parser_invoice_totals[entry.reference] = parser_invoice_totals[entry.reference] +  parser_amount
                     #print (parser_invoice_totals)
                     #print (entrydetails[t])
                     #print (parser_amount)
@@ -144,9 +145,11 @@ class Command(BaseCommand):
                for oir in oi_receipts:
                     oracle_receipts_total = oracle_receipts_total + oir.amount
            
-
-                              
-
+           parser_invoice_totals_rolling_totals = []
+           parser_rolling_total = float('0.00')
+           for pi in parser_invoice_totals:    
+               parser_rolling_total = parser_rolling_total + parser_invoice_totals[pi]
+               parser_invoice_totals_rolling_totals.append({'invoice': pi, 'amount': parser_invoice_totals[pi], 'rolling_total': parser_rolling_total })
            if  (len(rows)) > 0 or (len(missing_records)) > 0 or (len(missing_records_in_ledger)) > 0:
               print ("Sending Report")
               context = {
@@ -157,7 +160,8 @@ class Command(BaseCommand):
                   'bpoint_total_amount': bpoint_amount_nice,
                   'ledger_payment_amount_total' : ledger_payment_amount_total,
                   'oracle_receipts_total' : oracle_receipts_total,
-                  'parser_invoice_totals' : parser_invoice_totals
+                  'parser_invoice_totals' : parser_invoice_totals,
+                  'parser_invoice_totals_rolling_totals' : parser_invoice_totals_rolling_totals
               }
               email_list = []
               for email_to in settings.NOTIFICATION_EMAIL.split(","):

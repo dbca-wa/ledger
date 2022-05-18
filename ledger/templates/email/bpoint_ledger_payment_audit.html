@@ -139,11 +139,13 @@ Compares Bpoint transactions with ledger payment transaction data.  <br>
         <tr>
                 <th class='tableth'>Invoice No</th>
                 <th class='tableth'>Amount</th>
+		<th class='tableth'>Rolling Total</th>
         </tr>
-        {% for key,value in parser_invoice_totals.items %}
+        {% for rt in parser_invoice_totals_rolling_totals %}
             <tr>
-                    <td class='tabletd'>{{ key }}</td>
-                    <td class='tabletd'>${{ value }}</td>
+                    <td class='tabletd'>{{ rt.invoice }}</td>
+                    <td class='tabletd'>${{ rt.amount }}</td>
+		    <td class='tabletd'>${{ rt.rolling_total }}</td>
             </tr>
     {% endfor %}
 </table>
