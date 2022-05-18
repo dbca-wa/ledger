@@ -46,8 +46,9 @@ class Command(BaseCommand):
                     entrydetails = json.loads(entry.details)
                     parser_amount = float('0.00')
                     for t in entrydetails:
-                        parser_amount = float(entrydetails[t]['order'])
-                        parser_invoice_totals[entry.reference] = parser_invoice_totals[entry.reference] +  parser_amount
+                        if 'order' in entrydetails[t]:
+                          parser_amount = float(entrydetails[t]['order'])
+                          parser_invoice_totals[entry.reference] = parser_invoice_totals[entry.reference] +  parser_amount
                     #print (parser_invoice_totals)
                     #print (entrydetails[t])
                     #print (parser_amount)
@@ -142,8 +143,9 @@ class Command(BaseCommand):
                oi_receipts = OracleInterface.objects.filter(source=source, receipt_date=settlement_date_search_obj)
                for oir in oi_receipts:
                     oracle_receipts_total = oracle_receipts_total + oir.amount
-                  
-               
+           
+
+                              
 
            if  (len(rows)) > 0 or (len(missing_records)) > 0 or (len(missing_records_in_ledger)) > 0:
               print ("Sending Report")
@@ -154,7 +156,8 @@ class Command(BaseCommand):
                   'missing_records_in_ledger' : missing_records_in_ledger,
                   'bpoint_total_amount': bpoint_amount_nice,
                   'ledger_payment_amount_total' : ledger_payment_amount_total,
-                  'oracle_receipts_total' : oracle_receipts_total
+                  'oracle_receipts_total' : oracle_receipts_total,
+                  'parser_invoice_totals' : parser_invoice_totals
               }
               email_list = []
               for email_to in settings.NOTIFICATION_EMAIL.split(","):

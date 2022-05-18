@@ -133,6 +133,22 @@ Compares Bpoint transactions with ledger payment transaction data.  <br>
     {% endfor %}
 </table>
 <br>
+<u>Oracle Parser invoice calculations</u>
+<br>
+<table class='table' cellpadding=0 border=1 cellspacing=0 >
+        <tr>
+                <th class='tableth'>Invoice No</th>
+                <th class='tableth'>Amount</th>
+        </tr>
+        {% for key,value in parser_invoice_totals.items %}
+            <tr>
+                    <td class='tabletd'>{{ key }}</td>
+                    <td class='tabletd'>${{ value }}</td>
+            </tr>
+    {% endfor %}
+</table>
+<br>
+
 <br><br>
 
 Kind Regards<br>
