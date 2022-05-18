@@ -7,8 +7,9 @@ from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from django.conf import settings
 from datetime import timedelta, datetime
 from ledger.payments.bpoint.facade import Facade
-from ledger.payments.models import OracleInterfaceSystem, OracleInterface 
+from ledger.payments.models import OracleInterfaceSystem, OracleInterface, OracleParser, OracleParserInvoice 
 from ledger.emails.emails import sendHtmlEmail
+import json
 
 class Command(BaseCommand):
     help = 'Check for payment which have been completed but are missing a booking.'
@@ -26,7 +27,6 @@ class Command(BaseCommand):
            SYSTEM_ID = ''
            if settings.PS_PAYMENT_SYSTEM_ID:
                   SYSTEM_ID = settings.PS_PAYMENT_SYSTEM_ID.replace("S","0")
-                  
            yesterday = datetime.today() - timedelta(days=1)
            settlement_date_search = yesterday.strftime("%Y%m%d")
            if options['settlement_date']:
@@ -34,11 +34,32 @@ class Command(BaseCommand):
            settlement_date_search_obj = datetime.strptime(settlement_date_search, '%Y%m%d')
 
            print ("Checking :"+settlement_date_search)
+           # Calculate Oracle Parse Data
+           parser_invoice_totals = {}
+           op = OracleParser.objects.filter(date_parsed=settlement_date_search_obj)
+           if op.count() > 0:
+                opi = OracleParserInvoice.objects.filter(parser=op).order_by('reference')
+
+                for entry in opi:
+                    if entry.reference[:4] == SYSTEM_ID:
+                        parser_invoice_totals[entry.reference] = float('0.00')
+                        entrydetails = json.loads(entry.details)
+                        parser_amount = float('0.00')
+                        for t in entrydetails:
+                           if 'order' in entrydetails[t]:
+                              parser_amount = float(entrydetails[t]['order'])
+                              parser_invoice_totals[entry.reference] = parser_invoice_totals[entry.reference] +  parser_amount
+                    #print (parser_invoice_totals)
+                    #print (entrydetails[t])
+                    #print (parser_amount)
+           #os.exit()
+           # Retreive BPOINT data
            bpoint_facade = Facade()
            b = bpoint_facade.fetch_transaction_by_settlement_date(settlement_date_search)
            ledger_payment_amount = 0
            bpoint_amount = 0
            bpoint_amount_nice = 0
+           oracle_parser_amount = float('0.00')
            recordcount = 0
            duplicate_check_array =[]
            for c in b:
@@ -65,7 +86,13 @@ class Command(BaseCommand):
                     is_dupe = False
                     if c.crn1 in duplicate_check_array:
                         is_dupe = True
-                    rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action, 'amount': amount, 'bpoint_amount': bpoint_amount_nice, 'ledger_payment_amount': ledger_payment_amount, 'bp_lpb_diff': bp_lpb_diff ,'ledger_payment_settlement_date': ledger_payment_settlement_date, 'is_dupe': is_dupe})
+
+                    if c.crn1 in parser_invoice_totals:
+                        oracle_parser_amount = float(oracle_parser_amount) + float(parser_invoice_totals[c.crn1])
+
+                    #print ("CALC")
+                    #print (oracle_parser_amount)
+                    rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action, 'amount': amount, 'bpoint_amount': bpoint_amount_nice, 'ledger_payment_amount': ledger_payment_amount, 'bp_lpb_diff': bp_lpb_diff ,'ledger_payment_settlement_date': ledger_payment_settlement_date, 'is_dupe': is_dupe, 'oracle_parser_amount': oracle_parser_amount})
                     duplicate_check_array.append(c.crn1)
                     recordcount=recordcount + 1
 
@@ -116,8 +143,12 @@ class Command(BaseCommand):
                oi_receipts = OracleInterface.objects.filter(source=source, receipt_date=settlement_date_search_obj)
                for oir in oi_receipts:
                     oracle_receipts_total = oracle_receipts_total + oir.amount
-                  
-               
+           
+           parser_invoice_totals_rolling_totals = []
+           parser_rolling_total = float('0.00')
+           for pi in parser_invoice_totals:    
+               parser_rolling_total = parser_rolling_total + parser_invoice_totals[pi]
+               parser_invoice_totals_rolling_totals.append({'invoice': pi, 'amount': parser_invoice_totals[pi], 'rolling_total': parser_rolling_total })
 
            if  (len(rows)) > 0 or (len(missing_records)) > 0 or (len(missing_records_in_ledger)) > 0:
               print ("Sending Report")
@@ -128,7 +159,9 @@ class Command(BaseCommand):
                   'missing_records_in_ledger' : missing_records_in_ledger,
                   'bpoint_total_amount': bpoint_amount_nice,
                   'ledger_payment_amount_total' : ledger_payment_amount_total,
-                  'oracle_receipts_total' : oracle_receipts_total
+                  'oracle_receipts_total' : oracle_receipts_total,
+                  'parser_invoice_totals' : parser_invoice_totals,
+                  'parser_invoice_totals_rolling_totals' : parser_invoice_totals_rolling_totals
               }
               email_list = []
               for email_to in settings.NOTIFICATION_EMAIL.split(","):
