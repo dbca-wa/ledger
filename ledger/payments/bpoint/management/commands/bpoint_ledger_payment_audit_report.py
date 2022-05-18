@@ -38,14 +38,14 @@ class Command(BaseCommand):
            parser_invoice_totals = {}
            op = OracleParser.objects.filter(date_parsed=settlement_date_search_obj)
            if op.count() > 0:
-                opi = OracleParserInvoice.objects.filter(parser=op)
+                opi = OracleParserInvoice.objects.filter(parser=op).order_by('reference')
 
                 for entry in opi:
-                    parser_invoice_totals[entry.reference] = float('0.00')
-                    entrydetails = json.loads(entry.details)
-                    parser_amount = float('0.00')
-                    for t in entrydetails:
-                        if entry.reference[:4] == SYSTEM_ID:
+                    if entry.reference[:4] == SYSTEM_ID:
+                        parser_invoice_totals[entry.reference] = float('0.00')
+                        entrydetails = json.loads(entry.details)
+                        parser_amount = float('0.00')
+                        for t in entrydetails:
                            if 'order' in entrydetails[t]:
                               parser_amount = float(entrydetails[t]['order'])
                               parser_invoice_totals[entry.reference] = parser_invoice_totals[entry.reference] +  parser_amount
@@ -149,6 +149,7 @@ class Command(BaseCommand):
            for pi in parser_invoice_totals:    
                parser_rolling_total = parser_rolling_total + parser_invoice_totals[pi]
                parser_invoice_totals_rolling_totals.append({'invoice': pi, 'amount': parser_invoice_totals[pi], 'rolling_total': parser_rolling_total })
+
            if  (len(rows)) > 0 or (len(missing_records)) > 0 or (len(missing_records_in_ledger)) > 0:
               print ("Sending Report")
               context = {
