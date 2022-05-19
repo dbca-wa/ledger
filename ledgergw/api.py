@@ -114,10 +114,12 @@ def user_info_search(request, apikey):
 def update_user_info_id(request, userid,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
+    
     post_list = list(request.POST)
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             ledger_user = models.EmailUser.objects.filter(id=int(userid))
+
             if ledger_user.count() > 0:
                 ledger_obj = ledger_user[0]
                 residential_address_obj = {}
@@ -126,58 +128,57 @@ def update_user_info_id(request, userid,apikey):
                     residential_address_obj = json.loads(request.POST.get('residential_address'))
                 if 'postal_address' in post_list:
                     postal_address_obj = json.loads(request.POST.get('postal_address'))
-                    
-
                 if 'dob' in post_list:
                     dob = request.POST.get('dob')
                     date_dob = datetime.strptime(dob, '%d/%m/%Y').date()
                     ledger_obj.dob = date_dob
+                if 'residential_address' in post_list:
+                    if ledger_obj.residential_address is None:
+                        residential_address =  models.Address.objects.create(user=ledger_obj,
+                                                  line1=residential_address_obj['residential_line1'],
+                                                  locality=residential_address_obj['residential_locality'],
+                                                  state=residential_address_obj['residential_state'],
+                                                  postcode=residential_address_obj['residential_postcode'],
+                                                  country=residential_address_obj['residential_country'],
+                                                 )
+                        ledger_obj.residential_address = residential_address
+                    else:
+                        if 'residential_line1' in residential_address_obj:
+                               ledger_obj.residential_address.line1 =residential_address_obj['residential_line1']
+                        if 'residential_locality' in residential_address_obj:
+                               ledger_obj.residential_address.locality = residential_address_obj['residential_locality']
+                        if 'residential_state' in residential_address_obj:
+                               ledger_obj.residential_address.state = residential_address_obj['residential_state']
+                        if 'residential_postcode' in residential_address_obj:
+                               ledger_obj.residential_address.postcode = residential_address_obj['residential_postcode']
+                        if 'residential_country' in residential_address_obj:
+                               ledger_obj.residential_address.country = residential_address_obj['residential_country']
+                        ledger_obj.residential_address.save()
 
-                if ledger_obj.residential_address is None:
-                    residential_address =  models.Address.objects.create(user=ledger_obj,
-                                              line1=residential_address_obj['residential_line1'],
-                                              locality=residential_address_obj['residential_locality'],
-                                              state=residential_address_obj['residential_state'],
-                                              postcode=residential_address_obj['residential_postcode'],
-                                              country=residential_address_obj['residential_country'],
-                                             )
-                    ledger_obj.residential_address = residential_address
-                else:
-                    if 'residential_line1' in residential_address_obj:
-                           ledger_obj.residential_address.line1 =residential_address_obj['residential_line1']
-                    if 'residential_locality' in residential_address_obj:
-                           ledger_obj.residential_address.locality = residential_address_obj['residential_locality']
-                    if 'residential_state' in residential_address_obj:
-                           ledger_obj.residential_address.state = residential_address_obj['residential_state']
-                    if 'residential_postcode' in residential_address_obj:
-                           ledger_obj.residential_address.postcode = residential_address_obj['residential_postcode']
-                    if 'residential_country' in residential_address_obj:
-                           ledger_obj.residential_address.country = residential_address_obj['residential_country']
-                    ledger_obj.residential_address.save()
-
-                if ledger_obj.postal_address is None:
-                    postal_address =  models.Address.objects.create(user=ledger_obj,
-                                              line1=request.POST.get('postal_line1'),
-                                              locality=request.POST.get('postal_locality'),
-                                              state=request.POST.get('postal_state'),
-                                              postcode=request.POST.get('postal_postcode'),
-                                              country=request.POST.get('postal_country'),
-                                             )
-                    ledger_obj.postal_address = postal_address
-                else:
-                    if 'postal_line1' in postal_address_obj:
-                        ledger_obj.postal_address.line1 =postal_address_obj['postal_line1']
-                    if 'postal_locality' in postal_address_obj:
-                           ledger_obj.postal_address.locality = postal_address_obj['postal_locality']
-                    if 'postal_state' in postal_address_obj:
-                           ledger_obj.postal_address.state = postal_address_obj['postal_state']
-                    if 'postal_postcode' in postal_address_obj:
-                           ledger_obj.postal_address.postcode = postal_address_obj['postal_postcode']
-                    if 'postal_country' in postal_address_obj:
-                           ledger_obj.postal_address.country = postal_address_obj['postal_country']
-                    if 'postal_same_as_residential' in postal_address_obj:
-                           ledger_obj.postal_same_as_residential = postal_address_obj['postal_same_as_residential']
-                    ledger_obj.postal_address.save()
+                if 'postal_address' in post_list: 
+                    if ledger_obj.postal_address is None:
+                        postal_address =  models.Address.objects.create(user=ledger_obj,
+                                                  line1=request.POST.get('postal_line1'),
+                                                  locality=request.POST.get('postal_locality'),
+                                                  state=request.POST.get('postal_state'),
+                                                  postcode=request.POST.get('postal_postcode'),
+                                                  country=request.POST.get('postal_country'),
+                                                 )
+                        ledger_obj.postal_address = postal_address
+                    else:
+                        if 'postal_line1' in postal_address_obj:
+                            ledger_obj.postal_address.line1 =postal_address_obj['postal_line1']
+                        if 'postal_locality' in postal_address_obj:
+                               ledger_obj.postal_address.locality = postal_address_obj['postal_locality']
+                        if 'postal_state' in postal_address_obj:
+                               ledger_obj.postal_address.state = postal_address_obj['postal_state']
+                        if 'postal_postcode' in postal_address_obj:
+                               ledger_obj.postal_address.postcode = postal_address_obj['postal_postcode']
+                        if 'postal_country' in postal_address_obj:
+                               ledger_obj.postal_address.country = postal_address_obj['postal_country']
+                        if 'postal_same_as_residential' in postal_address_obj:
+                               ledger_obj.postal_same_as_residential = postal_address_obj['postal_same_as_residential']
+                        ledger_obj.postal_address.save()
                 if 'phone_number' in post_list:
                     ledger_obj.phone_number = request.POST.get('phone_number')
 
@@ -911,8 +912,10 @@ def process_refund_from_basket(request,basket_obj):
                       try:
                          bpoint_obj = payment_bpoint_models.BpointTransaction.objects.filter(txn_number=tx)
                          if bpoint_obj.count() > 0:
+                               
                               bpoint = bpoint_obj[0]
                               invoice_reference=bpoint.crn1
+                              
                               refund = bpoint.refund(info,basket.owner)
                               invoice_reference=bpoint.crn1
                               invoice = Invoice.objects.get(reference=bpoint.crn1)
