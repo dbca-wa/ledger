@@ -35,6 +35,7 @@ ENV TZ=Australia/Perth
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 COPY gunicorn.ini manage_ledgergw.py ./
 COPY ledger ./ledger
+COPY bin ./bin
 RUN touch /app/.env
 COPY ledgergw ./ledgergw
 COPY cron /etc/cron.d/ledgergw
