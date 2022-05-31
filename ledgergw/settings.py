@@ -73,6 +73,7 @@ BPAY_ALLOWED = env('BPAY_ALLOWED',False)
 OSCAR_BASKET_COOKIE_OPEN = 'ledgergw_basket'
 
 CRON_CLASSES = [
+        'ledgergw.cron.OracleReceipts',
 ]
 
 # Additional logging

@@ -4,6 +4,8 @@
 # Uncomment once every one on the new code
 0 8,10,12,14,16,18 * * * root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python /app/manage_ledgergw.py sync_ad_users >> /app/logs/sync_ad_users.log 
 
+0 1 * * *  root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python /app/manage_ledgergw.py runcrons >> /app/logs/runcrons.log
+
 #BPAY Backups
 30 7 * * * root /app/bin/backup_bpay.sh
 
