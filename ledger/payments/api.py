@@ -1033,15 +1033,19 @@ def LedgerPayments(request, *args, **kwargs):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 def CheckOracleCodeView(request, *args, **kwargs):
+    print ("CheckOracleCodeView 1.1")
     if helpers.is_payment_admin(request.user) is True:
+        print ("CheckOracleCodeView 1.2")
         try:
            oracle_code = request.GET.get('oracle_code','')
            if OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() > 0:
                  json_obj = {'found': True, 'code': oracle_code}
            else:
                  json_obj = {'found': False, 'code': oracle_code}
+           print ("CheckOracleCodeView 1.3")
            return HttpResponse(json.dumps(json_obj), content_type='application/json')
         except Exception as e:
+           print ("CheckOracleCodeView 1.4")
            print(traceback.print_exc())
            raise
 
