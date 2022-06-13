@@ -275,7 +275,6 @@ def user_info_id(request, userid,apikey):
                              ledger_user_json['postal_address']['country'] = ledger_obj.postal_address.country.code
                          ledger_user_json['postal_address']['postcode'] = ledger_obj.postal_address.postcode
                     ledger_user_json['postal_same_as_residential'] = ledger_obj.postal_same_as_residential
-                         
 
                     # Groups
                     ledger_user_group = []
@@ -305,14 +304,22 @@ def user_info(request, ledgeremail,apikey):
             ledgeremail=ledgeremail.lower()
             ledgeremail=ledgeremail.replace(" ","")
             ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
+            # Post Variable
+            first_name = request.POST.get('first_name','')
+            last_name =  request.POST.get('last_name','')
+
             if ledger_user.count() == 0:
-                 first_name = request.POST.get('first_name','')
-                 last_name =  request.POST.get('last_name','')
                  a = models.EmailUser.objects.create(email=ledgeremail,first_name=first_name,last_name=last_name)
                  #a.save()
                  #ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
                  #ledger_user.save()
-
+            if ledger_user.count() > 0:
+                 pass
+                 ledger_user_obj = models.EmailUser.objects.get(id=ledger_user[0].id)
+                 ledger_user_obj.first_name = first_name
+                 ledger_user_obj.last_name = last_name
+                 ledger_user_obj.save()
+                 ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
 
             if ledger_user.count() > 0:
                     ledger_obj = ledger_user[0]
