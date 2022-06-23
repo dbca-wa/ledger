@@ -1156,7 +1156,7 @@ def RefundOracleView(request, *args, **kwargs):
                              bpoint_id = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
                              info = {'amount': Decimal('{:.2f}'.format(float(bp_txn['line-amount']))), 'details' : 'Refund via system'}
                         except Exception as e:
-                             print ("BPOUNT TRANSACTION EXCEPTION") 
+                             print ("BPOINT TRANSACTION EXCEPTION") 
                              print (e)
                              info = {'amount': Decimal('{:.2f}'.format('0.00')), 'details' : 'Refund via system'}
 

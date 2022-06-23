@@ -30,6 +30,7 @@ from django.http import HttpResponse
 from wsgiref.util import FileWrapper
 from django.core.exceptions import ValidationError
 from datetime import datetime
+from django.conf import settings
 import base64
 import traceback
 import json
@@ -882,22 +883,32 @@ def process_refund_from_basket(request,basket_obj):
             linked_payment_data = None
             basket_total = Decimal('0.00')
             basket = None
+            basket_owner = None
             system_id = None
+            system = None
             booking_reference = None
+            new_invoices = []
+            refund_txn = []
+            refund_txn_failed = []
+            order_response_global = False
 
             if basket_obj.count() > 0:
                 basket=basket_obj[0]
                 basket_total = basket_totals(basket.id)
                 basket.save()
+                basket_owner = basket_obj[0].owner
                 system_id = basket_obj[0].system.replace('S','0')
+                system = payment_models.OracleInterfaceSystem.objects.get(system_id=system_id)
                 booking_reference = basket_obj[0].booking_reference_link
                 linked_payment_data = get_linked_invoice_data_by_booking_reference(booking_reference,system_id)
             basket_total_positive = basket_total - basket_total - basket_total
             refund_tx_pool = {}
+            print ('refunding for basket id --> '+str(basket.id)+' with amount '+str(basket_total))
             #basket_total_positive = Decimal('730.00')
             if basket_total_positive > Decimal(linked_payment_data['total_available']):
                 print ("ERROR,  Not enough funds")
                 return
+
             for tx in linked_payment_data['txn_pool']:
                 txn_avail = linked_payment_data['txn_pool'][tx] - basket_total_positive
                 if txn_avail >= 0:
@@ -906,79 +917,97 @@ def process_refund_from_basket(request,basket_obj):
                 if txn_avail < 0:
                     refund_tx_pool[tx] = (txn_avail + basket_total_positive)
                     basket_total_positive =  txn_avail - txn_avail - txn_avail
+
+            count = 0
             # Prepare to send transactions to bpoint
             for tx in refund_tx_pool:
+                count  = count + 1
                 if refund_tx_pool[tx] > 0:
-                      print ('refunding for txpool --> '+tx+' with amount '+str(refund_tx_pool[tx]))
-                      b_total =  Decimal('{:.2f}'.format(float(refund_tx_pool[tx])))
-                      info = {'amount': Decimal('{:.2f}'.format(float(refund_tx_pool[tx]))), 'details' : 'Refund via system'}
-                      invoice_reference=None
-                      refund = None
-                      invoice_reference=None
-                      bpoint_obj=None
-                      try:
-                         bpoint_obj = payment_bpoint_models.BpointTransaction.objects.filter(txn_number=tx)
-                         if bpoint_obj.count() > 0:
-                               
-                              bpoint = bpoint_obj[0]
-                              invoice_reference=bpoint.crn1
-                              
-                              refund = bpoint.refund(info,basket.owner)
-                              invoice_reference=bpoint.crn1
-                              invoice = Invoice.objects.get(reference=bpoint.crn1)
-                              payments_utils.update_payments(invoice.reference)
-                      except Exception as e:
-                         print ("EXCEPTION")
-                         print (e)
-                         failed_refund = True
-                         system = payment_models.OracleInterfaceSystem.objects.get(system_id=system_id)
-                         li = payment_models.LinkedInvoice.objects.filter(booking_reference=booking_reference,system_identifier=system)
-                         payment_models.RefundFailed.objects.create(invoice_group=li[0].invoice_group_id,
-                                                                    booking_reference=booking_reference,
-                                                                    invoice_reference=invoice_reference,
-                                                                    refund_amount=Decimal(refund_tx_pool[tx]),
-                                                                    status=0,
-                                                                    basket_json="{}",
-                                                                    system_identifier=system,
-                                                                   )
-                         #booking_invoice = BookingInvoice.objects.filter(booking=booking.old_booking).order_by('id')
-                         #for bi in booking_invoice:
-                         #    invoice = Invoice.objects.get(reference=bi.invoice_reference)
-                         #RefundFailed.objects.create(booking=booking, invoice_reference=invoice.reference, refund_amount=b_total,status=0)
-                      order_response = None
-                      try:
-                          order_response = utils.place_order_submission(request)
-                      except Exception as e:
-                          print ("ORDER RESPONSE EXCEPTION")
-                          print (e)
+                      try: 
+                           print ('refunding for txpool --> '+tx+' with amount '+str(refund_tx_pool[tx]))
+                           b_total = Decimal('{:.2f}'.format(float(refund_tx_pool[tx])))
+                           info = {'amount': Decimal('{:.2f}'.format(float(refund_tx_pool[tx]))), 'details' : 'Refund via system'}
+                           invoice_reference=None
+                           refund = None
+                           invoice_reference=None
+                           bpoint_obj=None
 
-                      new_order = Order.objects.get(basket=basket)
-                      new_order.user = basket.owner
-                      new_order.save()
-                      new_invoice = Invoice.objects.get(order_number=new_order.number)
-                      new_invoice.settlement_date = None
-                      new_invoice.save()
-                      if refund:
-                           invoice.voided = True
-                           invoice.save()
-                           bpoint_refund = payment_bpoint_models.BpointTransaction.objects.get(txn_number=refund.txn_number)
-                           bpoint_refund.crn1 = new_invoice.reference
-                           bpoint_refund.save()
-                           payments_utils.update_payments(invoice.reference)
-                      payments_utils.update_payments(new_invoice.reference)
-                      if order_response:
-                          jsondata['status'] = 200
-                          jsondata['message'] = 'success'
-                          jsondata['order_response'] = json.loads(order_response.content.decode("utf-8"))
-                          jsondata['data'] = {'invoice_reference': new_invoice.reference}
-                          #return order_response
-                      else:
-                         jsondata['status'] = 500
-                         jsondata['message'] = 'error'
-                         jsondata['order_response'] = {}
-                         jsondata['data'] = {}
-                      return jsondata
+                           try:
+                              bpoint_obj = payment_bpoint_models.BpointTransaction.objects.filter(txn_number=tx)
+                              if bpoint_obj.count() > 0:
+                                   bpoint = bpoint_obj[0]
+                                   invoice_reference=bpoint.crn1
+                                   refund = bpoint.refund(info,basket.owner)
+                                   invoice_reference=bpoint.crn1
+                                   invoice = Invoice.objects.get(reference=bpoint.crn1)
+                                   payments_utils.update_payments(invoice.reference)
+                                   refund_txn.append({'txn_number': refund.txn_number})
+                           except Exception as e:
+                              print ("EXCEPTION")
+                              print (e)
+                              failed_refund = True
+                              #system = payment_models.OracleInterfaceSystem.objects.get(system_id=system_id)
+                              refund_txn_failed.append({'booking_reference': booking_reference, 'amount': refund_tx_pool[tx],'invoice_reference': invoice_reference})
+                              li = payment_models.LinkedInvoice.objects.filter(booking_reference=booking_reference,system_identifier=system)
+                              payment_models.RefundFailed.objects.create(invoice_group=li[0].invoice_group_id,
+                                                                         booking_reference=booking_reference,
+                                                                         invoice_reference=invoice_reference,
+                                                                         refund_amount=Decimal(refund_tx_pool[tx]),
+                                                                         status=0,
+                                                                         basket_json="{}",
+                                                                         system_identifier=system,
+                                                                        )
 
+                           order_response_global = True        
+                      except Exception as e:
+                           order_response_global = False
+                           print ("Refund Loop Exception"+str(tx))
+                           print (e)
+
+                else:
+                    print ("Refund amount is zero")
+
+            order_response = None
+            try:
+                order_response = utils.place_order_submission(request)
+            except Exception as e:
+                print ("ORDER RESPONSE EXCEPTION")
+                print (e)
+
+            new_order = Order.objects.get(basket=basket)
+            new_order.user = basket.owner
+            new_order.save()
+            new_invoice = Invoice.objects.get(order_number=new_order.number)
+            new_invoice.settlement_date = None
+            new_invoice.save()
+
+
+            for refund in refund_txn:
+                invoice.voided = True
+                invoice.save()
+                bpoint_refund = payment_bpoint_models.BpointTransaction.objects.get(txn_number=refund['txn_number'])
+                bpoint_refund.crn1 = new_invoice.reference
+                bpoint_refund.save()
+                payments_utils.update_payments(invoice.reference)
+
+            payments_utils.update_payments(new_invoice.reference)
+            for refund in refund_txn_failed:
+                try:
+                    lines = [{'ledger_description':'Refund assigned to unallocated pool',"quantity":1,"price_incl_tax":abs(refund['amount']),"oracle_code":settings.UNALLOCATED_ORACLE_CODE, 'line_status': 1}]
+                    allocation_order = utils_ledger_payment_invoice.allocate_failedrefund_to_unallocated(request, booking_reference, lines, None, None,abs(refund['amount']),basket_owner, booking_reference, system.system_id)
+                except Exception as e:
+                    print (e)
+
+
+            if order_response_global:
+                jsondata['status'] = 200
+                jsondata['message'] = 'success'
+                jsondata['data'] = {'invoice_reference': new_invoices}
+            else:
+               jsondata['status'] = 500
+               jsondata['message'] = 'error'
+               jsondata['data'] = {}
+            return jsondata
 
 
 def process_zero(request,apikey):

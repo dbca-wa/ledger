@@ -11,6 +11,7 @@ from ledger.payments.models import Invoice
 from ledger.payments.utils import systemid_check, update_payments, LinkedInvoiceCreate
 from decimal import Decimal
 import datetime
+import re
 
 Order = get_model('order', 'Order')
 Line = get_model('order', 'Line')
@@ -48,7 +49,6 @@ class CreateInvoiceBasket(CoreOrderCreator):
         """
         Creates and order from the basket and generates a new invoice.
         """
-
         basket = models.Basket.objects.get(id=basket.id)
         shipping_charge = ShippingCharge()
         shipping_method = ShippingMethod()
@@ -110,7 +110,7 @@ class CreateInvoiceBasket(CoreOrderCreator):
         basket.status = 'Submitted'
         basket.date_submitted = datetime.datetime.now()
         basket.save()
-
+        print ("Linking Invoice "+str(invoice.reference)+' from '+str(basket.id))
         LinkedInvoiceCreate(invoice, basket.id)
 
         return order
@@ -221,4 +221,30 @@ def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=N
         new_invoice = Invoice.objects.get(order_number=order.number)
         update_payments(new_invoice.reference)
         return order
+
+
+def allocate_failedrefund_to_unallocated(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=None, system_id=None):
+        basket_params = {
+            'products': lines,
+            'vouchers': [],
+            'system': re.sub(r'^0', 'S',system_id),
+            'custom_basket': True,
+            'booking_reference': booking_reference,
+            'booking_reference_link': booking_reference_linked
+        }
+
+        basket, basket_hash = create_basket_session(request, basket_params)
+        basket.owner = user
+        basket.save()
+
+        ci = CreateInvoiceBasket()
+        if system_id:
+             ci.system = system_id
+
+        order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Refund Allocation Pool', )
+        new_invoice = Invoice.objects.get(order_number=order.number)
+        update_payments(new_invoice.reference)
+
+        return order
+
 

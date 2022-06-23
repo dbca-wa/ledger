@@ -4,6 +4,7 @@ from django.forms import modelform_factory
 from django.conf import settings
 from django.contrib.auth.models import Group
 
+
 from reversion.admin import VersionAdmin
 
 from ledger.accounts.models import EmailUser, Document, PrivateDocument, Address, Profile
