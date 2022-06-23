@@ -52,7 +52,7 @@ width:100px;margin-top: 30px; font-size: 20px; margin-right:30px;
                       </div>
 
                       {% block place_order %}
-                          <form method="post" action="javascript:return:false;" id="place_order_form">
+                          <form method="post" iiaction="javascript:return:false;" onsubmit="return false;" id="place_order_form">
 			      <input type="hidden" id='payment-csrfmiddlewaretoken' name="payment-csrfmiddlewaretoken" value="{{csrf_token}}">
                               <input type="hidden" name="action" value="place_order" />
                       

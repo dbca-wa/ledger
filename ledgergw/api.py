@@ -999,13 +999,15 @@ def process_refund_from_basket(request,basket_obj):
                     print (e)
 
 
-            if order_response_global:
+            if order_response:
                 jsondata['status'] = 200
                 jsondata['message'] = 'success'
+                jsondata['order_response'] = json.loads(order_response.content.decode("utf-8"))
                 jsondata['data'] = {'invoice_reference': new_invoices}
             else:
                jsondata['status'] = 500
                jsondata['message'] = 'error'
+               jsondata['order_response'] = {}
                jsondata['data'] = {}
             return jsondata
 
