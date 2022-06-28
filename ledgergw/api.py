@@ -1309,6 +1309,7 @@ class OracleJob(views.APIView):
     def get(self, request, format=None):
         try:
             system = request.GET.get('system')
+            ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api', enabled=True, system_id=system)
             data = {
                 "date": request.GET.get("date"),
                 "override": request.GET.get("override")
@@ -1316,7 +1317,7 @@ class OracleJob(views.APIView):
             
             serializer = OracleSerializer(data=data)
             serializer.is_valid(raise_exception=True)
-            ledgergw_utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'), serializer.validated_data['override'], system)
+            ledgergw_utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'), serializer.validated_data['override'], system, ois[0].system_name)
             data = {'successful': True}
             return Response(data)
         except serializers.ValidationError:
