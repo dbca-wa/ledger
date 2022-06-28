@@ -655,7 +655,7 @@ def get_failed_refund_totals(request,apikey,system_id):
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             ois_obj = {}
-            total_fr = payment_models.RefundFailed.objects.filter(system_identifier__system_id=system_id).count()
+            total_fr = payment_models.RefundFailed.objects.filter(system_identifier__system_id=system_id, status=0).count()
             jsondata['status'] = 200
             jsondata['message'] = 'Success'
             jsondata['data'] = {'total_failed': total_fr}
