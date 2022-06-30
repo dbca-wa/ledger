@@ -27,7 +27,6 @@ class Command(BaseCommand):
             url = ITASSETS_USER_JSON_URL
             resp = requests.get(url, data ={}, auth=(ITASSETS_USER_LOGIN, ITASSETS_USER_TOKEN))
             data =  json.loads(codecs.decode(resp.text.encode(), 'utf-8-sig'))
-            print (data)
             row =0
             noaccount=0
             updatedaccount=0
