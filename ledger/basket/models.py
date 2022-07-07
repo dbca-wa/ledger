@@ -10,6 +10,7 @@ class Basket(CoreAbstractBasket):
     custom_ledger = models.BooleanField(default=False)
     booking_reference = models.CharField(max_length=254, blank=True, null=True)
     booking_reference_link = models.CharField(max_length=254, blank=True, null=True)
+    no_oracle=models.NullBooleanField(default=False)
 
     def all_lines(self):
         """

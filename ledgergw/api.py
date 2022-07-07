@@ -1058,9 +1058,14 @@ def process_no(request,apikey):
             basket_hash = request.COOKIES.get('ledgergw_basket','')
             basket_hash_split = basket_hash.split("|")
             basket_obj = basket_models.Basket.objects.filter(id=basket_hash_split[0])
+            if basket_obj.count() > 0:
+                get_basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
+                get_basket.no_oracle =  True
+                get_basket.save()
             order_response = utils.place_order_submission(request)
             new_order = Order.objects.get(basket=basket_obj)
             new_invoice = Invoice.objects.get(order_number=new_order.number)
+            new_invoice.save()
 
             if order_response:
                 jsondata['status'] = 200
