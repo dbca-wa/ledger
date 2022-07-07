@@ -118,6 +118,10 @@ class OracleParserAdmin(admin.ModelAdmin):
 class OracleInterfaceAdmin(admin.ModelAdmin):
     list_display = ['activity_name','amount','status','receipt_number','receipt_date','source','method']
     search_fields = ('source','receipt_number')
+
+class OracleInterfaceReportReceipientInline(admin.TabularInline):
+    model = models.OracleInterfaceReportReceipient
+    extra = 1
 class OracleInterfaceRecipientInline(admin.TabularInline):
     model = models.OracleInterfaceRecipient
     extra = 1
@@ -129,7 +133,7 @@ class OracleInterfaceDeductionInline(admin.TabularInline):
 @admin.register(models.OracleInterfaceSystem)
 class OracleInterfaceSystemAdmin(admin.ModelAdmin):
     list_display = ('system_name','system_id')
-    inlines = [OracleInterfaceRecipientInline, OracleInterfaceDeductionInline] 
+    inlines = [OracleInterfaceRecipientInline, OracleInterfaceReportReceipientInline, OracleInterfaceDeductionInline] 
 
 @admin.register(models.OracleAccountCode)
 class OracleAccountCode(admin.ModelAdmin):
