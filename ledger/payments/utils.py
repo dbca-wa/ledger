@@ -733,7 +733,8 @@ def update_payments_allocation(invoice_reference):
                 i = Invoice.objects.get(reference=str(invoice_reference))
             except Invoice.DoesNotExist:
                 raise ValidationError('The invoice with refererence {} does not exist'.format(invoice_reference))
-
+            print ("INVOICE")
+            print (i.reference)
             refunded = D(0.0)
             paid = D(0.0)
             deductions = D(0.0)
@@ -748,6 +749,10 @@ def update_payments_allocation(invoice_reference):
 
             # Get Order Information
             if i.order:
+                print ("ORDER")
+                print (i.order)
+                print (i.order.basket)
+                no_oracle = i.order.basket.no_oracle
                 # total amount based on oracle code to get a negiative / positive value.
                 for line in i.order.lines.all():
                     if line.oracle_code not in oracle_code_totals:
@@ -776,18 +781,21 @@ def update_payments_allocation(invoice_reference):
                               line.refund_details['order'] = {}
                               line.payment_details['order']  = {}
                               line.deduction_details['order']  = {}
-
-
-                              if line is not None:
-                                 # look for lines under invoice --> order that are new line
-                                 if line.line_price_incl_tax > 0 and line.line_status == 1:
-                                         if oracle_code_totals[line.oracle_code] >= line.line_price_incl_tax:
-                                             line.payment_details['order'][str(line.id)] = str(line.line_price_incl_tax)
-                                             oracle_code_totals[line.oracle_code] = oracle_code_totals[line.oracle_code] - line.line_price_incl_tax
-                                 # look for lines under invoice --> order that are have been removed
-                                 if line.line_price_incl_tax < 0 and line.line_status == 3:
-                                         line.payment_details['order'][str(line.id)] = str(oracle_code_totals[line.oracle_code])
-                                         oracle_code_totals[line.oracle_code] =  oracle_code_totals[line.oracle_code] - oracle_code_totals[line.oracle_code]
+                              print ("ORACLE NO")
+                              print (no_oracle)
+                              if no_oracle is True:
+                                  pass
+                              else:
+                                  if line is not None:
+                                     # look for lines under invoice --> order that are new line
+                                     if line.line_price_incl_tax > 0 and line.line_status == 1:
+                                             if oracle_code_totals[line.oracle_code] >= line.line_price_incl_tax:
+                                                 line.payment_details['order'][str(line.id)] = str(line.line_price_incl_tax)
+                                                 oracle_code_totals[line.oracle_code] = oracle_code_totals[line.oracle_code] - line.line_price_incl_tax
+                                     # look for lines under invoice --> order that are have been removed
+                                     if line.line_price_incl_tax < 0 and line.line_status == 3:
+                                             line.payment_details['order'][str(line.id)] = str(oracle_code_totals[line.oracle_code])
+                                             oracle_code_totals[line.oracle_code] =  oracle_code_totals[line.oracle_code] - oracle_code_totals[line.oracle_code]
 
 
                     line.save()
