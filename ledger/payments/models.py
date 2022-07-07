@@ -100,6 +100,13 @@ class OracleInterfaceRecipient(models.Model):
         return '{} - {}'.format(str(self.system),self.email)
 
 
+class OracleInterfaceReportReceipient(models.Model):
+    system = models.ForeignKey(OracleInterfaceSystem,related_name='report_recipients')
+    email = models.EmailField()
+
+    def __str__(self):
+        return '{} - {}'.format(str(self.system),self.email)
+
 class OracleAccountCode(models.Model):
     active_receivables_activities = models.CharField(max_length=50,primary_key=True)
     description = models.CharField(max_length=240)    
