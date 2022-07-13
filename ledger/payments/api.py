@@ -1114,12 +1114,22 @@ def RefundOracleView(request, *args, **kwargs):
                 newest_booking_id = request.POST.get('newest_booking_id',None)
                 booking_reference = request.POST.get('booking_reference',None)
                 booking_reference_linked = request.POST.get('booking_reference_linked',None)
+                settlement_date = request.POST.get('settlement_date','')
 
                 #booking = Booking.objects.get(pk=newest_booking_id)
                 money_from_json = json.loads(money_from)
                 money_to_json = json.loads(money_to)
                 bpoint_trans_split_json = json.loads(bpoint_trans_split)
                 failed_refund = False
+
+                payment_oracle_admin = helpers.is_payment_oracle_admin(request.user)
+                print ("POA")
+                print (payment_oracle_admin)
+                if len(settlement_date) == 10:
+                    if payment_oracle_admin is True:
+                        pass
+                    else:
+                        raise ValidationError("You do not have permissions to set settlement date") 
 
                 system_id = None
                 li = LinkedInvoice.objects.filter(booking_reference=booking_reference)
@@ -1186,9 +1196,33 @@ def RefundOracleView(request, *args, **kwargs):
                                bpoint_refund = BpointTransaction.objects.get(txn_number=refund.txn_number)
                                bpoint_refund.crn1 = new_invoice.reference
                                bpoint_refund.save()
-                               new_invoice.settlement_date = None
+                               if len(settlement_date) == 10:
+                                   new_invoice.settlement_date = None
                                new_invoice.save()
                                update_payments(new_invoice.reference)
+                elif int(refund_method) == 6:
+                   lines = []
+                   for mf in money_from_json:
+                        if Decimal(mf['line-amount']) > 0:
+                            money_from_total = (Decimal(mf['line-amount']) - Decimal(mf['line-amount']) - Decimal(mf['line-amount']))
+                            lines.append({'ledger_description':str(mf['line-text']),"quantity":1,"price_incl_tax":money_from_total,"oracle_code":str(mf['oracle-code']), 'line_status': 3})
+
+
+                   order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None,  booking_reference_linked=booking_reference_linked, system_id=system_id)
+                   new_invoice = Invoice.objects.get(order_number=order.number)
+                   update_payments(new_invoice.reference)
+                   new_invoice.settlement_date = datetime.strptime(settlement_date, "%Y-%m-%d").date()
+                   new_invoice.save()
+
+                elif int(refund_method) == 7:
+                    lines = []
+                    for mt in money_to_json:
+                        lines.append({'ledger_description':mt['line-text'],"quantity":1,"price_incl_tax":mt['line-amount'],"oracle_code":mt['oracle-code'], 'line_status': 1})
+                    order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None,  booking_reference_linked=booking_reference_linked, system_id=system_id)
+                    new_invoice = Invoice.objects.get(order_number=order.number)
+                    update_payments(new_invoice.reference)
+                    new_invoice.settlement_date = datetime.strptime(settlement_date, "%Y-%m-%d").date()
+                    new_invoice.save()
 
                 else:
                     lines = []
@@ -1203,7 +1237,6 @@ def RefundOracleView(request, *args, **kwargs):
                     order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None,  booking_reference_linked=booking_reference_linked, system_id=system_id)
                     new_invoice = Invoice.objects.get(order_number=order.number)
                     update_payments(new_invoice.reference)
-
                 json_obj['failed_refund'] = failed_refund
                 return HttpResponse(json.dumps(json_obj), content_type='application/json')
            else:

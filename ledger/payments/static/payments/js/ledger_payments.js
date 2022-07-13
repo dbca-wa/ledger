@@ -38,7 +38,7 @@ var ledger_payments = {
 
 			     for (let i = 0; i < data.data.bpoint.length; i++) {
 				     
-                                     bpointdata+= "<tr><td>"+data.data.bpoint[i].txnnumber+"</td><td>"+data.data.bpoint[i].crn1+"</td><td>"+data.data.bpoint[i].action+"</td><td>$"+data.data.bpoint[i].amount+"</td><td>"+data.data.bpoint[i].processed+"</td></tr>";
+                                     bpointdata+= "<tr><td>"+data.data.bpoint[i].txnnumber+"</td><td><A href='/ledger/payments/invoice-pdf/"+data.data.bpoint[i].crn1+"' target='_pdf_invoice_"+data.data.bpoint[i].crn1+"'>"+data.data.bpoint[i].crn1+"</a></td><td>"+data.data.bpoint[i].action+"</td><td>$"+data.data.bpoint[i].amount+"</td><td>"+data.data.bpoint[i].processed+"</td></tr>";
 				     console.log(data.data.bpoint[i]);
 			     }
 
@@ -120,7 +120,6 @@ var ledger_payments = {
           $("#confirm_status_change_btn").click(function() {
 	      ledger_payments.update_failed_transaction_status_confirmed();
           });
-
           ledger_payments.load_failed_transactions();
      },	
      save_failed_transaction: function(rfid) {

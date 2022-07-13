@@ -63,6 +63,7 @@ class OraclePayments(generic.TemplateView):
             invoice_group_id = self.request.GET.get('invoice_group_id','');
             invoice_no = self.request.GET.get('invoice_no','')
             booking_reference = self.request.GET.get('booking_reference','')
+            ctx['payment_oracle_admin'] = helpers.is_payment_oracle_admin(self.request.user)
             #&cur    rent_invoice_no="+ledger_payments.var.current_invoice_no+"&current_booking_reference="+ledger_payments.var.current_booking_reference,
               
             ctx['invoice_group_id'] = invoice_group_id
