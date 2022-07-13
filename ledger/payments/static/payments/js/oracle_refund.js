@@ -254,6 +254,17 @@ var refund_booking =  {
                            $('#notification-box').hide();
    		        // $('.modal').hide();
    		});
+
+                $("#settlement_override").click(function() {
+                       var settlement_override = $('#settlement_override').prop('checked');
+                       if (settlement_override == true) {
+                             $('#div_settlement_date').show();
+                       } else {
+                             $('#div_settlement_date').hide();
+                       }
+                });
+
+
                 $('#okBtn').on("click", function() {
                         $('.modal-backdrop').hide();
                         // $('.modal').hide();
@@ -372,41 +383,88 @@ var refund_booking =  {
                            var notification_message = "";
                            var un_pool = $('#unallocated_pool_refund').val();
                            var trans_method = $('input[name="trans_method"]:checked').val();
+			   var settlement_date_form = $('#settlement_date').val();
+			   var settlement_override = $('#settlement_override').prop('checked');
+                           var settlement_date = '';
+
+			   if (trans_method == undefined) {
+                                  notification_message += "<li>Please select a transaction action.</li>";
+		           }
+                           if (settlement_override == true) {
+                                settlement_date = settlement_date_form;
+				if (settlement_date.length > 0 && settlement_date.length == 10) {
+                                    var settlement_date_split = settlement_date.split("-");
+				    if (settlement_date_split[0].length != 4) {
+					    notification_message += "<li>Settlement date year is invalid.</li>";
+				    }
+			            if (settlement_date_split[1].length != 2) {
+					    notification_message += "<li>Settlement date month is invalid.</li>";
+				    } else {
+                                        if (settlement_date_split[1] >= 1 && settlement_date_split[1] <= 12) {
+
+					} else {
+                                           notification_message += "<li>Settlement date month is invalid.</li>";
+					}
+			            }
+
+                                    if (settlement_date_split[2].length > 1 && settlement_date_split[2].length < 3) {
+                                        if (settlement_date_split[2] >= 1 && settlement_date_split[2] <= 31) {
+					} else {
+						notification_message += "<li>Settlement date day is invalid.1</li>";
+					}
+			            } else {
+                                       notification_message += "<li>Settlement date day is invalid.2</li>"; 
+				    }
+				  
+			        } else {
+                                        notification_message += "<li>Please enter a valid settlement date.</li>";
+				}
+		           }
 
 			   if (trans_method == "4") {
+
+		           //} else if (trans_method == "6") {
+                           //     if (refund_booking.var.total_from_money > 0) {
+                           //     } else {
+                           //       notification_message += "<li>From Money Pool total needs to be greater than $0.00.</li>";
+                           //     }
 
 		           } else {
 
                                 if (trans_method == undefined) { 
    			            notification_message += "<li>Please choose how the refund will be completed?</li>";
    			        }
-
-                                if (refund_booking.var.total_from_money > 0) {
-      			        } else {
-   			          notification_message += "<li>From Money Pool total needs to be greater than $0.00.</li>";
-   			        }
+                                if (trans_method == "7" ) {
+				} else {	
+                                    if (refund_booking.var.total_from_money > 0) {
+      			            } else {
+   			              notification_message += "<li>From Money Pool total needs to be greater than $0.00.</li>";
+   			            }
+			        }
    		
                                 if (un_pool > refund_booking.var.booking_allocation_pool) {
    			             notification_message += "<li>Your unallocated pool from money pool total is greater than the unallocation pool available total</li>";
    			        }
+                                if (trans_method == "6" || trans_method == "7" ) {
 
-                                if (trans_method == "1") {
-                                     if (refund_booking.var.total_from_money != refund_booking.var.total_bpoint_money) {
-   			                notification_message += "<li>Your total from money pool dose not match your bpoint allocation total.</li>"
-   			             }
+			        } else {
+                                     if (trans_method == "1") {
+                                          if (refund_booking.var.total_from_money != refund_booking.var.total_bpoint_money) {
+   			                     notification_message += "<li>Your total from money pool dose not match your bpoint allocation total.</li>"
+   			                  }
 
-                                     if (refund_booking.var.total_from_money > refund_booking.var.bpoint_amount_available) {
-                                         notification_message += "<li>Your total from pool is more than the available payment gateway funds</li>";
-                                     }
-                                } else { 
-                                     if (refund_booking.var.total_to_money > refund_booking.var.total_from_money) {
-                                              notification_message += "<li>Your to money pool is greater than the from money pool.</li>";
-                                     }
-                                     if (refund_booking.var.total_to_money != refund_booking.var.total_from_money) {
-                                         notification_message += "<li>Your total from and to pools do not match.</li>";
+                                          if (refund_booking.var.total_from_money > refund_booking.var.bpoint_amount_available) {
+                                              notification_message += "<li>Your total from pool is more than the available payment gateway funds</li>";
+                                          }
+                                     } else { 
+                                          if (refund_booking.var.total_to_money > refund_booking.var.total_from_money) {
+                                                   notification_message += "<li>Your to money pool is greater than the from money pool.</li>";
+                                          }
+                                          if (refund_booking.var.total_to_money != refund_booking.var.total_from_money) {
+                                              notification_message += "<li>Your total from and to pools do not match.</li>";
+                                          }
                                      }
                                 }
-
 
                                 $("#from-money-booking").find('input, select').each(function() {
                                          input_id = this.id;
@@ -423,12 +481,16 @@ var refund_booking =  {
    			             		   if (refund_booking.check_oracle_code(val) == false) {
    			             			notification_message += "<li>'"+val+"' oracle code does not exist. </li>";
    			             		   }
+                                                   if (trans_method == "6") {
+
+                                                   } else {
                                                            if (parseFloat(money_from_amount) > parseFloat(refund_booking.var.unique_oracle_code_on_booking[val])) {
-   			             			notification_message += "<li>'"+val+"' oracle code amount is greater than available amount pool of $"+refund_booking.var.unique_oracle_code_on_booking[val]+". </li>";
-   			             		   }
-                                                           if (line_text.length < 3) {
-   			             			notification_message += "<li>Please enter a suitable line description length. </li>";
-   			             	           }
+   			             			           notification_message += "<li>'"+val+"' oracle code amount is greater than available amount pool of $"+refund_booking.var.unique_oracle_code_on_booking[val]+". </li>";
+                                                           }
+                                                   }
+                                                              if (line_text.length < 3) {
+   			             		                	notification_message += "<li>Please enter a suitable line description length. </li>";
+   			             	                      }
                                                      }
    			                   }
                                          }
@@ -474,7 +536,8 @@ var refund_booking =  {
                                                 idvalname = input_id.substring(0, 11);
                                                 rowid = input_id.replace(idvalname,"");
                                                 if (idvalname == 'oracle-code') {
-                                                       var val = $('#'+input_id).val();
+                                                       //var val = $('#'+input_id).val();
+						       var val = $('#oracle-code'+rowid).val();
                                                        var money_from_amount = $('#line-amount'+rowid).val();
                                                        var line_text = $('#line-text'+rowid).val();
                                                        if (val.length > 0) {
@@ -630,7 +693,8 @@ var refund_booking =  {
                                                booking_id: refund_booking.var.booking_id,
                                                newest_booking_id: refund_booking.var.newest_booking_id,
 				               booking_reference: refund_booking.var.booking_reference,
-				               booking_reference_linked: refund_booking.var.booking_reference_linked
+				               booking_reference_linked: refund_booking.var.booking_reference_linked,
+					       settlement_date: settlement_date
                                        },
                                        // async: false,
                                        error: function(data) {
@@ -689,6 +753,11 @@ var refund_booking =  {
                        } else if (this.value == 5) {
 			   $('#cash-payment').show();
 			   $('#money-management').hide();
+		       } else if (this.value == 6) {
+			   $('#from-money-booking-div').show();
+		       } else if (this.value == 7) {
+			   $('#from-money-booking-div').hide();
+			   $('#to-money-booking-div').show();
       		       } else {
                            $('#to-money-booking-div').show();
                            //$('#money-bpoint-div').hide();

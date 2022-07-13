@@ -781,8 +781,6 @@ def update_payments_allocation(invoice_reference):
                               line.refund_details['order'] = {}
                               line.payment_details['order']  = {}
                               line.deduction_details['order']  = {}
-                              print ("ORACLE NO")
-                              print (no_oracle)
                               if no_oracle is True:
                                   pass
                               else:
