@@ -1211,8 +1211,9 @@ def RefundOracleView(request, *args, **kwargs):
                    order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None,  booking_reference_linked=booking_reference_linked, system_id=system_id)
                    new_invoice = Invoice.objects.get(order_number=order.number)
                    update_payments(new_invoice.reference)
-                   new_invoice.settlement_date = datetime.strptime(settlement_date, "%Y-%m-%d").date()
-                   new_invoice.save()
+                   if len(settlement_date) == 10:
+                      new_invoice.settlement_date = datetime.strptime(settlement_date, "%Y-%m-%d").date()
+                      new_invoice.save()
 
                 elif int(refund_method) == 7:
                     lines = []
@@ -1221,8 +1222,9 @@ def RefundOracleView(request, *args, **kwargs):
                     order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None,  booking_reference_linked=booking_reference_linked, system_id=system_id)
                     new_invoice = Invoice.objects.get(order_number=order.number)
                     update_payments(new_invoice.reference)
-                    new_invoice.settlement_date = datetime.strptime(settlement_date, "%Y-%m-%d").date()
-                    new_invoice.save()
+                    if len(settlement_date) == 10:
+                        new_invoice.settlement_date = datetime.strptime(settlement_date, "%Y-%m-%d").date()
+                        new_invoice.save()
 
                 else:
                     lines = []
