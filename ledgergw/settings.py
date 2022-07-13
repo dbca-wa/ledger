@@ -49,6 +49,7 @@ else:
 
 TEMPLATES[0]['DIRS'].append(os.path.join(BASE_DIR, 'ledgergw', 'templates'))
 #TEMPLATES[0]['OPTIONS']['context_processors'].append('ledgergw.context_processors.ledgergw_url')
+TEMPLATES[0]['OPTIONS']['context_processors'].append('ledgergw.context_processors.global_config')
 '''BOOTSTRAP3 = {
     'jquery_url': '/static/common/css/jquery.min.js',
     'base_url': '/static/common/css//twitter-bootstrap/3.3.6/',
@@ -125,5 +126,5 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 # allow upload big file
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 50  # 15M
 FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
-
+# ../ledgergw/context_processors.pyglobal_config
 #os.environ.setdefault("UPDATE_PAYMENT_ALLOCATION", True)
