@@ -8,6 +8,9 @@
 # Ledger Audit Report
 0 8 * * *  root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python /app/manage_ledgergw.py bpoint_ledger_payment_audit_report_segregated >> /app/logs/bpoint_ledger_payment_audit_report_segregated.log
 
+# Bpoint Missing Payments in Ledger
+15 7 * * *  root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python /app/manage_ledgergw.py bpoint_ledger_payment_missing_transaction_segregated >> /app/logs/bpoint_ledger_payment_missing_transaction_segregated.log
+
 #BPAY Backups
 30 7 * * * root /app/bin/backup_bpay.sh
 
