@@ -1,0 +1,62 @@
+<style>
+.table {
+ border-top: 1px solid #000000;
+ border-left: 1px solid #000000;
+ border-right: 1px solid #000000;
+ border-bottom: 2px solid #000000;
+}
+.tabletd {
+padding:5px;
+border: 1px solid #000000;
+}
+.tableth {
+    padding:5px;
+    border: 1px solid #000000;
+}
+
+</style>
+
+
+
+Hello,<br> 
+<br>
+Below is a list of transaction that exist in bpoint but do not exist in ledger.<br>
+<br>
+<b>Report Date: {{ settlement_date }}</b>
+<br>
+<br>
+<u>Bpoint transactions that are missing in ledger</u>
+<br>
+<table class='table' cellpadding=0 border=1 cellspacing=0 >
+	<tr>
+		<th class='tableth'>TXN Number</th>
+		<th class='tableth'>Invoice No</th>
+		<th class='tableth'>Ledger Settlement Date</th>
+		<th class='tableth'>Orginal TXN Number</th>
+		<th class='tableth'>Card Number</th>
+		<th class='tableth'>DV Token</th>
+		<th class='tableth'>Created</th>
+		<th class='tableth'>Action</th>
+		<th class='tableth'>Amount</th>
+	</tr>
+	{% for r in missing_records_in_ledger %}
+	    <tr>
+		    <td class='tabletd'>{{ r.txn_number }}</td>
+		    <td class='tabletd'>{{ r.crn1 }}</td>
+		    <td class='tabletd'>{{ r.settlement_date }}</td>
+		    <td class='tabletd'>{{ r.original_txn_number }}</td>
+		    <td class='tabletd'>{{ r.card_details}}</td>
+                    <td class='tabletd'>{{ r.dvtoken }}</td>
+
+
+		    <td class='tabletd'>{{ r.created }}</td>
+		    <td class='tabletd'>{{ r.action }}</td>
+		    <td class='tabletd'>${{ r.amount }}</td>
+	    </tr>
+    {% endfor %}
+</table>
+<br>
+<br><br>
+
+Kind Regards<br>
+Auto Generated<br>

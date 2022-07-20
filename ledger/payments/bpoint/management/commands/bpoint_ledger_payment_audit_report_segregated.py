@@ -7,6 +7,7 @@ from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from django.conf import settings
 from datetime import timedelta, datetime
 from ledger.payments.bpoint.facade import Facade
+from ledger.payments.bpoint.gateway import Gateway
 from ledger.payments.models import OracleInterfaceSystem, OracleInterface, OracleParser, OracleParserInvoice 
 from ledger.emails.emails import sendHtmlEmail
 from ledger.payments import models as payment_models
@@ -56,9 +57,20 @@ class Command(BaseCommand):
                                if 'order' in entrydetails[t]:
                                   parser_amount = float(entrydetails[t]['order'])
                                   parser_invoice_totals[entry.reference] = parser_invoice_totals[entry.reference] +  parser_amount
-               #os.exit()
-               # Retreive BPOINT data
+
                bpoint_facade = Facade()
+               if oracle_system.integration_type == 'bpoint_api':
+                    bpoint_facade.gateway = Gateway(
+                        oracle_system.bpoint_username,
+                        oracle_system.bpoint_password,
+                        oracle_system.bpoint_merchant_num,
+                        oracle_system.bpoint_currency,
+                        oracle_system.bpoint_biller_code,
+                        oracle_system.bpoint_test,
+                        oracle_system.id
+                    )
+
+
                b = bpoint_facade.fetch_transaction_by_settlement_date(settlement_date_search)
                ledger_payment_amount = 0
                bpoint_amount = 0
