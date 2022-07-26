@@ -142,7 +142,10 @@ class OracleAccountCode(admin.ModelAdmin):
 
 @admin.register(models.LinkedInvoice)
 class LinkedInvoiceAdmin(admin.ModelAdmin):
+    search_fields = ('invoice_reference','booking_reference','booking_reference_linked',)
     list_display = ('invoice_reference','system_identifier','booking_reference','booking_reference_linked','invoice_group_id_id','created')
+    list_filter = ('system_identifier','created',)
+
 
 @admin.register(models.RefundFailed)
 class RefundFailedAdmin(admin.ModelAdmin):
