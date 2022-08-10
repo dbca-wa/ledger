@@ -14,8 +14,9 @@ var ledger_payments = {
      },
      load_payment_info: function() {
 	 data = {}
+	 $('#LoadingPopup').modal('show');
          $.ajax({
-             url: ledger_payments.var.payment_info_url+"?invoice_group_id="+ledger_payments.var.current_invoice_group_id+"&invoice_no="+ledger_payments.var.current_invoice_no+"&booking_reference="+ledger_payments.var.current_booking_reference,
+             url: ledger_payments.var.payment_info_url+"?invoice_group_id="+ledger_payments.var.current_invoice_group_id+"&invoice_no="+ledger_payments.var.current_invoice_no+"&booking_reference="+ledger_payments.var.current_booking_reference+"&receipt_no="+ledger_payments.var.receipt_no+"&txn_number="+ledger_payments.var.txn_number,
              method: "GET",
              headers: {'X-CSRFToken' : ledger_payments.var.csrf_token },
              //data: JSON.stringify({'payload': data,}),
@@ -24,7 +25,7 @@ var ledger_payments = {
 		        var orderdata = "";
 		        var bpointdata = "";
 		        var cashdata = "";
-
+                        if (data.status == 200) { 
                         if (data.data.order.length > 0) {
                              for (let i = 0; i < data.data.order.length; i++) {
                                     var line_price_incl_tax_color = '#bb2d3b';
@@ -38,7 +39,7 @@ var ledger_payments = {
 
 			     for (let i = 0; i < data.data.bpoint.length; i++) {
 				     
-                                     bpointdata+= "<tr><td>"+data.data.bpoint[i].txnnumber+"</td><td><A href='/ledger/payments/invoice-pdf/"+data.data.bpoint[i].crn1+"' target='_pdf_invoice_"+data.data.bpoint[i].crn1+"'>"+data.data.bpoint[i].crn1+"</a></td><td>"+data.data.bpoint[i].action+"</td><td>$"+data.data.bpoint[i].amount+"</td><td>"+data.data.bpoint[i].processed+"</td></tr>";
+                                     bpointdata+= "<tr><td>"+data.data.bpoint[i].txnnumber+"</td><td><A href='/ledger/payments/invoice-pdf/"+data.data.bpoint[i].crn1+"' target='_pdf_invoice_"+data.data.bpoint[i].crn1+"'>"+data.data.bpoint[i].crn1+"</a></td><td>"+data.data.bpoint[i].action+"</td><td>$"+data.data.bpoint[i].amount+"</td><td>"+data.data.bpoint[i].processed+"</td><td>"+data.data.bpoint[i].settlement_date+"</td><td>"+data.data.bpoint[i].last_digits+"</td></tr>";
 				     console.log(data.data.bpoint[i]);
 			     }
 
@@ -62,14 +63,16 @@ var ledger_payments = {
 		      refund_booking.var.booking_reference = data.data.booking_reference;
 		      refund_booking.var.booking_reference_linked = data.data.booking_reference_linked;
 		      refund_booking.re_init();
+                      }
 
-		      $('#LoadingPopup').modal('hide');
+		      setTimeout("$('#LoadingPopup').modal('hide');",500);
 
 		      if (data.status == 404 ) {
 			  $('#oracle-payments-data-error-message').html(data.message);
 			  $('#oracle-payments-data').hide();
 			  $('#oracle-payments-data-error').show();
 		      }
+
 		      // refund_booking.init();
 		      console.log(data);
              },
@@ -213,7 +216,8 @@ var ledger_payments = {
          });
      },
      init: function() {
-       ledger_payments.load_payment_info();
+	     
+       setTimeout("ledger_payments.load_payment_info();",400);
 
      }
 }

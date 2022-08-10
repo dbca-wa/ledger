@@ -46,7 +46,8 @@
 	    ledger_payments.var.current_invoice_group_id = '{{ invoice_group_id }}';
             ledger_payments.var.current_invoice_no = '{{ invoice_no }}';
             ledger_payments.var.current_booking_reference = '{{ booking_reference }}';
-    
+            ledger_payments.var.receipt_no = '{{ receipt_no }}';
+            ledger_payments.var.txn_number = '{{ txn_number }}'; 
             ledger_payments.var.csrf_token = '{{ csrf_token }}';
             refund_booking.var.csrf_token = '{{ csrf_token }}';
 
@@ -470,6 +471,8 @@
       <th scope="col">Action</th>
       <th scope="col">Amount</th>
       <th scope="col">Processed</th>
+      <th scope="col">Settlement Date</th>
+      <th scope="col">Card Last Digits</th>
     </tr>
   </thead>
   <tbody id='bpoint_tbody'>
