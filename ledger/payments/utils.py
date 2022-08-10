@@ -733,8 +733,7 @@ def update_payments_allocation(invoice_reference):
                 i = Invoice.objects.get(reference=str(invoice_reference))
             except Invoice.DoesNotExist:
                 raise ValidationError('The invoice with refererence {} does not exist'.format(invoice_reference))
-            print ("INVOICE")
-            print (i.reference)
+
             refunded = D(0.0)
             paid = D(0.0)
             deductions = D(0.0)
@@ -749,9 +748,6 @@ def update_payments_allocation(invoice_reference):
 
             # Get Order Information
             if i.order:
-                print ("ORDER")
-                print (i.order)
-                print (i.order.basket)
                 no_oracle = i.order.basket.no_oracle
                 # total amount based on oracle code to get a negiative / positive value.
                 for line in i.order.lines.all():

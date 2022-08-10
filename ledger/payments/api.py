@@ -854,19 +854,36 @@ def LedgerPayments(request, *args, **kwargs):
     invoice_group_id = request.GET.get('invoice_group_id',None)
     invoice_no = request.GET.get('invoice_no','')
     booking_reference = request.GET.get('booking_reference','')
+    receipt_no = request.GET.get('receipt_no','')
+    txn_number = request.GET.get('txn_number','')
 
     data = {"status": 403, "data": {}} 
-    
+
     if helpers.is_payment_admin(request.user) is True:
         exists = False
         #if invoice_group_id: 
         #    if len(invoice_group_id) > 0:
         #       pass
-
         if len(invoice_no) > 0:
             link_res = LinkedInvoice.objects.filter(invoice_reference=invoice_no)
             if link_res.count() > 0:
                 invoice_group_id = link_res[0].invoice_group_id.id
+        elif len(receipt_no) > 0:
+            bt = BpointTransaction.objects.filter(receipt_number=receipt_no)
+            crn1=None
+            if bt.count() > 0:
+                 crn1 = bt[0].crn1
+                 link_res = LinkedInvoice.objects.filter(invoice_reference=crn1)
+                 if link_res.count() > 0:
+                     invoice_group_id = link_res[0].invoice_group_id.id
+        elif len(txn_number) > 0:
+            bt = BpointTransaction.objects.filter(txn_number=txn_number)
+            crn1=None
+            if bt.count() > 0:
+                 crn1 = bt[0].crn1
+                 link_res = LinkedInvoice.objects.filter(invoice_reference=crn1)
+                 if link_res.count() > 0:
+                     invoice_group_id = link_res[0].invoice_group_id.id
         elif len(booking_reference) > 0:
             link_res = LinkedInvoice.objects.filter(booking_reference=booking_reference)
             if link_res.count() > 0:
@@ -931,6 +948,9 @@ def LedgerPayments(request, *args, **kwargs):
                              row['crn1'] = bp.crn1
                              row['txnnumber'] = bp.txn_number
                              row['original_txn'] = bp.original_txn
+                             row['receipt_number'] = bp.receipt_number
+                             row['settlement_date'] = bp.settlement_date.strftime("%d/%m/%Y")
+                             row['last_digits'] = bp.last_digits
                              row['amount'] = str(bp.amount)
                              row['response_code'] = bp.response_code
                              row['action'] = bp.action
