@@ -174,10 +174,14 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
                        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(self.request),apikey) is True:
                            user = EmailUser.objects.get(id=int(self.checkout_session.get_user_logged_in()))
+
         if user:
             cards = user.stored_cards.all().filter(system_id=system_id_zeroed)
             if cards:
                 ctx['cards'] = cards
+        else:
+            ctx['store_card'] = False
+
 
         ctx['custom_template'] = custom_template
         ctx['bpay_allowed'] = settings.BPAY_ALLOWED
