@@ -77,7 +77,7 @@ var ledger_payments = {
 		      console.log(data);
              },
              error: function(errMsg) {
-		     $('#LoadingPopup').modal('hide');
+		     setTimeout("$('#LoadingPopup').modal('hide');",500);
              }
          });
      },
