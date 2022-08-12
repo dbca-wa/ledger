@@ -28,7 +28,7 @@ def create_basket_session_v2(emailuser_id, parameters):
     else:
         print (parameters)
         print ("USER IS NOT LOGGED IN")
-
+   
     user_obj = EmailUser.objects.get(id=int(emailuser_id))
     serializer = serializers.BasketSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
@@ -211,6 +211,9 @@ def create_checkout_session(request, parameters):
         session_data.set_session_type(serializer.validated_data['session_type'])
     else:
         session_data.set_session_type('standard')
+
+
+
 # shortcut for finalizing a checkout session and creating an invoice.
 # equivalent to checking out with a deferred payment method (e.g. BPAY).
 # useful for internal booking methods being invoked from server-side.
@@ -458,7 +461,7 @@ def createBasket(product_list, owner, system, vouchers=None, force_flush=True, b
         raise
 
 
-def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None):
+def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None,):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
