@@ -1,32 +1,43 @@
 <BR><BR>
 
-<div class='container-fluid page'>
-<div class="navbar navbar-static-top navbar-inverse nav-checkout payment-layer" style='margin-bottom: 0px; background-color: #FFF; border-radius: 4px 4px 0px 0px;'>
-    <ul class="nav navbar-nav">
-         <li class="step3">
-                    <span class="navbar-text" style='color: #000000;'>
-                        Payments 
-                    </span>
-         </li>
-    </ul>
-    <div style='padding: 15px;'>
-       <a class="close close-ledger-popup"  href="#">×</a>
-    </div>
-</div>
+<div class="container rounded" style='background-color: #FFFFFF;'>
+       <div class="row">
+             <div class="col-1">
+                <div class='pt-3 ps-3'>
+                   <i class="bi bi-x-circle-fill " style='color: red; font-size: 34px;'></i>
+                </div>
+             </div>
+             <div class="col-11">
+                   <div class="row pt-4">
+                        <div class="col-6">
+                            <h3>Payment Error</h3>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button type="button" class="btn-close close-ledger-popup" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="col-12">
+                            &nbsp;
+                        </div>
+                   </div>
+                   <div class="row">
+                        <div class="col-12">
+                             <div class="page_inner">
 
-   <div class="page_inner">
-	   
-    {% if error %}
-        <div class="alert alert-danger">
-            {{ error }}
+                              {% if error %}
+                                  <div class="alert alert-danger">
+                                      {{ error }}
+                                  </div>
+                              {% endif %}
+
+                              {% include "partials/alert_messages.html" %}
+
+                           <BR>
+                           <BR>
+                           </div>
+                        </div>    
+                   </div>
+             </div>
         </div>
-    {% endif %}
-
-    {% include "partials/alert_messages.html" %}     
-    
-    <button type='button' class="btn btn-primary btn-lg close-ledger-popup" style='display:none;'>Close</button>
-
-  </div>
 </div>
 
 <script>

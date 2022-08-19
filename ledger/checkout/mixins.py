@@ -5,6 +5,7 @@ from ledger.payments.models import Invoice
 from django.http import HttpResponseRedirect
 from ledger.accounts.models import EmailUser
 from django.http import Http404, HttpResponse, JsonResponse, HttpResponseRedirect
+from ledger.basket.middleware import BasketMiddleware
 
 CoreOrderPlacementMixin = get_class('checkout.mixins','OrderPlacementMixin')
 
@@ -75,11 +76,20 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         # FIXME: replace with basket one-time secret
         if return_preload_url:
             try:
-                requests.get('{}?invoice={}'.format(return_preload_url, invoice.reference),
+                basket = BasketMiddleware().get_basket(self.request)
+                basket.notification_url = '{}?invoice={}'.format(return_preload_url, invoice.reference)
+                basket.save()
+                resp = requests.get('{}?invoice={}'.format(return_preload_url, invoice.reference),
                                 cookies=self.request.COOKIES,
                                 verify=False)
+
                 # bodge for race condition: if preload updates the session, we need to update it
                 self.request.session._session_cache = self.request.session.load()
+                if resp.status_code == 200:
+                   basket.notification_count = 1
+                   basket.notification_completed = True
+                   basket.save()
+
             except requests.exceptions.ConnectionError:
                 pass
      

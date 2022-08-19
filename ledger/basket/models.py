@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from oscar.apps.basket.abstract_models import AbstractBasket as CoreAbstractBasket, AbstractLine as CoreAbstractLine
 from oscar.models.fields.slugfield import SlugField
 from ledger.catalogue.models import Product
+import datetime
 
 class Basket(CoreAbstractBasket):
     system = models.CharField(max_length=4)
@@ -11,6 +12,10 @@ class Basket(CoreAbstractBasket):
     booking_reference = models.CharField(max_length=254, blank=True, null=True)
     booking_reference_link = models.CharField(max_length=254, blank=True, null=True)
     no_oracle=models.NullBooleanField(default=False)
+    notification_url = models.CharField(max_length=1024, blank=True, null=True) 
+    notification_count = models.IntegerField(default=0) 
+    notification_next = models.DateTimeField(default=datetime.datetime.now())
+    notification_completed = models.NullBooleanField(default=False)
 
     def all_lines(self):
         """

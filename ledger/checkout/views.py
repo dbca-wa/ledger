@@ -28,6 +28,7 @@ from ledger.api import models as ledgerapi_models
 from ledger.api import utils as ledgerapi_utils
 from ledger.payments.bpoint.gateway import Gateway
 from ledger.basket.models import Basket
+from ledger.basket.middleware import BasketMiddleware
 
 Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
@@ -159,7 +160,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
         system_id = self.checkout_session.system()
         system_id_zeroed=system_id.replace('S','0')
 
-
         ctx['store_card'] = True
         user = None
         
@@ -209,6 +209,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
             self.template_name = "checkout/payment_details_api_wrapper.html"
             #self.checkout_session.set_guest_email('jason.moore@dbca.wa.gov.au') 
             ctx['PAYMENT_API_WRAPPER'] = 'true'
+
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -216,6 +217,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # If it is valid, we render the preview screen with the forms hidden
         # within it.  When the preview is submitted, we pick up the 'action'
         # parameters and actually place the order.
+
         if request.POST.get('action', '') == 'place_order':
             if self.checkout_session.payment_method() == 'card':
                 return self.do_place_order(request)
@@ -248,6 +250,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 ctx = self.get_context_data(
                     bankcard_form=bankcard_form)
                 return self.render_to_response(ctx)
+
+
         # Render preview with bankcard hidden
         if self.checkout_session.payment_method() == 'card' and not checkout_token:
             return self.render_preview(request,bankcard_form=bankcard_form)
@@ -257,6 +261,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
     def do_place_order(self, request):
         # Helper method to check that the hidden forms wasn't tinkered
         # with.
+
         if request.COOKIES.get('payment_api_wrapper') == 'true':
             if 'LEDGER_API_KEY' in request.COOKIES:
                 apikey = request.COOKIES['LEDGER_API_KEY']

@@ -148,7 +148,6 @@ $("#process-no").click(function() {
       var paymentcsrfmiddlewaretoken = $('#payment-csrfmiddlewaretoken').val();
       var checkout_token = $('#checkout_token').val();
       var payment_method = $('#payment_method').val();
-
       var data = {'card': card, 'payment-csrfmiddlewaretoken': paymentcsrfmiddlewaretoken, 'checkout_token': checkout_token, 'payment_method':payment_method };
 
       $.ajax({
