@@ -41,7 +41,7 @@ class Command(BaseCommand):
                settlement_date_search_obj = datetime.strptime(settlement_date_search, '%Y%m%d')
                start_li = settlement_date_search_obj.strftime("%Y-%m-%d")+' 00:00'
                end_li = settlement_date_search_obj.strftime("%Y-%m-%d")+' 23:59'
-
+               print (start_li+" to "+end_li)
                linked_invoices = LinkedInvoice.objects.filter(created__gte=start_li,created__lte=end_li, system_identifier=oracle_system).values('invoice_group_id').distinct()
 
                #linked_invoices = LinkedInvoice.objects.filter(invoice_group_id=68682).values('invoice_group_id').distinct()
