@@ -1,0 +1,48 @@
+<style>
+.table {
+ border-top: 1px solid #000000;
+ border-left: 1px solid #000000;
+ border-right: 1px solid #000000;
+ border-bottom: 2px solid #000000;
+}
+.tabletd {
+padding:5px;
+border: 1px solid #000000;
+}
+.tableth {
+    padding:5px;
+    border: 1px solid #000000;
+}
+
+</style>
+
+
+
+Hello,<br> 
+<br>
+Below is a report of grouped invoice which contain a mismatch in oracle totals vs bpoint totals.<br>
+<br>
+<b>Report Date: {{ settlement_date }}</b>
+<br>
+<br>
+<table class='table' cellpadding=0 border=0 cellspacing=0 > 
+	<tr>
+		<th class='tableth'>Invoice Group ID</th>
+		<th class='tableth'>BPOINT Total</th>
+		<th class='tableth'>Oracle Order Total</th>
+		<th class='tableth'>Invoices</th>
+	</tr>	
+  {% for r in rows %}
+  <tr>
+	   <td class='tabletd'>{{ r.invoice_group_id }}</td>
+	   <td class='tabletd'>{{ r.bpoint_total }}</td>
+	   <td class='tabletd'>{{ r.oracle_order_total }}</td>
+	   <td class='tabletd'>{% for inv in r.invoices %}{{ inv }}<br>{% endfor %}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<br><br>
+
+Kind Regards<br>
+Auto Generated<br>
