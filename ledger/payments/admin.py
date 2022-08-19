@@ -145,6 +145,7 @@ class LinkedInvoiceAdmin(admin.ModelAdmin):
     search_fields = ('invoice_reference','booking_reference','booking_reference_linked',)
     list_display = ('invoice_reference','system_identifier','booking_reference','booking_reference_linked','invoice_group_id_id','created')
     list_filter = ('system_identifier','created',)
+    raw_id_fields = ('system_identifier','invoice_group_id',)
 
 
 @admin.register(models.RefundFailed)
