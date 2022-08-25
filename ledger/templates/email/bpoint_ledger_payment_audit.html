@@ -150,6 +150,25 @@ Compares Bpoint transactions with ledger payment transaction data.  <br>
     {% endfor %}
 </table>
 <br>
+<u>Ledger BPoint calculations</u>
+<br>
+<table class='table' cellpadding=0 border=1 cellspacing=0 >
+        <tr>
+                <th class='tableth'>Invoice No</th>
+                <th class='tableth'>Amount</th>
+                <th class='tableth'>Rolling Total</th>
+        </tr>
+        {% for rt in ledger_payment_amount_total_rolling_totals %}
+            <tr>
+                    <td class='tabletd'>{{ rt.invoice }}</td>
+                    <td class='tabletd'>${{ rt.amount }}</td>
+                    <td class='tabletd'>${{ rt.rolling_total }}</td>
+            </tr>
+    {% endfor %}
+</table>
+<br>
+
+
 
 <br><br>
 

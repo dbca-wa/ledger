@@ -141,13 +141,17 @@ class Command(BaseCommand):
                print ("Ledger Bpoint Transaction count:" +str(ledger_bpoint_count))
 
                # Totals
-               ledger_payment_amount_total = 0 
+               ledger_payment_amount_total = 0
+               ledger_payment_amount_total_rolling_totals = []
                bp_ledger_payment_refund = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID)
                for bpl in bp_ledger_payment_refund:
                     if bpl.action == 'refund':
                         ledger_payment_amount_total = ledger_payment_amount_total - bpl.amount
                     else:
                         ledger_payment_amount_total = ledger_payment_amount_total + bpl.amount
+                    ledger_payment_amount_total_rolling_totals.append({'invoice': bpl.crn1, 'amount': bpl.amount, 'rolling_total': ledger_payment_amount_total })
+
+
 
                ofs = OracleInterfaceSystem.objects.filter(system_id=SYSTEM_ID)
                source = ''
@@ -173,6 +177,7 @@ class Command(BaseCommand):
                       'missing_records_in_ledger' : missing_records_in_ledger,
                       'bpoint_total_amount': bpoint_amount_nice,
                       'ledger_payment_amount_total' : ledger_payment_amount_total,
+                      'ledger_payment_amount_total_rolling_totals' :  ledger_payment_amount_total_rolling_totals,
                       'oracle_receipts_total' : oracle_receipts_total,
                       'parser_invoice_totals' : parser_invoice_totals,
                       'parser_invoice_totals_rolling_totals' : parser_invoice_totals_rolling_totals
