@@ -127,7 +127,7 @@ class Command(BaseCommand):
 
                missing_records_in_ledger = []
                ledger_bpoint_count = 0
-               bp1 = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID)
+               bp1 = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID).order_by('processed')
                for c in b:
                       if c.bank_response_code == '00':
                          exists = False
