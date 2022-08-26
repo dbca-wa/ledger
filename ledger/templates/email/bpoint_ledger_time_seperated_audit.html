@@ -1,0 +1,54 @@
+<style>
+.table {
+ border-top: 1px solid #000000;
+ border-left: 1px solid #000000;
+ border-right: 1px solid #000000;
+ border-bottom: 2px solid #000000;
+}
+.tabletd {
+padding:5px;
+border: 1px solid #000000;
+}
+.tableth {
+    padding:5px;
+    border: 1px solid #000000;
+}
+
+</style>
+
+
+
+Hello,<br> 
+<br>
+Below is a time based transaction report.<br>
+<br>
+<b>Report Date: {{ settlement_date }}</b>
+<br>
+<br>
+<u>Bpoint transactions time based report</u>
+<br>
+<table class='table' cellpadding=0 border=1 cellspacing=0 >
+	<tr>
+		<th class='tableth'>Time Start</th>
+		<th class='tableth'>Time Finish</th>
+		<th class='tableth'>BPOINT Total</th>
+		<th class='tableth'>Order/Invoice Total</th>
+		<th class='tableth'>BPOINT TXN</th>
+		<th class='tableth'>Invoices</th>
+	</tr>
+	{% for r in rows %}
+	    <tr>
+		    <td class='tabletd'>{{ r.start_li }}</td>
+		    <td class='tabletd'>{{ r.end_li }}</td>
+		    <td class='tabletd'>{{ r.bpoint_total }}</td>
+		    <td class='tabletd'>{{ r.order_total }}</td>
+		    <td class='tabletd'>{{ r.bpoint_transactions }}</td>
+                    <td class='tabletd'>{{ r.order_invoices }}</td>
+	    </tr>
+    {% endfor %}
+</table>
+<br>
+<br><br>
+
+Kind Regards<br>
+Auto Generated<br>
