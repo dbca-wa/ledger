@@ -8,9 +8,10 @@ from django.conf import settings
 from datetime import timedelta, datetime
 from ledger.payments.bpoint.facade import Facade
 from ledger.payments.bpoint.gateway import Gateway
-from ledger.payments.models import OracleInterfaceSystem, OracleInterface, OracleParser, OracleParserInvoice 
+from ledger.payments.models import OracleInterfaceSystem, OracleInterface, OracleParser, OracleParserInvoice, PaymentTotal
 from ledger.emails.emails import sendHtmlEmail
 from ledger.payments import models as payment_models
+from decimal import Decimal as D
 import json
 import os
 
@@ -83,8 +84,8 @@ class Command(BaseCommand):
                         amount = str(c.amount)[:-2]+'.'+str(c.amount)[-2:]
                         if c.action == 'refund':
                             bpoint_amount = bpoint_amount - c.amount
-                        elif c.action == 'reversal':
-                            bpoint_amount = bpoint_amount - c.amount
+                        #elif c.action == 'reversal':
+                        #    bpoint_amount = bpoint_amount - c.amount
                         else:
                             bpoint_amount = bpoint_amount + c.amount
                         
@@ -127,7 +128,7 @@ class Command(BaseCommand):
 
                missing_records_in_ledger = []
                ledger_bpoint_count = 0
-               bp1 = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID)
+               bp1 = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID).order_by('processed')
                for c in b:
                       if c.bank_response_code == '00':
                          exists = False
@@ -141,13 +142,17 @@ class Command(BaseCommand):
                print ("Ledger Bpoint Transaction count:" +str(ledger_bpoint_count))
 
                # Totals
-               ledger_payment_amount_total = 0 
+               ledger_payment_amount_total = 0
+               ledger_payment_amount_total_rolling_totals = []
                bp_ledger_payment_refund = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID)
                for bpl in bp_ledger_payment_refund:
                     if bpl.action == 'refund':
                         ledger_payment_amount_total = ledger_payment_amount_total - bpl.amount
                     else:
                         ledger_payment_amount_total = ledger_payment_amount_total + bpl.amount
+                    ledger_payment_amount_total_rolling_totals.append({'invoice': bpl.crn1, 'amount': bpl.amount, 'rolling_total': ledger_payment_amount_total })
+
+
 
                ofs = OracleInterfaceSystem.objects.filter(system_id=SYSTEM_ID)
                source = ''
@@ -163,6 +168,36 @@ class Command(BaseCommand):
                for pi in parser_invoice_totals:    
                    parser_rolling_total = parser_rolling_total + parser_invoice_totals[pi]
                    parser_invoice_totals_rolling_totals.append({'invoice': pi, 'amount': parser_invoice_totals[pi], 'rolling_total': parser_rolling_total })
+               parser_total = parser_rolling_total
+
+               pt = PaymentTotal.objects.filter(oracle_system=oracle_system,settlement_date=settlement_date_search_obj)
+               if pt.count() > 0:
+                   pt_obj = PaymentTotal.objects.get(id=pt[0].id)
+                   pt_obj.oracle_system=oracle_system
+                   pt_obj.settlement_date=settlement_date_search_obj
+                   pt_obj.bpoint_gateway_total=D(bpoint_amount_nice)
+                   pt_obj.ledger_bpoint_total=D(ledger_payment_amount_total)
+                   pt_obj.oracle_parser_total=D(parser_total)
+                   pt_obj.oracle_receipt_total=D(oracle_receipts_total)
+                   pt_obj.updated = datetime.now()
+                   pt_obj.save()
+
+               
+               else:
+                    print (bpoint_amount_nice)
+                    print (ledger_payment_amount_total)
+                    print (parser_invoice_totals)
+                    print (oracle_receipts_total)
+                    PaymentTotal.objects.create( oracle_system=oracle_system,
+                                                 settlement_date=settlement_date_search_obj,
+                                                 bpoint_gateway_total=D(bpoint_amount_nice),
+                                                 ledger_bpoint_total=D(ledger_payment_amount_total),
+                                                 oracle_parser_total=D(parser_total),
+                                                 oracle_receipt_total=D(oracle_receipts_total),
+                                                 cash_total='0.00',
+                                                 bpay_total='0.00',
+                                               )
+
 
                if  (len(rows)) > 0 or (len(missing_records)) > 0 or (len(missing_records_in_ledger)) > 0:
                   print ("Sending Report")
@@ -173,7 +208,9 @@ class Command(BaseCommand):
                       'missing_records_in_ledger' : missing_records_in_ledger,
                       'bpoint_total_amount': bpoint_amount_nice,
                       'ledger_payment_amount_total' : ledger_payment_amount_total,
+                      'ledger_payment_amount_total_rolling_totals' :  ledger_payment_amount_total_rolling_totals,
                       'oracle_receipts_total' : oracle_receipts_total,
+                      'parser_total': parser_total,
                       'parser_invoice_totals' : parser_invoice_totals,
                       'parser_invoice_totals_rolling_totals' : parser_invoice_totals_rolling_totals
                   }

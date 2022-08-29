@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 # Register your models here.
 from . import models
@@ -151,4 +152,26 @@ class LinkedInvoiceAdmin(admin.ModelAdmin):
 @admin.register(models.RefundFailed)
 class RefundFailedAdmin(admin.ModelAdmin):
     list_display = ('invoice_group','booking_reference','invoice_reference','refund_amount','status','system_identifier','created','completed_date','completed_by')
+
+@admin.register(models.PaymentTotal)
+class PaymentTotal(admin.ModelAdmin):
+     list_display = ('oracle_system','settlement_date2','bpoint_gateway_total','ledger_bpoint_total','oracle_parser_total','oracle_receipt_total','cash_total','bpay_total','updated')
+     list_filter = ('oracle_system','settlement_date',)
+     raw_id_fields = ('oracle_system',)
+
+     def settlement_date2(self, obj):
+            if obj.bpoint_gateway_total != obj.oracle_parser_total:
+                 return format_html(
+                    
+                     '<b style="font-weight:bold; color: red">{}</b>',
+                    obj.settlement_date
+                    )
+            else:
+                 return format_html(
+
+                     '<b style="font-weight:bold; color: #65af22">{}</b>',
+                    obj.settlement_date
+                    )
+
+     settlement_date2.allow_tags = True
 
