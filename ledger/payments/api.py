@@ -904,7 +904,7 @@ def LedgerPayments(request, *args, **kwargs):
                          invs = Invoice.objects.filter(reference__in=invoices)
                          for i in invs:
                              orders.append(i.order_number)
-                             invoices_data.append({'invoice_reference': i.reference, 'payment_status': str(i.payment_status), 'balance': str(i.balance)})
+                             invoices_data.append({'invoice_reference': i.reference, 'payment_status': str(i.payment_status), 'balance': str(i.balance), 'settlement_date': i.settlement_date.strftime("%d/%m/%Y")})
                          invoice_orders = Order.objects.filter(number__in=orders)
                          order_array = []
                          order_obj = order_model.Line.objects.filter(order__number__in=orders).order_by('order__date_placed')

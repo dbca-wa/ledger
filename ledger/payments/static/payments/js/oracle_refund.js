@@ -75,7 +75,7 @@ var refund_booking =  {
         money_cash_trans_payment: function() { 
                  var html = "<option selected value=''>Open this select menu</option>";
 		 for (let i = 0; i < refund_booking.var.invoices_data.length; i++) { 
-		      console.log(refund_booking.var.invoices_data[i].invoice_reference);
+		      // console.log(refund_booking.var.invoices_data[i].invoice_reference);
                       html += "<option value="+refund_booking.var.invoices_data[i].invoice_reference+">Invoice: "+refund_booking.var.invoices_data[i].invoice_reference+" Payment Status:"+refund_booking.var.invoices_data[i].payment_status+" Balance Owing $"+refund_booking.var.invoices_data[i].balance+"</option>";
 	         }
                  $('#new-cash-line-invoice1').html(html); 
@@ -579,7 +579,7 @@ var refund_booking =  {
                                                  if (this.type == 'text' || this.type=='hidden') {
                                                       idvalname = input_id.substring(0, 19);
                                                       rowid = input_id.replace(idvalname,"");
-						       console.log(idvalname);
+						       // console.log(idvalname);
                                                       if (idvalname == 'cash_invoice_number') {
                                                              var cash_iv = $('#cash_invoice_number'+rowid).val();
                                                              var line_amount = $('#cash-line-amount'+rowid).val();
