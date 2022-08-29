@@ -25,6 +25,7 @@ var ledger_payments = {
 		        var orderdata = "";
 		        var bpointdata = "";
 		        var cashdata = "";
+		        var linked_invoices = "";
                         if (data.status == 200) { 
                         if (data.data.order.length > 0) {
                              for (let i = 0; i < data.data.order.length; i++) {
@@ -34,23 +35,31 @@ var ledger_payments = {
 			            }
 
 				    orderdata+= "<tr><td>"+data.data.order[i].order_number+"</td><td>"+data.data.order[i].title+"</td><td>"+data.data.order[i].oracle_code+"</td><td style='background-color: "+line_price_incl_tax_color+"; color: #FFFFFF;'>$"+data.data.order[i].line_price_incl_tax+"</td><td>$"+data.data.order[i].rolling_total+"</td><td>"+data.data.order[i].order_date+"</td></tr>";
-                                    console.log(data.data.order[i]); 
+                                    // console.log(data.data.order[i]); 
 			     }
 
 			     for (let i = 0; i < data.data.bpoint.length; i++) {
 				     
                                      bpointdata+= "<tr><td>"+data.data.bpoint[i].txnnumber+"</td><td><A href='/ledger/payments/invoice-pdf/"+data.data.bpoint[i].crn1+"' target='_pdf_invoice_"+data.data.bpoint[i].crn1+"'>"+data.data.bpoint[i].crn1+"</a></td><td>"+data.data.bpoint[i].action+"</td><td>$"+data.data.bpoint[i].amount+"</td><td>"+data.data.bpoint[i].processed+"</td><td>"+data.data.bpoint[i].settlement_date+"</td><td>"+data.data.bpoint[i].last_digits+"</td></tr>";
-				     console.log(data.data.bpoint[i]);
+				     // console.log(data.data.bpoint[i]);
 			     }
 
 			     for (let i = 0; i < data.data.cash.length; i++) {
 				     cashdata+= "<tr><td>"+data.data.cash[i].id+"</td><td>"+data.data.cash[i].invoice_reference+"</td><td>"+data.data.cash[i].action+"</td><td>$"+data.data.cash[i].amount+"</td><td>"+data.data.cash[i].created+"</td></tr>";
 			     }
 		      }
+		      if (data.data.linked_payments.length > 0 ) {
+                                for (let i = 0; i < data.data.linked_payments.length; i++) {
+                                      linked_invoices+= "<tr><td>"+data.data.linked_payments[i].invoice_reference+"</td><td>"+data.data.linked_payments[i].booking_reference+"</td><td>"+data.data.linked_payments[i].booking_reference_linked+"</td></tr>";
+
+				}
+
+		      }
 
 		      $('#order_list').html(orderdata);
 		      $('#bpoint_tbody').html(bpointdata);
 		      $('#cash_tbody').html(cashdata);
+		      $('#linked_invoices').html(linked_invoices);
 		      $('#total_payment_gateway').html('$&nbsp;'+data.data.total_gateway_amount);
 		      $('#total_cash_payment').html('$&nbsp;'+data.data.total_cash_amount);
 		      $('#total_unallocated').html('$&nbsp;'+data.data.total_unallocated);
@@ -74,10 +83,15 @@ var ledger_payments = {
 		      }
 
 		      // refund_booking.init();
-		      console.log(data);
+		      // console.log(data);
              },
              error: function(errMsg) {
+
 		     setTimeout("$('#LoadingPopup').modal('hide');",500);
+		     $('#oracle-payments-data-error-message').html("An error has occured");
+		     $('#oracle-payments-data').hide();
+		     $('#oracle-payments-data-error').show();
+
              }
          });
      },
