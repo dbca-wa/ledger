@@ -65,7 +65,7 @@ var refund_booking =  {
                        total_available = refund_booking.var.bpoint_trans_totals[i].amount-refund_booking.var.bpoint_trans_totals[i].amount_refunded;
                        var html = "<tr id='money_bpoint_row"+refund_booking.var.row_id+"' >";
                            html += "<td><input style='width: 150px;' class='form-control input-sm' type='hidden' id='txn_number"+refund_booking.var.row_id+"' value='"+refund_booking.var.bpoint_trans_totals[i].txnnumber+"'>"+refund_booking.var.bpoint_trans_totals[i].txnnumber+"  ($"+total_available+" Available)</td>";
-                           html += "<td><div style='display:flex'><span class='money_sign' style='padding-top: 6px'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='line-amount"+refund_booking.var.row_id+"'></div></td>";
+                           html += "<td><div style='display:flex'><span class='money_sign' style='padding-top: 6px'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='bp-line-amount"+refund_booking.var.row_id+"'></div></td>";
                            html += "</tr>";
 
                            $("#money-bpoint-booking tbody").append(html);
@@ -507,7 +507,7 @@ var refund_booking =  {
                                                rowid = input_id.replace(idvalname,"");
                                                if (idvalname == 'txn_number') {
                                                       var txn_number = $('#txn_number'+rowid).val();
-                                                      var line_amount = $('#line-amount'+rowid).val();
+                                                      var line_amount = $('#bp-line-amount'+rowid).val();
 						      var btt = {};
 						      for (let i = 0; i < refund_booking.var.bpoint_trans_totals.length; i++) {
 							      if (refund_booking.var.bpoint_trans_totals[i].txnnumber == txn_number) {
@@ -674,7 +674,7 @@ var refund_booking =  {
                                                       rowid = input_id.replace(idvalname,"");
                                                       if (idvalname == 'txn_number') {
                                                              var txn_number = $('#txn_number'+rowid).val();
-                                                             var line_amount = $('#line-amount'+rowid).val();
+                                                             var line_amount = $('#bp-line-amount'+rowid).val();
                                                              bpoint_trans_split_array.push({'txn_number': txn_number, 'line-amount': line_amount});
                                                       }
                                                  }
