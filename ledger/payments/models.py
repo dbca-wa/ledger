@@ -191,3 +191,18 @@ class RefundFailed(models.Model):
     completed_date = models.DateTimeField(null=True, blank=True)
     completed_by = models.ForeignKey(EmailUser, blank=True, null=True)
 
+class PaymentTotal(models.Model):
+
+    oracle_system = models.ForeignKey(OracleInterfaceSystem)
+    settlement_date = models.DateField(blank=True, null=True)
+    bpoint_gateway_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    ledger_bpoint_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    oracle_parser_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    oracle_receipt_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    cash_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    bpay_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
+    updated = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
+    def __str__(self):
+        return '{} - {}'.format(str(self.oracle_system.system_id),self.settlement_date)
+
