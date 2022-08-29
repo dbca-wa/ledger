@@ -76,35 +76,38 @@ class Command(BaseCommand):
                for ti in time_intervals:
                     print (ti)
                     settlement_date_search_obj_delta = settlement_date_search_obj + timedelta(days=ti['day'])
-                    start_li = settlement_date_search_obj_delta.strftime("%Y-%m-%d")+' '+ti['hour']+':00'
-                    end_li = settlement_date_search_obj_delta.strftime("%Y-%m-%d")+' '+ti['hour']+':59'
+                    start_li = settlement_date_search_obj_delta.strftime("%Y-%m-%d")+' '+ti['hour']+':00:00'
+                    end_li = settlement_date_search_obj_delta.strftime("%Y-%m-%d")+' '+ti['hour']+':59:59'
                     print (start_li+" to "+end_li)
 
                     bpoint_total = D('0.00')
                     bpoint_transactions = []
-                    bp_trans = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, processed__gte=start_li, processed__lte=end_li)
+                    bp_trans = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, processed__gte=start_li, processed__lte=end_li,  crn1__startswith=SYSTEM_ID)
                     for bp in bp_trans:
                         if bp.action == 'payment':
-                            bpoint_total = bp.amount + bp.amount
+                            bpoint_total = bpoint_total + bp.amount
 
                         if bp.action == 'refund':
-                            bpoint_total = bp.amount - bp.amount
-                        bpoint_transactions.append(bp.crn1)
+                            bpoint_total = bpoint_total - bp.amount
+                        bpoint_transactions.append(bp.crn1+' ('+str(bp.amount)+')')
 
 
                     order_total = D('0.00')
                     order_invoices = []
-                    invoices = Invoice.objects.filter(settlement_date=settlement_date_search_obj, created__gte=start_li, created__lte=end_li)
+                    invoices = Invoice.objects.filter(settlement_date=settlement_date_search_obj, created__gte=start_li, created__lte=end_li, system=SYSTEM_ID)
                     for inv in invoices:
                         print (inv.order_number)
                         orders = Order.objects.filter(number=inv.order_number)
+                        line_order_total = D('0.00')
                         for o in orders:
                             order_lines = OrderLine.objects.filter(order=o)
                             for ol in order_lines:
+
                                 if 'order' in ol.payment_details:
                                    for pd_key,pd_val in ol.payment_details['order'].items():
                                        order_total = order_total + D(pd_val)
-
+                                       line_order_total = line_order_total + D(pd_val)
+                        order_invoices.append(inv.reference+' ('+str(line_order_total)+')')
 
                     row = {}
                     row['start_li'] = start_li
@@ -130,5 +133,5 @@ class Command(BaseCommand):
                   for rr in oirr:
                          print (rr.email)
                          email_list.append(rr.email)
-                  sendHtmlEmail(tuple(email_list),"[LEDGER] "+oracle_system.system_name+" Ledger Payment Oracle Order Discrepancy Report for "+str(settlement_date_search)+" "+SYSTEM_ID,context,'email/bpoint_ledger_time_seperated_audit.html',None,None,settings.EMAIL_FROM,'system-oim',attachments=None)
+                  sendHtmlEmail(tuple(email_list),"[LEDGER] "+oracle_system.system_name+" Ledger Payment Time Based Audit Report for "+str(settlement_date_search)+" "+SYSTEM_ID,context,'email/bpoint_ledger_time_seperated_audit.html',None,None,settings.EMAIL_FROM,'system-oim',attachments=None)
                     
