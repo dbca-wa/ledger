@@ -1143,8 +1143,6 @@ def RefundOracleView(request, *args, **kwargs):
                 failed_refund = False
 
                 payment_oracle_admin = helpers.is_payment_oracle_admin(request.user)
-                print ("POA")
-                print (payment_oracle_admin)
                 if len(settlement_date) == 10:
                     if payment_oracle_admin is True:
                         pass
@@ -1216,8 +1214,8 @@ def RefundOracleView(request, *args, **kwargs):
                                bpoint_refund = BpointTransaction.objects.get(txn_number=refund.txn_number)
                                bpoint_refund.crn1 = new_invoice.reference
                                bpoint_refund.save()
-                               if len(settlement_date) == 10:
-                                   new_invoice.settlement_date = None
+                               if bpoint_refund.settlement_date:
+                                   new_invoice.settlement_date = bpoint_refund.settlement_date
                                new_invoice.save()
                                update_payments(new_invoice.reference)
                 elif int(refund_method) == 6:
