@@ -980,7 +980,7 @@ def process_refund_from_basket(request,basket_obj):
             new_invoice = Invoice.objects.get(order_number=new_order.number)
             new_invoice.settlement_date = None
             new_invoice.save()
-
+            new_invoices.append(new_invoice.reference) 
 
             for refund in refund_txn:
                 invoice.voided = True
