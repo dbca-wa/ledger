@@ -155,7 +155,7 @@ class RefundFailedAdmin(admin.ModelAdmin):
 
 @admin.register(models.PaymentTotal)
 class PaymentTotal(admin.ModelAdmin):
-     list_display = ('oracle_system','settlement_date','bpoint_gateway_total','ledger_bpoint_total','oracle_parser_total','oracle_receipt_total','cash_total','bpay_total','discrepancy','updated')
+     list_display = ('oracle_system','settlement_date','bpoint_gateway_total','ledger_bpoint_total','oracle_parser_total','oracle_receipt_total','cash_total','bpay_total','difference','discrepancy','updated')
      list_filter = ('oracle_system','settlement_date',)
      raw_id_fields = ('oracle_system',)
      ordering = ('-settlement_date',)
@@ -171,6 +171,9 @@ class PaymentTotal(admin.ModelAdmin):
 
                      '<b style="font-weight:bold; color: #65af22">&#x2713;</b>',
                     )
+     def difference(self, obj):
+         return obj.bpoint_gateway_total - obj.oracle_receipt_total
+
 
      discrepancy.allow_tags = True
-
+     difference.allow_tags = True
