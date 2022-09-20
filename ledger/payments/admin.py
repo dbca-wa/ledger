@@ -155,23 +155,21 @@ class RefundFailedAdmin(admin.ModelAdmin):
 
 @admin.register(models.PaymentTotal)
 class PaymentTotal(admin.ModelAdmin):
-     list_display = ('oracle_system','settlement_date2','bpoint_gateway_total','ledger_bpoint_total','oracle_parser_total','oracle_receipt_total','cash_total','bpay_total','updated')
+     list_display = ('oracle_system','settlement_date','bpoint_gateway_total','ledger_bpoint_total','oracle_parser_total','oracle_receipt_total','cash_total','bpay_total','discrepancy','updated')
      list_filter = ('oracle_system','settlement_date',)
      raw_id_fields = ('oracle_system',)
 
-     def settlement_date2(self, obj):
-            if obj.bpoint_gateway_total != obj.oracle_parser_total:
+     def discrepancy(self, obj):
+            if obj.bpoint_gateway_total != obj.oracle_receipt_total:
                  return format_html(
                     
-                     '<b style="font-weight:bold; color: red">{}</b>',
-                    obj.settlement_date
+                     '<b style="font-weight:bold; color: red">&#x2718;</b>',
                     )
             else:
                  return format_html(
 
-                     '<b style="font-weight:bold; color: #65af22">{}</b>',
-                    obj.settlement_date
+                     '<b style="font-weight:bold; color: #65af22">&#x2713;</b>',
                     )
 
-     settlement_date2.allow_tags = True
+     discrepancy.allow_tags = True
 
