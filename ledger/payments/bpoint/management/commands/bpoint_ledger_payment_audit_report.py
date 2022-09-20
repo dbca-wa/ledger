@@ -63,7 +63,7 @@ class Command(BaseCommand):
            recordcount = 0
            duplicate_check_array =[]
            for c in b:
-                if c.bank_response_code == '00':
+                if c.bank_response_code == '00' and c.response_code == '0':
                     amount = str(c.amount)[:-2]+'.'+str(c.amount)[-2:]
                     if c.action == 'refund':
                         bpoint_amount = bpoint_amount - c.amount
@@ -115,7 +115,7 @@ class Command(BaseCommand):
            ledger_bpoint_count = 0
            bp1 = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj, crn1__istartswith=SYSTEM_ID)
            for c in b:
-                  if c.bank_response_code == '00':
+                  if c.bank_response_code == '00' and c.response_code == '0':
                      exists = False
                      for rec in bp1:
                          if rec.crn1 == c.crn1:

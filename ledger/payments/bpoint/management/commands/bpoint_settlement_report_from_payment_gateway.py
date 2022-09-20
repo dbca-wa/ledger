@@ -34,7 +34,7 @@ class Command(BaseCommand):
            bpoint_facade = Facade()
            b = bpoint_facade.fetch_transaction_by_settlement_date(settlement_date_search)
            for c in b:
-                if c.bank_response_code == '00':
+                if c.bank_response_code == '00' and c.response_code == '0':
                     amount = str(c.amount)[:-2]+'.'+str(c.amount)[-2:]
                     rows.append({'txn_number': c.txn_number,'crn1': c.crn1,'processed_date_time': c.processed_date_time, 'settlement_date': c.settlement_date, 'action': c.action, 'amount': amount})
            if  (len(rows)) > 0:

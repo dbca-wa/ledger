@@ -43,6 +43,7 @@ class Invoice(models.Model):
     previous_invoice = models.ForeignKey('self',null=True,blank=True)
     settlement_date = models.DateField(blank=True, null=True)
     payment_method = models.SmallIntegerField(choices=PAYMENT_METHOD_CHOICES, default=0)
+    #no_oracle=models.NullBooleanField(default=False)
     #payment_amount_cached = models.DecimalField(decimal_places=2,max_digits=12, default='0.00',)
     #payment_status_cached = models.CharField(max_length=50,null=True,blank=True)
 
@@ -161,18 +162,22 @@ class Invoice(models.Model):
         '''
         amount_paid = self.__calculate_bpay_payments() + self.__calculate_bpoint_payments() + self.__calculate_cash_payments() - self.__calculate_total_refunds() 
         pay_status = 'over_paid'
-        if amount_paid == decimal.Decimal('0') and self.amount > 0:
-            pay_status = 'unpaid'
-        elif amount_paid < self.amount:
-            pay_status = 'partially_paid'
-        elif amount_paid == self.amount:
-            pay_status = 'paid'
-        else:
-            pay_status ='over_paid'
 
-        #if payment_status_cached != pay_status:
-        #    self.payment_status_cached  = pay_status
-        #    self.save()
+        if self.voided is True: 
+            pay_status = 'cancelled'
+        else:
+            if amount_paid == decimal.Decimal('0') and self.amount > 0:
+                pay_status = 'unpaid'
+            elif amount_paid < self.amount:
+                pay_status = 'partially_paid'
+            elif amount_paid == self.amount:
+                pay_status = 'paid'
+            else:
+                pay_status ='over_paid'
+
+            #if payment_status_cached != pay_status:
+            #    self.payment_status_cached  = pay_status
+            #    self.save()
              
         return pay_status
 
