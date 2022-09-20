@@ -64,7 +64,7 @@ class Command(BaseCommand):
                ledger_bpoint_count = 0
                bp1 = BpointTransaction.objects.filter(settlement_date=settlement_date_search_obj)
                for c in b:
-                      if c.bank_response_code == '00':
+                      if c.bank_response_code == '00' and c.response_code == '0':
                          exists = False
                          for rec in bp1:
                              if rec.txn_number == c.txn_number:
