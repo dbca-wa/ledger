@@ -158,6 +158,7 @@ class PaymentTotal(admin.ModelAdmin):
      list_display = ('oracle_system','settlement_date','bpoint_gateway_total','ledger_bpoint_total','oracle_parser_total','oracle_receipt_total','cash_total','bpay_total','discrepancy','updated')
      list_filter = ('oracle_system','settlement_date',)
      raw_id_fields = ('oracle_system',)
+     ordering = ('-settlement_date',)
 
      def discrepancy(self, obj):
             if obj.bpoint_gateway_total != obj.oracle_receipt_total:
