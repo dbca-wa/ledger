@@ -1344,3 +1344,96 @@ def get_countries(request):
      resp['data'] = countries_list
      return HttpResponse(json.dumps(resp), content_type='application/json')
 
+@csrf_exempt
+def create_organistion(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            try:
+                data = json.loads(request.POST.get('data', "{}"))
+                organisation_name = data['organisation_name']
+                organisation_abn = data['organisation_abn']
+            
+                organisation_id = models.Organisation.objects.create(name=organisation_name, abn=organisation_abn)
+
+                jsondata['status'] = 200
+                jsondata['message'] = 'Success'     
+                jsondata['data'] = {'organisation_id': organisation_id}
+            except Exception as e:
+                jsondata['status'] = 501
+                jsondata['message'] = 'Error'     
+                jsondata['data'] = {'messagge': str(e)}
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+
+@csrf_exempt
+def update_organistion(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            data = json.loads(request.POST.get('data', "{}"))
+            organisation_id = data['organisation_id']
+            organisation_name = data['organisation_name']
+            organisation_abn = data['organisation_abn']           
+
+            if models.Organisation.objects.filter(id=organisation_id).count() > 0:
+                    org_obj = models.Organisation.objects.get(id=organisation_id)
+                    org_obj.name = organisation_name
+                    org_obj.abn = organisation_abn                                     
+                    org_obj.save()
+
+                    jsondata['status'] = 200
+                    jsondata['message'] = 'Success'
+                    jsondata['data'] = {'organisation_id': organisation_id}
+            else:
+                    jsondata['status'] = 404
+                    jsondata['message'] = 'Not found'
+                    jsondata['data'] = {"message": "Not found"}
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        jsondata['status'] = 403
+        jsondata['message'] = 'Key Issue'
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+
+@csrf_exempt
+def get_organisation(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            data = json.loads(request.POST.get('data', "{}"))
+            organisation_id = data['organisation_id']          
+            if models.Organisation.objects.filter(id=organisation_id).count() > 0:
+                    org_obj = models.Organisation.objects.get(id=organisation_id)                                  
+                    
+                    jsondata['status'] = 200
+                    jsondata['message'] = 'Success'
+                    jsondata['data'] = {'organisation_id': org_obj.id, "organisation_name": org_obj.name, "organisation_abn": org_obj.abn}
+            else:
+                    jsondata['status'] = 404
+                    jsondata['message'] = 'Not found '
+                    jsondata['data'] = {}
+                    jsondata['post'] = request.POST
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response   
