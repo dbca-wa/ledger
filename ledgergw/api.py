@@ -35,6 +35,7 @@ import base64
 import traceback
 import json
 import ipaddress
+import re
 
 
 @csrf_exempt
@@ -1345,6 +1346,60 @@ def get_countries(request):
      return HttpResponse(json.dumps(resp), content_type='application/json')
 
 @csrf_exempt
+def create_get_emailuser(request,apikey):
+    # Due to auth2,  given_name and last_name are auto populated by auth2
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            try:
+                data = json.loads(request.POST.get('data', "{}"))
+                email = data['email']
+ 
+                regex = '^[a-z0-9]+[\._+]?[a-z0-9]+[@]\w+[.]\w{2,3}$'  
+                if re.match(regex,email):
+                    print ("Valid Email Address")
+                else:
+                    raise ValidationError('Error: the email address provided is invalid.')                                      
+                
+                eu = models.EmailUser.objects.filter(email=email)
+                status = ''
+                if eu.count():
+                    status = 'existing'
+                    emailuser = eu[0]                    
+                else:
+                    status = 'new'
+                    emailuser = models.EmailUser.objects.create_user(email)
+                
+                dob_str = ''         
+                if emailuser.dob:
+                    dob_str = emailuser.dob.strftime('%d/%m/%Y')
+                jsondata['status'] = 200
+                jsondata['message'] = 'Success'     
+                jsondata['data'] = {'emailuser_id': emailuser.id, 
+                                    'email': emailuser.email,
+                                    'record_status': status, 
+                                    'title': emailuser.title,
+                                    'dob': dob_str, 
+                                    'phone_number': emailuser.phone_number, 
+                                    'mobile_number': emailuser.mobile_number, 
+                                    }
+            except Exception as e:
+                jsondata['status'] = 501
+                jsondata['message'] = 'Error'     
+                jsondata['data'] = {'message': str(e)}
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+
+
+@csrf_exempt
 def create_organistion(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
@@ -1364,7 +1419,7 @@ def create_organistion(request,apikey):
             except Exception as e:
                 jsondata['status'] = 501
                 jsondata['message'] = 'Error'     
-                jsondata['data'] = {'messagge': str(e)}
+                jsondata['data'] = {'message': str(e)}
 
         else:
             jsondata['status'] = 403
