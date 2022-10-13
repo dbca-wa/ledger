@@ -418,6 +418,13 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
             self.identification = document
             self.save()
 
+    def upload_identification2(self, request):
+        with transaction.atomic():
+            document = PrivateDocument(upload=request.data.dict()['identification2'])
+            document.save()
+            self.identification2 = document
+            self.save()
+
     dummy_email_suffix = ".s058@ledger.dpaw.wa.gov.au"
     dummy_email_suffix_len = len(dummy_email_suffix)
 
