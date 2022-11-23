@@ -113,3 +113,7 @@ disturbance/static/disturbance_vue/static/js/manifest.js
 disturbance/static/disturbance_vue/static/js/vendor.js
 disturbance/static/disturbance_vue/static/js/babel-polyfill.js
 
+.DAV
+
+private-media/
+temp/
