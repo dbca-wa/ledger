@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
             today = datetime.today()# - timedelta(days=3)
-            baskets = basket_models.Basket.objects.filter(notification_completed=False, notification_count__lte=5, status='Submitted')
+            baskets = basket_models.Basket.objects.filter(notification_completed=False, notification_count__lte=5, status='Submitted')[:50]
             for b in baskets:
                 if b.notification_url:
                    if len(b.notification_url) > 6:
