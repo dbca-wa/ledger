@@ -11,7 +11,7 @@ RUN chown docker.docker /home/docker
 RUN cp /root/.bashrc /home/docker
 RUN cp /root/.profile /home/docker
 
-RUN echo "if ! [ -n "${SUDO_USER}" -a -n "${SUDO_PS1}" ]; then" >> /etc/bash.bashrc
+RUN echo 'if ! [ -n "${SUDO_USER}" -a -n "${SUDO_PS1}" ]; then' >> /etc/bash.bashrc
 RUN echo "export PS1='\e[0;31mdev:\e[m \e[0;32m${debian_chroot:+($debian_chroot)}\u@\h:\w\$\e[m '" >> /etc/bash.bashrc
 RUN echo "fi" >> /etc/bash.bashrc
 
