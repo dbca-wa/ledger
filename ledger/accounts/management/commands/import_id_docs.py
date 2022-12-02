@@ -21,10 +21,11 @@ class Command(BaseCommand):
         errors=[]
         updates=[]
         TEMP_DIR ='/temp'
+        PRIVATE_MEDIA_DIR='/private-media'
 
         import os
         from ledger.settings_base import BASE_DIR
-        save_dir =BASE_DIR + TEMP_DIR
+        save_dir =BASE_DIR + PRIVATE_MEDIA_DIR + TEMP_DIR
 
         logger.info('Running command {}'.format(__name__))
         entries_path=Path(save_dir)
