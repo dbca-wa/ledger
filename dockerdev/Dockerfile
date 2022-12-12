@@ -4,8 +4,14 @@ FROM dbcawa/ledgergw:latest as builder_base_ledgergwdev
 RUN apt-get update
 RUN apt-get --no-install-recommends -y install nginx
 
+# For windows
 RUN groupadd -g 1000 docker
 RUN useradd -g 1000 -u 1000 docker -s /bin/bash
+
+# For Linux
+RUN groupadd -g 20000 container
+RUN useradd -g 20000 -u 200000 container -s /bin/bash
+
 RUN mkdir /home/docker
 RUN chown docker.docker /home/docker
 RUN cp /root/.bashrc /home/docker
