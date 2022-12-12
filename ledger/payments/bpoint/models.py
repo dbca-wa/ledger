@@ -298,3 +298,10 @@ class UsedBpointToken(models.Model):
 
     class Meta:
         db_table = 'payments_usedbpointtoken'
+
+class BpointTokenPrimary(models.Model):
+    user = models.OneToOneField(EmailUser, related_name='user_primary_card')
+    bpoint_token = models.ForeignKey(BpointToken, related_name='bpoint_token_primary')
+    created = models.DateTimeField(auto_now_add=True)
+    
+    

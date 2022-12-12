@@ -82,6 +82,7 @@ def create_basket_session_v2(emailuser_id, parameters):
 # a basket contains the system ID, list of product line items, vouchers, and not much else.
 def create_basket_session(request, parameters):
     print ("create_basket_session params")
+    print (parameters)
     serializer = serializers.BasketSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
     custom = serializer.validated_data.get('custom_basket')
@@ -211,8 +212,9 @@ def create_checkout_session(request, parameters):
         session_data.set_session_type(serializer.validated_data['session_type'])
     else:
         session_data.set_session_type('standard')
-
-
+    if 'response_type' in parameters:
+        session_data.set_response_type(serializer.validated_data['response_type'])
+    
 
 # shortcut for finalizing a checkout session and creating an invoice.
 # equivalent to checking out with a deferred payment method (e.g. BPAY).
@@ -382,6 +384,12 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def get_session_type(self):
         return self._get('ledger','session_type')
+
+    def set_response_type(self,text):
+        self._set('ledger','response_type',text)
+
+    def get_response_type(self):
+        return self._get('ledger','response_type')
 
     def set_user_logged_in(self, value):
         return self._set('ledger','user_logged_in',value)
