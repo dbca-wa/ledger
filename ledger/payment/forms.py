@@ -9,10 +9,15 @@ VALID_CARDS = [VISA,VISA_ELECTRON,MASTERCARD]
 class BankcardForm(BankcardForm):
 
     start_month = None
-    
+
     class Meta:
         model = Bankcard
         fields = ('number','expiry_month','ccv')
+
+
+    def __init__(self, *args, **kwargs):
+        super(BankcardForm, self).__init__(*args, **kwargs)
+
 
     @property
     def bankcard(self):

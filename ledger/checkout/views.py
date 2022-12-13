@@ -191,13 +191,17 @@ class PaymentDetailsView(CorePaymentDetailsView):
         ctx['billing_address_form'] = kwargs.get(
             'billing_address_form', forms.BillingAddressForm())
         ctx['amount_override'] = None
+        ctx['response_type'] = 'html'
 
         if self.checkout_session.get_amount_override():
             ctx['amount_override'] =self.checkout_session.get_amount_override()
 
         if self.checkout_session.get_session_type():
            ctx['session_type'] = self.checkout_session.get_session_type()
-           
+
+        if self.checkout_session.get_response_type():
+           ctx['response_type'] = self.checkout_session.get_response_type()
+
         #print (request.COOKIES.get('logged_in_status'))
         ctx['NO_HEADER'] = 'false'
         ctx['PAYMENT_API_WRAPPER'] = 'false'

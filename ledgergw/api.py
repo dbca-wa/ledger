@@ -20,6 +20,7 @@ from ledger.order import models as order_models
 from django.core.files.base import ContentFile
 from django.utils.crypto import get_random_string
 from ledger.payments.models import Invoice, BpointToken
+from ledger.payments.bpoint.facade import Facade
 from rest_framework.response import Response
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer
@@ -31,12 +32,17 @@ from wsgiref.util import FileWrapper
 from django.core.exceptions import ValidationError
 from datetime import datetime
 from django.conf import settings
+from ledger.payment import forms as payment_forms
+from ledger.payments.bpoint.gateway import Gateway
 import base64
 import traceback
 import json
 import ipaddress
 import re
 
+
+#from oscar.core.loading import get_model
+#Bankcard = get_model('payment','Bankcard')
 
 @csrf_exempt
 def user_info_search(request, apikey):
@@ -1087,6 +1093,7 @@ def process_no(request,apikey):
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response
 
+@csrf_exempt
 def delete_card_token(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     invoice_json = {}
@@ -1109,12 +1116,38 @@ def delete_card_token(request,apikey):
                     b.delete()
                 jsondata['status'] = 200
                 jsondata['message'] = 'success'
-
              
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response
-             
 
+@csrf_exempt
+def get_primary_card_token_for_user(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}    
+   
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            user_id = data['user_id']
+            PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE = request.POST.get('PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE',None)
+            email_user_obj = models.EmailUser.objects.filter(id=int(user_id))
+            user = None
+            if email_user_obj.count() > 0:
+                user=email_user_obj[0]
+
+            primary_card_id = None
+            if user:
+                bpp = payment_bpoint_models.BpointTokenPrimary.objects.filter(user=user) 
+                if bpp.count() > 0:
+                    primary_card_id = bpp[0].bpoint_token.id
+
+            jsondata['primary_card'] = primary_card_id
+            jsondata['status'] = 200
+            jsondata['message'] = 'success'
+ 
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+             
+@csrf_exempt
 def get_card_tokens_for_user(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     
@@ -1132,20 +1165,171 @@ def get_card_tokens_for_user(request,apikey):
             if email_user_obj.count() > 0:
                 user=email_user_obj[0]
 
+            primary_card_id = None
+            if user:
+                bpp = payment_bpoint_models.BpointTokenPrimary.objects.filter(user=user) 
+                if bpp.count() > 0:
+                    primary_card_id = bpp[0].bpoint_token.id
+
             bt = BpointToken.objects.filter(user=user,system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
             if bt.count() > 0:
                 for b in bt:
                     card_tokens.append({'id' : b.id,  'last_digits' : b.last_digits,'expiry_date' : b.expiry_date.strftime("%m/%y"), 'card_type' : b.get_card_type_display()})
 
             jsondata['card_tokens'] = card_tokens
+            jsondata['primary_card'] = primary_card_id
             jsondata['status'] = 200
             jsondata['message'] = 'success'
-
-
  
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response
 
+@csrf_exempt
+def create_store_card_token(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}  
+
+    card_tokens = []
+    token = None
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            payload = json.loads(request.POST.get('payload', "{}"))            
+            try:                                
+                 
+                if len(payload['number']) != 16:
+                    raise ValidationError("Invalid card number")
+                
+                form_data = {
+                    'expiry_month_0': payload['expiry_month_0'],
+                    'expiry_month_1': payload['expiry_month_1'],
+                    'ccv': payload['ccv'],
+                    'number': payload['number']
+                }
+
+                # Validate card data using BankcardForm from oscar payments
+                bankcard_form = payment_forms.BankcardForm(form_data)            
+                if not bankcard_form.is_valid():
+                    errors = bankcard_form.errors
+                    for e in errors:
+                        raise serializers.ValidationError(errors.get(e)[0])
+
+                user_logged_in = request.POST.get('user_logged_in', None)
+                PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE = request.POST.get('PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE',None)
+                ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True,system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
+                if ois.count() > 0:
+                    oracle_system = ois[0]
+                    email_user_obj = models.EmailUser.objects.filter(id=int(user_logged_in))
+                    user = None
+                    if email_user_obj.count() > 0:
+                        user=email_user_obj[0]
+
+                    if user:
+
+                        bpoint_facade = Facade()                           
+                        bpoint_facade.gateway = Gateway(
+                                oracle_system.bpoint_username,
+                                oracle_system.bpoint_password,
+                                oracle_system.bpoint_merchant_num,
+                                oracle_system.bpoint_currency,
+                                oracle_system.bpoint_biller_code,
+                                oracle_system.bpoint_test,
+                                oracle_system.id
+                        )
+
+                        token = bpoint_facade.create_token(user, 'USER'+str(user.id), bankcard_form.bankcard, True, PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
+
+                        jsondata = {'status': 200, 'message': 'Success'} 
+
+
+            except Exception as e:
+                jsondata = {'status': 500, 'message': 'Issue creating token : '+str(e), 'error': str(e)} 
+                print ("EXCEPTION")
+                print (e)
+                    
+            # bt = BpointToken.objects.filter(user=user,system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
+            # if bt.count() > 0:
+            #    for b in bt:
+            #        card_tokens.append({'id' : b.id,  'last_digits' : b.last_digits,'expiry_date' : b.expiry_date.strftime("%m/%y"), 'card_type' : b.get_card_type_display()})
+
+            #jsondata['card_tokens'] = card_tokens
+            #jsondata['status'] = 200
+            #jsondata['message'] = 'success'
+ 
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json', status=jsondata['status'])
+    return response
+
+@csrf_exempt
+def set_primary_card(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}  
+
+    card_tokens = []
+    token = None
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            payload = json.loads(request.POST.get('payload', "{}"))
+            user_logged_in  = request.POST.get("user_logged_in", None)
+            print ("SAVE PRIMARY")
+            print (payload)
+
+            try:                
+                eu = models.EmailUser.objects.get(id=user_logged_in)                
+                bpp = payment_bpoint_models.BpointTokenPrimary.objects.filter(user=eu)                
+
+                if int(payload['default_card_id']) > 0:
+                    bp_token = payment_bpoint_models.BpointToken.objects.get(id=int(payload['default_card_id']))                
+                    
+
+                    if bpp.count() > 0:
+                        bpp_obj = payment_bpoint_models.BpointTokenPrimary.objects.get(id=bpp[0].id)
+                        bpp_obj.user = eu
+                        bpp_obj.bpoint_token = bp_token
+                        bpp_obj.save()
+                    else:
+                        payment_bpoint_models.BpointTokenPrimary.objects.create(user=eu,bpoint_token = bp_token)
+                else:
+                    bpp = payment_bpoint_models.BpointTokenPrimary.objects.filter(user=eu).delete()
+
+                jsondata = {'status': 200, 'message': 'Success'}
+
+            except Exception as e:
+                jsondata = {'status': 500, 'message': 'Issue creating token : '+str(e), 'error': str(e)} 
+                print ("EXCEPTION")
+                print (e)
+ 
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json', status=jsondata['status'])
+    return response
+
+@csrf_exempt
+def get_primary_card(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+
+    card_tokens = []
+    token = None
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            payload = json.loads(request.POST.get('payload', "{}"))
+            user_id = json.loads(request.POST.get('user_id',"{}"))
+            user_logged_in  = request.POST.get("user_logged_in", None)
+
+            try:
+                eu = models.EmailUser.objects.get(id=user_id)
+                bpp = payment_bpoint_models.BpointTokenPrimary.objects.filter(user=eu)
+
+                jsondata = {'status': 404, 'message': 'Token not found'}
+
+                if bpp.count() > 0:
+                    bpp_obj = payment_bpoint_models.BpointTokenPrimary.objects.get(id=bpp[0].id)
+                    jsondata = {'status': 200, 'message': 'Success', 'data': {'token_id': bpp_obj[0].bpoint_token} }
+
+            except Exception as e:
+                jsondata = {'status': 500, 'message': 'Issue creating token : '+str(e), 'error': str(e)}
+                print ("EXCEPTION")
+                print (e)
+
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json', status=jsondata['status'])
+    return response
 
 def process_refund(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}

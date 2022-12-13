@@ -99,7 +99,7 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
             print ('ledger_api')
             #return_url_success = '{}?invoice={}'.format(return_url, invoice.reference)
             return_url_success = '{}'.format(return_url)
-            response = HttpResponse(json.dumps({'return_url': return_url_success}), content_type='application/json')
+            response = HttpResponse(json.dumps({'status': 200, 'message': 'Success', 'return_url': return_url_success}), content_type='application/json')
             #response = HttpResponse("<script> window.location='"+return_url_success+"';</script> <a href='"+return_url_success+"'> Redirecting please wait: "+return_url_success+"</a>")
         else:
             response = HttpResponseRedirect('{}?invoice={}'.format(return_url, invoice.reference))
