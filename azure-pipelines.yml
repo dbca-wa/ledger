@@ -1,0 +1,43 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  tag: '$(Build.BuildId)'
+  tagDate: $[ format('{0:yyyy}.{0:MM}.{0:dd}.{0:HH}.{0:mm}{0:ss}', pipeline.startTime) ]
+  
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: Docker@2
+      displayName: Build an image and Push
+      inputs:
+        command: buildAndPush
+        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        tags: | 
+              latest
+              $(tagDate)
+        containerRegistry: DockerHub
+        repository: dbcawa/ledger
+    - task: Docker@2
+      displayName: Dev Build image and Push
+      inputs:
+        command: buildAndPush
+        dockerfile: '$(Build.SourcesDirectory)/dockerdev/Dockerfile'
+        tags: | 
+              ledger_dev_latest
+              ledger_dev_$(tagDate)              
+        containerRegistry: DockerHub
+        repository: dbcawa/docker_app_dev     
