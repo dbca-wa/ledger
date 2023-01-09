@@ -30,7 +30,7 @@ stages:
               latest
               $(tagDate)
         containerRegistry: DockerHub
-        repository: dbcawa/ledger
+        repository: dbcawa/ledgergw
     - task: Docker@2
       displayName: Dev Build image and Push
       inputs:
