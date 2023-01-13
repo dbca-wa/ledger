@@ -10,7 +10,7 @@
     "bootstrap-datetimepicker": "0.0.7",
     "datetimepicker": "0.1.39",
     "eonasdan-bootstrap-datetimepicker": "4.17.49",
-    "moment-timezone": "0.4.1",
+    "moment-timezone": "0.5.35",
     "jquery": "3.6.0",
     "moment": "2.29.1",
     "timepicker": "1.13.18",
