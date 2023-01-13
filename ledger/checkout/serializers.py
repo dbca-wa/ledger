@@ -45,6 +45,7 @@ class BasketSerializer(serializers.Serializer):
     custom_basket = serializers.BooleanField(default=False)
     booking_reference = serializers.CharField(required=False)
     booking_reference_link = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    organisation = serializers.IntegerField(required=False, allow_null=True) 
 
     def validate_system(self, value):
         if not value:

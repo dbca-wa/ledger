@@ -5,7 +5,7 @@
   "author": "ASI <asi@dpaw.wa.gov.au>",
   "private": true,
   "devDependencies": {
-    "bootstrap": "5.0.2",
+    "bootstrap": "5.2.3",
     "bootstrap-datepicker": "1.9.0",
     "bootstrap-datetimepicker": "0.0.7",
     "datetimepicker": "0.1.39",

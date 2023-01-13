@@ -1,3 +1,6 @@
+{% if response_type == 'json' %}
+{"status": 500, "message" : "{{ error }}"}
+{% else %}
 <BR><BR>
 
 <div class="container rounded" style='background-color: #FFFFFF;'>
@@ -47,3 +50,4 @@ $('.close-ledger-popup').click(function() {
 });
 
 </script>
+{% endif %}

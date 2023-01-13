@@ -10,7 +10,8 @@ from django.dispatch import receiver
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
-from oscar.apps.order.models import Order
+#from oscar.apps.order.models import Order
+from ledger.order.models import Order
 from ledger.payments.bpay.crn import getCRN
 from ledger.payments.bpay.models import BpayTransaction
 from ledger.payments.bpoint.models import BpointTransaction, TempBankCard, BpointToken, UsedBpointToken

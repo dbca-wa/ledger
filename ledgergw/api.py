@@ -11,7 +11,8 @@ from django.db.models import Q
 from ledger.checkout import utils
 from ledger.payments import utils as payments_utils
 from ledger.payments.invoice import utils as utils_ledger_payment_invoice
-from oscar.apps.order.models import Order
+#from oscar.apps.order.models import Order
+from ledger.order.models import Order
 from ledger.payments.invoice.models import Invoice
 from ledger.payments import models as payment_models
 from ledger.payments.bpoint import models as payment_bpoint_models
@@ -521,10 +522,15 @@ def create_basket_session(request,apikey):
             print ("API create_basket_session")
             parameters = json.loads(request.POST.get('parameters', "{}"))
             emailuser_id = request.POST.get('emailuser_id', None)
-            basket, basket_hash = utils.create_basket_session_v2(emailuser_id,parameters)
-            jsondata['status'] = 200
-            jsondata['message'] = 'Success'
-            jsondata['data'] = {'basket_hash': basket_hash}
+            try: 
+                 basket, basket_hash = utils.create_basket_session_v2(emailuser_id,parameters)
+                 jsondata['status'] = 200
+                 jsondata['message'] = 'Success'
+                 jsondata['data'] = {'basket_hash': basket_hash}
+            except:
+                 jsondata['status'] = 500
+                 jsondata['message'] = 'Error creating payment basket'
+                 jsondata['data'] = {}
             #ledger_user = models.EmailUser.objects.filter(email=ledgeremail)
             #if ledger_user.count() == 0:
 

@@ -6,7 +6,8 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 from ledger.payments.bpoint import settings as bpoint_settings
 from django.utils.encoding import python_2_unicode_compatible
-from oscar.apps.order.models import Order
+#from oscar.apps.order.models import Order
+from ledger.order.models import Order
 from ledger.accounts.models import EmailUser
 from ledger.payments.emails import send_refund_email
 from django.core.cache import cache

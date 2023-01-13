@@ -6,7 +6,7 @@ Order = get_model('order', 'Order')
 
 admin.site.unregister(Order)
 class OrderAdmin(OrderAdmin):
-    raw_id_fields = ['user', 'billing_address', 'shipping_address', 'basket']
+    raw_id_fields = ['user', 'billing_address', 'shipping_address', 'basket','organisation']
     list_display = ('number', 'total_incl_tax', 'site', 'user',
                     'billing_address', 'date_placed')
     readonly_fields = ('number', 'total_incl_tax', 'total_excl_tax',
