@@ -21,9 +21,10 @@ class LineAdmin(admin.ModelAdmin):
 
 
 class BasketAdmin(admin.ModelAdmin):
+    raw_id_fields = ['organisation']
     list_display = ('id', 'owner', 'status', 'num_lines',
                     'contains_a_voucher', 'date_created', 'date_submitted',
-                    'time_before_submit','booking_reference')
+                    'time_before_submit','booking_reference','organisation')
     readonly_fields = ('owner', 'date_merged', 'date_submitted','notification_url')
     inlines = [LineInline]
 

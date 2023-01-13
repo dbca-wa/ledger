@@ -9,7 +9,9 @@ from django.conf import settings
 from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransaction, BpointTransaction, BpayTransaction,Invoice, TrackRefund
 from datetime import timedelta
 from django.db.models import Q, Min
-from oscar.apps.order.models import Order
+#from oscar.apps.order.models import Order
+from ledger.order.models import Order
+
 
 def outstanding_bookings():
     try:

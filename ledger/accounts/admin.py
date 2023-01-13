@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 
 from reversion.admin import VersionAdmin
 
-from ledger.accounts.models import EmailUser, Document, PrivateDocument, Address, Profile, Organisation
+from ledger.accounts.models import EmailUser, Document, PrivateDocument, Address, Profile, Organisation, OrganisationAddress 
 from ledger.accounts.forms import ProfileAdminForm
 
 
@@ -111,4 +111,6 @@ class OrganisationAdmin(admin.ModelAdmin):
     ordering = ('name',)
     search_fields = ('name','abn')
 
-
+@admin.register(OrganisationAddress)
+class OrganisationAddressAdmin(admin.ModelAdmin):
+      pass

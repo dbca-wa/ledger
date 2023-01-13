@@ -12,7 +12,8 @@ from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.utils import checkURL
 from ledger.payments.cash.models import REGION_CHOICES
 #
-from oscar.apps.order.models import Order
+#from oscar.apps.order.models import Order
+from ledger.order.models import Order
 from ledger.payments.models import Invoice
 from ledger.payments.mixins import InvoiceOwnerMixin
 from ledger.basket import models as basket_models

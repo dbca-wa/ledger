@@ -15,7 +15,8 @@ from six.moves.urllib.parse import urlparse
 #
 from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction, OracleInterfaceSystem, LinkedInvoiceGroupIncrementer, LinkedInvoice
 #from ledger.payments.invoice import utils
-from oscar.apps.order.models import Order
+#from oscar.apps.order.models import Order
+from ledger.order.models import Order
 from ledger.basket.models import Basket
 from oscar.core.loading import get_class
 from confy import env

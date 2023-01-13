@@ -6,13 +6,14 @@ from django.conf import settings
 from oscar.apps.checkout.utils import CheckoutSessionData as CoreCheckoutSessionData
 from oscar.apps.voucher.models import Voucher
 from oscar.core.loading import get_class
-from ledger.accounts.models import EmailUser
+from ledger.accounts.models import EmailUser, Organisation
 from ledger.checkout import serializers
 from ledger.catalogue.models import Product
 from ledger.basket.models import Basket
 from ledger.basket.middleware import BasketMiddleware
 from ledger.payments.models import Invoice
-from oscar.apps.order.models import Order
+#from oscar.apps.order.models import Order
+from ledger.order.models import Order
 from django.core.signing import BadSignature, Signer
 from django.core.exceptions import ValidationError
 from confy import env
@@ -26,7 +27,6 @@ def create_basket_session_v2(emailuser_id, parameters):
     if emailuser_id:
         pass
     else:
-        print (parameters)
         print ("USER IS NOT LOGGED IN")
    
     user_obj = EmailUser.objects.get(id=int(emailuser_id))
@@ -35,12 +35,16 @@ def create_basket_session_v2(emailuser_id, parameters):
     custom = serializer.validated_data.get('custom_basket')
     booking_reference = None
     booking_reference_link = None
+    organisation_id=None
 
     if 'booking_reference' in parameters:
         booking_reference = serializer.validated_data['booking_reference']
 
     if 'booking_reference_link' in parameters:
         booking_reference_link = serializer.validated_data['booking_reference_link']
+
+    if 'organisation' in parameters:
+        organisation_id = serializer.validated_data['organisation']
 
     # validate product list
     if custom:
@@ -63,18 +67,19 @@ def create_basket_session_v2(emailuser_id, parameters):
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
                                         user_obj, serializer.validated_data['system'],
-                                        serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link)
+                                        serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link, organisation_id)
         else:
             basket = createBasket(serializer.validated_data['products'], user_obj,
                                     serializer.validated_data['system'],
-                                    serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link)
+                                    serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link, organisation_id)
     else:
         if custom:
             basket = createCustomBasket(serializer.validated_data['products'],
-                                        user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link)
+                                        user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link, organisation_id)
         else:
             basket = createBasket(serializer.validated_data['products'],
-                                    user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link)
+                                    user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link, organisation_id)
+
     return basket, BasketMiddleware().get_basket_hash(basket.id)
 
 
@@ -82,7 +87,6 @@ def create_basket_session_v2(emailuser_id, parameters):
 # a basket contains the system ID, list of product line items, vouchers, and not much else.
 def create_basket_session(request, parameters):
     print ("create_basket_session params")
-    print (parameters)
     serializer = serializers.BasketSerializer(data=parameters)
     serializer.is_valid(raise_exception=True)
     custom = serializer.validated_data.get('custom_basket')
@@ -405,7 +409,7 @@ def calculate_excl_gst(amount):
     return result
 
 
-def createBasket(product_list, owner, system, vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None):
+def createBasket(product_list, owner, system, vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None,organisation_id=None):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -444,6 +448,13 @@ def createBasket(product_list, owner, system, vouchers=None, force_flush=True, b
         basket.system = system
         basket.booking_reference = booking_reference
         basket.booking_reference_link = booking_reference_link
+        if organisation_id: 
+            try:
+               org_obj = Organisation.objects.get(id=organisation_id)
+               basket.organisation = org_obj
+            except:
+               print ("Error retreiving Organisation.objects.get(id="+str(organisation_id)+")")
+               raise ValidationError('Error with organisation id {}'.format(organisation_id))
         basket.strategy = selector.strategy(user=owner)
         # Check if there are products to be added to the cart and if they are valid products
         if not product_list:
@@ -469,7 +480,7 @@ def createBasket(product_list, owner, system, vouchers=None, force_flush=True, b
         raise
 
 
-def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None,):
+def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None,organisation_id=None):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -510,6 +521,13 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         basket.strategy = selector.strategy(user=owner)
         basket.booking_reference = booking_reference
         basket.booking_reference_link = booking_reference_link
+        if organisation_id:
+            try:
+               org_obj = Organisation.objects.get(id=organisation_id)
+               basket.organisation = org_obj
+            except:
+               print ("Error retreiving Organisation.objects.get(id="+str(organisation_id)+")")
+               raise ValidationError('Error with organisation id {}'.format(organisation_id))
         basket.custom_ledger = True
         # Check if there are products to be added to the cart and if they are valid products
         # EXAMPLE config for settings.py: os.environ['LEDGER_CUSTOM_PRODUCT_LIST'] = "('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code','line_status')"

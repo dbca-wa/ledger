@@ -28,7 +28,8 @@ from django.db.models import Q
 
 from ledger.accounts.models import EmailUser
 from ledger.order import models as order_model 
-from oscar.apps.order.models import Order
+#from oscar.apps.order.models import Order
+from ledger.order.models import Order
 from oscar.apps.payment import forms
 from decimal import Decimal
 from confy import env
