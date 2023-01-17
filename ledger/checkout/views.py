@@ -357,7 +357,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
         icrn_format = self.checkout_session.icrn_format()
         # Generate the string to be used to generate the icrn
         crn_string = '{0}{1}'.format(systemid_check(system),order_number)
-
         if method == 'crn':
             invoice = invoice_facade.create_invoice_crn(
                 order_number,

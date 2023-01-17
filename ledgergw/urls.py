@@ -35,6 +35,7 @@ urlpatterns = [
     url(r'^ledgergw/remote/process_refund/(?P<apikey>.+)/', api.process_refund),
     url(r'^ledgergw/remote/process_zero/(?P<apikey>.+)/', api.process_zero),
     url(r'^ledgergw/remote/process_no/(?P<apikey>.+)/', api.process_no),
+    url(r'^ledgergw/remote/process_create_future_invoice/(?P<apikey>.+)/', api.process_create_future_invoice),
     url(r'^ledgergw/remote/process-api-refund/(?P<apikey>.+)/', api.process_api_refund),
     url(r'^ledgergw/remote/oracle-interface-system/(?P<apikey>.+)/', api.oracle_interface_system),
     url(r'^ledgergw/remote/get_failed_refund_totals/(?P<apikey>.+)/(?P<system_id>\d+)/', api.get_failed_refund_totals),

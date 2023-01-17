@@ -41,6 +41,12 @@ import json
 import ipaddress
 import re
 
+from oscar.apps.checkout.mixins import OrderPlacementMixin
+from oscar.apps.shipping.methods import NoShippingRequired
+from oscar.apps.checkout.calculators import OrderTotalCalculator
+from ledger.payments.facade import invoice_facade
+from ledger.payments.utils import systemid_check, LinkedInvoiceCreate
+
 
 #from oscar.core.loading import get_model
 #Bankcard = get_model('payment','Bankcard')
@@ -1090,6 +1096,59 @@ def process_no(request,apikey):
                jsondata['message'] = 'error'
                jsondata['order_response'] = {}
             #jsondata = process_refund_from_basket(request,basket_obj)
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+
+@csrf_exempt
+def process_create_future_invoice(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    invoice_json = {}
+    basket =None
+    failed_refund = False
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            basket_id = request.POST.get('basket_id','')
+            invoice_text = request.POST.get('invoice_text', '')
+            basket_obj = basket_models.Basket.objects.filter(id=basket_id)
+            if basket_obj.count() > 0:
+                get_basket = basket_models.Basket.objects.get(id=basket_id)
+            
+            shipping_method = NoShippingRequired()
+            shipping_charge = shipping_method.calculate(get_basket)
+
+            otc = OrderTotalCalculator()
+            order_total = otc.calculate(get_basket, shipping_charge)
+            opm = OrderPlacementMixin()
+            order_number = opm.generate_order_number(get_basket)
+            opm.place_order(order_number, get_basket.owner, get_basket, None,shipping_method, shipping_charge, order_total, billing_address=None)
+            get_basket.status = 'Saved'
+            get_basket.save()
+
+
+            crn_string = '{0}{1}'.format(systemid_check(get_basket.system),order_number)
+            invoice = invoice_facade.create_invoice_crn(
+                order_number,
+                order_total.incl_tax,
+                crn_string,
+                get_basket.system,
+                invoice_text,
+                None
+            )
+            LinkedInvoiceCreate(invoice, get_basket.id)
+            jsondata['status'] = 200
+            jsondata['message'] = 'success'
+            jsondata['data'] = {'order': order_number, 'basket_id': get_basket.id, 'invoice': invoice.reference}
+
+            #   jsondata['status'] = 500
+            #   jsondata['message'] = 'error'
+            #   jsondata['order_response'] = {}
 
         else:
             jsondata['status'] = 403
