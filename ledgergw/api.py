@@ -44,6 +44,7 @@ import re
 from oscar.apps.checkout.mixins import OrderPlacementMixin
 from oscar.apps.shipping.methods import NoShippingRequired
 from oscar.apps.checkout.calculators import OrderTotalCalculator
+from ledger.checkout.utils import CheckoutSessionData
 from ledger.payments.facade import invoice_facade
 from ledger.payments.utils import systemid_check, LinkedInvoiceCreate
 
@@ -57,6 +58,7 @@ def user_info_search(request, apikey):
     ledger_user_json  = {}
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+
             keyword = request.POST.get('keyword', '')
             jsondata = {'status': 200, 'message': 'No Results'}
             jsondata['users'] = [] 
@@ -565,6 +567,9 @@ def create_checkout_session(request,apikey):
             #emailuser_id = request.POST.get('emailuser_id', None)
             #print (emailuser_id)
             resp = utils.create_checkout_session(request,checkout_parameters)
+
+            
+
             #basket, basket_hash = utils.create_checkout_session(request, parameters)
             jsondata['status'] = 200
             jsondata['message'] = 'Success'
@@ -1113,9 +1118,16 @@ def process_create_future_invoice(request,apikey):
     failed_refund = False
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            checkout_session = CheckoutSessionData(request)
+            print (checkout_session.return_preload_url())
+            print ("C SS")
+            print (checkout_session)
+
             data = json.loads(request.POST.get('data', "{}"))
             basket_id = request.POST.get('basket_id','')
             invoice_text = request.POST.get('invoice_text', '')
+            return_preload_url = request.POST.get('return_preload_url', '')
+
             basket_obj = basket_models.Basket.objects.filter(id=basket_id)
             if basket_obj.count() > 0:
                 get_basket = basket_models.Basket.objects.get(id=basket_id)
@@ -1129,6 +1141,7 @@ def process_create_future_invoice(request,apikey):
             order_number = opm.generate_order_number(get_basket)
             opm.place_order(order_number, get_basket.owner, get_basket, None,shipping_method, shipping_charge, order_total, billing_address=None)
             get_basket.status = 'Saved'
+            get_basket.notification_url = return_preload_url
             get_basket.save()
 
 
