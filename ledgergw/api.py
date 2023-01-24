@@ -167,12 +167,12 @@ def update_user_info_id(request, userid,apikey):
                 if 'postal_address' in post_list: 
                     if ledger_obj.postal_address is None:
                         postal_address =  models.Address.objects.create(user=ledger_obj,
-                                                  line1=request.POST.get('postal_line1'),
-                                                  locality=request.POST.get('postal_locality'),
-                                                  state=request.POST.get('postal_state'),
-                                                  postcode=request.POST.get('postal_postcode'),
-                                                  country=request.POST.get('postal_country'),
-                                                 )
+                                                  line1=postal_address_obj['postal_line1'],
+                                                  locality=postal_address_obj['postal_locality'],
+                                                  state=postal_address_obj['postal_state'],
+                                                  postcode=postal_address_obj['postal_postcode'],
+                                                  country=postal_address_obj['postal_country'],
+                                                  )
                         ledger_obj.postal_address = postal_address
                     else:
                         if 'postal_line1' in postal_address_obj:
