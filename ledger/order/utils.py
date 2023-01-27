@@ -49,6 +49,11 @@ class OrderCreator(CoreOrderCreator):
             else:
                 self.create_line_models(order,line,custom_ledger=True)
 
+        # Copy Organisation from Basket
+        if basket.organisation:
+            order.organisation = basket.organisation
+            order.save()
+
         # Record any discounts associated with this order
         for application in basket.offer_applications:
             # Trigger any deferred benefits from offers and capture the
