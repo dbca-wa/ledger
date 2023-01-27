@@ -57,7 +57,7 @@ def create_basket_session_v2(emailuser_id, parameters):
     #if request.user:
     #   if request.user.__class__.__name__ == 'EmailUser':
     if user_obj:
-          ba = Basket.objects.filter(owner=user_obj).exclude(status='Submitted')
+          ba = Basket.objects.filter(owner=user_obj).exclude(status='Submitted').exclude(status='Saved')
           for b in ba:
               b.status='Frozen'
               b.save()
@@ -108,7 +108,7 @@ def create_basket_session(request, parameters):
     # Cleaning up stale Baskets
     if request.user:
        if request.user.__class__.__name__ == 'EmailUser':
-          ba = Basket.objects.filter(owner=request.user).exclude(status='Submitted')
+          ba = Basket.objects.filter(owner=request.user).exclude(status='Submitted').exclude(status='Saved')
           for b in ba:
               b.status='Frozen'
               b.save()
