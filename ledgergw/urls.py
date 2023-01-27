@@ -23,6 +23,7 @@ urlpatterns = [
     url(r'^ledgergw/remote/create-basket-session/(?P<apikey>.+)/', api.create_basket_session),
     url(r'^ledgergw/remote/create-checkout-session/(?P<apikey>.+)/', api.create_checkout_session),
     url(r'^ledgergw/remote/get-invoice/(?P<apikey>.+)/', api.get_invoice_properties),
+    url(r'^ledgergw/remote/get-basket-for-future-invoice/(?P<apikey>\w+)/(?P<reference>\d+)/', api.get_basket_for_future_invoice),
     url(r'^ledgergw/remote/get-basket-total/(?P<apikey>.+)/', api.get_basket_total),
     url(r'^ledgergw/remote/get_order_info/(?P<apikey>.+)/', api.get_order_info),
     url(r'^ledgergw/remote/get_order_lines/(?P<apikey>.+)/', api.get_order_lines),

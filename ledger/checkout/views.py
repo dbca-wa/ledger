@@ -140,8 +140,6 @@ class PaymentDetailsView(CorePaymentDetailsView):
                     tax=D('0.00')
                 )
             total = self.get_order_totals(request.basket, shipping_charge)
-            print ("REFUND check")
-            print (total)
             if total.excl_tax == D('0.00'):
                 self.checkout_session.is_free_basket(True)
                 return True
@@ -438,7 +436,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
                             apikey = self.request.COOKIES['LEDGER_API_KEY']
                             if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
                                    if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(self.request),apikey) is True:
-                                       user_logged_in = EmailUser.objects.get(id=int(self.checkout_session.get_user_logged_in()))
+                                       if self.checkout_session.get_user_logged_in(): 
+                                            user_logged_in = EmailUser.objects.get(id=int(self.checkout_session.get_user_logged_in()))
                             else:
                                 user_logged_in = self.request.user
                         else:

@@ -35,6 +35,7 @@ from datetime import datetime
 from django.conf import settings
 from ledger.payment import forms as payment_forms
 from ledger.payments.bpoint.gateway import Gateway
+from ledger.basket.middleware import BasketMiddleware
 import base64
 import traceback
 import json
@@ -719,6 +720,83 @@ def oracle_interface_system(request,apikey):
     response.set_cookie('CookieTest', 'Testing',5)
     return response
 
+@csrf_exempt
+def get_basket_for_future_invoice(request,apikey, reference):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    invoice_json = {}
+    print ("get_basket_for_future_invoice")
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            data = json.loads(request.POST.get('data', "{}"))
+            user_logged_in = request.POST.get('user_logged_in',None)
+            fallback_url = request.POST.get('fallback_url', None)
+            return_url = request.POST.get('return_url', None)
+            try:
+               pass
+               if Invoice.objects.filter(reference=reference).count() > 0:
+                        invoice = Invoice.objects.get(reference=reference)
+                        if invoice.payment_status == 'unpaid': 
+                             order_number = invoice.order_number
+                             order_obj = Order.objects.filter(number=order_number)
+                             basket_id = None
+                             if order_obj.count() > 0:
+                                  if order_obj[0].basket:
+                                       if order_obj[0].basket.status == 'Saved': 
+                                            basket_id = order_obj[0].basket.id
+                                            basket_middleware = BasketMiddleware().get_basket_hash(basket_id) 
+                                            jsondata['status'] = 200
+                                            jsondata['message'] = 'Success'
+                                            jsondata['data'] = {"basket_hash": basket_middleware}
+                                            checkout_params = {
+                                                  'system': '0483',
+                                                  'fallback_url': fallback_url,
+                                                  'return_url': return_url,
+                                                  'force_redirect': True,
+                                                  'proxy': False,
+                                                  'session_type' : 'ledger_api',
+                                                  'basket_owner' : order_obj[0].basket.owner.id,
+                                                  'user_logged_in' : user_logged_in
+                                            }
+                                            resp = utils.create_checkout_session(request,checkout_params)
+                                            session_data = CheckoutSessionData(request)
+                                       else:
+                                           jsondata['status'] = 400
+                                           jsondata['message'] = 'Error: Invalid Order'
+
+                                  else:
+                                      jsondata['status'] = 400
+                                      jsondata['message'] = 'Error: Invalid Basket'
+
+                             else:
+                                 jsondata['status'] = 400
+                                 jsondata['message'] = 'Error: Invalid Order'
+                        else:
+                            jsondata['status'] = 400
+                            jsondata['message'] = 'Error: Invoice is not unpaid'
+                            
+               else:
+                   pass
+
+            except Exception as e:
+                print (e)
+                print ("ERROR")
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    print ("SESSION KEY")
+    print (request.session.session_key)
+    print (settings.SESSION_COOKIE_NAME)
+    print (settings.OSCAR_BASKET_COOKIE_OPEN)
+    print (basket_middleware)
+    response.set_cookie(settings.SESSION_COOKIE_NAME, request.session.session_key,86400)
+    response.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_middleware,3600)
+    return response
+
+
+
 
 @csrf_exempt
 def get_invoice_properties(request,apikey):
@@ -1119,10 +1197,6 @@ def process_create_future_invoice(request,apikey):
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             checkout_session = CheckoutSessionData(request)
-            print (checkout_session.return_preload_url())
-            print ("C SS")
-            print (checkout_session)
-
             data = json.loads(request.POST.get('data', "{}"))
             basket_id = request.POST.get('basket_id','')
             invoice_text = request.POST.get('invoice_text', '')
