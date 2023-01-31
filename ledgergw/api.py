@@ -748,7 +748,7 @@ def get_basket_for_future_invoice(request,apikey, reference):
                                             jsondata['message'] = 'Success'
                                             jsondata['data'] = {"basket_hash": basket_middleware}
                                             checkout_params = {
-                                                  'system': '0483',
+                                                  'system': invoice.system,
                                                   'fallback_url': fallback_url,
                                                   'return_url': return_url,
                                                   'force_redirect': True,
@@ -786,11 +786,6 @@ def get_basket_for_future_invoice(request,apikey, reference):
     else:
         pass
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
-    print ("SESSION KEY")
-    print (request.session.session_key)
-    print (settings.SESSION_COOKIE_NAME)
-    print (settings.OSCAR_BASKET_COOKIE_OPEN)
-    print (basket_middleware)
     response.set_cookie(settings.SESSION_COOKIE_NAME, request.session.session_key,86400)
     response.set_cookie(settings.OSCAR_BASKET_COOKIE_OPEN, basket_middleware,3600)
     return response
