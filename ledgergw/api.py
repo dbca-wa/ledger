@@ -730,6 +730,7 @@ def get_basket_for_future_invoice(request,apikey, reference):
             data = json.loads(request.POST.get('data', "{}"))
             user_logged_in = request.POST.get('user_logged_in',None)
             fallback_url = request.POST.get('fallback_url', None)
+            return_preload_url = request.POST.get('return_preload_url', None)
             return_url = request.POST.get('return_url', None)
             try:
                pass
@@ -750,6 +751,7 @@ def get_basket_for_future_invoice(request,apikey, reference):
                                             checkout_params = {
                                                   'system': invoice.system,
                                                   'fallback_url': fallback_url,
+                                                  'return_preload_url': return_preload_url,
                                                   'return_url': return_url,
                                                   'force_redirect': True,
                                                   'proxy': False,
