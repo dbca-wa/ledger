@@ -751,6 +751,7 @@ def get_basket_for_future_invoice(request,apikey, reference):
                                                   'system': invoice.system,
                                                   'fallback_url': fallback_url,
                                                   'return_url': return_url,
+                                                  'return_preload_url': order_obj[0].basket.notification_url,
                                                   'force_redirect': True,
                                                   'proxy': False,
                                                   'session_type' : 'ledger_api',
