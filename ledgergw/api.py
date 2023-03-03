@@ -817,7 +817,10 @@ def get_invoice_properties(request,apikey):
                        invoice_obj['token'] = invoice.token
                        invoice_obj['voided'] = invoice.voided
                        invoice_obj['previous_invoice'] = invoice.previous_invoice
-                       invoice_obj['settlement_date'] = invoice.settlement_date.strftime('%d/%m/%Y')
+                       invoice_obj['settlement_date'] = ''
+                       if invoice.settlement_date:
+                           invoice_obj['settlement_date'] = invoice.settlement_date.strftime('%d/%m/%Y')
+                       
                        invoice_obj['payment_method'] = invoice.payment_method
                        invoice_obj['biller_code'] = invoice.biller_code
                        invoice_obj['number'] = invoice.number
@@ -841,10 +844,12 @@ def get_invoice_properties(request,apikey):
                        jsondata['status'] = 200
                        jsondata['message'] = 'Success'
                        jsondata['data'] = {'invoice': invoice_obj}
-                       print ("YES")
+                      
                  except Exception as e:
-                     print (e)
-                     print ("ERROR")
+                       jsondata['status'] = 500
+                       jsondata['message'] = 'Invoice Error: '+str(e)                       
+                       print ("ERROR")
+                       print (e)
             else:
                  jsondata['status'] = 404
                  jsondata['message'] = 'not found'
