@@ -36,6 +36,7 @@ from django.conf import settings
 from ledger.payment import forms as payment_forms
 from ledger.payments.bpoint.gateway import Gateway
 from ledger.basket.middleware import BasketMiddleware
+from ledger.address.models import Country
 import base64
 import traceback
 import json
@@ -139,7 +140,8 @@ def update_user_info_id(request, userid,apikey):
             ledger_user = models.EmailUser.objects.filter(id=int(userid))
 
             if ledger_user.count() > 0:
-                ledger_obj = ledger_user[0]
+                #ledger_obj = ledger_user[0]
+                ledger_obj = models.EmailUser.objects.get(id=int(userid))
                 residential_address_obj = {}
                 postal_address_obj = {}
                 if 'residential_address' in post_list:
@@ -151,7 +153,15 @@ def update_user_info_id(request, userid,apikey):
                     date_dob = datetime.strptime(dob, '%d/%m/%Y').date()
                     ledger_obj.dob = date_dob
                 if 'residential_address' in post_list:
+                  
                     if ledger_obj.residential_address is None:
+               
+                        if Country.objects.filter(iso_3166_1_a2=residential_address_obj['residential_country']).count() > 0:
+                            pass 
+                        else:
+                            residential_address_obj['residential_country'] = "AU"                           
+                        
+                        
                         residential_address =  models.Address.objects.create(user=ledger_obj,
                                                   line1=residential_address_obj['residential_line1'],
                                                   locality=residential_address_obj['residential_locality'],
@@ -159,6 +169,7 @@ def update_user_info_id(request, userid,apikey):
                                                   postcode=residential_address_obj['residential_postcode'],
                                                   country=residential_address_obj['residential_country'],
                                                  )
+                        
                         ledger_obj.residential_address = residential_address
                     else:
                         if 'residential_line1' in residential_address_obj:
@@ -175,14 +186,27 @@ def update_user_info_id(request, userid,apikey):
 
                 if 'postal_address' in post_list: 
                     if ledger_obj.postal_address is None:
-                        postal_address =  models.Address.objects.create(user=ledger_obj,
-                                                  line1=request.POST.get('postal_line1'),
-                                                  locality=request.POST.get('postal_locality'),
-                                                  state=request.POST.get('postal_state'),
-                                                  postcode=request.POST.get('postal_postcode'),
-                                                  country=request.POST.get('postal_country'),
+   
+                        try: 
+                            if Country.objects.filter(iso_3166_1_a2=postal_address_obj['postal_country']).count() > 0:
+                                pass 
+                            else:
+                                postal_address_obj['postal_country'] = "AU"        
+                            
+                            postal_address =  models.Address.objects.create(user=ledger_obj,
+                                                  line1=postal_address_obj['postal_line1'],
+                                                  locality=postal_address_obj['postal_locality'],
+                                                  state=postal_address_obj['postal_state'],
+                                                  postcode=postal_address_obj['postal_postcode'],
+                                                  country=postal_address_obj['postal_country'],
                                                  )
-                        ledger_obj.postal_address = postal_address
+                            ledger_obj.postal_address = postal_address
+                     
+                        except Exception as e:
+                            jsondata['status'] = '404'
+                            jsondata['message'] = 'Country not found'
+                        
+                        
                     else:
                         if 'postal_line1' in postal_address_obj:
                             ledger_obj.postal_address.line1 =postal_address_obj['postal_line1']
@@ -197,12 +221,13 @@ def update_user_info_id(request, userid,apikey):
                         if 'postal_same_as_residential' in postal_address_obj:
                                ledger_obj.postal_same_as_residential = postal_address_obj['postal_same_as_residential']
                         ledger_obj.postal_address.save()
+                
                 if 'phone_number' in post_list:
                     ledger_obj.phone_number = request.POST.get('phone_number')
-
+                
                 if 'mobile_number' in post_list:
                     ledger_obj.mobile_number = request.POST.get('mobile_number')
-
+                
                 ledger_obj.save()
                 #jsondata['user'] = ledger_user_json
                 jsondata['status'] = 200
@@ -255,6 +280,8 @@ def user_info_id(request, userid,apikey):
                         ledger_user_json['fullnamedob'] = ledger_obj.get_full_name_dob()
                     else:
                         ledger_user_json['fullnamedob'] = None
+                        
+                    
                     ledger_user_json['residential_address'] =  {}
                     ledger_user_json['residential_address']['line1'] = ""
                     ledger_user_json['residential_address']['line2'] = ""
