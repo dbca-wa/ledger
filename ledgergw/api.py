@@ -186,6 +186,14 @@ def update_user_info_id(request, userid,apikey):
 
                 if 'postal_address' in post_list: 
                     if ledger_obj.postal_address is None:
+                        postal_address =  models.Address.objects.create(user=ledger_obj,
+                                                  line1=request.POST.get('postal_line1'),
+                                                  locality=request.POST.get('postal_locality'),
+                                                  state=request.POST.get('postal_state'),
+                                                  postcode=request.POST.get('postal_postcode'),
+                                                  country=request.POST.get('postal_country'),
+                                                 )
+                        ledger_obj.postal_address = postal_address
    
                         try: 
                             if Country.objects.filter(iso_3166_1_a2=postal_address_obj['postal_country']).count() > 0:
@@ -207,6 +215,7 @@ def update_user_info_id(request, userid,apikey):
                             jsondata['message'] = 'Country not found'
                         
                         
+>>>>>>> 505b258cc17d848bb64adb443ddfcc73b74a25a4
                     else:
                         if 'postal_line1' in postal_address_obj:
                             ledger_obj.postal_address.line1 =postal_address_obj['postal_line1']
@@ -833,6 +842,84 @@ def get_invoice_properties(request,apikey):
             print (data)
             if Invoice.objects.filter(id=data['invoice_id']).count() > 0:
                  try:
+<<<<<<< HEAD
+                     invoice = Invoice.objects.get(id=data['invoice_id'])
+                     invoice_obj = {}
+                     invoice_obj['id'] = invoice.id
+                     invoice_obj['text'] = invoice.text
+                     invoice_obj['amount'] = str(invoice.amount)
+                     invoice_obj['order_number'] = invoice.order_number
+                     invoice_obj['reference'] = invoice.reference
+                     invoice_obj['system'] = invoice.system
+                     invoice_obj['token'] = invoice.token
+                     invoice_obj['voided'] = invoice.voided
+                     invoice_obj['previous_invoice'] = invoice.previous_invoice
+                     if invoice.settlement_date:
+                         invoice_obj['settlement_date'] = invoice.settlement_date.strftime('%d/%m/%Y')
+                     else:
+                         invoice_obj['settlement_date'] = None
+                     invoice_obj['payment_method'] = invoice.payment_method
+                     invoice_obj['biller_code'] = invoice.biller_code
+                     invoice_obj['number'] = invoice.number
+                     if invoice.owner:
+                         invoice_obj['owner'] = invoice.owner.id
+                     else:
+                         invoice_obj['owner'] = None
+                     invoice_obj['refundable_amount'] = str(invoice.refundable_amount)
+                     invoice_obj['refundable'] = invoice.refundable
+                     invoice_obj['num_items'] = invoice.num_items
+                     #invoice_obj['linked_bpay_transactions'] = invoice.linked_bpay_transactions
+
+                     invoice_obj['payment_amount'] = str(invoice.payment_amount)
+                     invoice_obj['total_payment_amount'] = str(invoice.total_payment_amount)
+                     invoice_obj['refund_amount'] = str(invoice.refund_amount)
+                     invoice_obj['deduction_amount'] = str(invoice.deduction_amount)
+                     invoice_obj['transferable_amount'] = str(invoice.transferable_amount)
+                     invoice_obj['balance'] = str(invoice.balance)
+                     invoice_obj['payment_status'] = invoice.payment_status
+
+                     jsondata['status'] = 200
+                     jsondata['message'] = 'Success'
+                     jsondata['data'] = {'invoice': invoice_obj}
+                     print ("YES")
+||||||| 5d3055e3
+                       invoice = Invoice.objects.get(id=data['invoice_id'])
+                       invoice_obj = {}
+                       invoice_obj['id'] = invoice.id
+                       invoice_obj['text'] = invoice.text
+                       invoice_obj['amount'] = str(invoice.amount)
+                       invoice_obj['order_number'] = invoice.order_number
+                       invoice_obj['reference'] = invoice.reference
+                       invoice_obj['system'] = invoice.system
+                       invoice_obj['token'] = invoice.token
+                       invoice_obj['voided'] = invoice.voided
+                       invoice_obj['previous_invoice'] = invoice.previous_invoice
+                       invoice_obj['settlement_date'] = invoice.settlement_date.strftime('%d/%m/%Y')
+                       invoice_obj['payment_method'] = invoice.payment_method
+                       invoice_obj['biller_code'] = invoice.biller_code
+                       invoice_obj['number'] = invoice.number
+                       if invoice.owner:
+                           invoice_obj['owner'] = invoice.owner.id
+                       else:
+                           invoice_obj['owner'] = None
+                       invoice_obj['refundable_amount'] = str(invoice.refundable_amount)
+                       invoice_obj['refundable'] = invoice.refundable
+                       invoice_obj['num_items'] = invoice.num_items
+                       #invoice_obj['linked_bpay_transactions'] = invoice.linked_bpay_transactions
+
+                       invoice_obj['payment_amount'] = str(invoice.payment_amount)
+                       invoice_obj['total_payment_amount'] = str(invoice.total_payment_amount)
+                       invoice_obj['refund_amount'] = str(invoice.refund_amount)
+                       invoice_obj['deduction_amount'] = str(invoice.deduction_amount)
+                       invoice_obj['transferable_amount'] = str(invoice.transferable_amount)
+                       invoice_obj['balance'] = str(invoice.balance)
+                       invoice_obj['payment_status'] = invoice.payment_status
+
+                       jsondata['status'] = 200
+                       jsondata['message'] = 'Success'
+                       jsondata['data'] = {'invoice': invoice_obj}
+                       print ("YES")
+=======
                        invoice = Invoice.objects.get(id=data['invoice_id'])
                        invoice_obj = {}
                        invoice_obj['id'] = invoice.id
@@ -872,6 +959,7 @@ def get_invoice_properties(request,apikey):
                        jsondata['message'] = 'Success'
                        jsondata['data'] = {'invoice': invoice_obj}
                       
+>>>>>>> 505b258cc17d848bb64adb443ddfcc73b74a25a4
                  except Exception as e:
                        jsondata['status'] = 500
                        jsondata['message'] = 'Invoice Error: '+str(e)                       
