@@ -26,11 +26,7 @@ class Command(BaseCommand):
          parser.add_argument('settlement_date', nargs='?', default=settlement_date_search)
 
     def handle(self, *args, **options):
-           linked_invoice_group_totals = {}
-           rows = []
-           used_bp_trans = []
-           dupe_bp_trans = []
-           no_bpoint_trans = []
+
            SYSTEM_ID = ''
            time_intervals = [
                    {"hour":"14", "day": -1,},
@@ -65,6 +61,11 @@ class Command(BaseCommand):
            ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True)
            for oracle_system in ois:
                print (oracle_system)
+               linked_invoice_group_totals = {}
+               rows = []
+               used_bp_trans = []
+               dupe_bp_trans = []
+               no_bpoint_trans = []               
                SYSTEM_ID = oracle_system.system_id
 
                yesterday = datetime.today() - timedelta(days=1)
