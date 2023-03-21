@@ -14,7 +14,7 @@ RUN useradd -g 1000 -u 1000 docker -s /bin/bash
 
 # For Linux
 RUN groupadd -g 20000 container
-RUN useradd -g 20000 -u 20000 container -s /bin/bash
+RUN useradd -g 200000 -u 20000 container -s /bin/bash
 
 RUN mkdir /home/docker
 RUN chown container.container /home/docker

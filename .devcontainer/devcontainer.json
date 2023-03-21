@@ -1,0 +1,15 @@
+{
+	"name": "Ledger GW Development",
+	"image": "dbcawa/docker_app_dev:ledger_dev_latest",
+	"remoteUser": "container",
+	"workspaceFolder": "/data/data/projects/ledger",
+	"mounts": ["type=bind,source=/data/,target=/data/",
+	           "type=bind,source=/data/data/containerhome/,target=/home/container/"
+	          ],	
+	"appPort": [ "7001:8080","9021:9021","9022:9022","9023:9023","9024:9024","9025:9025","9026:9026","9027:9027","9028:9028","9029:9029","9030:9030" ],
+	"runArgs": ["--env-file","${localEnv:HOME}/vscode-env/ledger.env",
+		   "--hostname","ledger-dev"
+		   ],
+	"forwardPorts": [9021,9022,9023,9024,9025,9026,9027,9028,9029,9030],
+	"initializeCommand" : "${localEnv:HOME}/docker-scripts-dev/windows_vbox/postgres_docker_load.sh"
+}
