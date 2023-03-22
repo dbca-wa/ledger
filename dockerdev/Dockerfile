@@ -11,17 +11,16 @@ RUN echo "fi" >> /etc/bash.bashrc
 # For windows
 RUN groupadd -g 1000 docker
 RUN useradd -g 1000 -u 1000 docker -s /bin/bash
+RUN mkdir /home/docker
 
 # For Linux
 RUN groupadd -g 20000 container
 RUN useradd -g 200000 -u 20000 container -s /bin/bash
-
-RUN mkdir /home/docker
+RUN mkdir /home/container
 RUN chown container.container /home/docker
+
 RUN cp /root/.bashrc /home/docker
 RUN cp /root/.profile /home/docker
-
-
 
 EXPOSE 80
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:80/"]
