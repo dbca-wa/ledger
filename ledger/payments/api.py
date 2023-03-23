@@ -485,30 +485,40 @@ class CashViewSet(viewsets.ModelViewSet):
             invoice,txn = None, None
             #Check if the invoice being paid for exists
             # Check if the invoice exists if action is payment,preauth
+            
             try:
                 invoice = Invoice.objects.get(reference=serializer.validated_data['invoice']['reference'])
                 serializer.validated_data['invoice'] = invoice
             except Invoice.DoesNotExist:
                 raise serializers.ValidationError("The invoice doesn't exist.")
+            
             # Check if the amount was specified otherwise pay the whole amount
             if not serializer.validated_data.get('amount'):
                 serializer.validated_data['amount'] = invoice.amount
+            
             with transaction.atomic():
+                
                 txn = serializer.save()
                 if txn.type == 'refund':
+                    
                     TrackRefund.objects.create(user=request.user,type=1,refund_id=txn.id,details=serializer.validated_data['details'])
+                    
                     send_refund_email(invoice,'manual',txn.amount)
+                    
+                
                 update_payments(invoice.reference)
-
+                
+            
+            
             LEDGER_INVOICE_TRANSACTION_CALLBACK_MODULE =env('LEDGER_INVOICE_TRANSACTION_CALLBACK_MODULE', '')
-            if len(LEDGER_INVOICE_TRANSACTION_CALLBACK_MODULE) != 0:
+            
+            if len(LEDGER_INVOICE_TRANSACTION_CALLBACK_MODULE) != 0:                
                 try:
                     ltc = LEDGER_INVOICE_TRANSACTION_CALLBACK_MODULE.split(":")
                     exec('import '+str(ltc[0]))
                     exec(ltc[1]+"('"+invoice.reference+"')")
                 except Exception as e:
-                    print (e)
-
+                    print (e)            
             http_status = status.HTTP_201_CREATED
             serializer = CashSerializer(txn)
             return Response(serializer.data,status=http_status)
@@ -905,7 +915,11 @@ def LedgerPayments(request, *args, **kwargs):
                          invs = Invoice.objects.filter(reference__in=invoices)
                          for i in invs:
                              orders.append(i.order_number)
-                             invoices_data.append({'invoice_reference': i.reference, 'payment_status': str(i.payment_status), 'balance': str(i.balance), 'settlement_date': i.settlement_date.strftime("%d/%m/%Y")})
+                             settlement_date = None
+                             if i.settlement_date:
+                                  settlement_date = i.settlement_date.strftime("%d/%m/%Y")
+                                 
+                             invoices_data.append({'invoice_reference': i.reference, 'payment_status': str(i.payment_status), 'balance': str(i.balance), 'settlement_date': settlement_date})
                          invoice_orders = Order.objects.filter(number__in=orders)
                          order_array = []
                          order_obj = order_model.Line.objects.filter(order__number__in=orders).order_by('order__date_placed')
@@ -1246,6 +1260,7 @@ def RefundOracleView(request, *args, **kwargs):
                         new_invoice.save()
 
                 else:
+                   
                     lines = []
                     for mf in money_from_json:
                         if Decimal(mf['line-amount']) > 0:

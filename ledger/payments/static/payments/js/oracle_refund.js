@@ -679,28 +679,29 @@ var refund_booking =  {
                                                       }
                                                  }
                                        });
-				       $('#LoadingPopup').modal('show');
-				       // $('input[name="csrfmiddlewaretoken"]').val(),
-                                       $.ajax({
-                                       url: refund_booking.var.api_url,
-			               headers: {'X-CSRFToken' : refund_booking.var.csrf_token },
-                                       data: {
-                                               csrfmiddlewaretoken: refund_booking.var.csrf_token,
-                                               money_from : JSON.stringify(from_money_pool_array),
-                                               money_to: JSON.stringify(to_money_pool_array),
-                                               bpoint_trans_split: JSON.stringify(bpoint_trans_split_array),
-                                               refund_method: trans_method,
-                                               booking_id: refund_booking.var.booking_id,
-                                               newest_booking_id: refund_booking.var.newest_booking_id,
-				               booking_reference: refund_booking.var.booking_reference,
-				               booking_reference_linked: refund_booking.var.booking_reference_linked,
-					       settlement_date: settlement_date
-                                       },
+				                    $('#LoadingPopup').modal('show');
+                                        
+				                    // $('input[name="csrfmiddlewaretoken"]').val(),
+                                        $.ajax({
+                                             url: refund_booking.var.api_url,
+                                             headers: {'X-CSRFToken' : refund_booking.var.csrf_token },
+                                             data: {
+                                                  csrfmiddlewaretoken: refund_booking.var.csrf_token,
+                                                  money_from : JSON.stringify(from_money_pool_array),
+                                                  money_to: JSON.stringify(to_money_pool_array),
+                                                  bpoint_trans_split: JSON.stringify(bpoint_trans_split_array),
+                                                  refund_method: trans_method,
+                                                  booking_id: refund_booking.var.booking_id,
+                                                  newest_booking_id: refund_booking.var.newest_booking_id,
+                                                  booking_reference: refund_booking.var.booking_reference,
+                                                  booking_reference_linked: refund_booking.var.booking_reference_linked,
+                                                  settlement_date: settlement_date
+                                        },
                                        // async: false,
                                        error: function(data) {
                                              $('#notification-body').html("There was a system error, attempting to process your request please try again later.");
-   	                                     $('.modal-backdrop').show();
-            	                             $('#notification-box').show();
+   	                                        $('.modal-backdrop').show();
+            	                              $('#notification-box').show();
                                              ledger_payments.load_payment_info();
                                        },
                                        dataType: 'json',
