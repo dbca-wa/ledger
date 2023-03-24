@@ -37,6 +37,7 @@ from ledger.payment import forms as payment_forms
 from ledger.payments.bpoint.gateway import Gateway
 from ledger.basket.middleware import BasketMiddleware
 from ledger.address.models import Country
+from django.db.models import Q, Max
 import base64
 import traceback
 import json
@@ -1848,6 +1849,74 @@ def get_organisation(request,apikey):
                     jsondata['message'] = 'Not found '
                     jsondata['data'] = {}
                     jsondata['post'] = request.POST
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response   
+
+@csrf_exempt
+def get_all_organisation(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            org_array = []
+            data = json.loads(request.POST.get('data', "{}"))           
+            org_obj = models.Organisation.objects.all()
+            for o in org_obj:
+                org_row = {'organisation_id': o.id, "organisation_name": o.name, "organisation_abn": o.abn}
+                org_array.append(org_row)
+
+            jsondata['status'] = 200
+            jsondata['message'] = 'Success'
+            jsondata['data'] = org_array
+            
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response       
+
+@csrf_exempt
+def get_search_organisation(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+      
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            org_array = []
+            data = json.loads(request.POST.get('data', "{}"))
+            organisation_name = data['organisation_name']
+            organisation_abn = data['organisation_abn']
+            search_filter = Q()
+            if organisation_name:
+                search_filter = Q(name__icontains=organisation_name)
+            if organisation_abn:
+                search_filter = Q(abn__icontains=organisation_abn)                            
+            org_obj = models.Organisation.objects.filter(search_filter)
+            
+            if org_obj.count() > 0:
+                    for o in org_obj:
+                        org_row = {'organisation_id': o.id, "organisation_name": o.name, "organisation_abn": o.abn}
+                        org_array.append(org_row)
+
+                    jsondata['status'] = 200
+                    jsondata['message'] = 'Success'
+                    jsondata['data'] = org_array
+
+            else:
+                    jsondata['status'] = 404
+                    jsondata['message'] = 'Not found '
+                    jsondata['data'] = {}
+                    #jsondata['post'] = request.POST
 
         else:
             jsondata['status'] = 403
