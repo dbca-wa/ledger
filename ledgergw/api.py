@@ -1843,7 +1843,7 @@ def get_organisation(request,apikey):
                     
                     jsondata['status'] = 200
                     jsondata['message'] = 'Success'
-                    jsondata['data'] = {'organisation_id': org_obj.id, "organisation_name": org_obj.name, "organisation_abn": org_obj.abn}
+                    jsondata['data'] = {'organisation_id': org_obj.id, "organisation_name": org_obj.name, "organisation_abn": org_obj.abn, "organisation_email": org_obj.email}
             else:
                     jsondata['status'] = 404
                     jsondata['message'] = 'Not found '
@@ -1869,7 +1869,7 @@ def get_all_organisation(request,apikey):
             data = json.loads(request.POST.get('data', "{}"))           
             org_obj = models.Organisation.objects.all()
             for o in org_obj:
-                org_row = {'organisation_id': o.id, "organisation_name": o.name, "organisation_abn": o.abn}
+                org_row = {'organisation_id': o.id, "organisation_name": o.name, "organisation_abn": o.abn, "organisation_email": o.email}
                 org_array.append(org_row)
 
             jsondata['status'] = 200
@@ -1905,7 +1905,7 @@ def get_search_organisation(request,apikey):
             
             if org_obj.count() > 0:
                     for o in org_obj:
-                        org_row = {'organisation_id': o.id, "organisation_name": o.name, "organisation_abn": o.abn}
+                        org_row = {'organisation_id': o.id, "organisation_name": o.name, "organisation_abn": o.abn, "organisation_email": o.email}
                         org_array.append(org_row)
 
                     jsondata['status'] = 200
