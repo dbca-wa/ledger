@@ -52,12 +52,11 @@ class Command(BaseCommand):
                     print (lpic['data']['total_oracle_amount'])
                     #print (lpic['data']['bp_txn_total'])
                     print ("TOTAL END")
-                    booking_reference_linked = booking_reference
-                    #print (lpic)
+                    booking_reference_linked = booking_reference                 
                     
                     if 'data' in lpic:
                         if lpic['data']['total_gateway_amount'] == lpic['data']['total_oracle_amount']:                 
-                            #print (lpic)
+                            
                             total_payment_gateway = lpic['data']['total_gateway_amount']
                             system_id = lpic['data']['linked_payments'][0]['system_identifier_system']
                             owner_id = lpic['data']['order'][0]['owner_id']
