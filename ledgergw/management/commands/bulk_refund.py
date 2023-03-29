@@ -92,8 +92,7 @@ class Command(BaseCommand):
                                     if txn_total > 0:                                    
                                         info = {'amount': Decimal('{:.2f}'.format(float(txn_total))), 'details' : 'Bulk Refund via system'}
                                         bpoint_trans = bpoint_models.BpointTransaction.objects.get(id=b['id'])
-                                        #user = accounts_models.EmailUser.objects.get(id=1)
-                                        raise
+                                        #user = accounts_models.EmailUser.objects.get(id=1)                                        
                                         refund = bpoint_trans.refund(info,email_user)                                                     
                                         invoice = invoice_models.Invoice.objects.get(reference=bpoint_trans.crn1)
                                         payments_utils.update_payments(invoice.reference)                                                                                
