@@ -276,7 +276,7 @@ def _create_invoice(invoice_buffer, invoice):
  
 
     data = [
-        ['Item','Product', 'Quantity','Unit Price', 'Total']
+        ['Item','Product', 'Qty', 'Unit Price', 'Tax', 'Total']
     ]
     val = 1
     s = styles["BodyText"]
@@ -287,8 +287,9 @@ def _create_invoice(invoice_buffer, invoice):
             [
                 val,
                 Paragraph(item.description, s),
-                item.quantity,
+                item.quantity,                
                 currency(item.unit_price_incl_tax),
+                currency(item.line_price_before_discounts_incl_tax - item.line_price_before_discounts_excl_tax),
                 currency(item.line_price_before_discounts_incl_tax)
             ]
         )
@@ -318,11 +319,12 @@ def _create_invoice(invoice_buffer, invoice):
             style=invoice_table_style,
             hAlign='LEFT',
             colWidths=(
-            0.7 * inch,
+            0.4 * inch,
             None,
+            0.4 * inch,
+            0.9 * inch,
             0.7 * inch,
-            1.0 * inch,
-            1.0 * inch,
+            0.9 * inch,
             )
         )
     elements.append(t)
