@@ -154,9 +154,9 @@ def update_user_info_id(request, userid,apikey):
                     date_dob = datetime.strptime(dob, '%d/%m/%Y').date()
                     ledger_obj.dob = date_dob
                 if 'residential_address' in post_list:
-                  
+
                     if ledger_obj.residential_address is None:
-               
+
                         if Country.objects.filter(iso_3166_1_a2=residential_address_obj['residential_country']).count() > 0:
                             pass 
                         else:
@@ -1801,16 +1801,117 @@ def update_organistion(request,apikey):
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             ois_obj = {}
-            data = json.loads(request.POST.get('data', "{}"))
-            organisation_id = data['organisation_id']
-            organisation_name = data['organisation_name']
-            organisation_abn = data['organisation_abn']           
+            data = json.loads(request.POST.get('data', "{}"))            
+            organisation_id = None
+            organisation_name = None
+            organisation_abn = None
+            organisation_email = None
+            organisation_trading_name = None
+            postal_address = None
+            billing_address = None
 
+            if 'organisation_id' in data:                
+                organisation_id = data['organisation_id']
+            if 'organisation_name' in data:
+                organisation_name = data['organisation_name']
+            if 'organisation_abn' in data:
+                organisation_abn = data['organisation_abn']   
+            if 'organisation_email' in data:
+                organisation_email = data['organisation_email'] 
+            if 'organisation_trading_name' in data:
+                organisation_trading_name = data['organisation_trading_name']       
+            if 'postal_address' in data:     
+                postal_address = data['postal_address']                
+            if 'billing_address' in data:     
+                billing_address = data['billing_address']    
+                                                        
             if models.Organisation.objects.filter(id=organisation_id).count() > 0:
                     org_obj = models.Organisation.objects.get(id=organisation_id)
-                    org_obj.name = organisation_name
-                    org_obj.abn = organisation_abn                                     
-                    org_obj.save()
+                    if organisation_name:
+                        org_obj.name = organisation_name
+                    if organisation_abn:
+                        org_obj.abn = organisation_abn                                    
+                    if organisation_email:
+                        org_obj.email = organisation_email
+                    if organisation_trading_name:
+                        org_obj.trading_name = organisation_trading_name                                
+                    if postal_address:
+
+                        if Country.objects.filter(iso_3166_1_a2=postal_address['postal_country']).count() > 0:
+                            pass
+                        else:
+                            postal_address['postal_country'] = "AU" 
+
+                        if org_obj.postal_address:
+                            org_obj.postal_address.line1 = postal_address['postal_line1']
+                            org_obj.postal_address.locality = postal_address['postal_locality']
+                            org_obj.postal_address.state = postal_address['postal_state']
+                            org_obj.postal_address.postcode = postal_address['postal_postcode']
+                            org_obj.postal_address.country = postal_address['postal_country']
+                            org_obj.postal_address.save()                            
+                        else:                            
+                            try:
+                                postal_address = models.OrganisationAddress.objects.create(organisation=org_obj,
+                                                  line1=postal_address['postal_line1'],
+                                                  locality=postal_address['postal_locality'],
+                                                  state=postal_address['postal_state'],
+                                                  postcode=postal_address['postal_postcode'],
+                                                  country=postal_address['postal_country'],
+                                                 )    
+                                org_obj.postal_address = postal_address                            
+                            except Exception as e:
+                                print ("ERROR: Saving Organisation Address")
+                                print (e)
+                                jsondata['status'] = 500
+                                jsondata['message'] = 'error saving organisation postal address details'
+                                jsondata['data'] = {"message": "error saving organisation postal address details"}
+
+                            #org_obj.postal_address = postal_address
+                            #org_obj.postal_address.save()
+                            
+
+                    if billing_address:
+                        if Country.objects.filter(iso_3166_1_a2=billing_address['billing_country']).count() > 0:
+                            pass
+                        else:
+                            billing_address['billing_country'] = "AU" 
+
+                        if org_obj.billing_address:
+                            org_obj.billing_address.line1 = billing_address['billing_line1']
+                            org_obj.billing_address.locality = billing_address['billing_locality']
+                            org_obj.billing_address.state = billing_address['billing_state']
+                            org_obj.billing_address.postcode = billing_address['billing_postcode']
+                            org_obj.billing_address.country = billing_address['billing_country']
+                            org_obj.billing_address.save()                            
+                        else:                            
+                            try:
+                                billing_address = models.OrganisationAddress.objects.create(organisation=org_obj,
+                                                  line1=billing_address['billing_line1'],
+                                                  locality=billing_address['billing_locality'],
+                                                  state=billing_address['billing_state'],
+                                                  postcode=billing_address['billing_postcode'],
+                                                  country=billing_address['billing_country'],
+                                                 )    
+                                org_obj.billing_address = billing_address                            
+
+                            except Exception as e:
+                                print ("ERROR: Saving Organisation billing Address")
+                                print (e)
+                                jsondata['status'] = 500
+                                jsondata['message'] = 'error saving organisation billing details'
+                                jsondata['data'] = {"message": "error saving organisation billing details"}
+
+
+
+                    try:
+                        org_obj.save()
+                    except Exception as e:
+                        print ("ERROR: Saving Organisation")
+                        print (e)                    
+
+                        jsondata['status'] = 500
+                        jsondata['message'] = 'error saving organisation details'
+                        jsondata['data'] = {"message": "error saving organisation details"}
 
                     jsondata['status'] = 200
                     jsondata['message'] = 'Success'
