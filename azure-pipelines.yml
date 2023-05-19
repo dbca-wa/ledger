@@ -13,8 +13,7 @@ variables:
   tagDate: $[ format('{0:yyyy}.{0:MM}.{0:dd}.{0:HH}.{0:mm}{0:ss}', pipeline.startTime) ]
   
 stages:
-- stage: Build
-  condition: and(succeeded(), eq(variables.isMain, 'true'))
+- stage: Build  
   displayName: Build image
   jobs:
   - job: Build
