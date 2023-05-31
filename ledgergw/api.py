@@ -1944,7 +1944,44 @@ def get_organisation(request,apikey):
                     
                     jsondata['status'] = 200
                     jsondata['message'] = 'Success'
-                    jsondata['data'] = {'organisation_id': org_obj.id, "organisation_name": org_obj.name, "organisation_abn": org_obj.abn, "organisation_email": org_obj.email}
+                    jsondata['data'] = {
+                            "organisation_id": org_obj.id, 
+                            "organisation_name": org_obj.name, 
+                            "organisation_abn": org_obj.abn, 
+                            "organisation_email": org_obj.email,
+                            "billing_address": {
+                                                "line1" : "",
+                                                "locality": "",
+                                                "state" : "",
+                                                "postcode" : "",
+                                                "country" : "AU"
+                            },
+                            "postal_address" : {
+                                                "line1" : "",
+                                                "locality": "",
+                                                "state" : "",
+                                                "postcode" : "",
+                                                "country" : "AU"
+                            }
+                            }
+                    
+                    if org_obj.billing_address:
+                        jsondata['data']['billing_address'] =   {"line1" : org_obj.billing_address.line1,
+                                                                   "locality": org_obj.billing_address.locality,
+                                                                   "state" : org_obj.billing_address.state,
+                                                                   "postcode" : org_obj.billing_address.postcode,
+                                                                   "country" : str(org_obj.billing_address.country)
+                                                                }
+                    if org_obj.postal_address:
+                            jsondata['data']['postal_address'] = {"line1" : org_obj.postal_address.line1,
+                                                                   "locality": org_obj.postal_address.locality,
+                                                                   "state" : org_obj.postal_address.state,
+                                                                   "postcode" : org_obj.postal_address.postcode,
+                                                                   "country" : str(org_obj.postal_address.country)
+                                                                  }
+
+                    
+
             else:
                     jsondata['status'] = 404
                     jsondata['message'] = 'Not found '
@@ -1956,6 +1993,7 @@ def get_organisation(request,apikey):
             jsondata['message'] = 'Access Forbidden'
     else:
         pass
+    
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response   
 
