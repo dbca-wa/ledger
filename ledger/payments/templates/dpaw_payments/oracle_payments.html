@@ -318,7 +318,7 @@
                   <th style='width: 200px;'>Oracle Code</th>
                   <th>Line Description</th>
                   <th style='width: 100px;'>Amount</th>
-		  <th style='width: 10px;'><button id='from-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;"><i class="bi bi-plus-lg"></i></button></th>
+		              <th style='width: 10px;'><button id='from-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;"><i class="bi bi-plus-lg"></i></button></th>
                 </tr>
         </thead>
         <tbody>
@@ -328,11 +328,11 @@
                 <td><input style='width: 100%' type='hidden' id='unallocated-text' value="Unallocated Pool" class='form-control input-sm'>Unallocated Pool</td>
                 <td><div class='tooltip2'  align='left' style='display:flex;'>
                                          
-                                         <span class="tooltiptext">Cannot be greater than the Unallocated Pool Amount</span>
-					 <span class='money_sign'>$</span>
-                                         <input style='width: 100px;' type='number' id='unallocated_pool_refund' step='0.01' class='form-control input-sm money' value='{{ invoice_line_items.total_booking_allocation_pool }}' onblur='refund_booking.money_update(this);'>
+                <span class="tooltiptext">Cannot be greater than the Unallocated Pool Amount</span>
+					      <span class='money_sign'>$</span>
+                <input style='width: 100px;' type='number' id='unallocated_pool_refund' step='0.01' class='form-control input-sm money' value='{{ invoice_line_items.total_booking_allocation_pool }}' onblur='refund_booking.money_update(this);'>
 
-                                                       </div>
+            </div>
 </td>
                 <td>&nbsp;</td>
            </tr>
