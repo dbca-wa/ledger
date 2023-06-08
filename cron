@@ -3,7 +3,7 @@
 0 4 * * * root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python /app/manage_ledgergw.py collectbpay /mnt/external/CommBiz_WildlifeLicensing 2>&1 | logger -t wl_collectbpay
 # Uncomment once every one on the new code
 0 8,10,12,14,16,18 * * * root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python /app/manage_ledgergw.py sync_itassets_users >> /app/logs/sync_ad_users.log 
-20 12 * * *  root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python /app/manage_ledgergw.py runcrons >> /app/logs/runcrons.log
+20 1 * * *  root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python /app/manage_ledgergw.py runcrons >> /app/logs/runcrons.log
 
 # Ledger Audit Report
 0 8 * * *  root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\"  ) && python /app/manage_ledgergw.py bpoint_ledger_payment_audit_report_segregated >> /app/logs/bpoint_ledger_payment_audit_report_segregated.log
