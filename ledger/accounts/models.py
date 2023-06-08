@@ -772,7 +772,7 @@ class OrganisationAddress(BaseAddress):
     organisation = models.ForeignKey(Organisation, null=True,blank=True, related_name='adresses')
     class Meta:
         verbose_name_plural = 'organisation addresses'
-        unique_together = ('organisation','hash')
+        #unique_together = ('organisation','hash')
 
 class ProfileListener(object):
     """

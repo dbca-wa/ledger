@@ -36,6 +36,8 @@ from django.conf import settings
 from ledger.payment import forms as payment_forms
 from ledger.payments.bpoint.gateway import Gateway
 from ledger.basket.middleware import BasketMiddleware
+from ledger.address.models import Country
+from django.db.models import Q, Max
 import base64
 import traceback
 import json
@@ -139,7 +141,8 @@ def update_user_info_id(request, userid,apikey):
             ledger_user = models.EmailUser.objects.filter(id=int(userid))
 
             if ledger_user.count() > 0:
-                ledger_obj = ledger_user[0]
+                #ledger_obj = ledger_user[0]
+                ledger_obj = models.EmailUser.objects.get(id=int(userid))
                 residential_address_obj = {}
                 postal_address_obj = {}
                 if 'residential_address' in post_list:
@@ -151,7 +154,15 @@ def update_user_info_id(request, userid,apikey):
                     date_dob = datetime.strptime(dob, '%d/%m/%Y').date()
                     ledger_obj.dob = date_dob
                 if 'residential_address' in post_list:
+
                     if ledger_obj.residential_address is None:
+
+                        if Country.objects.filter(iso_3166_1_a2=residential_address_obj['residential_country']).count() > 0:
+                            pass 
+                        else:
+                            residential_address_obj['residential_country'] = "AU"                           
+                        
+                        
                         residential_address =  models.Address.objects.create(user=ledger_obj,
                                                   line1=residential_address_obj['residential_line1'],
                                                   locality=residential_address_obj['residential_locality'],
@@ -159,6 +170,7 @@ def update_user_info_id(request, userid,apikey):
                                                   postcode=residential_address_obj['residential_postcode'],
                                                   country=residential_address_obj['residential_country'],
                                                  )
+                        
                         ledger_obj.residential_address = residential_address
                     else:
                         if 'residential_line1' in residential_address_obj:
@@ -175,14 +187,27 @@ def update_user_info_id(request, userid,apikey):
 
                 if 'postal_address' in post_list: 
                     if ledger_obj.postal_address is None:
-                        postal_address =  models.Address.objects.create(user=ledger_obj,
-                                                  line1=request.POST.get('postal_line1'),
-                                                  locality=request.POST.get('postal_locality'),
-                                                  state=request.POST.get('postal_state'),
-                                                  postcode=request.POST.get('postal_postcode'),
-                                                  country=request.POST.get('postal_country'),
+   
+                        try: 
+                            if Country.objects.filter(iso_3166_1_a2=postal_address_obj['postal_country']).count() > 0:
+                                pass 
+                            else:
+                                postal_address_obj['postal_country'] = "AU"        
+                            
+                            postal_address =  models.Address.objects.create(user=ledger_obj,
+                                                  line1=postal_address_obj['postal_line1'],
+                                                  locality=postal_address_obj['postal_locality'],
+                                                  state=postal_address_obj['postal_state'],
+                                                  postcode=postal_address_obj['postal_postcode'],
+                                                  country=postal_address_obj['postal_country'],
                                                  )
-                        ledger_obj.postal_address = postal_address
+                            ledger_obj.postal_address = postal_address
+                     
+                        except Exception as e:
+                            jsondata['status'] = '404'
+                            jsondata['message'] = 'Country not found'
+                        
+                        
                     else:
                         if 'postal_line1' in postal_address_obj:
                             ledger_obj.postal_address.line1 =postal_address_obj['postal_line1']
@@ -197,12 +222,13 @@ def update_user_info_id(request, userid,apikey):
                         if 'postal_same_as_residential' in postal_address_obj:
                                ledger_obj.postal_same_as_residential = postal_address_obj['postal_same_as_residential']
                         ledger_obj.postal_address.save()
+                
                 if 'phone_number' in post_list:
                     ledger_obj.phone_number = request.POST.get('phone_number')
-
+                
                 if 'mobile_number' in post_list:
                     ledger_obj.mobile_number = request.POST.get('mobile_number')
-
+                
                 ledger_obj.save()
                 #jsondata['user'] = ledger_user_json
                 jsondata['status'] = 200
@@ -255,6 +281,8 @@ def user_info_id(request, userid,apikey):
                         ledger_user_json['fullnamedob'] = ledger_obj.get_full_name_dob()
                     else:
                         ledger_user_json['fullnamedob'] = None
+                        
+                    
                     ledger_user_json['residential_address'] =  {}
                     ledger_user_json['residential_address']['line1'] = ""
                     ledger_user_json['residential_address']['line2'] = ""
@@ -753,6 +781,7 @@ def get_basket_for_future_invoice(request,apikey, reference):
                                                   'fallback_url': fallback_url,
                                                   'return_preload_url': return_preload_url,
                                                   'return_url': return_url,
+                                                  'return_preload_url': order_obj[0].basket.notification_url,
                                                   'force_redirect': True,
                                                   'proxy': False,
                                                   'session_type' : 'ledger_api',
@@ -818,7 +847,10 @@ def get_invoice_properties(request,apikey):
                        invoice_obj['token'] = invoice.token
                        invoice_obj['voided'] = invoice.voided
                        invoice_obj['previous_invoice'] = invoice.previous_invoice
-                       invoice_obj['settlement_date'] = invoice.settlement_date.strftime('%d/%m/%Y')
+                       invoice_obj['settlement_date'] = ''
+                       if invoice.settlement_date:
+                           invoice_obj['settlement_date'] = invoice.settlement_date.strftime('%d/%m/%Y')
+                       
                        invoice_obj['payment_method'] = invoice.payment_method
                        invoice_obj['biller_code'] = invoice.biller_code
                        invoice_obj['number'] = invoice.number
@@ -842,10 +874,12 @@ def get_invoice_properties(request,apikey):
                        jsondata['status'] = 200
                        jsondata['message'] = 'Success'
                        jsondata['data'] = {'invoice': invoice_obj}
-                       print ("YES")
+                      
                  except Exception as e:
-                     print (e)
-                     print ("ERROR")
+                       jsondata['status'] = 500
+                       jsondata['message'] = 'Invoice Error: '+str(e)                       
+                       print ("ERROR")
+                       print (e)
             else:
                  jsondata['status'] = 404
                  jsondata['message'] = 'not found'
@@ -1769,16 +1803,117 @@ def update_organistion(request,apikey):
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             ois_obj = {}
-            data = json.loads(request.POST.get('data', "{}"))
-            organisation_id = data['organisation_id']
-            organisation_name = data['organisation_name']
-            organisation_abn = data['organisation_abn']           
+            data = json.loads(request.POST.get('data', "{}"))            
+            organisation_id = None
+            organisation_name = None
+            organisation_abn = None
+            organisation_email = None
+            organisation_trading_name = None
+            postal_address = None
+            billing_address = None
 
+            if 'organisation_id' in data:                
+                organisation_id = data['organisation_id']
+            if 'organisation_name' in data:
+                organisation_name = data['organisation_name']
+            if 'organisation_abn' in data:
+                organisation_abn = data['organisation_abn']   
+            if 'organisation_email' in data:
+                organisation_email = data['organisation_email'] 
+            if 'organisation_trading_name' in data:
+                organisation_trading_name = data['organisation_trading_name']       
+            if 'postal_address' in data:     
+                postal_address = data['postal_address']                
+            if 'billing_address' in data:     
+                billing_address = data['billing_address']    
+                                                        
             if models.Organisation.objects.filter(id=organisation_id).count() > 0:
                     org_obj = models.Organisation.objects.get(id=organisation_id)
-                    org_obj.name = organisation_name
-                    org_obj.abn = organisation_abn                                     
-                    org_obj.save()
+                    if organisation_name:
+                        org_obj.name = organisation_name
+                    if organisation_abn:
+                        org_obj.abn = organisation_abn                                    
+                    if organisation_email:
+                        org_obj.email = organisation_email
+                    if organisation_trading_name:
+                        org_obj.trading_name = organisation_trading_name                                
+                    if postal_address:
+
+                        if Country.objects.filter(iso_3166_1_a2=postal_address['postal_country']).count() > 0:
+                            pass
+                        else:
+                            postal_address['postal_country'] = "AU" 
+
+                        if org_obj.postal_address:
+                            org_obj.postal_address.line1 = postal_address['postal_line1']
+                            org_obj.postal_address.locality = postal_address['postal_locality']
+                            org_obj.postal_address.state = postal_address['postal_state']
+                            org_obj.postal_address.postcode = postal_address['postal_postcode']
+                            org_obj.postal_address.country = postal_address['postal_country']
+                            org_obj.postal_address.save()                            
+                        else:                            
+                            try:
+                                postal_address = models.OrganisationAddress.objects.create(organisation=org_obj,
+                                                  line1=postal_address['postal_line1'],
+                                                  locality=postal_address['postal_locality'],
+                                                  state=postal_address['postal_state'],
+                                                  postcode=postal_address['postal_postcode'],
+                                                  country=postal_address['postal_country'],
+                                                 )    
+                                org_obj.postal_address = postal_address                            
+                            except Exception as e:
+                                print ("ERROR: Saving Organisation Address")
+                                print (e)
+                                jsondata['status'] = 500
+                                jsondata['message'] = 'error saving organisation postal address details'
+                                jsondata['data'] = {"message": "error saving organisation postal address details"}
+
+                            #org_obj.postal_address = postal_address
+                            #org_obj.postal_address.save()
+                            
+
+                    if billing_address:
+                        if Country.objects.filter(iso_3166_1_a2=billing_address['billing_country']).count() > 0:
+                            pass
+                        else:
+                            billing_address['billing_country'] = "AU" 
+
+                        if org_obj.billing_address:
+                            org_obj.billing_address.line1 = billing_address['billing_line1']
+                            org_obj.billing_address.locality = billing_address['billing_locality']
+                            org_obj.billing_address.state = billing_address['billing_state']
+                            org_obj.billing_address.postcode = billing_address['billing_postcode']
+                            org_obj.billing_address.country = billing_address['billing_country']
+                            org_obj.billing_address.save()                            
+                        else:                            
+                            try:
+                                billing_address = models.OrganisationAddress.objects.create(organisation=org_obj,
+                                                  line1=billing_address['billing_line1'],
+                                                  locality=billing_address['billing_locality'],
+                                                  state=billing_address['billing_state'],
+                                                  postcode=billing_address['billing_postcode'],
+                                                  country=billing_address['billing_country'],
+                                                 )    
+                                org_obj.billing_address = billing_address                            
+
+                            except Exception as e:
+                                print ("ERROR: Saving Organisation billing Address")
+                                print (e)
+                                jsondata['status'] = 500
+                                jsondata['message'] = 'error saving organisation billing details'
+                                jsondata['data'] = {"message": "error saving organisation billing details"}
+
+
+
+                    try:
+                        org_obj.save()
+                    except Exception as e:
+                        print ("ERROR: Saving Organisation")
+                        print (e)                    
+
+                        jsondata['status'] = 500
+                        jsondata['message'] = 'error saving organisation details'
+                        jsondata['data'] = {"message": "error saving organisation details"}
 
                     jsondata['status'] = 200
                     jsondata['message'] = 'Success'
@@ -1811,12 +1946,118 @@ def get_organisation(request,apikey):
                     
                     jsondata['status'] = 200
                     jsondata['message'] = 'Success'
-                    jsondata['data'] = {'organisation_id': org_obj.id, "organisation_name": org_obj.name, "organisation_abn": org_obj.abn}
+                    jsondata['data'] = {
+                            "organisation_id": org_obj.id, 
+                            "organisation_name": org_obj.name, 
+                            "organisation_abn": org_obj.abn, 
+                            "organisation_email": org_obj.email,
+                            "billing_address": {
+                                                "line1" : "",
+                                                "locality": "",
+                                                "state" : "",
+                                                "postcode" : "",
+                                                "country" : "AU"
+                            },
+                            "postal_address" : {
+                                                "line1" : "",
+                                                "locality": "",
+                                                "state" : "",
+                                                "postcode" : "",
+                                                "country" : "AU"
+                            }
+                            }
+                    
+                    if org_obj.billing_address:
+                        jsondata['data']['billing_address'] =   {"line1" : org_obj.billing_address.line1,
+                                                                   "locality": org_obj.billing_address.locality,
+                                                                   "state" : org_obj.billing_address.state,
+                                                                   "postcode" : org_obj.billing_address.postcode,
+                                                                   "country" : str(org_obj.billing_address.country)
+                                                                }
+                    if org_obj.postal_address:
+                            jsondata['data']['postal_address'] = {"line1" : org_obj.postal_address.line1,
+                                                                   "locality": org_obj.postal_address.locality,
+                                                                   "state" : org_obj.postal_address.state,
+                                                                   "postcode" : org_obj.postal_address.postcode,
+                                                                   "country" : str(org_obj.postal_address.country)
+                                                                  }
+
+                    
+
             else:
                     jsondata['status'] = 404
                     jsondata['message'] = 'Not found '
                     jsondata['data'] = {}
                     jsondata['post'] = request.POST
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response   
+
+@csrf_exempt
+def get_all_organisation(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            org_array = []
+            data = json.loads(request.POST.get('data', "{}"))           
+            org_obj = models.Organisation.objects.all()
+            for o in org_obj:
+                org_row = {'organisation_id': o.id, "organisation_name": o.name, "organisation_abn": o.abn, "organisation_email": o.email}
+                org_array.append(org_row)
+
+            jsondata['status'] = 200
+            jsondata['message'] = 'Success'
+            jsondata['data'] = org_array
+            
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response       
+
+@csrf_exempt
+def get_search_organisation(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+      
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            org_array = []
+            data = json.loads(request.POST.get('data', "{}"))
+            organisation_name = data['organisation_name']
+            organisation_abn = data['organisation_abn']
+            search_filter = Q()
+            if organisation_name:
+                search_filter = Q(name__icontains=organisation_name)
+            if organisation_abn:
+                search_filter = Q(abn__icontains=organisation_abn)                            
+            org_obj = models.Organisation.objects.filter(search_filter)
+            
+            if org_obj.count() > 0:
+                    for o in org_obj:
+                        org_row = {'organisation_id': o.id, "organisation_name": o.name, "organisation_abn": o.abn, "organisation_email": o.email}
+                        org_array.append(org_row)
+
+                    jsondata['status'] = 200
+                    jsondata['message'] = 'Success'
+                    jsondata['data'] = org_array
+
+            else:
+                    jsondata['status'] = 404
+                    jsondata['message'] = 'Not found '
+                    jsondata['data'] = {}
+                    #jsondata['post'] = request.POST
 
         else:
             jsondata['status'] = 403

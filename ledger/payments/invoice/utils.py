@@ -9,6 +9,7 @@ from ledger.checkout.utils import create_basket_session, create_checkout_session
 from ledger.payments.invoice import facade as invoice_facade
 from ledger.payments.models import Invoice
 from ledger.payments.utils import systemid_check, update_payments, LinkedInvoiceCreate
+from ledger.accounts import models as accounts_models
 from decimal import Decimal
 import datetime
 import re
@@ -247,4 +248,44 @@ def allocate_failedrefund_to_unallocated(request, booking_reference, lines, invo
 
         return order
 
+class FakeRequestSessionObj():
+     def __init__(self):
+         self.session = {}
+         self.user = None
+         pass
 
+     def __getitem__(self, item):
+         return self.session[item]
+
+     def build_absolute_uri(self):
+         return ''
+
+
+def create_submitted_basket_order_from_lines(booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=None, system_id=None):
+        # This will create a submitted order and basket with a completed invoice.  Not to be used for invoices still requiring payment.
+        # To assist and balancing oracle receipts.
+        request =  FakeRequestSessionObj()
+        request.user = accounts_models.EmailUser.objects.get(id=user.id)
+
+        basket_params = {
+            'products': lines,
+            'vouchers': [],
+            'system': re.sub(r'^0', 'S',system_id),
+            'custom_basket': True,
+            'booking_reference': booking_reference,
+            'booking_reference_link': booking_reference_linked
+        }
+
+        basket, basket_hash = create_basket_session(request, basket_params)
+        basket.owner = user
+        basket.save()
+
+        ci = CreateInvoiceBasket()
+        if system_id:
+             ci.system = system_id
+
+        order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Refund Allocation Pool', )
+        new_invoice = Invoice.objects.get(order_number=order.number)
+        update_payments(new_invoice.reference)
+
+        return order

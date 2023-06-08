@@ -18,6 +18,9 @@ from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, O
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
 from ledger.basket.models import Basket
+from ledger.order import models as order_model
+from ledger.payments.cash.models import CashTransaction
+from ledger.payments.bpoint.models import BpointTransaction
 from oscar.core.loading import get_class
 from confy import env
 from decimal import Decimal
@@ -857,6 +860,10 @@ def LinkedInvoiceCreate(invoice, basket_id):
                               li = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference_link)
                               if li.count() > 0:
                                   lig = li[0].invoice_group_id
+                              else:
+                                  libr = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference)
+                                  if libr.count() > 0:
+                                      lig = libr[0].invoice_group_id
                       if lig is None:
                            lig = LinkedInvoiceGroupIncrementer.objects.create(system_identifier=ois)
                       booking_reference_linked = basket.booking_reference_link
@@ -886,3 +893,236 @@ def LinkedInvoiceCreate(invoice, basket_id):
 #        update_payments(new_invoice.reference)
 #        return order
 #
+
+def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_reference, receipt_no, txn_number):
+        if invoice_no is None:
+            invoice_no = ''
+        if booking_reference is None:
+            booking_reference =''
+        if receipt_no is None:
+            receipt_no = ''
+        if txn_number is None:
+            txn_number = ''
+    
+        data = {"status": 403, "data": {}} 
+        exists=False
+        if len(invoice_no) > 0:
+            link_res = LinkedInvoice.objects.filter(invoice_reference=invoice_no)
+            if link_res.count() > 0:
+                invoice_group_id = link_res[0].invoice_group_id.id
+        elif len(receipt_no) > 0:
+            bt = BpointTransaction.objects.filter(receipt_number=receipt_no)
+            crn1=None
+            if bt.count() > 0:
+                 crn1 = bt[0].crn1
+                 link_res = LinkedInvoice.objects.filter(invoice_reference=crn1)
+                 if link_res.count() > 0:
+                     invoice_group_id = link_res[0].invoice_group_id.id
+        elif len(txn_number) > 0:
+            bt = BpointTransaction.objects.filter(txn_number=txn_number)
+            crn1=None
+            if bt.count() > 0:
+                 crn1 = bt[0].crn1
+                 link_res = LinkedInvoice.objects.filter(invoice_reference=crn1)
+                 if link_res.count() > 0:
+                     invoice_group_id = link_res[0].invoice_group_id.id
+        elif len(booking_reference) > 0:
+            link_res = LinkedInvoice.objects.filter(booking_reference=booking_reference)
+            if link_res.count() > 0:
+                invoice_group_id = link_res[0].invoice_group_id.id
+
+        if invoice_group_id:
+                if int(invoice_group_id) > 0:
+                     linkinv = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id)
+                     if linkinv.count() > 0:
+                         latest_li = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id).order_by('-created')[0]
+                         linked_payments = []
+                         invoices = []
+                         invoices_data = []
+                         orders = []
+                         for li in linkinv:
+                             invoices.append(li.invoice_reference)
+                             linked_payments.append({'id': li.id, 'invoice_reference': li.invoice_reference, 'system_identifier_id': li.system_identifier.id, 'system_identifier_system': li.system_identifier.system_id, 'booking_reference': li.booking_reference, 'booking_reference_linked': li.booking_reference_linked, 'invoice_group_id': li.invoice_group_id.id})
+                         invs = Invoice.objects.filter(reference__in=invoices)
+                         for i in invs:
+                             orders.append(i.order_number)
+                             settlement_date = None
+                             if i.settlement_date:
+                                  settlement_date = i.settlement_date.strftime("%d/%m/%Y")
+                                 
+                             invoices_data.append({'invoice_reference': i.reference, 'payment_status': str(i.payment_status), 'balance': str(i.balance), 'settlement_date': settlement_date})
+                         invoice_orders = Order.objects.filter(number__in=orders)
+                         order_array = []
+                         order_obj = order_model.Line.objects.filter(order__number__in=orders).order_by('order__date_placed')
+                         rolling_total = Decimal('0.00')
+                         total_unallocated = Decimal('0.00')
+
+                         oracle_code_totals = {}
+                         data['data']['oracle_code_totals'] = {}
+                         for o in order_obj:
+                             owner_id = None
+                             if o.order:
+                                if o.order.basket:
+                                    if o.order.basket.owner:
+                                        owner_id = o.order.basket.owner.id
+
+                             if o.oracle_code == 'NNP449 GST':
+                                 total_unallocated = total_unallocated + o.line_price_incl_tax
+                             rolling_total = rolling_total + o.line_price_incl_tax
+                             row = {'id': o.id, 'order_number': o.order.number, 'title': o.title, 'line_price_incl_tax': str(o.line_price_incl_tax), 'line_price_excl_tax': str(o.line_price_incl_tax), 'owner_id': str(owner_id),'oracle_code': o.oracle_code, 'rolling_total': str(rolling_total), 'order_date': o.order.date_placed.strftime("%d/%m/%Y %H:%M:%S")}
+                             order_array.append(row)
+
+                             if o.oracle_code not in oracle_code_totals:
+                                 oracle_code_totals[o.oracle_code] = Decimal('0.00')
+                             oracle_code_totals[o.oracle_code] = oracle_code_totals[o.oracle_code] + o.line_price_incl_tax 
+
+                         for cct in oracle_code_totals.keys():
+                             data['data']['oracle_code_totals'][cct] = str(oracle_code_totals[cct])
+
+                         bp_array = []
+                         bp_txn_refund_hash = {}
+                         bp_txn_total ={}
+                         bp_trans = BpointTransaction.objects.filter(crn1__in=invoices)
+                         for bp in bp_trans:
+                             if bp.original_txn not in bp_txn_refund_hash:
+                                   bp_txn_refund_hash[bp.original_txn] = Decimal('0.00')
+                                   
+                             if bp.original_txn not in bp_txn_total:
+                                   bp_txn_total[bp.original_txn] = float('0.00')
+                                   
+                             if bp.txn_number not in bp_txn_total:
+                                   bp_txn_total[bp.txn_number] = float('0.00')                                   
+
+                             if bp.action == 'payment':
+                                 bp_txn_total[bp.txn_number] = bp_txn_total[bp.txn_number] + float(bp.amount)
+                                                                                                       
+                             if bp.action == 'refund':
+                                 bp_txn_total[bp.original_txn] = bp_txn_total[bp.original_txn] - float(bp.amount)
+                                 
+                                 bp_txn_refund_hash[bp.original_txn] = bp_txn_refund_hash[bp.original_txn] + bp.amount
+                                 
+                                 
+                                 
+
+
+                         total_gateway_amount = Decimal('0.00')
+                         for bp in bp_trans:
+                             if bp.action == 'refund':
+                                 total_gateway_amount = total_gateway_amount - bp.amount
+                             else:
+                                 total_gateway_amount = total_gateway_amount + bp.amount
+
+                             row = {}
+                             row['id'] = bp.id
+                             row['crn1'] = bp.crn1
+                             row['txnnumber'] = bp.txn_number
+                             row['original_txn'] = bp.original_txn
+                             row['receipt_number'] = bp.receipt_number
+                             row['settlement_date'] = bp.settlement_date.strftime("%d/%m/%Y")
+                             row['last_digits'] = bp.last_digits
+                             row['amount'] = str(bp.amount)
+                             row['response_code'] = bp.response_code
+                             row['action'] = bp.action
+                             row['processed'] = bp.processed.strftime("%d/%m/%Y %H:%M:%S")
+                             row['response_txt'] = bp.response_txt
+                             if bp.action == 'payment':
+                                row['amount_refunded'] = '0.00'
+                                if bp.txn_number in bp_txn_refund_hash:
+                                    row['amount_refunded'] = str(bp_txn_refund_hash[bp.txn_number])
+                             bp_array.append(row)
+
+
+                         cash_array = []
+                         cash_array_invoices = {}
+                         cash_txn_refund_hash = {}
+                         cash_trans = CashTransaction.objects.filter(invoice__in=invs)
+                         for c in cash_trans:
+                             if c.id not in cash_txn_refund_hash:
+                                 cash_txn_refund_hash[c.id] = Decimal('0.00')
+                             if c.type == 'refund':
+                                 cash_txn_refund_hash[c.id] = cash_txn_refund_hash[c.id] + c.amount
+                        
+                         total_cash_amount = Decimal('0.00')
+                         for ch in cash_trans:
+                             if ch.type  == 'refund':
+                                   total_cash_amount = total_cash_amount - ch.amount
+                             elif ch.type == 'payment':
+                                   total_cash_amount = total_cash_amount + ch.amount
+
+                             row = {}
+                             row['id'] = ch.id
+                             row['invoice_reference'] = ch.invoice.reference
+                             row['amount'] = str(ch.amount)
+                             row['action'] = ch.type
+                             row['source'] = ch.source
+                             row['receipt'] = ch.receipt
+                             row['details'] = ch.details
+                             row['created'] = ch.created.strftime("%d/%m/%Y %H:%M:%S")
+                             
+                             if ch.type == 'payment':
+                                  row['amount_refunded'] = '0.00'
+                                  if ch.id in cash_txn_refund_hash:
+                                      row['amount_refunded'] = str(cash_txn_refund_hash[ch.id])
+                             cash_array.append(row)
+
+                         # cash group by invoice
+                         for ch in cash_trans:
+                             if ch.invoice.reference not in cash_array_invoices:
+                                   cash_array_invoices[ch.invoice.reference] = Decimal('0.00')
+
+                             if ch.type  == 'refund':
+                                  cash_array_invoices[ch.invoice.reference] = cash_array_invoices[ch.invoice.reference] - ch.amount
+                             if ch.type  == 'payment':
+                                  cash_array_invoices[ch.invoice.reference] = cash_array_invoices[ch.invoice.reference] + ch.amount
+
+                         cai = []
+                         # convert decimal money to string for json dump    
+                         for ca in cash_array_invoices.keys():
+                               row = {}
+                               row['invoice_reference'] = ca
+                               row['amount'] = str(cash_array_invoices[ca])
+                               cai.append(row)
+
+                         data['data']['linked_payments'] = linked_payments
+                         data['data']['total_gateway_amount'] = str(total_gateway_amount)
+                         data['data']['total_oracle_amount'] = str(rolling_total)
+                         data['data']['total_cash_amount'] = str(total_cash_amount)
+                         data['data']['total_unallocated'] = str(total_unallocated)
+                         #data['data']['oracle_code_totals']  
+                         data['data']['order'] = order_array
+                         data['data']['bpoint'] = bp_array
+                         data['data']['cash'] = cash_array
+                         data['data']['cash_on_invoices'] = cai
+                         data['data']['invoices_data'] = invoices_data
+                         data['data']['booking_reference'] = latest_li.booking_reference
+                         data['data']['booking_reference_linked'] = latest_li.booking_reference_linked
+                         #data['data']['bp_txn_refund'] = bp_txn_refund_hash
+                         data['data']['bp_txn_total'] = bp_txn_total
+                         data['status'] = 200
+                         exists = True
+                     else:
+                         data['status'] = 404
+                         data['message'] =  "No records found"
+                         data['data']['linked_payments'] = []
+                         data['data']['total_gateway_amount'] = '0.00'
+                         data['data']['total_unallocated'] = '0.00'
+                         data['data']['total_oracle_amount'] = '0.00'
+                         data['data']['order'] = []
+                         data['data']['bpoint'] = []
+                         data['data']['booking_reference'] = ''
+                         data['data']['booking_reference_linked'] = ''
+                         data['data']['bp_txn_total'] = {}
+
+        else:
+            data['status'] = 404
+            data['message'] =  "No records found"
+            data['data']['linked_payments'] = []
+            data['data']['total_gateway_amount'] = '0.00'
+            data['data']['total_unallocated'] = '0.00'
+            data['data']['total_oracle_amount'] = '0.00'
+            data['data']['order'] = []
+            data['data']['bpoint'] = []
+            data['data']['booking_reference'] = ''
+            data['data']['booking_reference_linked'] = ''
+            
+        return data

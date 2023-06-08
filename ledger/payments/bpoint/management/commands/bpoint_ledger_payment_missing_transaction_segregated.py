@@ -24,10 +24,11 @@ class Command(BaseCommand):
          parser.add_argument('settlement_date', nargs='?', default=settlement_date_search)
 
     def handle(self, *args, **options):
-           rows = []
+          
            SYSTEM_ID = ''
            ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True)
            for oracle_system in ois:
+               rows = []
                print (oracle_system)
                SYSTEM_ID = oracle_system.system_id 
 

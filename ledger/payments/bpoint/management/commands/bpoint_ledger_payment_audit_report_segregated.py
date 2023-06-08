@@ -24,7 +24,7 @@ class Command(BaseCommand):
          parser.add_argument('settlement_date', nargs='?', default=settlement_date_search)
 
     def handle(self, *args, **options):
-           rows = []
+           
            #system = settings.PS_PAYMENT_SYSTEM_ID
            #system = system.replace('S','0')
            #rows = bpoint_integrity_checks(system,100,2)
@@ -33,6 +33,7 @@ class Command(BaseCommand):
            #       SYSTEM_ID = settings.PS_PAYMENT_SYSTEM_ID.replace("S","0")
            ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True)
            for oracle_system in ois:
+               rows = []
                print (oracle_system)
                SYSTEM_ID = oracle_system.system_id 
 
@@ -183,11 +184,7 @@ class Command(BaseCommand):
                    pt_obj.save()
 
                
-               else:
-                    print (bpoint_amount_nice)
-                    print (ledger_payment_amount_total)
-                    print (parser_invoice_totals)
-                    print (oracle_receipts_total)
+               else:                    
                     PaymentTotal.objects.create( oracle_system=oracle_system,
                                                  settlement_date=settlement_date_search_obj,
                                                  bpoint_gateway_total=D(bpoint_amount_nice),

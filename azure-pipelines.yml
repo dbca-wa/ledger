@@ -3,7 +3,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
-- main
+- master
 
 resources:
 - repo: self
@@ -11,9 +11,11 @@ resources:
 variables:
   tag: '$(Build.BuildId)'
   tagDate: $[ format('{0:yyyy}.{0:MM}.{0:dd}.{0:HH}.{0:mm}{0:ss}', pipeline.startTime) ]
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
   
 stages:
 - stage: Build
+  condition: and(succeeded(), eq(variables.isMain, 'true'))
   displayName: Build image
   jobs:
   - job: Build
