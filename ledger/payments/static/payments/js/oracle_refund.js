@@ -20,7 +20,8 @@ var refund_booking =  {
                cash_payment_url: '',
                booking_reference: '',
                booking_reference_linked: '',
-               csrf_token: ''
+               csrf_token: '',
+               invoice_group_id: ''
           }, 
    	     from_money_add_row:  function() {
                refund_booking.var.row_id = refund_booking.var.row_id + 1;

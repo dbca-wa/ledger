@@ -24,6 +24,8 @@ from ledger.payments.bpoint.models import BpointTransaction
 from oscar.core.loading import get_class
 from confy import env
 from decimal import Decimal
+from django.db.models import Q
+from django.db.models import Count
 import logging
 logger = logging.getLogger(__name__)
 
@@ -933,16 +935,28 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
 
         if invoice_group_id:
                 if int(invoice_group_id) > 0:
-                     linkinv = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id)
+                     linkinv = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id)                     
+                     system_id = None
                      if linkinv.count() > 0:
+                         system_id = linkinv[0].system_identifier.system_id
                          latest_li = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id).order_by('-created')[0]
                          linked_payments = []
+                         linked_payments_booking_references = []
                          invoices = []
                          invoices_data = []
                          orders = []
+                         invoice_group_checks_total = 0
                          for li in linkinv:
                              invoices.append(li.invoice_reference)
                              linked_payments.append({'id': li.id, 'invoice_reference': li.invoice_reference, 'system_identifier_id': li.system_identifier.id, 'system_identifier_system': li.system_identifier.system_id, 'booking_reference': li.booking_reference, 'booking_reference_linked': li.booking_reference_linked, 'invoice_group_id': li.invoice_group_id.id})
+                             if li.booking_reference not in linked_payments_booking_references:
+                                linked_payments_booking_references.append(li.booking_reference)
+                             if li.booking_reference_linked not in linked_payments_booking_references:
+                                linked_payments_booking_references.append(li.booking_reference_linked)
+                         
+                         invoice_group_checks = LinkedInvoice.objects.filter(Q(booking_reference__in=linked_payments_booking_references) | Q(booking_reference_linked__in=linked_payments_booking_references)).values('invoice_group_id_id').annotate(total=Count('invoice_group_id_id')).order_by('total')
+                         invoice_group_checks_total = invoice_group_checks.count()
+
                          invs = Invoice.objects.filter(reference__in=invoices)
                          for i in invs:
                              orders.append(i.order_number)
@@ -950,7 +964,7 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
                              if i.settlement_date:
                                   settlement_date = i.settlement_date.strftime("%d/%m/%Y")
                                  
-                             invoices_data.append({'invoice_reference': i.reference, 'payment_status': str(i.payment_status), 'balance': str(i.balance), 'settlement_date': settlement_date})
+                             invoices_data.append({'invoice_reference': i.reference, 'payment_status': str(i.payment_status), 'balance': str(i.balance), 'settlement_date': settlement_date, 'amount': str(i.amount)})
                          invoice_orders = Order.objects.filter(number__in=orders)
                          order_array = []
                          order_obj = order_model.Line.objects.filter(order__number__in=orders).order_by('order__date_placed')
@@ -1000,10 +1014,6 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
                                  bp_txn_total[bp.original_txn] = bp_txn_total[bp.original_txn] - float(bp.amount)
                                  
                                  bp_txn_refund_hash[bp.original_txn] = bp_txn_refund_hash[bp.original_txn] + bp.amount
-                                 
-                                 
-                                 
-
 
                          total_gateway_amount = Decimal('0.00')
                          for bp in bp_trans:
@@ -1096,8 +1106,11 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
                          data['data']['invoices_data'] = invoices_data
                          data['data']['booking_reference'] = latest_li.booking_reference
                          data['data']['booking_reference_linked'] = latest_li.booking_reference_linked
+                         data['data']['invoice_group_checks_total'] = invoice_group_checks_total
                          #data['data']['bp_txn_refund'] = bp_txn_refund_hash
                          data['data']['bp_txn_total'] = bp_txn_total
+                         data['data']['invoice_group_id'] = invoice_group_id
+                         data['data']['system_id'] = system_id
                          data['status'] = 200
                          exists = True
                      else:
