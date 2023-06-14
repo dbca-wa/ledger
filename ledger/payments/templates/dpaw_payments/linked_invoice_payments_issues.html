@@ -1,0 +1,65 @@
+{% extends "dpaw_payments/base.html" %}
+
+{% load static %} 
+{% load dpaw_extras %}
+
+
+{% block "body-content" %}
+
+
+<div class='p-1'>
+    &nbsp;
+</div>
+<div class="container">
+    <div class='row'>
+        <div class='col-6'>
+            <h4>Link Invoice Grouping Fixes</h4>
+        </div>
+        <div class='col-6 text-end'>
+            <a href='/ledger/payments/oracle/payments?invoice_group_id={{ invoice_group_id }}' class='btn btn-primary'>Return to Ledger Payments</a>
+        </div>
+    </div>
+    <br>
+    <div class="card" id='linked-invoice-grouping-fix'>
+        <h5 class="card-header">List of Invoice Grouping</h5>
+        <div class="card-body">
+
+            <table cellspacing="0" width="100%" id="from-money-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+                <thead>
+                    <tr>
+                        <th style='width: 200px;'>LGID</th>
+                        <th>Invoice Reference</th>
+                        <th>Booking Reference</th>
+                        <th>Booking Reference Linked</th>
+                        <th style='width: 100px;'>Invoice Group ID</th>
+                        <th style='width: 10px;'>Status</th>
+                    </tr>
+                </thead>
+                <tbody>        
+                    {% for igc in invoice_group_checks %}
+                        <tr>
+                            <td>{{ igc.id }}</td>
+                            <td>{{ igc.invoice_reference }}</td>
+                            <td>{{ igc.booking_reference }}</td>
+                            <td>{{ igc.booking_reference_linked }}</td>
+                            <td>{{ igc.invoice_reference }}</td>
+                            <td class="{% if invoice_group_id_highest == igc.invoice_group_id_id %}bg-success{% else %}bg-danger{% endif %} text-white">{{ igc.invoice_group_id_id }}</td>
+                        </tr>
+                    {% endfor %}
+        
+                </tbody>   
+            </table>
+
+            {% if linked_group_issue is True %}
+                <div class='col-12 text-end'>
+                    <a href='?fix_lgid=true' class='btn btn-primary'>Fix LIGID</a>
+                </div>
+            {% endif %}
+            
+        </div>
+    </div>
+
+
+</div>
+
+{% endblock %}

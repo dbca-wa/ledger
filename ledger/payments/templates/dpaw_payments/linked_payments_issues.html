@@ -1,0 +1,63 @@
+{% extends "dpaw_payments/base.html" %}
+
+{% load static %} 
+{% load dpaw_extras %}
+
+
+{% block "body-content" %}
+
+<div class='p-1'>
+    &nbsp;
+</div>
+
+<div class="container">
+    <div class='row'>
+        <div class='col-6'>
+            <h4>Payment Discrephency</h4>
+        </div>
+        <div class='col-6 text-end'>
+            <a href='/ledger/payments/oracle/payments?invoice_group_id={{ invoice_group_id }}' class='btn btn-primary'>Return to Ledger Payments</a>
+        </div>
+    </div>
+    <br>
+    <div class="card" id='linked-invoice-grouping-fix'>
+        <h5 class="card-header">Discrephency found by settlement date</h5>
+        <div class="card-body">
+            <p> The below table lists payment discrephencies found for linked invoice group id {{ invoice_group_id }}.  The discrephencies list the settlement date and amount which is considered to having issues.</p>
+            <p>By clicking the "Correct Discrephency" button will cause the system to generate oracle records into the unallocated pool for the settlement date and amount listed below.  This will then allow bpoint refunds to be completed for duplicate payments or allow money to be moved into the correct oracle codes for missing amounts.</p>
+
+
+            <table cellspacing="0" width="100%" id="from-money-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+                <thread>
+                    <tr>
+                        <th>Settlement Date</th>
+                        <th>Amount</th>
+                    </tr>
+                </thread>
+                <tbody>
+                    {% for gr in generate_receipts_for %}
+                        <tr>                       
+                            <td>
+                                {{ gr.settlement_date}}
+                            </td>
+                            <td>
+                                ${{ gr.total_amount }}
+                            </td>
+                            
+                        </tr>
+                    {% endfor %}
+                </tbody>                
+            </table>
+
+            {% if generate_receipts_for_length > 0 %}            
+                <div class='col-12 text-end'>
+                    <a href='?fix_discrephency=true' class='btn btn-primary'>Correct Discrephency</a>
+                </div>
+            {% endif %}            
+            
+        </div>
+    </body>
+    <br>
+</div>
+
+{% endblock %}

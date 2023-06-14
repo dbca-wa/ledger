@@ -15,7 +15,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="/static/common/node_modules/bootstrap-icons/font/bootstrap-icons.css?ver=">
     <script src="/static/common/node_modules/jquery/dist/jquery.min.js"></script>
-
     <script src="/static/payments/js/ledger_payments.js"></script>
     <script src="/static/payments/js/oracle_refund.js"></script>
 
@@ -68,7 +67,7 @@
 </head>
 
 <body>
-	{% block "body-content" %}
+{% block "body-content" %}
 
 <div class="modal fade" id="LoadingPopup" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog modal-sm">
@@ -128,43 +127,80 @@
 
   <div class='alert alert-danger' id='oracle-payments-data-error-message'></div>
 </div>
+
+
+
+
+
+
 <div class="container" id='oracle-payments-data'>
 
-    <div class="row">
+
+<div class="row">
+    <div class='col-12 text-end'>
+      <BR>
+    </div>
+    <div class='col-12'>
+      <div class="btn-group" role="group" aria-label="Button group with nested dropdown">     
+        <div class="btn-group" role="group">
+          <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            Actions
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+            <li><a class="dropdown-item" id='fix-linked-invoice-grouping-link' href="#">Fix Linked Invoice Grouping</a></li>
+            <li><a class="dropdown-item" id='fix-linked-payment-issues' href="#">Payment Discrephency</a></li>
+            <li><a class="dropdown-item" href="#">Take Payment</a></li>            
+          </ul>
+        </div>
+      </div>
+
+    </div>
 
     <div class="col-12">
+
+      
 <br>
 <div class="row">
- <div class="col">
-    <div class="card text-white bg-success mb-3" style="max-width: 18rem;">
-      <div class="card-body">
-       <h5 class="card-title">Payment Gateway</h5>
-       <p class="card-text fs-2" id='total_payment_gateway'>$0.00</p>
-       <p class="card-text"><i class="bi bi-info-circle-fill"></i>&nbsp;<small class="">Total money received from bpoint minus refunds</small></p>
+  <div class="col">
+      <div class="card text-white bg-success mb-3" style="max-width: 18rem;">
+        <div class="card-body">
+        <h5 class="card-title">Payment Gateway</h5>
+        <p class="card-text fs-2" id='total_payment_gateway'>$0.00</p>
+        <p class="card-text"><i class="bi bi-info-circle-fill"></i>&nbsp;<small class="">Total money received from bpoint minus refunds</small></p>
+      </div>
     </div>
-   </div>
-</div>
-
- <div class="col">
-    <div class="card text-white bg-info mb-3" style="max-width: 18rem;">
-      <div class="card-body">
-       <h5 class="card-title">Cash Payments</h5>
-       <p class="card-text fs-2" id='total_cash_payment'>$0.00</p>
-       <p class="card-text"><i class="bi bi-info-circle-fill"></i>&nbsp;<small class="">Total money received from cash/eftpos/cheque/money order</small></p>
-    </div>
-   </div>
-</div>
-
-
-<div class="col">
-<div class="card text-white bg-danger mb-3" style="max-width: 18rem;">
-  <div class="card-body">
-    <h5 class="card-title">Unallocated Pool</h5>
-    <p class="card-text fs-2" id='total_unallocated'>$0.00</p>
-    <p class="card-text"><i class="bi bi-info-circle-fill"></i>&nbsp;<small class=""> Total money moved to the unallocated pool</small></p>
   </div>
-</div>
-</div>
+
+  <div class="col">
+      <div class="card text-white bg-info mb-3" style="max-width: 18rem;">
+        <div class="card-body">
+        <h5 class="card-title">Cash Payments</h5>
+        <p class="card-text fs-2" id='total_cash_payment'>$0.00</p>
+        <p class="card-text"><i class="bi bi-info-circle-fill"></i>&nbsp;<small class="">Total money received from cash/eftpos/cheque/money order</small></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="card text-white bg-warning mb-3" style="max-width: 18rem;">
+      <div class="card-body">
+        <h5 class="card-title">Oracle Total</h5>
+        <p class="card-text fs-2" id='total_oracle'>$0.00</p>
+        <p class="card-text"><i class="bi bi-info-circle-fill"></i>&nbsp;<small class=""> Total of debit's and credits moved to and from oracle codes</small></p>
+      </div>
+    </div>
+    </div>
+
+
+    <div class="col">
+    <div class="card text-white bg-danger mb-3" style="max-width: 18rem;">
+      <div class="card-body">
+        <h5 class="card-title">Unallocated Pool</h5>
+        <p class="card-text fs-2" id='total_unallocated'>$0.00</p>
+        <p class="card-text"><i class="bi bi-info-circle-fill"></i>&nbsp;<small class=""> Total money moved to the unallocated pool</small></p>
+      </div>
+    </div>
+    </div>
 </div>
 
 {% if payment_oracle_admin is True %}

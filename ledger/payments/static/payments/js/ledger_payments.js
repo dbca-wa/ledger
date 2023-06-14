@@ -1,90 +1,107 @@
 var ledger_payments = {
-     var: {
-	'current_invoice_group_id': '',
-	'current_invoice_no': '',
-	'current_booking_reference': '',
-        'csrf_token': '',
-        'payment_info_url' : '/ledger/payments/api/ledger/payments-info',
-        'failed_transaction_url' : '/ledger/payments/api/ledger/failed-transactions',
-        'payment_info': [],
-	'pagestart': 0,
-	'pageend': 10,
-        'formoptions': {'frstatus': '', 'frsystem':'','frkeyword': '' },
-	'selected_id': null
-     },
-     load_payment_info: function() {
-	 data = {}
-	 $('#LoadingPopup').modal('show');
-         $.ajax({
-             url: ledger_payments.var.payment_info_url+"?invoice_group_id="+ledger_payments.var.current_invoice_group_id+"&invoice_no="+ledger_payments.var.current_invoice_no+"&booking_reference="+ledger_payments.var.current_booking_reference+"&receipt_no="+ledger_payments.var.receipt_no+"&txn_number="+ledger_payments.var.txn_number,
-             method: "GET",
-             headers: {'X-CSRFToken' : ledger_payments.var.csrf_token },
-             //data: JSON.stringify({'payload': data,}),
-             contentType: "application/json",
-             success: function(data) {
-		        var orderdata = "";
-		        var bpointdata = "";
-		        var cashdata = "";
-		        var linked_invoices = "";
+
+        var: {
+                'current_invoice_group_id': '',                
+                'current_invoice_no': '',
+                'current_booking_reference': '',
+                'csrf_token': '',
+                'payment_info_url' : '/ledger/payments/api/ledger/payments-info',
+                'failed_transaction_url' : '/ledger/payments/api/ledger/failed-transactions',
+                'payment_info': [],
+                'pagestart': 0,
+                'pageend': 10,
+                'formoptions': {'frstatus': '', 'frsystem':'','frkeyword': '' },
+                'selected_id': null
+        },
+        load_payment_info: function() {
+                data = {}
+                $('#LoadingPopup').modal('show');
+                $.ajax({
+                url: ledger_payments.var.payment_info_url+"?invoice_group_id="+ledger_payments.var.current_invoice_group_id+"&invoice_no="+ledger_payments.var.current_invoice_no+"&booking_reference="+ledger_payments.var.current_booking_reference+"&receipt_no="+ledger_payments.var.receipt_no+"&txn_number="+ledger_payments.var.txn_number,
+                method: "GET",
+                headers: {'X-CSRFToken' : ledger_payments.var.csrf_token },
+                //data: JSON.stringify({'payload': data,}),
+                contentType: "application/json",
+                success: function(data) {
+                        var orderdata = "";
+                        var bpointdata = "";
+                        var cashdata = "";
+                        var linked_invoices = "";
                         if (data.status == 200) { 
-                        if (data.data.order.length > 0) {
-                             for (let i = 0; i < data.data.order.length; i++) {
-                                    var line_price_incl_tax_color = '#bb2d3b';
-				    if (data.data.order[i].line_price_incl_tax > 0) {
-					 line_price_incl_tax_color = '#157347';				         	   
-			            }
+                                if (data.data.order.length > 0) {
+                                        for (let i = 0; i < data.data.order.length; i++) {
+                                                var line_price_incl_tax_color = '#bb2d3b';
+                                                if (data.data.order[i].line_price_incl_tax > 0) {
+                                                        line_price_incl_tax_color = '#157347';				         	   
+                                                }
 
-				    orderdata+= "<tr><td>"+data.data.order[i].order_number+"</td><td>"+data.data.order[i].title+"</td><td>"+data.data.order[i].oracle_code+"</td><td style='background-color: "+line_price_incl_tax_color+"; color: #FFFFFF;'>$"+data.data.order[i].line_price_incl_tax+"</td><td>$"+data.data.order[i].rolling_total+"</td><td>"+data.data.order[i].order_date+"</td></tr>";
-                                    // console.log(data.data.order[i]); 
-			     }
+                                                orderdata+= "<tr><td>"+data.data.order[i].order_number+"</td><td>"+data.data.order[i].title+"</td><td>"+data.data.order[i].oracle_code+"</td><td style='background-color: "+line_price_incl_tax_color+"; color: #FFFFFF;'>$"+data.data.order[i].line_price_incl_tax+"</td><td>$"+data.data.order[i].rolling_total+"</td><td>"+data.data.order[i].order_date+"</td></tr>";
+                                                // console.log(data.data.order[i]); 
+                                        }
 
-			     for (let i = 0; i < data.data.bpoint.length; i++) {
-				     
-                                     bpointdata+= "<tr><td>"+data.data.bpoint[i].txnnumber+"</td><td><A href='/ledger/payments/invoice-pdf/"+data.data.bpoint[i].crn1+"' target='_pdf_invoice_"+data.data.bpoint[i].crn1+"'>"+data.data.bpoint[i].crn1+"</a></td><td>"+data.data.bpoint[i].action+"</td><td>$"+data.data.bpoint[i].amount+"</td><td>"+data.data.bpoint[i].processed+"</td><td>"+data.data.bpoint[i].settlement_date+"</td><td>"+data.data.bpoint[i].last_digits+"</td></tr>";
-				     // console.log(data.data.bpoint[i]);
-			     }
+                                        for (let i = 0; i < data.data.bpoint.length; i++) {
+                                                
+                                                bpointdata+= "<tr><td>"+data.data.bpoint[i].txnnumber+"</td><td><A href='/ledger/payments/invoice-pdf/"+data.data.bpoint[i].crn1+"' target='_pdf_invoice_"+data.data.bpoint[i].crn1+"'>"+data.data.bpoint[i].crn1+"</a></td><td>"+data.data.bpoint[i].action+"</td><td>$"+data.data.bpoint[i].amount+"</td><td>"+data.data.bpoint[i].processed+"</td><td>"+data.data.bpoint[i].settlement_date+"</td><td>"+data.data.bpoint[i].last_digits+"</td></tr>";
+                                                // console.log(data.data.bpoint[i]);
+                                        }
 
-			     for (let i = 0; i < data.data.cash.length; i++) {
-				     cashdata+= "<tr><td>"+data.data.cash[i].id+"</td><td>"+data.data.cash[i].invoice_reference+"</td><td>"+data.data.cash[i].action+"</td><td>$"+data.data.cash[i].amount+"</td><td>"+data.data.cash[i].created+"</td></tr>";
-			     }
-		      }
-		      if (data.data.linked_payments.length > 0 ) {
-                                for (let i = 0; i < data.data.linked_payments.length; i++) {
-                                      linked_invoices+= "<tr><td>"+data.data.linked_payments[i].invoice_reference+"</td><td>"+data.data.linked_payments[i].booking_reference+"</td><td>"+data.data.linked_payments[i].booking_reference_linked+"</td></tr>";
+                                        for (let i = 0; i < data.data.cash.length; i++) {
+                                                cashdata+= "<tr><td>"+data.data.cash[i].id+"</td><td>"+data.data.cash[i].invoice_reference+"</td><td>"+data.data.cash[i].action+"</td><td>$"+data.data.cash[i].amount+"</td><td>"+data.data.cash[i].created+"</td></tr>";
+                                        }
+                                }
+                                if (data.data.linked_payments.length > 0 ) {
+                                                for (let i = 0; i < data.data.linked_payments.length; i++) {
+                                                linked_invoices+= "<tr><td>"+data.data.linked_payments[i].invoice_reference+"</td><td>"+data.data.linked_payments[i].booking_reference+"</td><td>"+data.data.linked_payments[i].booking_reference_linked+"</td></tr>";
 
-				}
+                                                }
 
-		      }
+                                }
 
-		      $('#order_list').html(orderdata);
-		      $('#bpoint_tbody').html(bpointdata);
-		      $('#cash_tbody').html(cashdata);
-		      $('#linked_invoices').html(linked_invoices);
-		      $('#total_payment_gateway').html('$&nbsp;'+data.data.total_gateway_amount);
-		      $('#total_cash_payment').html('$&nbsp;'+data.data.total_cash_amount);
-		      $('#total_unallocated').html('$&nbsp;'+data.data.total_unallocated);
+                                $('#order_list').html(orderdata);
+                                $('#bpoint_tbody').html(bpointdata);
+                                $('#cash_tbody').html(cashdata);
+                                $('#linked_invoices').html(linked_invoices);
+                                $('#total_payment_gateway').html('$&nbsp;'+data.data.total_gateway_amount);
+                                $('#total_cash_payment').html('$&nbsp;'+data.data.total_cash_amount);
+                                $('#total_unallocated').html('$&nbsp;'+data.data.total_unallocated);
+                                $('#total_oracle').html('$&nbsp;'+data.data.total_oracle_amount);
+                                
+                                $('#fix-linked-invoice-grouping-link').attr("href","/ledger/payments/oracle/payments/linked-invoice-issues/"+data.data.invoice_group_id+"/");
+                                $('#fix-linked-payment-issues').attr("href","/ledger/payments/oracle/payments/linked-payment-issues/"+data.data.invoice_group_id+"/");
 
-                      refund_booking.var.bpoint_trans_totals = data.data.bpoint;
-		      refund_booking.var.cash_trans_totals = data.data.cash;
-		      refund_booking.var.cash_on_invoices = data.data.cash_on_invoices;
-		      refund_booking.var.invoices_data = data.data.invoices_data;
-		      refund_booking.var.unique_oracle_code_on_booking = data.data.oracle_code_totals; 
-		      refund_booking.var.booking_reference = data.data.booking_reference;
-		      refund_booking.var.booking_reference_linked = data.data.booking_reference_linked;
-		      refund_booking.re_init();
-                      }
+                                refund_booking.var.bpoint_trans_totals = data.data.bpoint;
+                                refund_booking.var.cash_trans_totals = data.data.cash;
+                                refund_booking.var.cash_on_invoices = data.data.cash_on_invoices;
+                                refund_booking.var.invoices_data = data.data.invoices_data;
+                                refund_booking.var.unique_oracle_code_on_booking = data.data.oracle_code_totals; 
+                                refund_booking.var.booking_reference = data.data.booking_reference;
+                                refund_booking.var.booking_reference_linked = data.data.booking_reference_linked;
+                                refund_booking.var.invoice_group_id = data.data.invoice_group_id;
+                                refund_booking.re_init();
+                                
+                                if (data.data.invoice_group_checks_total > 1) {
+                                        $('#oracle-payments-data-error-message').html("<B>Error</B> Linked invoice grouping issues.  Please fix before making any monetary changes or payment refunds.");                
+                                        $('#oracle-payments-data-error').show();
+                                }
+                                var bpoint_cash_total = data.data.total_gateway_amount + data.data.total_cash_amount;
+                                if (parseFloat(data.data.total_oracle_amount) != parseFloat(bpoint_cash_total)) {
+                                        $('#oracle-payments-data-error-message').html("<B>Error</B> You have a oracle discrepency agasin't your bpoint and cash payments.  Please investigate before performing any monetary changes.");                
+                                        $('#oracle-payments-data-error').show();                                        
+                                }
 
-		      setTimeout("$('#LoadingPopup').modal('hide');",500);
+                        }
 
-		      if (data.status == 404 ) {
-			  $('#oracle-payments-data-error-message').html(data.message);
-			  $('#oracle-payments-data').hide();
-			  $('#oracle-payments-data-error').show();
-		      }
+                        setTimeout("$('#LoadingPopup').modal('hide');",500);
 
-		      // refund_booking.init();
-		      // console.log(data);
-             },
+                        if (data.status == 404 ) {
+                                $('#oracle-payments-data-error-message').html(data.message);
+                                $('#oracle-payments-data').hide();
+                                $('#oracle-payments-data-error').show();
+                        }
+
+                        // refund_booking.init();
+                        // console.log(data);
+                },
              error: function(errMsg) {
 
 		     setTimeout("$('#LoadingPopup').modal('hide');",500);
