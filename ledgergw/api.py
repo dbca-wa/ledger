@@ -1797,7 +1797,7 @@ def create_organistion(request,apikey):
     return response
 
 @csrf_exempt
-def update_organistion(request,apikey):
+def update_organisation(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():

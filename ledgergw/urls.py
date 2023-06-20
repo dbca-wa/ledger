@@ -44,7 +44,7 @@ urlpatterns = [
     url(r'^ledgergw/remote/get_all_organisation/(?P<apikey>.+)/', api.get_all_organisation),
     url(r'^ledgergw/remote/get_search_organisation/(?P<apikey>.+)/', api.get_search_organisation),
     url(r'^ledgergw/remote/create_organisation/(?P<apikey>.+)/', api.create_organistion),
-    url(r'^ledgergw/remote/update_organisation/(?P<apikey>.+)/', api.update_organistion),
+    url(r'^ledgergw/remote/update_organisation/(?P<apikey>.+)/', api.update_organisation),
     url(r'^ledgergw/remote/create_get_emailuser/(?P<apikey>.+)/', api.create_get_emailuser),
     url(r'^ledgergw/invoice-pdf/(?P<api_key>\w+)/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
     url(r'^api/reports/refunds$', api.RefundsReportView.as_view(), name='refunds-report'),
