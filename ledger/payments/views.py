@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from ledger.payments.pdf import create_invoice_pdf_bytes
 from ledger.payments.utils import checkURL
 from ledger.payments.cash.models import REGION_CHOICES
+from ledger.payments.utils import systemid_check, update_payments, ledger_payment_invoice_calulations 
 #
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
@@ -19,6 +20,11 @@ from ledger.payments.mixins import InvoiceOwnerMixin
 from ledger.basket import models as basket_models
 from ledger.payments import models as payments_models
 from ledger.payments import helpers
+from ledger.payments.models import LinkedInvoiceGroupIncrementer, LinkedInvoice
+from django.db.models import Q
+from decimal import Decimal as D
+from django.db.models import Count
+from ledger.payments.invoice import utils as invoice_utils
 #
 from confy import env
 #
@@ -81,7 +87,137 @@ class OraclePayments(generic.TemplateView):
             self.template_name = 'dpaw_payments/forbidden.html'
         return ctx
 
+class LinkedInvoiceIssue(generic.TemplateView):
+    template_name = 'dpaw_payments/linked_invoice_payments_issues.html'
 
+    def get(self, request, **kwargs):
+        
+        ctx = super(LinkedInvoiceIssue,self).get_context_data(**kwargs)
+        if helpers.is_payment_admin(request.user) is True:
+            invoice_group_id = self.kwargs['linked_invoice_group_id']
+            fix_lgid = request.GET.get('fix_lgid','');            
+            
+            linked_payments_booking_references = []
+            linked_group_issue = False
+            if invoice_group_id:
+                if int(invoice_group_id) > 0:
+                    linkinv = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id)
+                    if linkinv.count() > 0:
+                        # invoice_group = LinkedInvoice.objects.filter(invoice_group_id=invoice_group_id).order_by('-created')[0]
+
+                        # invoice_group_checks = LinkedInvoice.objects.filter(Q(booking_reference__in=linked_payments_booking_references) | Q(booking_reference_linked__in=linked_payments_booking_references)).values('invoice_group_id_id').annotate(total=Count('invoice_group_id_id')).order_by('total')
+
+                        for li in linkinv:                                                
+                            if li.booking_reference not in linked_payments_booking_references:
+                                linked_payments_booking_references.append(li.booking_reference)
+                            if li.booking_reference_linked not in linked_payments_booking_references:
+                                linked_payments_booking_references.append(li.booking_reference_linked)
+
+                        invoice_group_checks_group_by = LinkedInvoice.objects.filter(Q(booking_reference__in=linked_payments_booking_references) | Q(booking_reference_linked__in=linked_payments_booking_references)).values('invoice_group_id_id').annotate(total=Count('invoice_group_id_id')).order_by('-total')
+                        
+                        invoice_group_id_highest = invoice_group_checks_group_by[0]['invoice_group_id_id']
+                        invoice_group_checks = LinkedInvoice.objects.filter(Q(booking_reference__in=linked_payments_booking_references) | Q(booking_reference_linked__in=linked_payments_booking_references))
+                        if invoice_group_checks_group_by.count() > 1:
+                            linked_group_issue = True
+                        
+                        if fix_lgid == 'true':
+                            invoice_group_id_highest_obj = LinkedInvoiceGroupIncrementer.objects.filter(id=invoice_group_id_highest)
+                            if invoice_group_id_highest_obj.count() > 0:
+                                for lgc in invoice_group_checks:
+                                    lgc.invoice_group_id = invoice_group_id_highest_obj[0]
+                                    lgc.save()
+                            response = HttpResponse("<script>window.location='/ledger/payments/oracle/payments/linked-invoice-issues/"+str(invoice_group_id)+"/';</script>", content_type='text/html')
+                            return response
+
+            ctx['invoice_group_id_highest'] = invoice_group_id_highest            
+            ctx['invoice_group_id'] = invoice_group_id
+            ctx['oracle_code_refund_allocation_pool'] = settings.UNALLOCATED_ORACLE_CODE
+            ctx['invoice_group_checks'] = invoice_group_checks
+            ctx['linked_group_issue'] = linked_group_issue
+
+            #self.get_booking_history(invoice_group_id)
+        else:
+            self.template_name = 'dpaw_payments/forbidden.html'
+        return render(request, self.template_name, ctx)
+
+
+class LinkedPaymentIssue(generic.TemplateView):
+    template_name = 'dpaw_payments/linked_payments_issues.html'
+
+    def get(self, request, **kwargs):
+        
+        ctx = super(LinkedPaymentIssue,self).get_context_data(**kwargs)
+        if helpers.is_payment_admin(request.user) is True:
+            invoice_group_id = self.kwargs['linked_invoice_group_id']
+            generate_receipts_for = []
+            fix_discrephency = request.GET.get('fix_discrephency','')            
+            
+            linked_payments_booking_references = []
+            linked_group_issue = False
+            if invoice_group_id:
+                lpic = ledger_payment_invoice_calulations(invoice_group_id, None, None, None, None)
+                total_difference_of_gw_and_oracle = D(lpic['data']['total_gateway_amount']) - D(lpic['data']['total_oracle_amount'])
+
+                #if D(lpic['data']['total_gateway_amount']) >= total_difference_of_gw_and_oracle:
+                if  D(lpic['data']['total_gateway_amount']) != D(lpic['data']['total_oracle_amount']):
+                    bp_hash = {}
+                    inv_hash = {}
+                    for bp_data in lpic['data']['bpoint']:
+                        hashstr = str(str(bp_data['settlement_date']) + str(bp_data['amount'])).replace("/","").replace(".","")
+                        if hashstr in bp_hash:
+                            if bp_data['action'] == 'payment':
+                                bp_hash[hashstr]['total'] = bp_hash[hashstr]['total'] + 1
+                                bp_hash[hashstr]['total_amount'] = str(D(bp_hash[hashstr]['total_amount']) + D(bp_data['amount']))
+                            elif bp_data['action'] == 'refund':
+                                bp_hash[hashstr]['total'] = bp_hash[hashstr]['total'] + 1
+                                bp_hash[hashstr]['total_amount'] = str(D(bp_hash[hashstr]['total_amount']) - D(bp_data['amount']))                                
+                        else:
+                            if bp_data['action'] == 'payment':
+                                bp_hash[hashstr] = {'total':  1, 'total_amount': bp_data['amount'],'amount': bp_data['amount'], 'settlement_date': bp_data['settlement_date']}
+                            elif bp_data['action'] == 'refund':
+                                total_refund = D(bp_data['amount']) - D(bp_data['amount'])
+                                bp_hash[hashstr] = {'total':  1, 'total_amount': total_refund,'amount': total_refund, 'settlement_date': bp_data['settlement_date']}
+
+                    for inv_data in lpic['data']['invoices_data']:
+                        hashstr = str(str(inv_data['settlement_date']) + str(inv_data['amount'])).replace("/","").replace(".","")
+                        if hashstr in inv_data:
+                            inv_hash[hashstr]['total'] = inv_hash[hashstr]['total'] + 2
+                            inv_hash[hashstr]['total_amount'] = str(D(inv_hash[hashstr]['total_amount']) + D(inv_data['amount']))
+                        else:
+                            inv_hash[hashstr] = {'total':  1, 'total_amount' : inv_data['amount'], 'amount': inv_data['amount'], 'settlement_date': inv_data['settlement_date']}
+
+                    for bp_keys in bp_hash:
+                        if bp_keys in inv_hash:
+                            if bp_keys in inv_hash: 
+                                total_trans = bp_hash[bp_keys]['total'] - inv_hash[bp_keys]['total']
+                                total_amount = str(total_trans * D(bp_hash[bp_keys]['amount']))                                
+                                generate_receipts_for.append({"total_amount": total_amount, "settlement_date": bp_hash[bp_keys]['settlement_date']})                                                                                            
+
+
+
+                if fix_discrephency == 'true':
+                    lines = []
+                    for gr in generate_receipts_for:                    
+                        lines.append({'ledger_description':str("Payment disrephency for settlement date {}".format(gr['settlement_date'])),"quantity":1,"price_incl_tax":D('{:.2f}'.format(float(gr['total_amount']))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})                        
+                    order = invoice_utils.allocate_refund_to_invoice(request, lpic['data']['booking_reference'], lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=lpic['data']['booking_reference_linked'],system_id=lpic['data']['system_id'])
+                    new_invoice = Invoice.objects.get(order_number=order.number)
+                    new_invoice.settlement_date = gr['settlement_date']
+                    update_payments(new_invoice.reference)
+                    
+                    response = HttpResponse("<script>window.location='/ledger/payments/oracle/payments/linked-payment-issues/"+str(invoice_group_id)+"/';</script>", content_type='text/html')
+                    return response
+
+
+            print ("GENERATE RECEIPTS FOR")
+            print (generate_receipts_for)
+            print (len(generate_receipts_for))
+            ctx['generate_receipts_for'] = generate_receipts_for
+            ctx['invoice_group_id'] = invoice_group_id
+            ctx['generate_receipts_for_length'] = len(generate_receipts_for)
+        else:
+            self.template_name = 'dpaw_payments/forbidden.html'
+        return render(request, self.template_name, ctx)
+    
 class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
     template_name = 'dpaw_payments/invoice/payment.html'
     num_years = 10

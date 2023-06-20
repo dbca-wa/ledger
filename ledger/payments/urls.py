@@ -58,7 +58,10 @@ urlpatterns = [
     #url(r'payments/invoice/payment/(?P<reference>\d+)',views.InvoicePaymentView.as_view(), name='invoice-payment'),
     url(r'payments/invoice/payment$',views.InvoicePaymentView.as_view(), name='invoice-payment'),
     url(r'payments/invoice/search$',views.InvoiceSearchView.as_view(), name='invoice-search'),
+    url(r'payments/oracle/payments/linked-invoice-issues/(?P<linked_invoice_group_id>\d+)/$', views.LinkedInvoiceIssue.as_view(), name='linked-invoice-issues'),
+    url(r'payments/oracle/payments/linked-payment-issues/(?P<linked_invoice_group_id>\d+)/$', views.LinkedPaymentIssue.as_view(), name='linked-payment-issues'),
     url(r'payments/oracle/payments$', views.OraclePayments.as_view(), name='oracle-payments'),
+    
     url(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
     url(r'payments/oracle/failed-transactions$', views.FailedTransaction.as_view(), name='failed-transactions')
 ]
