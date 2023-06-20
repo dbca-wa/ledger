@@ -1949,6 +1949,7 @@ def get_organisation(request,apikey):
                     jsondata['data'] = {
                             "organisation_id": org_obj.id, 
                             "organisation_name": org_obj.name, 
+                            "organisation_trading_name": org_obj.trading_name, 
                             "organisation_abn": org_obj.abn, 
                             "organisation_email": org_obj.email,
                             "billing_address": {
