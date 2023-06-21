@@ -51,7 +51,7 @@ var ledger_payments = {
                                 }
                                 if (data.data.linked_payments.length > 0 ) {
                                                 for (let i = 0; i < data.data.linked_payments.length; i++) {
-                                                linked_invoices+= "<tr><td>"+data.data.linked_payments[i].invoice_reference+"</td><td>"+data.data.linked_payments[i].booking_reference+"</td><td>"+data.data.linked_payments[i].booking_reference_linked+"</td></tr>";
+                                                linked_invoices+= "<tr><td>"+data.data.linked_payments[i].invoice_reference+"</td><td>"+data.data.linked_payments[i].booking_reference+"</td><td>"+data.data.linked_payments[i].booking_reference_linked+"</td><td>"+data.data.linked_payments[i].settlement_date+"</td></tr>";
 
                                                 }
 

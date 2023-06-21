@@ -946,9 +946,13 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
                          invoices_data = []
                          orders = []
                          invoice_group_checks_total = 0
-                         for li in linkinv:
+                         for li in linkinv:                             
                              invoices.append(li.invoice_reference)
-                             linked_payments.append({'id': li.id, 'invoice_reference': li.invoice_reference, 'system_identifier_id': li.system_identifier.id, 'system_identifier_system': li.system_identifier.system_id, 'booking_reference': li.booking_reference, 'booking_reference_linked': li.booking_reference_linked, 'invoice_group_id': li.invoice_group_id.id})
+                             inv = Invoice.objects.filter(reference=li.invoice_reference)
+                             settlement_date = ''
+                             if inv.count() > 0:
+                                 settlement_date = inv[0].settlement_date.strftime("%d/%m/%Y")
+                             linked_payments.append({'id': li.id, 'invoice_reference': li.invoice_reference, 'system_identifier_id': li.system_identifier.id, 'system_identifier_system': li.system_identifier.system_id, 'booking_reference': li.booking_reference, 'booking_reference_linked': li.booking_reference_linked, 'invoice_group_id': li.invoice_group_id.id,'settlement_date': settlement_date})
                              if li.booking_reference not in linked_payments_booking_references:
                                 linked_payments_booking_references.append(li.booking_reference)
                              if li.booking_reference_linked not in linked_payments_booking_references:
