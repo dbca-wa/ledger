@@ -858,14 +858,21 @@ def LinkedInvoiceCreate(invoice, basket_id):
                       print ("LinkedInvoice already exists, not dupilication")
                   else:
                       if basket.booking_reference_link:
-                          if len(basket.booking_reference_link) > 0:
-                              li = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference_link)
-                              if li.count() > 0:
-                                  lig = li[0].invoice_group_id
-                              else:
-                                  libr = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference)
-                                  if libr.count() > 0:
-                                      lig = libr[0].invoice_group_id
+                            if len(basket.booking_reference_link) > 0:
+                                li = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference_link)
+                                if li.count() > 0:
+                                    lig = li[0].invoice_group_id                                  
+                                else:
+                                    libr = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference)
+                                    if libr.count() > 0:
+                                        lig = libr[0].invoice_group_id
+
+                      if lig is None:
+                            if len(basket.booking_reference) > 0:
+                                libr = LinkedInvoice.objects.filter(system_identifier=ois,booking_reference=basket.booking_reference)
+                                if libr.count() > 0:
+                                    lig = libr[0].invoice_group_id
+                            
                       if lig is None:
                            lig = LinkedInvoiceGroupIncrementer.objects.create(system_identifier=ois)
                       booking_reference_linked = basket.booking_reference_link
