@@ -27,7 +27,9 @@ from django.db.models import Count
 from ledger.payments.invoice import utils as invoice_utils
 #
 from confy import env
+from datetime import datetime
 #
+
 
 class InvoicePDFView(InvoiceOwnerMixin,generic.View):
     def get(self, request, *args, **kwargs):
@@ -228,7 +230,7 @@ class LinkedPaymentIssue(generic.TemplateView):
                         lines.append({'ledger_description':str("Payment disrephency for settlement date {}".format(gr['settlement_date'])),"quantity":1,"price_incl_tax":D('{:.2f}'.format(float(gr['total_amount']))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': line_status})
                     order = invoice_utils.allocate_refund_to_invoice(request, lpic['data']['booking_reference'], lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=lpic['data']['booking_reference_linked'],system_id=lpic['data']['system_id'])
                     new_invoice = Invoice.objects.get(order_number=order.number)
-                    new_invoice.settlement_date = gr['settlement_date']
+                    new_invoice.settlement_date = datetime.strptime(gr['settlement_date'], '%d/%m/%Y').date()
                     new_invoice.save()
                     update_payments(new_invoice.reference)
                     
