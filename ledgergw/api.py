@@ -326,7 +326,15 @@ def user_info_id(request, userid,apikey):
                     ledger_user_group = []
                     for g in ledger_obj.groups.all():
                         ledger_user_group.append({'group_id': g.id, 'group_name': g.name})
-                    ledger_user_json['groups'] = ledger_user_group
+                    ledger_user_json['groups'] = ledger_user_group                    
+                    jsondata['information_status'] = {"personal_details_completed" : False,
+                                                              "address_details_completed": False,
+                                                              "contact_details_completed": False,                                                              
+                                                             }
+                    
+                    # if len(ledger_user_json['dob']) == 10:
+                    #     jsondata['information_status']["personal_details_completed"] = True
+                        
                     jsondata['user'] = ledger_user_json
                     jsondata['status'] = 200
                     jsondata['message'] = 'User Found'
