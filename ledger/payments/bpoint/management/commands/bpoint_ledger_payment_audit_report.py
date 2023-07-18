@@ -163,8 +163,13 @@ class Command(BaseCommand):
                   'parser_invoice_totals' : parser_invoice_totals,
                   'parser_invoice_totals_rolling_totals' : parser_invoice_totals_rolling_totals
               }
-              email_list = []
-              for email_to in settings.NOTIFICATION_EMAIL.split(","):
-                     email_list.append(email_to)
+            #   email_list = []
+            #   for email_to in settings.NOTIFICATION_EMAIL.split(","):
+            #          email_list.append(email_to)
+
+              oirr = payment_models.OracleInterfaceReportReceipient.objects.filter(system=oracle_system)
+              for rr in oirr:
+                    print (rr.email)
+                    email_list.append(rr.email)                     
               sendHtmlEmail(tuple(email_list),"[LEDGER] Bpoint Ledger Payment Audit Report for "+str(settlement_date_search)+" "+SYSTEM_ID,context,'email/bpoint_ledger_payment_audit.html',None,None,settings.EMAIL_FROM,'system-oim',attachments=None)
                     
