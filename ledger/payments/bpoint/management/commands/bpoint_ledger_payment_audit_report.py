@@ -163,11 +163,11 @@ class Command(BaseCommand):
                   'parser_invoice_totals' : parser_invoice_totals,
                   'parser_invoice_totals_rolling_totals' : parser_invoice_totals_rolling_totals
               }
-            #   email_list = []
+              email_list = []
             #   for email_to in settings.NOTIFICATION_EMAIL.split(","):
             #          email_list.append(email_to)
 
-              oirr = OracleInterfaceReportReceipient.objects.filter(system=oracle_system)
+              oirr = OracleInterfaceReportReceipient.objects.filter(system=ofs)
               for rr in oirr:
                     print (rr.email)
                     email_list.append(rr.email)                     
