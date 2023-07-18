@@ -7,7 +7,7 @@ from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from django.conf import settings
 from datetime import timedelta, datetime
 from ledger.payments.bpoint.facade import Facade
-from ledger.payments.models import OracleInterfaceSystem, OracleInterface, OracleParser, OracleParserInvoice 
+from ledger.payments.models import OracleInterfaceSystem, OracleInterface, OracleParser, OracleParserInvoice, OracleInterfaceReportReceipient
 from ledger.emails.emails import sendHtmlEmail
 import json
 
@@ -167,7 +167,7 @@ class Command(BaseCommand):
             #   for email_to in settings.NOTIFICATION_EMAIL.split(","):
             #          email_list.append(email_to)
 
-              oirr = payment_models.OracleInterfaceReportReceipient.objects.filter(system=oracle_system)
+              oirr = OracleInterfaceReportReceipient.objects.filter(system=oracle_system)
               for rr in oirr:
                     print (rr.email)
                     email_list.append(rr.email)                     
