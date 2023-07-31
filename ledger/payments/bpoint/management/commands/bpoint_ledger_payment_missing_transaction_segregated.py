@@ -71,33 +71,33 @@ class Command(BaseCommand):
                              if rec.txn_number == c.txn_number:
                                  exists = True
                          #exists = False
+                         if c.action != 'reversal':
+                            if exists is False:
+                                    bpoint_amount_nice1 = str(c.amount)[:-2]+'.'+str(c.amount)[-2:]
+                                    missing_records_in_ledger.append({'crn1': c.crn1, 'created':c.processed_date_time, 'settlement_date': c.settlement_date, 'amount':bpoint_amount_nice1,'action': c.action, 'txn_number': c.txn_number, 'card_details' : c.card_details.masked_card_number, 'rrn': c.rrn , 'original_txn_number' : c.original_txn_number , 'card_type' : c.card_type, 'receipt_number' : c.receipt_number, 'dvtoken': c.dvtoken })
+                                    orignal_crn1 = ''
+                                    if c.original_txn_number:
+                                        bpoint_orginal = BpointTransaction.objects.filter(txn_number=c.original_txn_number)
+                                        if bpoint_orginal.count() > 0:
+                                            orignal_crn1 = bpoint_orginal[0].crn1
+                                    BpointTransaction.objects.create(action=c.action,
+                                                                    amount=bpoint_amount_nice1,
+                                                                    amount_original=bpoint_amount_nice1,
+                                                                    cardtype=c.card_type,
+                                                                    crn1=c.crn1,
+                                                                    original_crn1=orignal_crn1, 
+                                                                    response_code=0, 
+                                                                    response_txt='Approved', 
+                                                                    receipt_number=c.receipt_number, 
+                                                                    processed=c.processed_date_time, 
+                                                                    settlement_date=datetime.strptime(c.settlement_date, "%Y%m%d").date(),
+                                                                    type=c.type, 
+                                                                    txn_number=c.txn_number,
+                                                                    original_txn=c.original_txn_number,
+                                                                    dvtoken=c.dvtoken,
+                                                                    is_test=c.is_test_txn)
 
-                         if exists is False:
-                                bpoint_amount_nice1 = str(c.amount)[:-2]+'.'+str(c.amount)[-2:]
-                                missing_records_in_ledger.append({'crn1': c.crn1, 'created':c.processed_date_time, 'settlement_date': c.settlement_date, 'amount':bpoint_amount_nice1,'action': c.action, 'txn_number': c.txn_number, 'card_details' : c.card_details.masked_card_number, 'rrn': c.rrn , 'original_txn_number' : c.original_txn_number , 'card_type' : c.card_type, 'receipt_number' : c.receipt_number, 'dvtoken': c.dvtoken })
-                                orignal_crn1 = ''
-                                if c.original_txn_number:
-                                     bpoint_orginal = BpointTransaction.objects.filter(txn_number=c.original_txn_number)
-                                     if bpoint_orginal.count() > 0:
-                                         orignal_crn1 = bpoint_orginal[0].crn1
-                                BpointTransaction.objects.create(action=c.action,
-                                                                 amount=bpoint_amount_nice1,
-                                                                 amount_original=bpoint_amount_nice1,
-                                                                 cardtype=c.card_type,
-                                                                 crn1=c.crn1,
-                                                                 original_crn1=orignal_crn1, 
-                                                                 response_code=0, 
-                                                                 response_txt='Approved', 
-                                                                 receipt_number=c.receipt_number, 
-                                                                 processed=c.processed_date_time, 
-                                                                 settlement_date=datetime.strptime(c.settlement_date, "%Y%m%d").date(),
-                                                                 type=c.type, 
-                                                                 txn_number=c.txn_number,
-                                                                 original_txn=c.original_txn_number,
-                                                                 dvtoken=c.dvtoken,
-                                                                 is_test=c.is_test_txn)
-
-                         ledger_bpoint_count = ledger_bpoint_count + 1
+                            ledger_bpoint_count = ledger_bpoint_count + 1
                print ("Ledger Bpoint Transaction count:" +str(ledger_bpoint_count))
 
                # Totals
