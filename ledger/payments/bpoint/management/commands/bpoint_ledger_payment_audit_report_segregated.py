@@ -83,9 +83,14 @@ class Command(BaseCommand):
                for c in b:
                     if c.bank_response_code == '00' and c.response_code == '0':
                         amount = str(c.amount)[:-2]+'.'+str(c.amount)[-2:]
+                        # Skip reversal as these do not impact bpoint settlement totals
+                        if c.action == 'reversal':
+                            continue
+
                         if c.action == 'refund':
                             bpoint_amount = bpoint_amount - c.amount
-                        #elif c.action == 'reversal':
+                        elif c.action == 'reversal':
+                             pass
                         #    bpoint_amount = bpoint_amount - c.amount
                         else:
                             bpoint_amount = bpoint_amount + c.amount
@@ -98,6 +103,8 @@ class Command(BaseCommand):
                             ledger_payment_settlement_date = bp[0].settlement_date 
                             if bp[0].action == 'refund':
                                 ledger_payment_amount = ledger_payment_amount - bp[0].amount
+                            elif bp[0].action == 'reversal':
+                                pass
                             else:
                                 ledger_payment_amount = ledger_payment_amount + bp[0].amount
                         bp_lpb_diff = float(bpoint_amount_nice) - float(ledger_payment_amount)
