@@ -191,18 +191,18 @@ class LinkedPaymentIssue(generic.TemplateView):
                         else:
                             inv_hash[hashstr] = {'total':  1, 'total_amount' : inv_data['amount'], 'amount': inv_data['amount'], 'settlement_date': inv_data['settlement_date']} 
 
-
                     for bp_keys in bp_hash:
                         if bp_keys in inv_hash:
+                            total_trans = bp_hash[bp_keys]['total_refunds'] - inv_hash[bp_keys]['total']
+                            total_amount = str(D(bp_hash[bp_keys]['total_amount']) - D(inv_hash[bp_keys]['total_amount']))
+                        else:
+                            total_trans = bp_hash[bp_keys]['total_refunds'] - float('0.00')
+                            total_amount = str(D(bp_hash[bp_keys]['total_amount']) - D('0.00'))
 
-                                    total_trans = bp_hash[bp_keys]['total_refunds'] - inv_hash[bp_keys]['total']
-      
-                                    total_amount = str(D(bp_hash[bp_keys]['total_amount']) - D(inv_hash[bp_keys]['total_amount']))
-
-                                    if D(total_amount) > 0 and bp_hash[bp_keys]['total_payments'] > 0:                        
-                                        generate_receipts_for.append({"total_amount": total_amount, "settlement_date": bp_hash[bp_keys]['settlement_date']})      
-                                    if D(total_amount) < 0 and bp_hash[bp_keys]['total_refunds'] > 0:
-                                        generate_receipts_for.append({"total_amount": total_amount, "settlement_date": bp_hash[bp_keys]['settlement_date']})         
+                        if D(total_amount) > 0 and bp_hash[bp_keys]['total_payments'] > 0:
+                            generate_receipts_for.append({"total_amount": total_amount, "settlement_date": bp_hash[bp_keys]['settlement_date']})
+                        if D(total_amount) < 0 and bp_hash[bp_keys]['total_refunds'] > 0:
+                            generate_receipts_for.append({"total_amount": total_amount, "settlement_date": bp_hash[bp_keys]['settlement_date']})
 
 
                     for inv_keys in inv_hash:
