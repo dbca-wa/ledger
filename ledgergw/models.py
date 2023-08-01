@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.utils.crypto import get_random_string
 from django_countries.fields import CountryField
 from django.utils.crypto import get_random_string
+from django.conf import settings
 
 from datetime import datetime, date
 
@@ -47,3 +48,24 @@ class API(models.Model):
     def get_random_key(self,key_length=100):
         return get_random_string(length=key_length, allowed_chars=u'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
 
+
+
+
+class JobQueue(models.Model):
+    STATUS = (
+       (0, 'Pending'),
+       (1, 'Running'),
+       (2, 'Completed'),
+       (3, 'Failed'),
+    )
+
+    job_cmd = models.CharField(max_length=1000, null=True, blank=True)
+    system_id = models.CharField(max_length=4, null=True, blank=True)
+    status = models.SmallIntegerField(choices=STATUS, default=0) 
+    parameters_json = models.TextField(null=True, blank=True)
+    processed_dt = models.DateTimeField(default=None,null=True, blank=True )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,default=None,null=True, blank=True )
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.job_cmd   

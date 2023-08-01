@@ -43,6 +43,7 @@ class Command(BaseCommand):
                dupe_bp_trans = []
                no_bpoint_trans = []
                print (oracle_system)
+               
                SYSTEM_ID = oracle_system.system_id
 
                yesterday = datetime.today() - timedelta(days=1)

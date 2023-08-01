@@ -216,7 +216,88 @@
             </div>
         </form>
     </div>
-</div>    
+</div>
+<br>
+    <div class="card">
+        <div class="card-body">
+
+        <form ref="oracle_form" id='oracle_form' onsubmit="event.preventDefault();">
+          <div class="well well-sm">
+              <div class="row">
+                  <div class="col-lg-12">
+                      <div class="col-lg-12">
+                          <h3 style="margin-bottom:20px;">Payment Audit Report</h3>
+                      </div>
+                      <div class="row">
+                          <div class="col-lg-12">
+                              <div class="col-sm-6">
+                                  <div class="form-group">
+                                    <label for="">Date</label>
+                                    <div class="input-group date" ref="paymentauditDatePicker" id='paymentauditDatePicker'>
+                                        <input type="text" class="form-control" name="payment_audit_report" id='paymentauditDatePicker'  placeholder="DD/MM/YYYY" required autocomplete='off'>
+                                                 <span class="input-group-addon input-group-text">
+                                                     <span class="bi bi-calendar2-range-fill"></span>
+                                                 </span>
+                                    </div>
+
+                                  </div>
+                                  <div class="form-group">
+                                      <button onclick="reports.QueuePaymentAuditReportJob()" class="btn btn-primary pull-left" >Run Job</button>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </form>
+  </div>
+
+</div>
+  <br>
+  <div class="card">
+      <div class="card-body">
+
+      <form ref="oracle_form" id='oracle_form' onsubmit="event.preventDefault();">
+        <div class="well well-sm">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="col-lg-12">
+                        <h3 style="margin-bottom:20px;">Time Based Payment Audit Report</h3>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                  <label for="">Date</label>
+                                  <div class="input-group date" ref="timepaymentauditreportDatePicker" id='timepaymentauditreportDatePicker'>
+                                      <input type="text" class="form-control" name="time_payment_audit_report" id='timepaymentauditreportDatePicker'  placeholder="DD/MM/YYYY" required autocomplete='off'>
+                                            <span class="input-group-addon input-group-text">
+                                                <span class="bi bi-calendar2-range-fill"></span>
+                                            </span>
+                                  </div>
+                                </div>
+                                <div class="form-group">
+                                    <button onclick="reports.QueueTimePaymentAuditReportJob()" class="btn btn-primary pull-left" >Run Job</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+
+
+</div>  
+
+
+
+
+
     </div>
 <br>
 <br>  
@@ -230,6 +311,7 @@
 // export default {
 	var reports = { "var": {
 		                   system_id: "{{ system_id }}",
+                           queue_report_job_url: "/api/queue-report-job",
 		                   refund_report_url: "/api/reports/refunds",
 		                   settlement_report_url: "/api/reports/settlements",
 		                   payments_report_url: '/ledger/payments/api/report-allocated',
@@ -248,6 +330,9 @@
                                    flatDateEndPicker:null,
                                    refundsStartPicker:null,
                                    refundsEndPicker:null,
+                                   paymentauditDatePicker:null,
+                                   timepaymentauditreportDatePicker:null,
+
                                    datepickerOptions:{
                                        format: 'DD/MM/YYYY',
                                        showClear:true,
@@ -277,7 +362,8 @@
                                 reports.var.refundsEndPicker = $('#refundsEndPicker').datetimepicker(reports.var.datepickerOptions);
                                 reports.var.oracleDatePicker = $('#oracleDatePicker').datetimepicker(reports.var.datepickerOptions);
                                 reports.var.bookingSettlementsDatePicker = $('#bookingSettlementsDatePicker').datetimepicker(reports.var.datepickerOptions);
-
+                                reports.var.paymentauditDatePicker = $('#paymentauditDatePicker').datetimepicker(reports.var.datepickerOptions);
+                                reports.var.timepaymentauditreportDatePicker = $('#timepaymentauditreportDatePicker').datetimepicker(reports.var.datepickerOptions);
                                 reports.var.flatDateStartPicker.on('dp.hide',function (e) {
                                     reports.var.flatDateEndPicker.data("DateTimePicker").date(null);
                                     reports.var.flatDateEndPicker.data("DateTimePicker").minDate(e.date);
@@ -355,7 +441,61 @@
                                       });
 				}
 
-                        }
+                        },
+                        QueuePaymentAuditReportJob: function() {
+                            var oracle_date = reports.var.paymentauditDatePicker.data("DateTimePicker").date().format('YYYY-MM-DD');
+                            if (oracle_date.length > 0) { 
+                                    $('#LoadingPopup').modal('show');
+                                    var report_url = reports.var.queue_report_job_url+"?system="+reports.var.system_id+"&job_date="+oracle_date+"&job_type=audit_report";
+                                    $.ajax({
+                                      url: report_url,
+                                      method: 'GET',
+                                      dataType: 'json',
+                                      contentType: 'application/json',
+                                      // data: "{}",
+                                      success: function (response) {
+                                            setTimeout("$('#LoadingPopup').modal('hide')",800);
+                                            if (response['data']['status'] == 200) {
+                                                   setTimeout("$('#SuccessPopupBox').modal('show')",1000);
+                                                   console.log(response['data']['message']);
+                                            }
+                                    },
+                                    error: function (error) {
+                                            setTimeout("$('#LoadingPopup').modal('hide');",600);
+                                            setTimeout("$('#ErrorPopupBox').modal('show');",1000);
+                                            console.log('Error running oracle job');
+                                    },
+                                });
+                            }
+
+                        },
+                        QueueTimePaymentAuditReportJob: function() {
+                            var oracle_date = reports.var.timepaymentauditreportDatePicker.data("DateTimePicker").date().format('YYYY-MM-DD');
+                            if (oracle_date.length > 0) { 
+                                    $('#LoadingPopup').modal('show');
+                                    var report_url = reports.var.queue_report_job_url+"?system="+reports.var.system_id+"&job_date="+oracle_date+"&job_type=timed_audit_report";
+                                    $.ajax({
+                                      url: report_url,
+                                      method: 'GET',
+                                      dataType: 'json',
+                                      contentType: 'application/json',
+                                      // data: "{}",
+                                      success: function (response) {
+                                            setTimeout("$('#LoadingPopup').modal('hide')",800);
+                                            if (response['data']['status'] == 200) {
+                                                   setTimeout("$('#SuccessPopupBox').modal('show')",1000);
+                                                   console.log(response['data']['message']);
+                                            }
+                                    },
+                                    error: function (error) {
+                                            setTimeout("$('#LoadingPopup').modal('hide');",600);
+                                            setTimeout("$('#ErrorPopupBox').modal('show');",1000);
+                                            console.log('Error running oracle job');
+                                    },
+                                });
+                            }
+
+                        }                                                 
 
 	              }
 reports.init();

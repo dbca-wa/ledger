@@ -75,6 +75,7 @@ OSCAR_BASKET_COOKIE_OPEN = 'ledgergw_basket'
 
 CRON_CLASSES = [
         'ledgergw.cron.OracleReceipts',
+        'ledgergw.cron.JobQueue'
 ]
 
 # Additional logging
