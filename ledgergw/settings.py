@@ -16,7 +16,8 @@ INSTALLED_APPS += [
     'rest_framework_gis',
     'crispy_forms',
     'ledgergw',
-    'webtemplate_dbca'
+    'webtemplate_dbca',
+
 ]
 
 MIDDLEWARE_CLASSES += [
