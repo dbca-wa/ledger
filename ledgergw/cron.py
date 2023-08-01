@@ -10,6 +10,7 @@ import json
 
 class OracleReceipts(CronJobBase):
     RUN_AT_TIMES = ['01:00']
+    MIN_NUM_FAILURES = 2
 
     schedule = Schedule(run_at_times=RUN_AT_TIMES)
     code = 'ledgergw.oraclereceipts'
