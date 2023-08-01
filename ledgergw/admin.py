@@ -43,3 +43,12 @@ class EmailUserAdmin(ledger_admin.EmailUserAdmin):
 class APIAdmin(ModelAdmin):
      list_display = ('id','system_name','system_id','active')
 
+
+@admin.register(models.JobQueue)
+class JobQueueAdmin(ModelAdmin):
+     list_display = ('id','job_cmd','parameters_json','system_id','status','processed_dt','user','created')
+     search_fields = ('job_cmd','parameters_json',)
+     list_filter = ('system_id','created')  
+     ordering = ('id',)
+
+

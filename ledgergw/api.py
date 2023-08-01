@@ -50,7 +50,7 @@ from oscar.apps.checkout.calculators import OrderTotalCalculator
 from ledger.checkout.utils import CheckoutSessionData
 from ledger.payments.facade import invoice_facade
 from ledger.payments.utils import systemid_check, LinkedInvoiceCreate
-
+from ledger.payments import helpers
 
 #from oscar.core.loading import get_model
 #Bankcard = get_model('payment','Bankcard')
@@ -2073,3 +2073,43 @@ def get_search_organisation(request,apikey):
         pass
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response   
+
+def QueuePayemntAuditReportJob(request, *args, **kwargs):
+        json_obj = {"data": {}}
+        try:
+           if helpers.is_payment_admin(request.user) is True:
+                system_id = request.GET.get('system', "")
+                job_date = request.GET.get('job_date', "")
+                job_type = request.GET.get('job_type', "")
+                job_cmd = ""
+                job_date = re.sub("[^0-9]", "", job_date)
+                parameters_json=[]
+                if job_type == 'audit_report': 
+                    job_cmd = "bpoint_ledger_payment_audit_report_segregated"
+                    parameters_json=[str(job_date),str(system_id),]
+                if job_type == 'timed_audit_report': 
+                    job_cmd = "bpoint_ledger_time_seperated_report_segregated"
+                    parameters_json=[str(job_date),str(system_id),]
+                
+                ledgergw_models.JobQueue.objects.create(
+                    job_cmd=job_cmd,
+                    status=0,
+                    parameters_json=json.dumps(parameters_json),
+                    user=request.user
+                )
+                # job_queue = ledgergw_models.JobQueue.objects.filter(status=0)
+                # for jq in job_queue:
+                #     print (jq)
+                #     jq.status = 1
+                #     jq.save()
+                
+
+                json_obj['data'] = {'status': 200, "message" : "completed"} 
+                return HttpResponse(json.dumps(json_obj), content_type='application/json')
+           else:
+                raise serializers.ValidationError('Permission Denied.')
+
+        except Exception as e:
+           print ("ERROR Making Oracle Refund Move")
+           print (traceback.print_exc())
+           raise

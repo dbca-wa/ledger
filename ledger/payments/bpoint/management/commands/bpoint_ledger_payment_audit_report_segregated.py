@@ -22,6 +22,7 @@ class Command(BaseCommand):
          yesterday = datetime.today() - timedelta(days=1)
          settlement_date_search = yesterday.strftime("%Y%m%d")
          parser.add_argument('settlement_date', nargs='?', default=settlement_date_search)
+         parser.add_argument('system_id', nargs='?', default=None)
 
     def handle(self, *args, **options):
            
@@ -31,7 +32,11 @@ class Command(BaseCommand):
            SYSTEM_ID = ''
            #if settings.PS_PAYMENT_SYSTEM_ID:
            #       SYSTEM_ID = settings.PS_PAYMENT_SYSTEM_ID.replace("S","0")
-           ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True)
+           ois = None
+           if options['system_id']:
+                ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True, system_id=options['system_id'])
+           else:
+                ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True)
            for oracle_system in ois:
                rows = []
                print (oracle_system)
