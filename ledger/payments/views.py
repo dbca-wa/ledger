@@ -161,64 +161,64 @@ class LinkedPaymentIssue(generic.TemplateView):
                 total_difference_of_gw_and_oracle = D(lpic['data']['total_gateway_amount']) - D(lpic['data']['total_oracle_amount'])
 
                 #if D(lpic['data']['total_gateway_amount']) >= total_difference_of_gw_and_oracle:
-                if  D(lpic['data']['total_gateway_amount']) != D(lpic['data']['total_oracle_amount']):
-                    bp_hash = {}
-                    inv_hash = {}
-                    for bp_data in lpic['data']['bpoint']:
-                        hashstr = str(str(bp_data['settlement_date'])).replace("/","").replace(".","").replace("-","")
-                        #hashstr = str(str(bp_data['settlement_date']) + str(bp_data['amount'])).replace("/","").replace(".","").replace("-","")
-                        if hashstr not in bp_hash:
-                            bp_hash[hashstr] = {    'total_payments':  0, 
-                                                    'total_refunds':  0, 
-                                                    'total_amount': '0.00',
-                                                    'amount': '0.00', 
-                                                    'settlement_date': bp_data['settlement_date'],                                                                                                                                                                                                      
-                                                }
+                #if  D(lpic['data']['total_gateway_amount']) != D(lpic['data']['total_oracle_amount']):
+                bp_hash = {}
+                inv_hash = {}
+                for bp_data in lpic['data']['bpoint']:
+                    hashstr = str(str(bp_data['settlement_date'])).replace("/","").replace(".","").replace("-","")
+                    #hashstr = str(str(bp_data['settlement_date']) + str(bp_data['amount'])).replace("/","").replace(".","").replace("-","")
+                    if hashstr not in bp_hash:
+                        bp_hash[hashstr] = {    'total_payments':  0, 
+                                                'total_refunds':  0, 
+                                                'total_amount': '0.00',
+                                                'amount': '0.00', 
+                                                'settlement_date': bp_data['settlement_date'],                                                                                                                                                                                                      
+                                            }
 
-                        if hashstr in bp_hash:
-                            if bp_data['action'] == 'payment':
-                                bp_hash[hashstr]['total_payments'] = bp_hash[hashstr]['total_payments'] + 1
-                                bp_hash[hashstr]['total_amount'] = str(D(bp_hash[hashstr]['total_amount']) + D(bp_data['amount']))
-                            elif bp_data['action'] == 'refund':
-                                bp_hash[hashstr]['total_refunds'] = bp_hash[hashstr]['total_refunds'] + 1
-                                bp_hash[hashstr]['total_amount'] = str(D(bp_hash[hashstr]['total_amount']) - D(bp_data['amount']))                           
+                    if hashstr in bp_hash:
+                        if bp_data['action'] == 'payment':
+                            bp_hash[hashstr]['total_payments'] = bp_hash[hashstr]['total_payments'] + 1
+                            bp_hash[hashstr]['total_amount'] = str(D(bp_hash[hashstr]['total_amount']) + D(bp_data['amount']))
+                        elif bp_data['action'] == 'refund':
+                            bp_hash[hashstr]['total_refunds'] = bp_hash[hashstr]['total_refunds'] + 1
+                            bp_hash[hashstr]['total_amount'] = str(D(bp_hash[hashstr]['total_amount']) - D(bp_data['amount']))                           
 
-                    for inv_data in lpic['data']['invoices_data']:
-                        hashstr = str(str(inv_data['settlement_date'])).replace("/","").replace(".","").replace("-","")                        
-                        if hashstr in inv_hash:
-                            inv_hash[hashstr]['total'] = inv_hash[hashstr]['total'] + 1
-                            inv_hash[hashstr]['total_amount'] = str(D(inv_hash[hashstr]['total_amount']) + D(inv_data['amount']))
-                        else:
-                            inv_hash[hashstr] = {'total':  1, 'total_amount' : inv_data['amount'], 'amount': inv_data['amount'], 'settlement_date': inv_data['settlement_date']} 
+                for inv_data in lpic['data']['invoices_data']:
+                    hashstr = str(str(inv_data['settlement_date'])).replace("/","").replace(".","").replace("-","")                        
+                    if hashstr in inv_hash:
+                        inv_hash[hashstr]['total'] = inv_hash[hashstr]['total'] + 1
+                        inv_hash[hashstr]['total_amount'] = str(D(inv_hash[hashstr]['total_amount']) + D(inv_data['amount']))
+                    else:
+                        inv_hash[hashstr] = {'total':  1, 'total_amount' : inv_data['amount'], 'amount': inv_data['amount'], 'settlement_date': inv_data['settlement_date']} 
 
-                    for bp_keys in bp_hash:
-                        if bp_keys in inv_hash:
-                            total_trans = bp_hash[bp_keys]['total_refunds'] - inv_hash[bp_keys]['total']
-                            total_amount = str(D(bp_hash[bp_keys]['total_amount']) - D(inv_hash[bp_keys]['total_amount']))
-                        else:
-                            total_trans = bp_hash[bp_keys]['total_refunds'] - float('0.00')
-                            total_amount = str(D(bp_hash[bp_keys]['total_amount']) - D('0.00'))
+                for bp_keys in bp_hash:
+                    if bp_keys in inv_hash:
+                        total_trans = bp_hash[bp_keys]['total_refunds'] - inv_hash[bp_keys]['total']
+                        total_amount = str(D(bp_hash[bp_keys]['total_amount']) - D(inv_hash[bp_keys]['total_amount']))
+                    else:
+                        total_trans = bp_hash[bp_keys]['total_refunds'] - float('0.00')
+                        total_amount = str(D(bp_hash[bp_keys]['total_amount']) - D('0.00'))
 
-                        if D(total_amount) > 0 and bp_hash[bp_keys]['total_payments'] > 0:
-                            generate_receipts_for.append({"total_amount": total_amount, "settlement_date": bp_hash[bp_keys]['settlement_date']})
-                        if D(total_amount) < 0 and bp_hash[bp_keys]['total_refunds'] > 0:
-                            generate_receipts_for.append({"total_amount": total_amount, "settlement_date": bp_hash[bp_keys]['settlement_date']})
+                    if D(total_amount) > 0 and bp_hash[bp_keys]['total_payments'] > 0:
+                        generate_receipts_for.append({"total_amount": total_amount, "settlement_date": bp_hash[bp_keys]['settlement_date']})
+                    if D(total_amount) < 0 and bp_hash[bp_keys]['total_refunds'] > 0:
+                        generate_receipts_for.append({"total_amount": total_amount, "settlement_date": bp_hash[bp_keys]['settlement_date']})
 
 
-                    for inv_keys in inv_hash:
-                        if inv_keys not in bp_hash:
-                      
-                            if inv_keys in inv_hash: 
-                                if D(inv_hash[inv_keys]['total_amount']) > 0:
-                                    pass
-                                    print ("Reverse Payment")
-                                    total_amount = D(inv_hash[inv_keys]['total_amount']) - D(inv_hash[inv_keys]['total_amount']) - D(inv_hash[inv_keys]['total_amount'])
-                                    generate_receipts_for.append({"total_amount": total_amount, "settlement_date": inv_hash[inv_keys]['settlement_date']})  
-                                if D(inv_hash[inv_keys]['total_amount']) < 0:
-                                    pass
-                                    print ("Reverse Refund")
-                                    total_amount = D(inv_hash[inv_keys]['total_amount']) - D(inv_hash[inv_keys]['total_amount']) - D(inv_hash[inv_keys]['total_amount'])
-                                    generate_receipts_for.append({"total_amount": total_amount, "settlement_date": inv_hash[inv_keys]['settlement_date']})                             
+                for inv_keys in inv_hash:
+                    if inv_keys not in bp_hash:
+                    
+                        if inv_keys in inv_hash: 
+                            if D(inv_hash[inv_keys]['total_amount']) > 0:
+                                pass
+                                print ("Reverse Payment")
+                                total_amount = D(inv_hash[inv_keys]['total_amount']) - D(inv_hash[inv_keys]['total_amount']) - D(inv_hash[inv_keys]['total_amount'])
+                                generate_receipts_for.append({"total_amount": total_amount, "settlement_date": inv_hash[inv_keys]['settlement_date']})  
+                            if D(inv_hash[inv_keys]['total_amount']) < 0:
+                                pass
+                                print ("Reverse Refund")
+                                total_amount = D(inv_hash[inv_keys]['total_amount']) - D(inv_hash[inv_keys]['total_amount']) - D(inv_hash[inv_keys]['total_amount'])
+                                generate_receipts_for.append({"total_amount": total_amount, "settlement_date": inv_hash[inv_keys]['settlement_date']})                             
 
                 if fix_discrephency == 'true':
                     lines = []
