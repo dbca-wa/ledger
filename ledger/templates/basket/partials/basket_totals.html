@@ -71,7 +71,7 @@
                     {% else %}
                         {# No discounts to basket #}
                         <tr>
-                            <th class="total">{% trans "Basket total" %}</th>
+			    <th class="total">{% if basket.total_incl_tax < 0 %}Total Refund{% elif basket.total_incl_tax == 0 %}Total{% else %}Total Payment{% endif %}</th>
                             <th class="total align-right">
                                 {% if not show_tax_separately and basket.is_tax_known %}
                                     {{ basket.total_incl_tax|currency:basket.currency }}
