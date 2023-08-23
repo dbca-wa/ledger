@@ -71,7 +71,7 @@
                     {% else %}
                         {# No discounts to basket #}
                         <tr>
-                            <th class="total">{% trans "Basket total" %}</th>
+			    <th class="total">{% if basket.total_incl_tax < 0 %}Total Refund{% elif basket.total_incl_tax == 0 %}Total{% else %}Total Payment{% endif %}</th>
                             <th class="total align-right">
                                 {% if not show_tax_separately and basket.is_tax_known %}
                                     {{ basket.total_incl_tax|currency:basket.currency }}
@@ -84,73 +84,6 @@
                 {% endblock %}
             {% endwith %}
             
-            {% if shipping_method.code != 'no-shipping-required' %}
-            {% block shipping_totals %}
-                <tr>
-                    <th>&nbsp;</th>
-                    <td></td>
-                </tr>
-
-                <tr>
-                    <th colspan="2">
-                        <h3>{% trans "Shipping" %}</h3>
-                        {% if shipping_methods|length > 1 and editable %}
-                            <small>{% trans "Alternative shipping methods can be chosen during checkout" %}</small>
-                        {% endif %}
-                    </th>
-                </tr>
-                {% if not shipping_method.is_discounted %}
-                    <tr>
-                        <th class="total">
-                            {{ shipping_method.name }}
-                        </th>
-                        <th class="total align-right">
-                            {% if not show_tax_separately and shipping_charge.is_tax_known %}
-                                {{ shipping_charge.incl_tax|currency:basket.currency }}
-                            {% else %}
-                                {{ shipping_charge.excl_tax|currency:basket.currency }}
-                            {% endif %}
-                        </th>
-                    </tr>
-                {% else %}
-                    {% shipping_charge_discount shipping_method basket as shipping_discount %}
-                    {% shipping_charge_excl_discount shipping_method basket as shipping_charge_excl_discount %}
-                    {# As shipping is discounted, we break it down into its original charge and a discount #}
-                    <tr>
-                        <th class="total">{% trans "Shipping method" %}</th>
-                        <td class="total align-right">{{ shipping_method.name }}</td>
-                    </tr>
-                    <tr>
-                        <td>{% trans "Shipping total (before discounts)" %}</td>
-                        <td class="align-right">
-                            {% if not show_tax_separately and shipping_charge_excl_discount.is_tax_known %}
-                                {{ shipping_charge_excl_discount.incl_tax|currency:basket.currency }}
-                            {% else %}
-                                {{ shipping_charge_excl_discount.excl_tax|currency:basket.currency }}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {# This section needs adjustment to when taxes are shown separately #}
-                    <tr>
-                        <td class="basket-discount"><span class="label label-success">{% trans "Discount" %}</span> {{ shipping_method.discount_name }}</td>
-                        <td class="align-right">-{{ shipping_discount|currency:basket.currency }}</td>
-                    </tr>
-                    <tr>
-                        <th class="total">
-                            {% trans "Shipping total (after discounts)" %}
-                        </th>
-                        <th class="total align-right">
-                            {% if not show_tax_separately and shipping_charge.is_tax_known %}
-                                {{ shipping_charge.incl_tax|currency:basket.currency }}
-                            {% else %}
-                                {{ shipping_charge.excl_tax|currency:basket.currency }}
-                            {% endif %}
-                        </th>
-                    </tr>
-                {% endif %}
-            {% endblock %}
-            {% endif %}
-
             {% block tax_totals %}
                 {% if show_tax_separately %}
                     <tr>
@@ -203,18 +136,6 @@
                     <th>&nbsp;</th>
                     <td></td>
                 </tr>
-                <tr>
-                    <th class="total"><h3>{% trans "Order total" %}</h3></th>
-                    <td class="total align-right">
-                        <h3 class="price_color">
-                            {% if order_total.is_tax_known %}
-                                {{ order_total.incl_tax|currency:basket.currency }}
-                            {% else %}
-                                {{ order_total.excl_tax|currency:basket.currency }}
-                            {% endif %}
-                        </h3>
-                    </td>
-                </tr>
 	        {% if amount_override %}	
                 <tr>
                     <th class="total"><h3>{% trans "Debit amount" %}</h3></th>
@@ -224,11 +145,6 @@
                         </h3>
                     </td>
                 </tr>
-                {% endif %}
-                {% if not order_total.is_tax_known %}
-                    <tr>
-                        <td><small>{% trans "Taxes will be added during checkout." %}</small></td>
-                    </tr>
                 {% endif %}
             {% endblock %}
         </tbody>
