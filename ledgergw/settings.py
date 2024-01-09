@@ -17,7 +17,7 @@ INSTALLED_APPS += [
     'crispy_forms',
     'ledgergw',
     'webtemplate_dbca',
-
+    'appmonitor_client'
 ]
 
 MIDDLEWARE_CLASSES += [
