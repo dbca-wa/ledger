@@ -13,14 +13,14 @@ from ledger.payments import utils as payments_utils
 from ledger.payments.invoice import utils as utils_ledger_payment_invoice
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
-from ledger.payments.invoice.models import Invoice
+from ledger.payments.invoice.models import Invoice, OracleInvoiceDocument
 from ledger.payments import models as payment_models
 from ledger.payments.bpoint import models as payment_bpoint_models
 from ledger.basket import models as basket_models
 from ledger.order import models as order_models
 from django.core.files.base import ContentFile
 from django.utils.crypto import get_random_string
-from ledger.payments.models import Invoice, BpointToken
+from ledger.payments.models import BpointToken
 from ledger.payments.bpoint.facade import Facade
 from rest_framework.response import Response
 from rest_framework import viewsets, serializers, status, generics, views
@@ -43,6 +43,7 @@ import traceback
 import json
 import ipaddress
 import re
+import mimetypes
 
 from oscar.apps.checkout.mixins import OrderPlacementMixin
 from oscar.apps.shipping.methods import NoShippingRequired
@@ -601,13 +602,7 @@ def create_checkout_session(request,apikey):
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             print ("API create_basket_session")
             checkout_parameters = json.loads(request.POST.get('checkout_parameters', "{}"))
-            #emailuser_id = request.POST.get('emailuser_id', None)
-            #print (emailuser_id)
             resp = utils.create_checkout_session(request,checkout_parameters)
-
-            
-
-            #basket, basket_hash = utils.create_checkout_session(request, parameters)
             jsondata['status'] = 200
             jsondata['message'] = 'Success'
             jsondata['data'] = {}
@@ -643,6 +638,7 @@ def get_order_info(request,apikey):
                order = Order.objects.get(basket__id=data['basket_id'])
             if 'number' in data:
                order = Order.objects.get(number=data['number'])
+
             order_obj = {}
             order_obj['id'] = order.id
             order_obj['number'] = order.number
@@ -681,6 +677,7 @@ def get_order_lines(request,apikey):
 
             if 'order_id' in data:
                 order = order_models.Line.objects.filter(order_id=data['order_id'])
+
             for o in order:
                row = {}
                row['id'] = o.id
@@ -705,8 +702,6 @@ def get_order_lines(request,apikey):
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     response.set_cookie('CookieTest', 'Testing',5)
     return response
-
-
 
 #is = ledger_payments_models.OracleInterfaceSystem.objects.filter(system_id=system_id_zeroed,enabled=True),
 
@@ -876,7 +871,8 @@ def get_invoice_properties(request,apikey):
                        invoice_obj['transferable_amount'] = str(invoice.transferable_amount)
                        invoice_obj['balance'] = str(invoice.balance)
                        invoice_obj['payment_status'] = invoice.payment_status
-
+                       invoice_obj['oracle_invoice_number'] = invoice.oracle_invoice_number
+                       
                        jsondata['status'] = 200
                        jsondata['message'] = 'Success'
                        jsondata['data'] = {'invoice': invoice_obj}
@@ -2112,3 +2108,55 @@ def QueuePayemntAuditReportJob(request, *args, **kwargs):
            print ("ERROR Making Oracle Refund Move")
            print (traceback.print_exc())
            raise
+
+
+@csrf_exempt
+def update_ledger_oracle_invoice(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    print ('update_ledger_oracle_invoice')
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        print ("YES 1")
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            print ("YES 2")
+            ois_obj = {}
+            org_array = []
+            data = json.loads(request.POST.get('data', "{}"))
+            #print (data)
+            ledger_invoice_number = request.POST.get('ledger_invoice_number',None)
+            oracle_invoice_number = request.POST.get('oracle_invoice_number',None)
+            extension = request.POST.get('extension',None)
+            
+            oracle_invoice_file_base64 = request.POST.get('oracle_invoice_file_base64',None)
+
+            oifilebase64 = oracle_invoice_file_base64
+            ledger_invoice_number_obj = Invoice.objects.get(reference=ledger_invoice_number)
+
+            if ledger_invoice_number:
+                randomfile_name = get_random_string(length=15, allowed_chars=u'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')                
+                b64data = oifilebase64.split(",")               
+                cfile = ContentFile(base64.b64decode(b64data[1]), name=randomfile_name+'.'+extension)
+                oi_document = OracleInvoiceDocument.objects.create(upload=cfile,name=randomfile_name,extension=extension)
+
+                ledger_invoice_number_obj.oracle_invoice_file=oi_document
+                ledger_invoice_number_obj.oracle_invoice_number=oracle_invoice_number
+                ledger_invoice_number_obj.save()
+                
+                jsondata['status'] = 200
+                jsondata['message'] = 'Success'
+                jsondata['data'] = org_array
+                
+            else:
+                jsondata['status'] = 404
+                jsondata['message'] = 'Not found '
+                jsondata['data'] = {}
+                #jsondata['post'] = request.POST
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response   
+

@@ -18,7 +18,30 @@ from ledger.payments.bpoint.models import BpointTransaction, TempBankCard, Bpoin
 from django.core.cache import cache
 import json
 from ledger.payments import trans_hash
+from django.core.files.storage import FileSystemStorage
+
 #from ledger.payments import trans_hash
+
+upload_storage = FileSystemStorage(location=settings.LEDGER_PRIVATE_MEDIA_ROOT, base_url=settings.LEDGER_PRIVATE_MEDIA_URL)
+
+@python_2_unicode_compatible
+class OracleInvoiceDocument(models.Model):
+
+    upload = models.FileField(max_length=512, upload_to='oracleinvoice/%Y/%m/%d', storage=upload_storage)
+    name = models.CharField(max_length=256)
+    extension = models.CharField(max_length=5, null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    @property
+    def file_url(self):
+         if self.extension is None:
+                self.extension = ''
+         return settings.LEDGER_PRIVATE_MEDIA_URL+str(self.pk)+'-file'+self.extension
+
+    def __str__(self):
+        return self.name
+
+
 
 class Invoice(models.Model):
 
@@ -44,6 +67,9 @@ class Invoice(models.Model):
     previous_invoice = models.ForeignKey('self',null=True,blank=True)
     settlement_date = models.DateField(blank=True, null=True)
     payment_method = models.SmallIntegerField(choices=PAYMENT_METHOD_CHOICES, default=0)
+    oracle_invoice_number = models.CharField(max_length=255, default='', null=True, blank=True)
+    oracle_invoice_file = models.ForeignKey(OracleInvoiceDocument, null=True, blank=True, on_delete=models.SET_NULL, related_name='oracle_invoice_file')
+
     #no_oracle=models.NullBooleanField(default=False)
     #payment_amount_cached = models.DecimalField(decimal_places=2,max_digits=12, default='0.00',)
     #payment_status_cached = models.CharField(max_length=50,null=True,blank=True)

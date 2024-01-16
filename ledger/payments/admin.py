@@ -26,10 +26,10 @@ class CashAdmin(admin.ModelAdmin):
 
 @admin.register(models.Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('reference','order','payment_status','settlement_date','amount', 'system','created' )
+    list_display = ('reference','oracle_invoice_number','order','payment_status','settlement_date','amount', 'system','created' )
     search_fields = ('reference',)
     list_filter = ('system'),    
-    raw_id_fields = ('previous_invoice',)
+    raw_id_fields = ('previous_invoice','oracle_invoice_file')
     list_per_page = 30
 
 @admin.register(models.InvoiceBPAY)
