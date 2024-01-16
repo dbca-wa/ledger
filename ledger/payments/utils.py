@@ -957,9 +957,11 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
                              invoices.append(li.invoice_reference)
                              inv = Invoice.objects.filter(reference=li.invoice_reference)
                              settlement_date = ''
+                             oracle_invoice_number = ''
                              if inv.count() > 0:
                                  settlement_date = inv[0].settlement_date.strftime("%d/%m/%Y")
-                             linked_payments.append({'id': li.id, 'invoice_reference': li.invoice_reference, 'system_identifier_id': li.system_identifier.id, 'system_identifier_system': li.system_identifier.system_id, 'booking_reference': li.booking_reference, 'booking_reference_linked': li.booking_reference_linked, 'invoice_group_id': li.invoice_group_id.id,'settlement_date': settlement_date})
+                                 oracle_invoice_number = inv[0].oracle_invoice_number
+                             linked_payments.append({'id': li.id, 'invoice_reference': li.invoice_reference, 'system_identifier_id': li.system_identifier.id, 'system_identifier_system': li.system_identifier.system_id, 'booking_reference': li.booking_reference, 'booking_reference_linked': li.booking_reference_linked, 'invoice_group_id': li.invoice_group_id.id,'settlement_date': settlement_date, 'oracle_invoice_number': oracle_invoice_number})
                              if li.booking_reference not in linked_payments_booking_references:
                                 linked_payments_booking_references.append(li.booking_reference)
                              if li.booking_reference_linked not in linked_payments_booking_references:

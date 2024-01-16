@@ -351,10 +351,17 @@ def _create_invoice(invoice_buffer, invoice):
 def create_invoice_pdf_bytes(filename, invoice):
     invoice_buffer = BytesIO()
 
-    _create_invoice(invoice_buffer, invoice)
+    if len(invoice.oracle_invoice_number) > 0 and invoice.oracle_invoice_file:         
+        if invoice.oracle_invoice_file.upload:
+            with open(invoice.oracle_invoice_file.upload.path, "rb") as OracleInvoiceFile:
+                value = OracleInvoiceFile.read()
 
-    # Get the value of the BytesIO buffer
-    value = invoice_buffer.getvalue()
-    invoice_buffer.close()
+         #print (settings.LEDGER_PRIVATE_MEDIA_ROOT+':'+str(invoice.oracle_invoice_file.upload))
+
+    else:
+        _create_invoice(invoice_buffer, invoice)
+        # Get the value of the BytesIO buffer
+        value = invoice_buffer.getvalue()
+        invoice_buffer.close()
 
     return value
