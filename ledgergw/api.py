@@ -1769,7 +1769,7 @@ def create_get_emailuser(request,apikey):
 
 
 @csrf_exempt
-def create_organistion(request,apikey):
+def create_organisation(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
