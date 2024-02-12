@@ -23,4 +23,4 @@
 30 6 * * 0 root /app/bin/rotate_backups.sh
 
 # App Monitor Client
-10 9 * * 0 root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\" ) && python3 /app/manage.py appmonitor_check >> /app/logs/appmonitor_client.log 2>&1
+10 9 * * 0 root eval $(grep -v '^#' /etc/.cronenv | xargs -d "\n" -I {} echo export \"{}\" ) && python3 /app/manage_ledgergw.py appmonitor_check >> /app/logs/appmonitor_client.log 2>&1
