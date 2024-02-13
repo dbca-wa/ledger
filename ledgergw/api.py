@@ -1726,8 +1726,11 @@ def create_get_emailuser(request,apikey):
                 data = json.loads(request.POST.get('data', "{}"))
                 email = data['email']
  
-                regex = '^[a-z0-9]+[\._+]?[a-z0-9]+[@]\w+[.]\w{2,3}$'  
-                if re.match(regex,email):
+                regex_one_dot = '^[a-z0-9]+[\._+]?[a-z0-9]+[@]\w+[.]\w{2,3}$'  
+                regex_two_dot = '^[a-z0-9]+[\._+]?[a-z0-9]+[@]\w+[.]\w{2,3}[.]\w{2}$'
+                regex_three_dot = '^[a-z0-9]+[\._+]?[a-z0-9]+[@]\w+[.]\w{2,3}[.]\w{2,3}\w[.]\w{2}$'
+                
+                if re.match(regex_one_dot,email) or re.match(regex_two_dot,email) or re.match(regex_three_dot,email):
                     print ("Valid Email Address")
                 else:
                     raise ValidationError('Error: the email address provided is invalid.')                                      
