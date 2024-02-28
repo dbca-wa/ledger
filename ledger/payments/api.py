@@ -1122,7 +1122,7 @@ def PaymentTotals(request, *args, **kwargs):
                 query &= Q(settlement_date=settlement_date_django)
            
             rf_array = {'status': 404, 'data': {'rows': [], 'totalrows': 0}}  
-            rf = PaymentTotal.objects.filter(query)[pagestart:pageend]
+            rf = PaymentTotal.objects.filter(query).order_by('-settlement_date')[pagestart:pageend]
             rf_array['data']['totalrows'] = PaymentTotal.objects.filter(query).count() 
             
             for r in rf: 
