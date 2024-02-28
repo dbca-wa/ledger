@@ -107,6 +107,31 @@ class OracleInterfaceReportReceipient(models.Model):
     def __str__(self):
         return '{} - {}'.format(str(self.system),self.email)
 
+
+
+
+
+class OracleInterfacePermission(models.Model):
+    ACCESS_TYPE = (
+                ('all_access', 'Full access to all Financial Tools'),
+                ('view_ledger_tools', 'View Ledger Payment Tools'),
+                ('manage_ledger_tool', 'Manage Ledger Payment Tools'), 
+    )
+
+    system = models.ForeignKey(OracleInterfaceSystem,related_name='oracle_interface_permission_recipients')    
+    email = models.EmailField()
+    access_type = models.CharField(choices=ACCESS_TYPE, null=True, blank=True, default=None, max_length=100)
+    active = models.BooleanField(
+        default=True,
+        help_text='Designates whether this user should be treated as active.'
+                  'Unselect this instead of deleting to disable permission',
+
+        # related_name='oracle_interface_permission_active'          
+    )
+
+    def __str__(self):
+        return '{} - {}'.format(str(self.system),self.email)    
+
 class OracleAccountCode(models.Model):
     active_receivables_activities = models.CharField(max_length=50,primary_key=True)
     description = models.CharField(max_length=240)    

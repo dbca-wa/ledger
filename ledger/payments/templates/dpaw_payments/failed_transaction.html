@@ -1,13 +1,25 @@
 {% extends "ledgergw/web/base_b5.html" %}
 
 {% block content %}
+
+{% if ois_found is True %}
+
+
+{% if system_interface_permssions.all_access is True or system_interface_permssions.view_ledger_tools is True or system_interface_permssions.manage_ledger_tool  is True %}
+
+
+
+<textarea id='system_interface_permssions' rows="4" cols="50" style='display:none'>
+  {{ system_interface_permssions_json }}
+</textarea>
+
 <div class="row">
         <div class="col-12">
           <BR>
           </div>
 
         <div class="col-12">
-            <h1>Failed Transations</h1>
+            <h1>Failed Transactions</h1>
         </div>
 		        <div class="col-12">
 			     <BR><BR>
@@ -17,7 +29,6 @@
                                       <option value="">All</option>
                                       <option value="0" selected >Pending</option>
                                       <option value="1">Refund Completed</option>
-
                                     </select>
 			                          </div>
 
@@ -77,4 +88,19 @@
 <script>
        ledger_payments.init_failed_transactions();
 </script>
+{% else %}
+<br>
+  <div class="alert alert-danger" role="alert">
+      You don't have permission to access this page.
+  </div>
+{% endif %}
+
+{% else %}
+<br>
+<div class="alert alert-danger" role="alert">
+  The system identifier does not exist.
+</div>
+
+
+{% endif %}
 {% endblock %}

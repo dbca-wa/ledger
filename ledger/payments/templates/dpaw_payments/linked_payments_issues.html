@@ -6,6 +6,10 @@
 
 {% block content %}
 
+{% if ois_found is True %}
+
+{% if system_interface_permssions.all_access is True  or system_interface_permssions.manage_ledger_tool  is True %}
+
 <div class='p-1'>
     &nbsp;
 </div>
@@ -59,5 +63,20 @@
     </body>
     <br>
 </div>
+{% else %}
+    <br>
+  <div class="alert alert-danger" role="alert">
+      You don't have permission to access this page.
+  </div>
+{% endif %}
+
+{% else %}
+<br>
+<div class="alert alert-danger" role="alert">
+  The system identifier does not exist.
+</div>
+
+
+{% endif %}
 
 {% endblock %}
