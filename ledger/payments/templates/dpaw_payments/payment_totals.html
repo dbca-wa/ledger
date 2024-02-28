@@ -6,9 +6,9 @@
 
 
 {% if system_interface_permssions.all_access is True or system_interface_permssions.view_payment_totals is True %}
-<link href="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css" rel="stylesheet"/>
-<script  type="text/javascript" src="/static/common/node_modules/moment/min/moment.min.js"></script>
-<script  type="text/javascript" src="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js"></script>
+<link href="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css?ver={{ settings.GIT_COMMIT_HASH }}" rel="stylesheet"/>
+<script  type="text/javascript" src="/static/common/node_modules/moment/min/moment.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
 
 
 <textarea id='system_interface_permssions' rows="4" cols="50" style='display:none'>
