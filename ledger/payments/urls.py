@@ -15,7 +15,8 @@ from ledger.payments.api import (
                 CheckOracleCodeView,
                 RefundOracleView,
                 FailedTransactions,
-                FailedTransactionCompleted
+                FailedTransactionCompleted,
+                PaymentTotals
                 )
 
 from ledger.payments.bpay.dashboard.app import application as bpay
@@ -39,6 +40,7 @@ api_patterns = [
     url(r'api/ledger/oracle-codes-lookup$', CheckOracleCodeView, name='ledger-oracle-codes'),
     url(r'api/ledger/oracle-payment-transfer$', RefundOracleView, name='ledger-oracle-refunds'),
     url(r'api/ledger/failed-transactions$', FailedTransactions, name='failed-transactions'),
+    url(r'api/ledger/payment-totals$', PaymentTotals, name='payment-totals'),
     url(r'api/ledger/failed-transaction-complete/(?P<rfid>\d+)/$', FailedTransactionCompleted, name='failed-transaction-completed'),
     url(r'api/report-allocated$', ReportCreateAllocatedView.as_view(),name='ledger-report-allocated'),
     url(r'api/report$', ReportCreateView.as_view(),name='ledger-report'),
@@ -63,5 +65,6 @@ urlpatterns = [
     url(r'payments/oracle/payments$', views.OraclePayments.as_view(), name='oracle-payments'),
     
     url(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
-    url(r'payments/oracle/failed-transactions$', views.FailedTransaction.as_view(), name='failed-transactions')
+    url(r'payments/oracle/failed-transactions$', views.FailedTransaction.as_view(), name='failed-transactions'),
+    url(r'payments/oracle/payment-totals$', views.PaymentTotals.as_view(), name='failed-transactions')
 ]

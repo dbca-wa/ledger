@@ -7,12 +7,18 @@ var ledger_payments = {
                 'csrf_token': '',
                 'payment_info_url' : '/ledger/payments/api/ledger/payments-info',
                 'failed_transaction_url' : '/ledger/payments/api/ledger/failed-transactions',
+                'payment_total_url' : '/ledger/payments/api/ledger/payment-totals',
                 'payment_info': [],
                 'pagestart': 0,
                 'pageend': 10,
-                'formoptions': {'frstatus': '', 'frsystem':'','frkeyword': '' },
+                'formoptions': {'frstatus': '', 'frsystem':'','frkeyword': '' , 'ptsystem':'','ptkeyword': '','ptsettlement_date': ''},
                 'selected_id': null,
-                'system_interface_permssions' : {}
+                'system_interface_permssions' : {},
+                'ptdatepickerOptions':{
+                        format: 'DD/MM/YYYY',
+                        showClear:true,
+                        useCurrent:false
+                },                
 
         },
         load_payment_info: function() {
@@ -119,6 +125,11 @@ var ledger_payments = {
 	      ledger_payments.var.pageend = pageend;
               ledger_payments.load_failed_transactions();
      },
+     update_page_payment_totals: function(pagestart,pageend) { 
+        ledger_payments.var.pagestart = pagestart;
+        ledger_payments.var.pageend = pageend;
+        ledger_payments.load_payment_totals();
+     },     
      update_failed_transaction_status: function(selected_id) { 
            ledger_payments.var.selected_id = selected_id;
            $('#ConfirmAction').modal('show');
@@ -142,9 +153,9 @@ var ledger_payments = {
 
           ledger_payments.var.formoptions.frsystem = $("#fr-system").val();
 
-          $("#fr-keyword").change(function() {
-                  ledger_payments.var.formoptions.frkeyword =this.value;
-                  console.log(ledger_payments.var.formoptions.frkeyword);
+          $("#settlement_report").change(function() {
+                alert(this.value);
+                  ledger_payments.var.formoptions.ptsettlement_date =this.value;                 
           });
 
           ledger_payments.var.formoptions.frkeyword = $("#fr-keyword").val();
@@ -163,6 +174,119 @@ var ledger_payments = {
           // system_interface_permssions
           ledger_payments.load_failed_transactions();
      },	
+     init_payment_totals: function() {
+        
+        $('#settlementDatePicker').datetimepicker(ledger_payments.var.ptdatepickerOptions);
+        $("#pt-status").change(function() {
+                ledger_payments.var.formoptions.frstatus =this.value;
+                console.log(ledger_payments.var.formoptions.frstatus);
+        });
+
+        // ledger_payments.var.formoptions.frstatus = $("#pt-status").val();
+
+        $("#pt-system").change(function() {
+                ledger_payments.var.formoptions.frsystem =this.value;
+                console.log(ledger_payments.var.formoptions.frsystem);
+        });
+
+        ledger_payments.var.formoptions.frsystem = $("#pt-system").val();
+
+        $("#pt-keyword").change(function() {
+                ledger_payments.var.formoptions.ptkeyword =this.value;
+                console.log(ledger_payments.var.formoptions.ptkeyword);
+        });
+
+        ledger_payments.var.formoptions.frkeyword = $("#pt-keyword").val();
+
+        $("#pt-filter").click(function() {
+                  ledger_payments.load_payment_totals();
+        });
+
+        var system_interface_permssions = $('#system_interface_permssions').val();
+        system_interface_permssions_obj = JSON.parse(system_interface_permssions);
+        
+        ledger_payments.system_interface_permssions = system_interface_permssions_obj
+        // system_interface_permssions
+        ledger_payments.load_payment_totals();
+        },	
+        load_payment_totals: function() {
+                var settlement_report = $("#settlement_report").val();
+                data = {}
+                $.ajax({
+                    url: ledger_payments.var.payment_total_url+"?pagestart="+ledger_payments.var.pagestart+"&pageend="+ledger_payments.var.pageend+"&system="+ledger_payments.var.formoptions.frsystem+"&settlement_date="+settlement_report,
+                    method: "GET",
+                    //headers: {'X-CSRFToken' : ledger_payments.var.csrf_token},
+                    //data: JSON.stringify({'payload': data,}),
+                    contentType: "application/json",
+                    success: function(data) {
+                            var html = "";
+                            if (data.data.rows.length > 0) {
+                                   for (let i = 0; i < data.data.rows.length; i++) {
+                                           html+= "<tr>";
+                                           html+= "<td>"+data.data.rows[i]['oracle_system_id_code']+"</td>";
+                                           html+= "<td>"+data.data.rows[i]['settlement_date']+"</td>";
+                                           html+= "<td>"+data.data.rows[i]['bpoint_gateway_total']+"</td>";
+                                           html+= "<td>"+data.data.rows[i]['ledger_bpoint_total']+"</td>";
+                                           html+= "<td>"+data.data.rows[i]['oracle_parser_total']+"</td>";
+                                           html+= "<td>"+data.data.rows[i]['oracle_receipt_total']+"</td>";
+                                           html+= "<td>"+data.data.rows[i]['cash_total']+"</td>";
+                                           html+= "<td>"+data.data.rows[i]['bpay_total']+"</td>";
+                                           html+= "<td align='center'>";
+                                           if (data.data.rows[i]['discrepancy'] == false) {
+                                                html+= '<i class="bi bi-check-circle-fill" style="color:#00d900;"></i>';
+                                           } else {
+                                                html+= '<i class="bi bi-x-circle-fill" style="color:#d90000"></i>';
+                                           }
+                                           "</td>";
+                                           html+= "<td>"+data.data.rows[i]['updated']+"</td>";
+                                           html+= "</tr>";
+                                   }
+                            }
+                            
+                            $('#payment-totals-table tbody').html(html);
+       
+                            var pageiterate = data.data.totalrows / 10;
+                            var totalpages = parseInt(pageiterate);
+       
+                            if (pageiterate > parseInt(pageiterate)) {
+                                totalpages = parseInt(pageiterate) + 1;
+                            }
+                            
+                            var pages = "";
+                            pages+='<ul class="pagination  justify-content-center">';
+                            pages+='<li class="page-item disabled">';
+                            // pages+='<a class="page-link" href="#" tabindex="-1">Previous</a>';
+                            pages+='</li>';
+                            var pagelimit = 10;
+                            var pstart = 0;
+                            var pend = 0 + pagelimit;
+                            for (let i = 1; i <= totalpages; i++) {
+                                pages+='<li class="page-item ';
+                                if (ledger_payments.var.pagestart == pstart && ledger_payments.var.pageend == pend) { 
+                                   pages+=' active';
+                                }
+                                pages+= '"><a class="page-link" href="javascript:void(0);" onclick="ledger_payments.update_page_payment_totals('+pstart+','+pend+');">'+i+'</a></li>';
+                                pstart = pstart + pagelimit;
+                                pend = pend + pagelimit;
+                            }
+                            //    pages+='<li class="page-item active">';
+                            //    pages+='<a class="page-link" href="#">2</a>';
+                            //    pages+='</li>';
+                            //pages+='<li class="page-item"><a class="page-link" href="#">3</a></li>';
+                            pages+='<li class="page-item">';
+                            // pages+='<a class="page-link" href="#">Next</a>';
+                            pages+='</li>';
+                            pages+='</ul>';
+       
+                            $('#pages').html(pages);
+                    },
+                    error: function(errMsg) {
+                            $('#LoadingPopup').modal('hide');
+                    }
+                });
+            },
+
+
      save_failed_transaction: function(rfid) {
 	    $("#LoadingPopup").modal('show');
 	    $('#ConfirmAction').modal('hide');
