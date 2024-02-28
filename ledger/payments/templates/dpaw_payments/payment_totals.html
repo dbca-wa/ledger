@@ -1,0 +1,116 @@
+{% extends "ledgergw/web/base_b5.html" %}
+
+{% block content %}
+
+{% if ois_found is True %}
+
+
+{% if system_interface_permssions.all_access is True or system_interface_permssions.view_payment_totals is True %}
+<link href="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css" rel="stylesheet"/>
+<script  type="text/javascript" src="/static/common/node_modules/moment/min/moment.min.js"></script>
+<script  type="text/javascript" src="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js"></script>
+
+
+<textarea id='system_interface_permssions' rows="4" cols="50" style='display:none'>
+  {{ system_interface_permssions_json }}
+</textarea>
+
+<div class="row">
+        <div class="col-12">
+          <BR>
+          </div>
+
+        <div class="col-12">
+            <h1>Payment Totals</h1>
+        </div>
+		        <div class="col-12">
+			     <BR><BR>
+			     <div class="row g-3">
+			        <div class="col-3">
+			                          </div>
+
+                                <div class="col-4">
+                                    <input type='hidden' value='{{ system_id }}' id='pt-system' >
+                                    <select class="form-select" aria-label="Select System" id='pt-system-old' style='display:none;'>
+                                      <option selected value="">All</option>
+                                        {% for system in oracle_systems %}
+                                                <option {% if system_id == system.system_id %}selected{% endif %} value="{{ system.system_id }}">{{ system.system_id }} - {{ system.system_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                      <div class="col-3">
+                        <div class="input-group date" ref="settlementDatePicker" id='settlementDatePicker'>
+                            <input type="text" class="form-control" name="settlement_report" id='settlement_report'  placeholder="DD/MM/YYYY" required autocomplete='off'>
+                                     <span class="input-group-addon input-group-text">
+                                         <span class="bi bi-calendar2-range-fill"></span>
+                                     </span>
+                        </div>                        
+                        
+                      </div>
+                      <div class="col-2 text-center">
+                                            <button type="button" class="btn btn-primary" id='pt-filter' >FILTER</button>
+                      </div>
+                    </div>
+                                      <BR>
+
+                             <table cellspacing="0" width="100%" id="payment-totals-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid"> 
+                             <thead>
+                                     <tr>
+                                       <th>System ID</th>
+                                       <th>Settlement Date</th>
+                                       <th>BPOINT Gateway Total</th>
+                                       <th>Ledger Bpoint Total</th>
+                                       <th>Oracle Parser Total</th>
+                                       <th>Oracle Receipt Total</th>
+                                       <th>Cash Total</th>
+                                       <th>BPAY Total</th>
+                                       <th>Discrepancy</th>
+                                       <th>Updated</th>
+                                     </tr>
+                             </thead>
+                             <tbody>
+                                    <tr>
+                                         <td>&nbsp;</td>
+                                         <td>&nbsp;</td>
+                                         <td>&nbsp;</td>
+                                         <td>&nbsp;</td>
+                                         <td>&nbsp;</td>
+                                         <td>&nbsp;</td>
+                                         <td>&nbsp;</td>
+                                         <td>&nbsp;</td>
+                                         <td>&nbsp;</td>
+                                         <td>&nbsp;</td>
+                                    </tr>
+                             </tbody>
+                             </table>
+
+	    </div>
+
+            <div class="col-12 ">
+            <nav aria-label="" id='pages'>
+            </nav>
+
+			</div>
+            </div>
+</div>
+</body>
+<script>
+       ledger_payments.init_payment_totals();
+</script>
+{% else %}
+<br>
+  <div class="alert alert-danger" role="alert">
+      You don't have permission to access this page.
+  </div>
+{% endif %}
+
+{% else %}
+<br>
+<div class="alert alert-danger" role="alert">
+  The system identifier does not exist.
+</div>
+
+
+{% endif %}
+{% endblock %}
