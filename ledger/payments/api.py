@@ -17,7 +17,7 @@ from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollectio
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
-from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode, RefundFailed, OracleInterfaceSystem
+from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode, RefundFailed, OracleInterfaceSystem, PaymentTotal
 from ledger.payments.utils import systemid_check, update_payments, ledger_payment_invoice_calulations 
 from ledger.payments.invoice import utils as invoice_utils
 from ledger.payments.facade import bpoint_facade
@@ -1102,6 +1102,52 @@ def FailedTransactionCompleted(request, *args, **kwargs):
             return HttpResponse(json.dumps({'status': 500, 'message': 'error'}), content_type='application/json', status=500)
             raise
 
+def PaymentTotals(request, *args, **kwargs):
+    if helpers.is_payment_admin(request.user) is True:
+        try:
+            query = Q()
+            pagestart = int(request.GET.get('pagestart',0))
+            pageend = int(request.GET.get('pageend',10))
+            status = request.GET.get('status','')
+            system = request.GET.get('system','')
+            settlement_date = request.GET.get('settlement_date','')
+         
+            # if len(status) > 0:
+            #     query &= Q(status=status)
+            # if len(system) > 0:
+            #     query &= Q(system_identifier__system_id=system)
+            if len(settlement_date) > 0:
+                
+                settlement_date_django = datetime.strptime(settlement_date, "%d/%m/%Y")
+                query &= Q(settlement_date=settlement_date_django)
+           
+            rf_array = {'status': 404, 'data': {'rows': [], 'totalrows': 0}}  
+            rf = PaymentTotal.objects.filter(query)[pagestart:pageend]
+            rf_array['data']['totalrows'] = PaymentTotal.objects.filter(query).count() 
+            
+            for r in rf: 
+                row = {}
+                row['id'] = r.id
+                row['oracle_system_id'] = r.oracle_system_id
+                row['oracle_system_id_code'] = r.oracle_system.system_id
+                row['settlement_date'] = r.settlement_date.strftime('%d %b %Y')  
+                row['bpoint_gateway_total'] = str(r.bpoint_gateway_total)
+                row['ledger_bpoint_total'] = str(r.ledger_bpoint_total)
+                row['oracle_parser_total'] = str(r.oracle_parser_total)
+                row['oracle_receipt_total'] = str(r.oracle_receipt_total)
+                row['cash_total'] = str(r.cash_total)
+                row['bpay_total'] = str(r.bpay_total)
+                discrepancy_status = False
+                if r.bpoint_gateway_total != r.oracle_receipt_total:
+                    discrepancy_status = True
+                row['discrepancy'] = discrepancy_status
+                row['updated'] = r.updated.strftime('%d/%m/%Y %H:%M:%S')        
+                rf_array['data']['rows'].append(row)
+            return HttpResponse(json.dumps(rf_array), content_type='application/json')
+        except Exception as e:
+            print(traceback.print_exc())
+            raise
+
 def FailedTransactions(request, *args, **kwargs):
     if helpers.is_payment_admin(request.user) is True:
         try:
@@ -1118,7 +1164,7 @@ def FailedTransactions(request, *args, **kwargs):
                 query &= Q(system_identifier__system_id=system)
             if len(keyword) > 0:
                 query &= Q(Q(booking_reference=keyword) | Q(invoice_reference=keyword))
-            print (query)
+            
             rf_array = {'status': 404, 'data': {'rows': [], 'totalrows': 0}}  
             rf = RefundFailed.objects.filter(query)[pagestart:pageend]
             rf_array['data']['totalrows'] = RefundFailed.objects.filter(query).count() 

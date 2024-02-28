@@ -421,6 +421,31 @@ class NoPaymentView(generic.TemplateView):
          basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
          return render(request, self.template_name, {'basket': basket})
 
+class PaymentTotals(generic.TemplateView):
+    template_name = 'dpaw_payments/payment_totals.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(PaymentTotals,self).get_context_data(**kwargs)
+        if helpers.is_payment_admin(self.request.user) is True:
+            system_id = self.request.GET.get('system_id','')
+            ois = payments_models.OracleInterfaceSystem.objects.filter(system_id=system_id) 
+            ois_found = False
+            ois_permissions = []
+            if ois.count() > 0:
+                ois_found = True
+                isp = payments_utils.get_oracle_interface_system_permissions(system_id,self.request.user.email)          
+
+                ctx['oracle_systems'] = payments_models.OracleInterfaceSystem.objects.all()
+                ctx['system_id'] = system_id
+                
+                ctx['system_interface_permssions'] = isp
+                ctx['system_interface_permssions_json'] = json.dumps(isp)
+            ctx['ois_found'] = ois_found
+
+        else:
+            self.template_name = 'dpaw_payments/forbidden.html'
+        return ctx
+
 class FailedTransaction(generic.TemplateView):
     template_name = 'dpaw_payments/failed_transaction.html'
 

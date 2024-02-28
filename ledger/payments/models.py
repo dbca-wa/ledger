@@ -116,6 +116,7 @@ class OracleInterfacePermission(models.Model):
                 ('all_access', 'Full access to all Financial Tools'),
                 ('view_ledger_tools', 'View Ledger Payment Tools'),
                 ('manage_ledger_tool', 'Manage Ledger Payment Tools'), 
+                ('view_payment_totals', 'View Payment Totals'), 
     )
 
     system = models.ForeignKey(OracleInterfaceSystem,related_name='oracle_interface_permission_recipients')    
