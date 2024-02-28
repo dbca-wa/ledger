@@ -261,13 +261,15 @@ var ledger_payments = {
                             var pstart = 0;
                             var pend = 0 + pagelimit;
                             for (let i = 1; i <= totalpages; i++) {
-                                pages+='<li class="page-item ';
-                                if (ledger_payments.var.pagestart == pstart && ledger_payments.var.pageend == pend) { 
-                                   pages+=' active';
+                                if (i < 40) {
+                                        pages+='<li class="page-item ';
+                                        if (ledger_payments.var.pagestart == pstart && ledger_payments.var.pageend == pend) { 
+                                        pages+=' active';
+                                        }
+                                        pages+= '"><a class="page-link" href="javascript:void(0);" onclick="ledger_payments.update_page_payment_totals('+pstart+','+pend+');">'+i+'</a></li>';
+                                        pstart = pstart + pagelimit;
+                                        pend = pend + pagelimit;
                                 }
-                                pages+= '"><a class="page-link" href="javascript:void(0);" onclick="ledger_payments.update_page_payment_totals('+pstart+','+pend+');">'+i+'</a></li>';
-                                pstart = pstart + pagelimit;
-                                pend = pend + pagelimit;
                             }
                             //    pages+='<li class="page-item active">';
                             //    pages+='<a class="page-link" href="#">2</a>';
