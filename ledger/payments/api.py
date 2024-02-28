@@ -1115,7 +1115,7 @@ def PaymentTotals(request, *args, **kwargs):
             # if len(status) > 0:
             #     query &= Q(status=status)
             # if len(system) > 0:
-            #     query &= Q(system_identifier__system_id=system)
+            query &= Q(oracle_system__system_id=system)
             if len(settlement_date) > 0:
                 
                 settlement_date_django = datetime.strptime(settlement_date, "%d/%m/%Y")
