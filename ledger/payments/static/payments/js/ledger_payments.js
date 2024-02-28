@@ -11,7 +11,9 @@ var ledger_payments = {
                 'pagestart': 0,
                 'pageend': 10,
                 'formoptions': {'frstatus': '', 'frsystem':'','frkeyword': '' },
-                'selected_id': null
+                'selected_id': null,
+                'system_interface_permssions' : {}
+
         },
         load_payment_info: function() {
                 data = {}
@@ -154,6 +156,11 @@ var ledger_payments = {
           $("#confirm_status_change_btn").click(function() {
 	      ledger_payments.update_failed_transaction_status_confirmed();
           });
+          var system_interface_permssions = $('#system_interface_permssions').val();
+          system_interface_permssions_obj = JSON.parse(system_interface_permssions);
+          
+          ledger_payments.system_interface_permssions = system_interface_permssions_obj
+          // system_interface_permssions
           ledger_payments.load_failed_transactions();
      },	
      save_failed_transaction: function(rfid) {
@@ -197,7 +204,9 @@ var ledger_payments = {
 				    var link_completed = 'ledger_payments.update_failed_transaction_status("'+data.data.rows[i]['id']+'");'
 			            html+= "<button type='button' class='btn btn-primary btn-sm' onclick='window.location="+link+"'>Oracle Refund</button>&nbsp;";
 				    if (data.data.rows[i]['status'] == 0) { 
-			                html+= "<button type='button' class='btn btn-primary btn-sm' onclick='"+link_completed+"'>Mark Completed</button>";
+                                        if (ledger_payments.system_interface_permssions.all_access == true || ledger_payments.system_interface_permssions.manage_ledger_tool == true) {
+			                        html+= "<button type='button' class='btn btn-primary btn-sm' onclick='"+link_completed+"'>Mark Completed</button>";
+                                        }
 			            }
 			            html+= "</td>";
 			            html+= "</tr>";

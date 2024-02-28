@@ -131,10 +131,14 @@ class OracleInterfaceDeductionInline(admin.TabularInline):
     model = models.OracleInterfaceDeduction
     extra = 1
 
+class OracleInterfacePermissionInline(admin.TabularInline):
+    model = models.OracleInterfacePermission
+    extra = 1
+
 @admin.register(models.OracleInterfaceSystem)
 class OracleInterfaceSystemAdmin(admin.ModelAdmin):
     list_display = ('system_name','system_id')
-    inlines = [OracleInterfaceRecipientInline, OracleInterfaceReportReceipientInline, OracleInterfaceDeductionInline] 
+    inlines = [OracleInterfacePermissionInline, OracleInterfaceRecipientInline, OracleInterfaceReportReceipientInline, OracleInterfaceDeductionInline, ] 
 
 @admin.register(models.OracleAccountCode)
 class OracleAccountCode(admin.ModelAdmin):

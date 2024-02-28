@@ -2,7 +2,7 @@
 
 {% load static %} {% load dpaw_extras %}
     {% block title %}
-    <title>Payments - Department of Biodiversity, Conservation and Attractions</title>
+    Oracle Payments - Department of Biodiversity, Conservation and Attractions
     {% endblock %}
 
 
@@ -53,6 +53,12 @@
 
 
 {% block content %}
+
+{% if ois_found is True %}
+
+{% if system_interface_permssions.all_access is True or system_interface_permssions.view_ledger_tools is True or system_interface_permssions.manage_ledger_tool  is True %}
+
+
 <script>
 	   
         ledger_payments.var.current_invoice_group_id = '{{ invoice_group_id }}';
@@ -146,6 +152,7 @@
   <BR>
   <h1>Oracle Payment Tool</h1>
 
+{% if system_interface_permssions.all_access is True or system_interface_permssions.manage_ledger_tool  is True %}
 <div class="row">
     <div class='col-12 text-end'>
       <BR>
@@ -165,6 +172,7 @@
       </div>
 
     </div>
+{% endif %}
 
     <div class="col-12">
 
@@ -213,23 +221,26 @@
     </div>
 </div>
 
-{% if payment_oracle_admin is True %}
-   <div class="col">
-   <div class="col-sm-3 col-md-3 col-lg-3">
+{% if system_interface_permssions.all_access is True or system_interface_permssions.manage_ledger_tool  is True %}
+  {% if payment_oracle_admin is True %}
+    <div class="col">
+    <div class="col-sm-3 col-md-3 col-lg-3">
 
-   <div class="form-check">
-     <input class="form-check-input" type="checkbox" value="" id="settlement_override">
-     <label class="form-check-label">
-          Override Settlement date
-     </label>
-   </div>
-   <div class="mb-3" style='display:none' id='div_settlement_date'>
-     <label class="form-label">Settlement Date</label>
-     <input type="email" class="form-control" id="settlement_date" placeholder="2022-12-04">
-   </div>
-   </div>
-   </div>
-{% endif %}
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="settlement_override">
+      <label class="form-check-label">
+            Override Settlement date
+      </label>
+    </div>
+    <div class="mb-3" style='display:none' id='div_settlement_date'>
+      <label class="form-label">Settlement Date</label>
+      <input type="email" class="form-control" id="settlement_date" placeholder="2022-12-04">
+    </div>
+    </div>
+    </div>
+  {% endif %}
+
+
 <div class="col-sm-12 col-md-12 col-lg-12">
 <br>
 
@@ -300,9 +311,9 @@
          </div>
      </div>
      {% endif %}
-
-
 </div>
+{% endif %}
+
 <div class="col-sm-12 col-md-12 col-lg-12">
         <BR>
 </div>
@@ -346,6 +357,7 @@
 <br>
 
 <div class="card" id='money-management'>
+  {% if system_interface_permssions.all_access is True or system_interface_permssions.manage_ledger_tool  is True %}
 	  <h5 class="card-header">Money Management</h5>
 	    <div class="card-body">
 
@@ -484,7 +496,7 @@
         </div>  
 
 
-
+        
         <div class="col-sm-12 col-md-12 col-lg-12">
                 <br>
                 <br>
@@ -493,12 +505,13 @@
                         <button id="refund-booking" type="button" class="btn btn-primary btn-lg" target="_blank">Complete Refund</button>
                 </span>
         </div>
-
+        
 
 
 </div>
 </div>
 <br>
+{% endif %}
 
 
 
@@ -620,5 +633,22 @@
 
 
 </div>
+<BR>
+  <BR>
+
+{% else %}
+<br>
+  <div class="alert alert-danger" role="alert">
+      You don't have permission to access this page.
+  </div>
+{% endif %}
+
+{% else %}
+<br>
+<div class="alert alert-danger" role="alert">
+  The system identifier does not exist.
+</div>
+{% endif %}
+
 {% endblock %}
 

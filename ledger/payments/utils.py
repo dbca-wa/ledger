@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
 from six.moves.urllib.parse import urlparse
 #
-from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction, OracleInterfaceSystem, LinkedInvoiceGroupIncrementer, LinkedInvoice
+from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, OracleInterfacePermission, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction, OracleInterfaceSystem, LinkedInvoiceGroupIncrementer, LinkedInvoice
 #from ledger.payments.invoice import utils
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
@@ -1152,3 +1152,27 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
             data['data']['booking_reference_linked'] = ''
             
         return data
+
+def get_oracle_interface_system_permissions(system_id, email):
+
+    system_interface_permssions = {
+        'all_access': False,
+        'view_ledger_tools' : False,
+        'manage_ledger_tool' : False,
+    }
+
+    ois = OracleInterfaceSystem.objects.filter(system_id=system_id) 
+    if ois.count() > 0:
+        ois_permissions = OracleInterfacePermission.objects.filter(system=ois[0],email=email)
+        for oisp in ois_permissions:
+            if oisp.access_type == 'all_access':
+                system_interface_permssions['all_access'] = True
+            if oisp.access_type == 'view_ledger_tools':
+                system_interface_permssions['view_ledger_tools'] = True
+            if oisp.access_type == 'manage_ledger_tool':
+                system_interface_permssions['manage_ledger_tool'] = True                
+                
+    return system_interface_permssions
+
+
+
