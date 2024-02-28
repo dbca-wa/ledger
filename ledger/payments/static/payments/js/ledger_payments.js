@@ -260,6 +260,7 @@ var ledger_payments = {
                             var pagelimit = 10;
                             var pstart = 0;
                             var pend = 0 + pagelimit;
+
                             for (let i = 1; i <= totalpages; i++) {
                                 if (i < 40) {
                                         pages+='<li class="page-item ';
@@ -271,6 +272,7 @@ var ledger_payments = {
                                         pend = pend + pagelimit;
                                 }
                             }
+                            
                             //    pages+='<li class="page-item active">';
                             //    pages+='<a class="page-link" href="#">2</a>';
                             //    pages+='</li>';
