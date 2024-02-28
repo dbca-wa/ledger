@@ -54,3 +54,4 @@ psycopg2==2.8.6
 whitenoise==5.3.0
 git+https://github.com/dbca-wa/appmonitor_client.git#egg=appmonitor_client
 python-decouple==3.8
+

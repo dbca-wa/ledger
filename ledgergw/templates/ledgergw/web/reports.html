@@ -1,5 +1,5 @@
-{% extends "dpaw_payments/base.html" %}
-{% block "body-content" %}
+{% extends "ledgergw/web/base_b5.html" %}
+{% block content %}
 
 <link href="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css" rel="stylesheet"/>
 <script  type="text/javascript" src="/static/common/node_modules/moment/min/moment.min.js"></script>
@@ -15,9 +15,11 @@
 
 <div id='reports'></div>
 <div class="container">
+    <br>
+    <h1>Financial Reports</h1>
     <div id="report-form">
         <form method="get" id="payments-form" onsubmit="event.preventDefault();">
-          <br><br>
+          <br>
           <div class="card">
             <div class="card-body">
             <div class="well">
