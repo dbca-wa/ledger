@@ -55,6 +55,11 @@ RUN touch /var/log/cron.log
 RUN service cron start
 RUN chmod 755 /app/bin/*
 RUN chmod 755 /startup.sh
+
+# kubernetes health checks script
+RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/main/wagov_utils/bin/health_check.sh -O /bin/health_check.sh
+RUN chmod 755 /bin/health_check.sh
+
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
 CMD ["/startup.sh"]
