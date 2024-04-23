@@ -24,11 +24,11 @@ class Command(BaseCommand):
             sftp_key_location = env('SFTP_KEY_LOCATION', "")
 
             try:
-                if len(sftp_username) > 0:
+                if len(sftp_username) < 1:
                      raise ValidationError("No username provided")
-                if len(sftp_host) > 0:
+                if len(sftp_host) < 1:
                      raise ValidationError("No host provided")
-                if len(sftp_key_location) > 0:
+                if len(sftp_key_location) < 1:            
                      raise ValidationError("No key provided")
 
 
