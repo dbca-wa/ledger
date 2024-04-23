@@ -32,13 +32,15 @@ class Command(BaseCommand):
                      raise ValidationError("No key provided")
 
 
+                shutil.copy2(sftp_key_location, '/tmp/bank.key')
+                os.chmod('/tmp/bank.key', 0o775)
                 local_bank_files = os.listdir(local_bank_directory)
                 print (local_bank_files)
                 for lbf in local_bank_files:
                     print ("removing "+lbf)
                     os.remove(local_bank_directory+lbf)
                 
-                result = subprocess.check_output('echo "ls '+remote_bank_directory+'" | sftp -i '+sftp_key_location+' '+sftp_username+'@'+sftp_host, shell=True, text=True)
+                result = subprocess.check_output('echo "ls '+remote_bank_directory+'" | sftp  -o StrictHostKeyChecking=no -i '+sftp_key_location+' '+sftp_username+'@'+sftp_host, shell=True, text=True)
                 sftpfiles = result.split("\n")
                 for file in sftpfiles:
                     sftp_file = file.strip()
@@ -51,9 +53,9 @@ class Command(BaseCommand):
                             print ("File already exists not downloading "+file_only)
                         else:      
                             print ('downloading file '+file_only)
-                            get_resp = subprocess.check_output('echo "get '+sftp_file+' '+local_bank_directory+'" | sftp -i '+sftp_key_location+' '+sftp_username+'@'+sftp_host, shell=True, text=True)
+                            get_resp = subprocess.check_output('echo "get '+sftp_file+' '+local_bank_directory+'" | sftp  -o StrictHostKeyChecking=no -i '+sftp_key_location+' '+sftp_username+'@'+sftp_host, shell=True, text=True)
                             #print (get_resp)
-                
+                os.remove('/tmp/bank.key')
             except Exception as e:
                 print ("EXCEPTION:")
                 print (e)
@@ -63,7 +65,7 @@ class Command(BaseCommand):
                 email_list = []
                 for email_to in settings.NOTIFICATION_EMAIL.split(","):
                         email_list.append(email_to)
-                sendHtmlEmail(tuple(email_list),"[LEDGER] Test Email",context,'ledgergw/email/cba_sync.html',None,None,settings.EMAIL_FROM,'system-oim',attachments=None)
+                sendHtmlEmail(tuple(email_list),"[LEDGER] CBA Sync ",context,'ledgergw/email/cba_sync.html',None,None,settings.EMAIL_FROM,'system-oim',attachments=None)
 
 
 
