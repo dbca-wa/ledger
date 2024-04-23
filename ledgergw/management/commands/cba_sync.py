@@ -33,7 +33,7 @@ class Command(BaseCommand):
 
 
                 shutil.copy2(sftp_key_location, '/tmp/bank.key')
-                os.chmod('/tmp/bank.key', 0o775)
+                os.chmod('/tmp/bank.key', 0o600)
                 local_bank_files = os.listdir(local_bank_directory)
                 print (local_bank_files)
                 for lbf in local_bank_files:
