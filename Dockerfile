@@ -25,7 +25,6 @@ RUN apt-get install --no-install-recommends -y python3.9 python3.9-dev python3.9
 RUN ln -s /usr/bin/python3.9 /usr/bin/python && python3.9 -m pip install --upgrade pip==21.3.1 
 RUN apt-get update
 
-RUN ln -s /usr/bin/python3 /usr/bin/python 
 #RUN ln -s /usr/bin/pip3 /usr/bin/pip
 RUN pip install --upgrade pip
 # Install Python libs from requirements.txt.
