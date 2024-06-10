@@ -15,7 +15,7 @@ RUN apt-get clean
 RUN apt-get update
 RUN apt-get upgrade -y
 RUN apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin python3 python3-setuptools python3-dev python3-pip tzdata cron 
-RUN apt-get install --no-install-recommends -y libpq-dev patch
+RUN apt-get install --no-install-recommends -y libpq-dev patch build-essential
 RUN apt-get install --no-install-recommends -y postgresql-client mtr htop vim ssh
 RUN ln -s /usr/bin/python3 /usr/bin/python 
 #RUN ln -s /usr/bin/pip3 /usr/bin/pip
