@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM ubuntu:20.04 as builder_base_ledgergw
+FROM ubuntu:22.04 as builder_base_ledgergw
 MAINTAINER asi@dbca.wa.gov.au
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Australia/Perth
@@ -14,7 +14,7 @@ RUN mv /etc/apt/sourcesau.list /etc/apt/sources.list
 RUN apt-get clean
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin python3 python3-setuptools python3-dev python3-pip tzdata cron rsyslog
+RUN apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin python3 python3-setuptools python3-dev python3-pip tzdata cron 
 RUN apt-get install --no-install-recommends -y libpq-dev patch
 RUN apt-get install --no-install-recommends -y postgresql-client mtr htop vim ssh
 RUN ln -s /usr/bin/python3 /usr/bin/python 
@@ -47,7 +47,7 @@ COPY ledgergw ./ledgergw
 COPY cron /etc/cron.d/ledgergw
 COPY startup.sh /
 RUN python manage_ledgergw.py collectstatic --noinput
-RUN service rsyslog start
+# RUN service rsyslog start
 RUN chmod 0644 /etc/cron.d/ledgergw
 RUN crontab /etc/cron.d/ledgergw
 RUN service cron start
