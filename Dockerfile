@@ -22,7 +22,7 @@ RUN apt-get install --no-install-recommends -y postgresql-client mtr htop vim ss
 
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get install --no-install-recommends -y python3.9 python3.9-dev python3.9-distutils 
-RUN ln -s /usr/bin/python3.9 /usr/bin/python && python3.9 -m pip install --upgrade pip==21.3.1 && 
+RUN ln -s /usr/bin/python3.9 /usr/bin/python && python3.9 -m pip install --upgrade pip==21.3.1 
 RUN apt-get update
 
 RUN ln -s /usr/bin/python3 /usr/bin/python 
