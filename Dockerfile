@@ -31,7 +31,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt \
   && rm -rf /var/lib/{apt,dpkg,cache,log}/ /tmp/* /var/tmp/*
 
 COPY libgeos.py.patch /app/
-RUN patch /usr/local/lib/python3.8/dist-packages/django/contrib/gis/geos/libgeos.py /app/libgeos.py.patch
+RUN patch /usr/local/lib/python3.10/dist-packages/django/contrib/gis/geos/libgeos.py /app/libgeos.py.patch
 RUN rm /app/libgeos.py.patch
 
 # Install the project (ensure that frontend projects have been built prior to this step).
