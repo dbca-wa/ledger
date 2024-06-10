@@ -21,8 +21,8 @@ RUN apt-get install --no-install-recommends -y postgresql-client mtr htop vim ss
 
 
 RUN add-apt-repository ppa:deadsnakes/ppa
-RUN apt-get install --no-install-recommends -y python3.9 python3.9-dev python3.9-distutils 
-RUN ln -s /usr/bin/python3.9 /usr/bin/python && python3.9 -m pip install --upgrade pip==21.3.1 
+RUN apt-get install --no-install-recommends -y python3.8 python3.8-dev python3.8-distutils 
+RUN ln -s /usr/bin/python3.8 /usr/bin/python && python3.8 -m pip install --upgrade pip==21.3.1 
 RUN apt-get update
 
 #RUN ln -s /usr/bin/pip3 /usr/bin/pip
@@ -38,7 +38,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt \
   && rm -rf /var/lib/{apt,dpkg,cache,log}/ /tmp/* /var/tmp/*
 
 COPY libgeos.py.patch /app/
-RUN patch /usr/local/lib/python3.9/dist-packages/django/contrib/gis/geos/libgeos.py /app/libgeos.py.patch
+RUN patch /usr/local/lib/python3.8/dist-packages/django/contrib/gis/geos/libgeos.py /app/libgeos.py.patch
 RUN rm /app/libgeos.py.patch
 
 # Install the project (ensure that frontend projects have been built prior to this step).
