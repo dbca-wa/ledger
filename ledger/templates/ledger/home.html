@@ -1,0 +1,48 @@
+{% extends "ledgergw/web/base_b5.html" %}
+{% block content %}
+
+
+
+<br>
+<h1>Payment Portal</h1>
+<br>
+<div class='col-sm-12'>
+Welcome to the payment portal for Department of Biodiversity, Conservation and Attractions.  To access a payment service please choose from the options below.
+
+</div>
+<br>
+
+
+{% for pa in pil_array %}
+
+<div class="card mb-1" >
+    <div class='row row-eq-height'>
+        <div class='col-sm-12'>
+            <div class="row g-0 row-eq-height">
+
+                <div class="col-sm-8">
+                    <div class="card-body">
+                    <h5 class="card-title">{{ pa.title }}</h5>
+                    <p class="card-text">{{ pa.description }}</p>          
+                    </div>
+                </div>
+                <div class="col-sm-4 text-end ">
+                    <div class='col-sm-12 d-none d-sm-block'>                                        
+                        <a class='mt-4 me-4 btn btn-primary btn-lg' href="{{ pa.url }}">OPEN <i class="bi bi-subtract"></i></a>
+                    </div>
+                    <div class='col-sm-12  d-sm-none d-md-none d-lg-none d-xl-none d-xl-none'>
+                        <div class="d-grid gap-2 p-1">
+                            <a class="btn btn-primary" href="{{ pa.url }}">OPEN <i class="bi bi-subtract"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>  
+    </div>  
+</div>  
+{% endfor %}
+
+
+
+ {% endblock %}
+

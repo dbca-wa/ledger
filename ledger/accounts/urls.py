@@ -9,7 +9,7 @@ api_patterns = [
 ]
 
 urlpatterns = [
-    url(r'^$', views.home, name='home'),
+    # url(r'^$', views.home, name='home'),
     url(r'^done/$', views.done, name='done'),
     url(r'^validation-sent/$', views.validation_sent, name='validation_sent'),
     url(r'^login-retry/$', views.login_retry, name='login_retry'),
