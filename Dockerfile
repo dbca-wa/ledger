@@ -14,15 +14,15 @@ RUN mv /etc/apt/sourcesau.list /etc/apt/sources.list
 RUN apt-get clean
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin python3 python3-setuptools python3-dev python3-pip tzdata cron 
+RUN apt-get install --no-install-recommends -y wget git libmagic-dev gcc binutils libproj-dev gdal-bin python3 python3-setuptools python3-dev python3-pip tzdata cron
 RUN apt-get install --no-install-recommends -y libpq-dev patch build-essential software-properties-common ca-certificates bzip2 gpg-agent
 RUN update-ca-certificates
 RUN apt-get install --no-install-recommends -y postgresql-client mtr htop vim ssh
 
 
 RUN add-apt-repository ppa:deadsnakes/ppa
-RUN apt-get install --no-install-recommends -y python3.8 python3.8-dev python3.8-distutils 
-RUN ln -s /usr/bin/python3.8 /usr/bin/python && python3.8 -m pip install --upgrade pip==21.3.1 
+RUN apt-get install --no-install-recommends -y python3.7 python3.7-dev python3.7-distutils
+RUN ln -s /usr/bin/python3.7 /usr/bin/python && python3.7 -m pip install --upgrade pip==21.3.1
 RUN apt-get update
 
 #RUN ln -s /usr/bin/pip3 /usr/bin/pip
@@ -38,7 +38,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt \
   && rm -rf /var/lib/{apt,dpkg,cache,log}/ /tmp/* /var/tmp/*
 
 COPY libgeos.py.patch /app/
-RUN patch /usr/local/lib/python3.8/dist-packages/django/contrib/gis/geos/libgeos.py /app/libgeos.py.patch
+RUN patch /usr/local/lib/python3.7/dist-packages/django/contrib/gis/geos/libgeos.py /app/libgeos.py.patch
 RUN rm /app/libgeos.py.patch
 
 # Install the project (ensure that frontend projects have been built prior to this step).
