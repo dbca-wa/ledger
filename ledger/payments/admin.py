@@ -181,3 +181,7 @@ class PaymentTotal(admin.ModelAdmin):
 
      discrepancy.allow_tags = True
      difference.allow_tags = True
+
+@admin.register(models.PaymentInformationLink)
+class PaymentInformationLinkAdmin(admin.ModelAdmin):
+    list_display = ('title','active','created')

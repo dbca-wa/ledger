@@ -17,7 +17,7 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from django.views.generic import TemplateView
 from oscar.app import application
-
+from ledger import views
 
 urlpatterns = [
     #url(r'^ledger/admin/', admin.site.urls, name='ledger_admin'),
@@ -26,5 +26,6 @@ urlpatterns = [
     url(r'^ledger/', include('social_django.urls', namespace='social')),
     url(r'^ledger/checkout/', application.urls),
     url(r'^taxonomy/', include('ledger.taxonomy.urls')),
-    url(r'^$', TemplateView.as_view(template_name='customers/base.html'), name='home')
+    url(r'^$', views.HomeView.as_view(), name='home'),  
+    # url(r'^$', TemplateView.as_view(template_name='customers/base.html'), name='home')    
 ]

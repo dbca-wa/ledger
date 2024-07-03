@@ -9,6 +9,7 @@ from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction
 from ledger.accounts.models import EmailUser
+from django.core.cache import cache
 
 # Oracle Integration
 # ======================================
@@ -232,3 +233,19 @@ class PaymentTotal(models.Model):
     def __str__(self):
         return '{} - {}'.format(str(self.oracle_system.system_id),self.settlement_date)
 
+
+
+class PaymentInformationLink(models.Model):
+    title = models.CharField(max_length=1000) 
+    description = models.TextField(blank=True, null=True)
+    url = models.CharField(max_length=1000)     
+    active = models.BooleanField(default=True)    
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{}'.format(str(self.title))        
+
+    def save(self, *args, **kwargs):
+        cache.delete('models.PaymentInformationLink.objects.filter(active=True)')
+        super(PaymentInformationLink, self).save(*args, **kwargs)    
+        

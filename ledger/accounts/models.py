@@ -287,6 +287,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, blank=False)
     first_name = models.CharField(max_length=128, blank=False, verbose_name='Given name(s)')
     last_name = models.CharField(max_length=128, blank=False)
+
+    legal_first_name = models.CharField(max_length=128, null=True, blank=True, verbose_name='Legal Given name(s)')
+    legal_last_name = models.CharField(max_length=128, null=True, blank=True)
+
     is_staff = models.BooleanField(
         default=False,
         help_text='Designates whether the user can log into the admin site.',
@@ -309,6 +313,8 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                              verbose_name='title', help_text='')
     dob = models.DateField(auto_now=False, auto_now_add=False, null=True, blank=False,
                            verbose_name="date of birth", help_text='')
+    legal_dob = models.DateField(auto_now=False, auto_now_add=False, null=True, blank=True,
+                           verbose_name="Legal date of birth", help_text='')
     phone_number = models.CharField(max_length=50, null=True, blank=True,
                                     verbose_name="phone number", help_text='')
     position_title = models.CharField(max_length=100, null=True, blank=True,
