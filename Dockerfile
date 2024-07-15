@@ -92,5 +92,5 @@ RUN python manage_ledgergw.py collectstatic --noinput
 
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
-CMD ["/startup.sh"]
+CMD ["/bin/bash", "-c", "/startup.sh"]
 #CMD ["gunicorn", "ledgergw.wsgi", "--bind", ":8080", "--config", "gunicorn.ini"]
