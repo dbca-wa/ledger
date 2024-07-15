@@ -29,12 +29,12 @@ RUN useradd -g 5000 -u 5000 oim -s /bin/bash -d /app
 RUN usermod -a -G sudo oim
 RUN mkdir /app
 RUN chown -R oim.oim /app
-COPY cron /etc/cron.d/ledgergw
-RUN chmod 0644 /etc/cron.d/ledgergw
-RUN crontab /etc/cron.d/ledgergw
-RUN service cron start
-RUN touch /var/log/cron.log
-RUN service cron start
+# COPY cron /etc/cron.d/ledgergw
+# RUN chmod 0644 /etc/cron.d/ledgergw
+# RUN crontab /etc/cron.d/ledgergw
+# RUN service cron start
+# RUN touch /var/log/cron.log
+# RUN service cron start
 
 COPY timezone /etc/timezone
 ENV TZ=Australia/Perth
