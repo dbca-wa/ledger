@@ -20,11 +20,13 @@ RUN apt-get install --no-install-recommends -y npm bzip2
 RUN update-ca-certificates
 RUN apt-get install --no-install-recommends -y postgresql-client mtr htop vim ssh
 
-
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get install --no-install-recommends -y python3.7 python3.7-dev python3.7-distutils
 RUN ln -s /usr/bin/python3.7 /usr/bin/python && python3.7 -m pip install --upgrade pip==21.3.1
 RUN apt-get update
+
+RUN cd /app/ledgergw/static/common; npm install
+# RUN cd /app/ledgergw/static/common; npm run build
 
 #RUN ln -s /usr/bin/pip3 /usr/bin/pip
 RUN pip install --upgrade pip
