@@ -47,6 +47,10 @@ RUN chmod 755 /startup.sh
 RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/main/wagov_utils/bin/health_check.sh -O /bin/health_check.sh
 RUN chmod 755 /bin/health_check.sh
 
+# add python cron
+RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/main/wagov_utils/bin-python/scheduler/scheduler.py -O /bin/scheduler.py
+RUN chmod 755 /bin/scheduler.py
+
 RUN pip install --upgrade pip
 # Install Python libs from requirements.txt.
 FROM builder_base_ledgergw as python_libs_ledgergw
