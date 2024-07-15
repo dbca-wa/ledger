@@ -352,7 +352,7 @@ if not PRODUCTION_EMAIL:
 SYSTEM_GROUPS = env('SYSTEM_GROUPS', None)
 PAYMENT_OFFICERS_GROUP = env('PAYMENT_OFFICERS_GROUP','Payments Officers')
 PAYMENT_ORACLE_ADMIN_GROUP = env('PAYMENT_ORACLE_ADMIN_GROUP', 'Payments Oracle Admin')
-
+ACCOUNT_OFFICERS_GROUP = env('ACCOUNT_OFFICERS_GROUP','Account Management Officers')
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True

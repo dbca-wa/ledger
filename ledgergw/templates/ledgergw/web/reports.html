@@ -1,9 +1,11 @@
 {% extends "ledgergw/web/base_b5.html" %}
 {% block content %}
+<link href="/static/common/node_modules/simplicite-bootstrap-datetimepicker/bootstrap5/css/bootstrap-datetimepicker.min.css?ver={{ settings.GIT_COMMIT_HASH }}" rel="stylesheet"/>
+<link href="/static/common/node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css?ver={{ settings.GIT_COMMIT_HASH }}" rel="stylesheet"/>
 
-<link href="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css" rel="stylesheet"/>
 <script  type="text/javascript" src="/static/common/node_modules/moment/min/moment.min.js"></script>
-<script  type="text/javascript" src="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js"></script>
+<script  type="text/javascript" src="/static/common/node_modules/simplicite-bootstrap-datetimepicker/bootstrap5/js/bootstrap-datetimepicker.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
 
 {% include "dpaw_payments/modal-loader.html" %}
 {% include "dpaw_payments/modal-error.html" %}
@@ -336,9 +338,10 @@
                                    timepaymentauditreportDatePicker:null,
 
                                    datepickerOptions:{
-                                       format: 'DD/MM/YYYY',
-                                       showClear:true,
-                                       useCurrent:false
+                                    format: 'dd/mm/yyyy',
+                                    showClear: true,
+                                    useCurrent: false,
+                                    autoclose: true
                                    },
                                    regions:[],
                                    region:'',
@@ -356,16 +359,16 @@
                                 reports.var.refund_form = $('#refund_form');
                                 reports.var.oracle_form = $('#oracle_form');
                                 reports.var.booking_settlements_form = $('#booking_settlements_form');
-                                reports.var.accountsDateStartPicker = $('#accountsDateStartPicker').datetimepicker(reports.var.datepickerOptions);
-                                reports.var.accountsDateEndPicker = $('#accountsDateEndPicker').datetimepicker(reports.var.datepickerOptions);
-                                reports.var.flatDateStartPicker = $('#flatDateStartPicker').datetimepicker(reports.var.datepickerOptions);
-                                reports.var.flatDateEndPicker = $('#flatDateEndPicker').datetimepicker(reports.var.datepickerOptions);
-                                reports.var.refundsStartPicker = $('#refundsStartPicker').datetimepicker(reports.var.datepickerOptions);
-                                reports.var.refundsEndPicker = $('#refundsEndPicker').datetimepicker(reports.var.datepickerOptions);
-                                reports.var.oracleDatePicker = $('#oracleDatePicker').datetimepicker(reports.var.datepickerOptions);
-                                reports.var.bookingSettlementsDatePicker = $('#bookingSettlementsDatePicker').datetimepicker(reports.var.datepickerOptions);
-                                reports.var.paymentauditDatePicker = $('#paymentauditDatePicker').datetimepicker(reports.var.datepickerOptions);
-                                reports.var.timepaymentauditreportDatePicker = $('#timepaymentauditreportDatePicker').datetimepicker(reports.var.datepickerOptions);
+                                reports.var.accountsDateStartPicker = $('#accountsDateStartPicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.accountsDateEndPicker = $('#accountsDateEndPicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.flatDateStartPicker = $('#flatDateStartPicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.flatDateEndPicker = $('#flatDateEndPicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.refundsStartPicker = $('#refundsStartPicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.refundsEndPicker = $('#refundsEndPicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.oracleDatePicker = $('#oracleDatePicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.bookingSettlementsDatePicker = $('#bookingSettlementsDatePicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.paymentauditDatePicker = $('#paymentauditDatePicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.timepaymentauditreportDatePicker = $('#timepaymentauditreportDatePicker').datepicker(reports.var.datepickerOptions);
                                 reports.var.flatDateStartPicker.on('dp.hide',function (e) {
                                     reports.var.flatDateEndPicker.data("DateTimePicker").date(null);
                                     reports.var.flatDateEndPicker.data("DateTimePicker").minDate(e.date);
@@ -388,39 +391,39 @@
                                 });
                         },
                         getBookingSettlementsReport() {
-                            var settlement_date = reports.var.bookingSettlementsDatePicker.data("DateTimePicker").date().format('DD/MM/YYYY');
+                            var settlement_date = moment(reports.var.bookingSettlementsDatePicker.datepicker("getDate")).format('DD/MM/YYYY');
                             var report_url = reports.var.settlement_report_url+"?system="+reports.var.system_id+"&date="+settlement_date;
                             window.location.assign(report_url);
                         },
                         generateRefundReport:function () {
                             let vm =this;
-                            var refundstart = reports.var.refundsStartPicker.data("DateTimePicker").date().format('DD/MM/YYYY');
-                            var refundend = reports.var.refundsEndPicker.data("DateTimePicker").date().format('DD/MM/YYYY');
+                            var refundstart = moment(reports.var.refundsStartPicker.datepicker("getDate")).format('DD/MM/YYYY');
+                            var refundend = moment(reports.var.refundsEndPicker.data("DateTimePicker").datepicker("getDate")).format('DD/MM/YYYY');
                             var report_url = reports.var.refund_report_url+"?system="+reports.var.system_id+"&start="+refundstart+"&end="+refundend;
                             window.location.assign(report_url);
                         },
 		        generateByAccountCodes:function () {
-                                var account_start = reports.var.accountsDateStartPicker.data("DateTimePicker").date().format('YYYY-MM-DD');
-                                var account_end = reports.var.accountsDateEndPicker.data("DateTimePicker").date().format('YYYY-MM-DD');
-                                var bank_start = reports.var.flatDateStartPicker.data("DateTimePicker").date().format('YYYY-MM-DD');
-                                var bank_end = reports.var.flatDateEndPicker.data("DateTimePicker").date().format('YYYY-MM-DD'); 
+                                var account_start = moment(reports.var.accountsDateStartPicker.datepicker("getDate")).format('YYYY-MM-DD');
+                                var account_end = moment(reports.var.accountsDateEndPicker.datepicker("getDate")).format('YYYY-MM-DD');
+                                var bank_start = moment(reports.var.flatDateStartPicker.datepicker("getDate")).format('YYYY-MM-DD');
+                                var bank_end = moment(reports.var.flatDateEndPicker.datepicker("getDate")).format('YYYY-MM-DD'); 
 		           
                                 var report_url = reports.var.payments_report_url+"?system="+reports.var.system_id+"&start="+account_start+" 00:00:00&end="+account_end+" 23:59:59&banked_start="+bank_start+" 00:00:00&banked_end="+bank_end+" 23:59:59&items=true"
                                 window.location.assign(report_url);
 			},
 		        generateFlatReport: function() {
-                                var account_start = reports.var.accountsDateStartPicker.data("DateTimePicker").date().format('YYYY-MM-DD');
-                                var account_end = reports.var.accountsDateEndPicker.data("DateTimePicker").date().format('YYYY-MM-DD');
-                                var bank_start = reports.var.flatDateStartPicker.data("DateTimePicker").date().format('YYYY-MM-DD');
-                                var bank_end = reports.var.flatDateEndPicker.data("DateTimePicker").date().format('YYYY-MM-DD');
+                                var account_start = moment(reports.var.accountsDateStartPicker.datepicker("getDate")).format('YYYY-MM-DD');
+                                var account_end = moment(reports.var.accountsDateEndPicker.datepicker("getDate")).format('YYYY-MM-DD');
+                                var bank_start = moment(reports.var.flatDateStartPicker.datepicker("getDate")).format('YYYY-MM-DD');
+                                var bank_end = moment(reports.var.flatDateEndPicker.datepicker("getDate")).format('YYYY-MM-DD');
 
                                 var report_url = reports.var.payments_report_url+"?system="+reports.var.system_id+"&start="+account_start+" 00:00:00&end="+account_end+" 23:59:59&banked_start="+bank_start+" 00:00:00&banked_end="+bank_end+" 23:59:59&flat=false"
                                 window.location.assign(report_url);
 			},
                         runOracleJob: function() {
-                                var oracle_date = reports.var.oracleDatePicker.data("DateTimePicker").date().format('YYYY-MM-DD');
+                                var oracle_date = moment(reports.var.oracleDatePicker.datepicker("getDate")).format('YYYY-MM-DD');
                                 if (oracle_date.length > 0) { 
-				      $('#LoadingPopup').modal('show');
+				                    $('#LoadingPopup').modal('show');
                                       var report_url = reports.var.oracle_job_url+"?system="+reports.var.system_id+"&date="+oracle_date+"&override="+reports.var.oracle_override;
                                       $.ajax({
                                           url: report_url,
@@ -445,7 +448,7 @@
 
                         },
                         QueuePaymentAuditReportJob: function() {
-                            var oracle_date = reports.var.paymentauditDatePicker.data("DateTimePicker").date().format('YYYY-MM-DD');
+                            var oracle_date = moment(reports.var.paymentauditDatePicker.datepicker("getDate")).format('YYYY-MM-DD');
                             if (oracle_date.length > 0) { 
                                     $('#LoadingPopup').modal('show');
                                     var report_url = reports.var.queue_report_job_url+"?system="+reports.var.system_id+"&job_date="+oracle_date+"&job_type=audit_report";
@@ -472,7 +475,7 @@
 
                         },
                         QueueTimePaymentAuditReportJob: function() {
-                            var oracle_date = reports.var.timepaymentauditreportDatePicker.data("DateTimePicker").date().format('YYYY-MM-DD');
+                            var oracle_date = moment(reports.var.timepaymentauditreportDatePicker.datepicker("getDate")).format('YYYY-MM-DD');
                             if (oracle_date.length > 0) { 
                                     $('#LoadingPopup').modal('show');
                                     var report_url = reports.var.queue_report_job_url+"?system="+reports.var.system_id+"&job_date="+oracle_date+"&job_type=timed_audit_report";

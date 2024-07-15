@@ -585,6 +585,17 @@ class EmailUserAction(UserAction):
             what=str(action)
         )
 
+class EmailUserChangeLog(models.Model):
+    emailuser = models.ForeignKey(EmailUser, related_name='change_log_email_user')
+    change_key = models.CharField(max_length=1024, blank=True, null=True)
+    change_value = models.CharField(max_length=1024, blank=True, null=True)
+    change_by = models.ForeignKey(EmailUser, related_name='change_log_request_user')
+    created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    class Meta:
+        app_label = 'accounts'
+        ordering = ['-created']
+
 class CommunicationsLogEntry(models.Model):
     TYPE_CHOICES = [
         ('email', 'Email'),

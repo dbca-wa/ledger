@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 
 from reversion.admin import VersionAdmin
 
-from ledger.accounts.models import EmailUser, Document, PrivateDocument, Address, Profile, Organisation, OrganisationAddress 
+from ledger.accounts.models import EmailUser,EmailUserAction, UserAction, EmailUserChangeLog, Document, PrivateDocument, Address, Profile, Organisation, OrganisationAddress 
 from ledger.accounts.forms import ProfileAdminForm
 
 
@@ -82,6 +82,16 @@ class EmailUserAdmin(UserAdmin):
         if settings.SYSTEM_GROUPS and db_field.name == "groups" and not request.user.is_superuser:
             kwargs["queryset"] = Group.objects.filter(name__in=settings.SYSTEM_GROUPS)
         return super(EmailUserAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
+@admin.register(EmailUserAction)
+class EmailUserActionAdmin(admin.ModelAdmin):
+    model = EmailUserAction
+
+@admin.register(EmailUserChangeLog)
+class EmailUserChangeLogAdmin(admin.ModelAdmin):
+    model = EmailUserChangeLog
+    list_display = ('id','emailuser','change_key', 'change_value', 'change_by','created')
+    ordering = ('-id',)
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):

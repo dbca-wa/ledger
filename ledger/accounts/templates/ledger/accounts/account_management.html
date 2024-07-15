@@ -1,0 +1,124 @@
+{% extends "ledgergw/web/base_b5.html" %}
+
+{% block content %}
+<script  type="text/javascript" src="/static/common/node_modules/jquery/dist/jquery.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<link href="/static/common/node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css?ver={{ settings.GIT_COMMIT_HASH }}" rel="stylesheet"/>
+<script  type="text/javascript" src="/static/common/node_modules/moment/min/moment.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/datatables.net/js/dataTables.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+
+<BR>
+
+
+<div class="card">
+  <h2 class="card-header">Account Management</h2>
+  <div class="card-body">
+<div class="row">
+
+
+
+		        <div class="col-12">
+			                                <BR>
+
+                             <table cellspacing="0" width="100%" id="account-management-table" name="account-management-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" ffrole="grid"> 
+                             <thead>
+                                     <tr>
+                                       <th>Ledger ID</th>
+                                       <th>Account Name</th>
+                                       <th>Legal Name</th>
+                                       <th>Account DOB</th>
+                                       <th>Legal DOB</th>
+                                       <th>Email</th>
+                                       <th>Action</th>
+
+                                     </tr>
+                             </thead>
+                             <tbody>
+           
+                             </tbody>
+                             </table>
+
+	    </div>
+
+            </div>
+          </div>
+</div>
+</div>
+
+<style>
+
+div.dt-processing div:last-child {
+    display: none;
+}
+</style>
+</body>
+
+<script>
+
+//  let table = new DataTable('#account-management-table');
+new DataTable('#account-management-table', {
+  // pageLength : 15,
+  "processing": true,
+  "searching": true,
+  "language": {
+        // processing: '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><span class="sr-only">Loading...</span> ',
+        "infoFiltered": "",
+        "processing": "<div style='font-weight:bold;'>Loading. Please wait...<BR><BR></div><div class='spinner-border text-primary' style='width: 3rem; height: 3rem;' role='status'><span class='visually-hidden'>Loading...</span></div><div><BR></div>"
+    },  
+    order: [[0, 'desc']],
+  columnDefs:    [
+      { className: "dt-head-left", targets: "_all" },
+      { className: "dt-head-left", targets: [6,],  "orderable": false },
+//      { className: "dt-head-left", targets: "_all" },
+      //{ className: "dt-head-left", targets: "_all" }, 
+      //{ className: "dt-head-left", targets: "_all" },
+      //{ className: "dt-head-left", targets: "_all" },
+      //{ className: "dt-head-left", targets: "_all" },
+
+  ],
+  "columns": [
+      { "data": "id"},
+      
+      { "data": "account_name"},
+      { "data": "legal_name"},      
+      { "data": "account_dob"},
+
+      { "data": "legal_dob"},
+      { "data": "email"},
+      { "data": "action"},
+  ],
+  "serverSide": true,
+  dataSrc: function (json) {
+    var data = JSON.parse(json.d);
+    console.log(data);
+  
+    return data.data;
+  }, 
+  "sssajax":  "/ledger/accounts/api/account/list",
+  "ajax": {
+      cache: false,
+      url: "/ledger/accounts/api/account/list",
+      type: "POST",
+      data: function (data) {
+        // data['active'] = true;
+         return JSON.stringify(data);
+      },
+      
+      dataType: "json",
+      //processData: false,
+      contentType: "application/json;charset=UTF-8",
+      // success: function (response) {
+      //    console.log(response);
+          //$('#account-management-table').DataTable().ajax.reload();
+          
+          // return response
+      //},
+      error: function () {
+          console.log("Error Loading Rest API");
+      },      
+  },
+} )
+</script>
+
+
+{% endblock %}

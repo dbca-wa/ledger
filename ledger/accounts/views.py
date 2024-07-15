@@ -3,10 +3,17 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from ledger.accounts import helpers
+from ledger.accounts import forms as app_forms
 from django.utils.http import urlquote_plus, urlencode
-
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
+from django.views import generic
+from django.http import HttpResponse, HttpResponseRedirect
+from django import forms
 from .forms import FirstTimeForm
-from .models import EmailUser
+from .models import EmailUser,EmailUserChangeLog,PrivateDocument
+import json
 
 # Example views, most of them are just template rendering
 
@@ -92,3 +99,120 @@ def token_login(request, token, email):
         urlencode({'verification_code': token, 'email': email})
     )
     return redirect(redirect_url)
+
+
+
+class AccountManagement(generic.TemplateView):
+    template_name = 'ledger/accounts/account_management.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(AccountManagement,self).get_context_data(**kwargs)
+
+        print (helpers.is_account_admin(self.request.user))
+        if helpers.is_account_admin(self.request.user) is True:
+            system_id = self.request.GET.get('system_id','')
+
+        else:
+            self.template_name = 'dpaw_payments/forbidden.html'
+        return ctx
+    
+class AccountChange(LoginRequiredMixin, UpdateView):
+   
+    template_name = 'ledger/accounts/account_change.html'
+    model = EmailUser
+    form_class = app_forms.EmailUserForm    
+
+
+    def get_initial(self):
+        initial = super(AccountChange, self).get_initial()
+        person = self.get_object()
+        initial['id'] = person.id
+        
+        initial['identification2'] = person.identification2
+
+        return initial
+    def get_context_data(self, **kwargs):
+        ctx = super(AccountChange,self).get_context_data(**kwargs)
+        ctx['account_id'] = self.kwargs['pk']
+
+        if helpers.is_account_admin(self.request.user) is True:
+            pass
+
+        else:
+            self.template_name = 'dpaw_payments/forbidden.html'
+        return ctx
+    
+    def get_absolute_url(self):       
+        
+        return "/ledger/account-management/"
+
+    def get_absolute_account_url(self):        
+        id = self.get_object().id
+        return "/ledger/account-management/{}/change/".format(id)
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):            
+            return HttpResponseRedirect(self.get_absolute_url())
+
+        first_name  = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+        
+        if len(first_name) < 1 and len(last_name) < 1:             
+            messages.error(self.request, "No Given name or last name data")
+
+        return super(AccountChange, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if helpers.is_account_admin(self.request.user) is True:
+            self.object = form.save(commit=False)
+            forms_data = form.cleaned_data
+            uservalue_map = {}
+            eu = EmailUser.objects.filter(id=self.object.id).values()
+            
+            for e in eu[0].keys():
+                uservalue_map[e] = eu[0][e]            
+            
+            if 'identification2_id' in uservalue_map:
+                if uservalue_map['identification_id'] is not None:
+                    self.object.identification2 = PrivateDocument.objects.get(id=uservalue_map['identification2_id'])
+
+            identification2_filechanged = False
+            if 'identification2_json' in self.request.POST:
+            
+                try:
+                    json_data = json.loads(self.request.POST['identification2_json'])
+                    if self.object.identification2:
+                        if self.object.identification2.id != int(json_data['doc_id']):
+                            doc = PrivateDocument.objects.get(id=int(json_data['doc_id']))
+                            self.object.identification2 = doc
+                            identification2_filechanged = True
+                    else:
+                        doc = PrivateDocument.objects.get(id=int(json_data['doc_id']))
+                        self.object.identification2 = doc
+                        identification2_filechanged = True                        
+                        
+                except Exception as e:
+                    print (e)
+
+            
+            
+            self.object.save()
+            if identification2_filechanged is True:
+                EmailUserChangeLog.objects.create(emailuser=self.object, change_key="identification2", change_value=str(self.object.identification2.id) + ":" +self.object.identification2.name,change_by=self.request.user)
+
+            for fd in forms_data:
+            
+                if fd == 'identification2':
+                    pass        
+                else:
+                    
+                    if uservalue_map[fd] != forms_data[fd]:
+                        EmailUserChangeLog.objects.create(emailuser=self.object, change_key=fd, change_value=forms_data[fd],change_by=self.request.user)
+            # 
+
+
+            messages.success(self.request, "Succesfully Updated {} {} <a href='{}' class='btn btn-sm btn-primary'>Change</a> ".format(self.object.first_name,self.object.last_name,self.get_absolute_account_url()))
+            return HttpResponseRedirect(self.get_absolute_url())
+        else:            
+            return HttpResponseRedirect(self.get_absolute_account_url())
+    

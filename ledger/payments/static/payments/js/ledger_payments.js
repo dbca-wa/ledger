@@ -15,9 +15,10 @@ var ledger_payments = {
                 'selected_id': null,
                 'system_interface_permssions': {},
                 'ptdatepickerOptions': {
-                        format: 'DD/MM/YYYY',
+                        format: 'dd/mm/yyyy',
                         showClear: true,
-                        useCurrent: false
+                        useCurrent: false,
+                        autoclose: true
                 },
 
         },
@@ -176,7 +177,7 @@ var ledger_payments = {
         },
         init_payment_totals: function () {
 
-                $('#settlementDatePicker').datetimepicker(ledger_payments.var.ptdatepickerOptions);
+                $('#settlementDatePicker').datepicker(ledger_payments.var.ptdatepickerOptions);
                 $("#pt-status").change(function () {
                         ledger_payments.var.formoptions.frstatus = this.value;
                         console.log(ledger_payments.var.formoptions.frstatus);
@@ -384,7 +385,7 @@ var ledger_payments = {
                 });
         },
         init: function () {
-
+                
                 setTimeout("ledger_payments.load_payment_info();", 400);
 
         }

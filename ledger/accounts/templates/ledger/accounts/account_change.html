@@ -1,0 +1,160 @@
+{% extends "ledgergw/web/base_b5.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<link href="/static/common/node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css?ver={{ settings.GIT_COMMIT_HASH }}" rel="stylesheet"/>
+<link href="/static/common/node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css?ver={{ settings.GIT_COMMIT_HASH }}" rel="stylesheet"/>
+
+<script  type="text/javascript" src="/static/common/node_modules/jquery/dist/jquery.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/moment/min/moment.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/datatables.net/js/dataTables.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/ledger/js/ajax_jquery_uploader.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+
+
+<BR>
+
+<div class="card">
+    <h2 class="card-header">
+        <div class='row'>
+            <div class='text-start col-6'> <h2>Update Account</h2></div><div class='text-end col-6'> <div>
+        </div>
+    </h2>
+
+    <div class="card-body">
+        {% crispy form %}
+    </div>
+    
+</div>
+
+
+<!-- Change Logs -->
+<BR><BR>
+<div class="card">
+    <h2 class="card-header">Change Log</h2>
+    <div class="card-body">
+  <div class="row">
+  
+  
+  
+                  <div class="col-12">
+                                              <BR>
+  
+                               <table cellspacing="0" width="100%" id="account-management-table" name="account-management-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" ffrole="grid"> 
+                               <thead>
+                                       <tr>
+                                         <th>CID</th>
+                                         <th>Change Key</th>
+                                         <th>Change Value</th>
+                                         <th>Change By</th>
+                                         <th>Created</th>                                         
+  
+                                       </tr>
+                               </thead>
+                               <tbody>
+             
+                               </tbody>
+                               </table>
+  
+          </div>
+  
+              </div>
+            </div>
+  </div>
+  </div>
+  <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR>    
+  <style>
+  
+  div.dt-processing div:last-child {
+      display: none;
+  }
+  </style>
+    
+<script>
+
+    //  let table = new DataTable('#account-management-table');
+    new DataTable('#account-management-table', {
+      // pageLength : 15,
+      "processing": true,
+      "searching": true,
+      "language": {            
+            "infoFiltered": "",
+            "processing": "<div style='font-weight:bold;'>Loading. Please wait...<BR><BR></div><div class='spinner-border text-primary' style='width: 3rem; height: 3rem;' role='status'><span class='visually-hidden'>Loading...</span></div><div><BR></div>"
+        }, 
+      order: [[4, 'desc']],
+      columnDefs:    [
+          { className: "dt-head-left", targets: "_all" },
+  
+      ],
+      "columns": [
+          { "data": "id"},          
+          { "data": "change_key"},
+          { "data": "change_value"},      
+          { "data": "change_by"},
+          { "data": "created"}
+      ],
+      "serverSide": true,
+      dataSrc: function (json) {
+        var data = JSON.parse(json.d);
+        console.log(data);
+      
+        return data.data;
+      }, 
+      "sssajax":  "/ledger/accounts/api/account/logs/{{ account_id }}",
+      "ajax": {
+          cache: false,
+          url: "/ledger/accounts/api/account/logs/{{ account_id }}",
+          type: "POST",
+          data: function (data) {
+            // data['active'] = true;
+             return JSON.stringify(data);
+          },
+          
+          dataType: "json",
+          //processData: false,
+          contentType: "application/json;charset=UTF-8",
+          // success: function (response) {
+          //    console.log(response);
+              //$('#account-management-table').DataTable().ajax.reload();
+              
+              // return response
+          //},
+          error: function () {
+              console.log("Error Loading Rest API");
+          },      
+      },
+    } )
+    </script>
+
+
+</body>
+<script>
+    $('#id_dob').datepicker({
+        format: 'dd/mm/yyyy',
+        showClear: true,
+        useCurrent: false,
+        autoclose: true
+    });
+
+    $('#id_legal_dob').datepicker({
+        format: 'dd/mm/yyyy',
+        showClear: true,
+        useCurrent: false,
+        autoclose: true
+    });
+</script>
+
+<style>
+label {
+    font-weight: bold;
+}
+.help-inline {
+    color: red;
+}
+
+
+</style>
+
+{% endblock %}

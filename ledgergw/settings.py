@@ -1,4 +1,5 @@
 from ledger.settings_base import *
+from django.contrib import messages
 from decimal import Decimal
 import os
 
@@ -130,3 +131,11 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 50  # 15M
 FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
 # ../ledgergw/context_processors.pyglobal_config
 #os.environ.setdefault("UPDATE_PAYMENT_ALLOCATION", True)
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'alert-info',
+    messages.INFO: 'alert-info',
+    messages.SUCCESS: 'alert-success',
+    messages.WARNING: 'alert-warning',
+    messages.ERROR: 'alert-danger',
+}
