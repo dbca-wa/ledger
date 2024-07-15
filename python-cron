@@ -1,0 +1,26 @@
+0 4 * * * python /app/manage_ledgergw.py collectbpay /mnt/external/CommBiz_WildlifeLicensing 2>&1 | logger -t wl_collectbpay
+0 1 * * * python /app/manage_ledgergw.py cba_sync >> /app/logs/cba_sync.log
+
+# Uncomment once every one on the new code
+0 8,10,12,14,16,18 * * * python /app/manage_ledgergw.py sync_itassets_users >> /app/logs/sync_ad_users.log
+*/5 * * * *  python /app/manage_ledgergw.py runcrons >> /app/logs/runcrons.log
+
+# Ledger Audit Report
+0 8 * * *  python /app/manage_ledgergw.py bpoint_ledger_payment_audit_report_segregated >> /app/logs/bpoint_ledger_payment_audit_report_segregated.log
+
+30 8 * * * python /app/manage_ledgergw.py bpoint_ledger_oracle_audit_segregated >> /app/logs/bpoint_ledger_oracle_audit_segregated.log
+
+# Bpoint Missing Payments in Ledger
+15 7 * * *  python /app/manage_ledgergw.py bpoint_ledger_payment_missing_transaction_segregated >> /app/logs/bpoint_ledger_payment_missing_transaction_segregated.log
+
+# Looking for booking with failed payment notification (helps recovery booking with missing payments)
+*/2 * * * * python /app/manage_ledgergw.py check_unsent_payment_notification >> /app/logs/check_unsent_payment_notification.log
+
+#BPAY Backups
+30 7 * * * /app/bin/backup_bpay.sh
+
+#Rotate Backups
+30 6 * * 0 /app/bin/rotate_backups.sh
+
+# App Monitor Client
+10 9 * * 0 python3 /app/manage_ledgergw.py appmonitor_check >> /app/logs/appmonitor_client.log 2>&1

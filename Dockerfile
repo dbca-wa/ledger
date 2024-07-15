@@ -74,6 +74,7 @@ RUN rm /app/libgeos.py.patch
 # Install the project (ensure that frontend projects have been built prior to this step).
 FROM python_libs_ledgergw
 COPY --chown=oim:oim .git .git
+COPY --chown=oim:oim python-cron python-cron
 COPY gunicorn.ini manage_ledgergw.py ./
 COPY ledger ./ledger
 RUN find /app/
