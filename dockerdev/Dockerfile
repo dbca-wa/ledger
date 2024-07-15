@@ -1,5 +1,6 @@
 # Prepare the base environment.
 FROM dbcawa/ledgergw:latest as builder_base_ledgergwdev
+USER root
 
 RUN apt-get update
 RUN apt-get --no-install-recommends -y install nginx
