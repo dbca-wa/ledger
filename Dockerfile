@@ -25,8 +25,7 @@ RUN apt-get install --no-install-recommends -y python3.7 python3.7-dev python3.7
 RUN ln -s /usr/bin/python3.7 /usr/bin/python && python3.7 -m pip install --upgrade pip==21.3.1
 RUN apt-get update
 
-RUN cd /app/ledgergw/static/common; npm install
-# RUN cd /app/ledgergw/static/common; npm run build
+
 
 #RUN ln -s /usr/bin/pip3 /usr/bin/pip
 RUN pip install --upgrade pip
@@ -56,6 +55,8 @@ RUN touch /app/.env
 COPY ledgergw ./ledgergw
 COPY cron /etc/cron.d/ledgergw
 COPY startup.sh /
+RUN cd /app/ledgergw/static/common; npm install
+# RUN cd /app/ledgergw/static/common; npm run build
 RUN python manage_ledgergw.py collectstatic --noinput
 # RUN service rsyslog start
 RUN chmod 0644 /etc/cron.d/ledgergw
