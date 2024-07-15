@@ -79,12 +79,11 @@ RUN find /app/bin
 RUN touch /app/.env
 COPY --chown=oim:oim ledgergw ./ledgergw
 RUN chmod 755 /app/bin/*
-RUN ls -lah /app/ledgergw/cache/ 
+RUN mkdir /app/ledgergw/cache/ 
 RUN cd /app/ledgergw/static/common; npm install
 # RUN cd /app/ledgergw/static/common; npm run build
 RUN python manage_ledgergw.py collectstatic --noinput
 # RUN service rsyslog start
-
 
 EXPOSE 8080
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:8080/"]
