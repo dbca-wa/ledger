@@ -47,6 +47,10 @@ RUN chmod 755 /startup.sh
 RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/main/wagov_utils/bin/health_check.sh -O /bin/health_check.sh
 RUN chmod 755 /bin/health_check.sh
 
+# add python cron
+RUN wget https://raw.githubusercontent.com/dbca-wa/wagov_utils/main/wagov_utils/bin-python/scheduler/scheduler.py -O /bin/scheduler.py
+RUN chmod 755 /bin/scheduler.py
+
 RUN pip install --upgrade pip
 # Install Python libs from requirements.txt.
 FROM builder_base_ledgergw as python_libs_ledgergw
@@ -70,6 +74,7 @@ RUN rm /app/libgeos.py.patch
 # Install the project (ensure that frontend projects have been built prior to this step).
 FROM python_libs_ledgergw
 COPY --chown=oim:oim .git .git
+COPY --chown=oim:oim python-cron python-cron
 COPY gunicorn.ini manage_ledgergw.py ./
 COPY ledger ./ledger
 RUN find /app/
