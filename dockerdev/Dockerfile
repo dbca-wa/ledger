@@ -3,7 +3,7 @@ FROM dbcawa/ledgergw:latest as builder_base_ledgergwdev
 USER root
 
 RUN apt-get update
-RUN apt-get --no-install-recommends -y install nginx
+# RUN apt-get --no-install-recommends -y install nginx
 RUN apt-get install --no-install-recommends -y virtualenv
 RUN apt-get install --no-install-recommends -y graphviz
 RUN apt-get install --no-install-recommends -y python3-pydot
@@ -27,5 +27,6 @@ RUN cp /root/.bashrc /home/docker
 RUN cp /root/.profile /home/docker
 
 EXPOSE 80
+USER oim
 HEALTHCHECK --interval=1m --timeout=5s --start-period=10s --retries=3 CMD ["wget", "-q", "-O", "-", "http://localhost:80/"]
 CMD ["/startup.sh"]
