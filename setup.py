@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='ledger',
-      version='2.4',
+      version='2.5',
       description='Ledger Payments App',
       url='https://github.com/dbca-wa/ledger',
       author='Department of Parks and Wildlife',
