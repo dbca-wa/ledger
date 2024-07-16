@@ -52,7 +52,7 @@ def getAppFile(request,file_id,extension):
     if allow_access == True:
         file_record = account_models.PrivateDocument.objects.get(id=file_id)
         file_name_path = file_record.upload.path
-        print (file_record.upload.path)
+        
         if os.path.isfile(file_name_path) is True:
                 the_file = open(file_name_path, 'rb')                
                 the_data = the_file.read()

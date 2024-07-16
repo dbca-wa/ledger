@@ -144,8 +144,7 @@ class UserAccountsList(views.APIView):
             http_status = status.HTTP_200_OK
             report = None
             if helpers.is_account_admin(self.request.user) is True:
-                request_body_json = json.loads(request.body.decode("utf-8"))
-                print (request_body_json)
+                request_body_json = json.loads(request.body.decode("utf-8"))                
                 page_length = request_body_json['length']                 
                 row_start = request_body_json['start']
                 draw = request_body_json['draw']

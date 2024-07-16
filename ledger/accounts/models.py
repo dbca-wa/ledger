@@ -404,8 +404,18 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
         super(EmailUser, self).save(*args, **kwargs)
 
     def get_full_name(self):
+
         full_name = '{} {}'.format(self.first_name, self.last_name)
-        #.encode('utf-8').strip()
+        if self.legal_first_name and self.legal_last_name:
+            legal_first_name = ''
+            legal_last_name = ''
+            if len(self.legal_first_name) > 0:
+                legal_first_name = self.legal_first_name
+            if len(self.legal_last_name) > 0:
+                legal_last_name = self.legal_last_name
+            if len(legal_first_name) > 0:
+                full_name = '{} {}'.format(legal_first_name, legal_last_name)
+        
         return full_name
 
     def get_full_name_dob(self):

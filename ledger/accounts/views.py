@@ -106,9 +106,7 @@ class AccountManagement(generic.TemplateView):
     template_name = 'ledger/accounts/account_management.html'
 
     def get_context_data(self, **kwargs):
-        ctx = super(AccountManagement,self).get_context_data(**kwargs)
-
-        print (helpers.is_account_admin(self.request.user))
+        ctx = super(AccountManagement,self).get_context_data(**kwargs)        
         if helpers.is_account_admin(self.request.user) is True:
             system_id = self.request.GET.get('system_id','')
 
