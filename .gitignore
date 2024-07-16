@@ -99,7 +99,7 @@ wildlifecompliance/static/wildlifecompliance_vue/static/*
 
 
 # npm locks
-#*-lock.json
+*-lock.json
 node_modules/
 
 commercialoperator/static/commercialoperator_vue/static/css/app.css

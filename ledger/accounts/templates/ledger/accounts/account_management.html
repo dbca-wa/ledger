@@ -19,6 +19,12 @@
 
 		        <div class="col-12">
 			                                <BR>
+                                        <div class="form-check">
+                                          <input class="form-check-input" type="checkbox"  id="active_users" value="" checked >
+                                          <label class="form-check-label" for="active_users">
+                                            Active Users
+                                          </label>
+                                        </div>
 
                              <table cellspacing="0" width="100%" id="account-management-table" name="account-management-table" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" ffrole="grid"> 
                              <thead>
@@ -56,7 +62,7 @@ div.dt-processing div:last-child {
 <script>
 
 //  let table = new DataTable('#account-management-table');
-new DataTable('#account-management-table', {
+ var account_table = new DataTable('#account-management-table', {
   // pageLength : 15,
   "processing": true,
   "searching": true,
@@ -100,7 +106,7 @@ new DataTable('#account-management-table', {
       url: "/ledger/accounts/api/account/list",
       type: "POST",
       data: function (data) {
-        // data['active'] = true;
+         data['active'] = $("#active_users").prop("checked");
          return JSON.stringify(data);
       },
       
@@ -118,6 +124,10 @@ new DataTable('#account-management-table', {
       },      
   },
 } )
+
+$('#active_users').click(function() {
+  account_table.ajax.reload();
+});
 </script>
 
 

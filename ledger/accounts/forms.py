@@ -128,7 +128,7 @@ class EmailUserForm(forms.ModelForm):
 
     class Meta:
         model = EmailUser
-        fields = ['email', 'first_name', 'last_name','legal_first_name','legal_last_name', 'title', 'dob', 'legal_dob', 'phone_number', 'mobile_number', 'fax_number','identification2']
+        fields = ['email', 'first_name', 'last_name','legal_first_name','legal_last_name', 'title','position_title','manager_name','manager_email', 'dob', 'legal_dob', 'phone_number', 'mobile_number', 'fax_number','identification2','is_staff','is_active']
 
     def __init__(self, *args, **kwargs):
         
@@ -148,10 +148,23 @@ class EmailUserForm(forms.ModelForm):
                 self.fields[f].widget = HiddenInput()
             if f == 'email':                
                 self.fields[f].widget = HiddenInput()
-    
+            if f == 'position_title':
+                self.fields[f].widget = HiddenInput()
+            if f == 'manager_name':
+                self.fields[f].widget = HiddenInput()    
+            if f == 'manager_email':
+                self.fields[f].widget = HiddenInput()
+            if f == 'is_active':
+                self.fields[f].widget.attrs['class'] = 'form-check-input'
+                self.fields[f].help_text = ''
+            if f == 'is_staff':
+                self.fields[f].widget.attrs['class'] = 'form-check-input'
+                self.fields[f].help_text = ''
+
                 
+
         self.helper.add_input(Submit('save', 'Save', css_class='btn-lg'))
-        self.helper.add_input(Submit('cancel', 'Cancel'))
+        self.helper.add_input(Submit('cancel', 'Cancel', css_class='btn-lg btn-danger'))
 
         person_id = self.initial['id']
         self.fields['email'].required = email_required
@@ -164,8 +177,23 @@ class EmailUserForm(forms.ModelForm):
         crispy_boxes.append(HTML("<label>Last Name</label><div class='p-1'>{}</div>".format(self.initial['last_name'])))
         crispy_boxes.append(HTML("<input type='hidden' value='{}' name='file_group' id='file_group'>".format('1')))
         crispy_boxes.append(HTML("<input type='hidden' value='{}' name='file_group_ref_id' id='file_group_ref_id'>".format(str(person_id))))
+
         crispy_boxes.append('first_name')
         crispy_boxes.append('last_name')
+
+        if self.initial['position_title']:
+            if len(self.initial['position_title']) > 0:
+                crispy_boxes.append(HTML("<label>Position Title</label><div class='p-1'>{}</div>".format(self.initial['position_title'])))
+        if self.initial['manager_name']:
+            if len(self.initial['manager_name']) > 0:
+                crispy_boxes.append(HTML("<label>Manager Name</label><div class='p-1'>{}</div>".format(self.initial['manager_name'])))
+        if self.initial['manager_email']:
+            if len(self.initial['manager_email']) > 0:
+                crispy_boxes.append(HTML("<label>Manager Email</label><div class='p-1'>{}</div>".format(self.initial['manager_email'])))                
+
+        crispy_boxes.append('position_title')    
+        crispy_boxes.append('manager_name')  
+        crispy_boxes.append('manager_email')  
         crispy_boxes.append('email')
         crispy_boxes.append('legal_first_name')
         crispy_boxes.append('legal_last_name')
@@ -176,6 +204,10 @@ class EmailUserForm(forms.ModelForm):
         crispy_boxes.append('mobile_number')
         crispy_boxes.append('fax_number')
         crispy_boxes.append('identification2')
+        crispy_boxes.append(HTML("<BR>"))
+        crispy_boxes.append('is_staff')
+        crispy_boxes.append('is_active')
+        
         crispy_boxes.append(HTML("<BR>"))
 
         self.helper.layout = Layout(crispy_boxes)
