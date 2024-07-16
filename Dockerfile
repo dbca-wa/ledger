@@ -81,7 +81,7 @@ RUN find /app/bin
 RUN touch /app/.env
 COPY --chown=oim:oim ledgergw ./ledgergw
 RUN chmod 755 /app/bin/*
-RUN mkdir /app/ledgergw/cache/ 
+RUN mkdir -p /app/ledgergw/cache/ 
 RUN cd /app/ledgergw/static/common; npm install
 # RUN cd /app/ledgergw/static/common; npm run build
 RUN python manage_ledgergw.py collectstatic --noinput

@@ -102,13 +102,12 @@
       
         return data.data;
       }, 
-      "sssajax":  "/ledger/accounts/api/account/logs/{{ account_id }}",
       "ajax": {
           cache: false,
           url: "/ledger/accounts/api/account/logs/{{ account_id }}",
           type: "POST",
           data: function (data) {
-            // data['active'] = true;
+             
              return JSON.stringify(data);
           },
           

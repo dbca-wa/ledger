@@ -589,7 +589,7 @@ class EmailUserChangeLog(models.Model):
     emailuser = models.ForeignKey(EmailUser, related_name='change_log_email_user')
     change_key = models.CharField(max_length=1024, blank=True, null=True)
     change_value = models.CharField(max_length=1024, blank=True, null=True)
-    change_by = models.ForeignKey(EmailUser, related_name='change_log_request_user')
+    change_by = models.ForeignKey(EmailUser, related_name='change_log_request_user', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:

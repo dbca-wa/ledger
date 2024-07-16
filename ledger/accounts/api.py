@@ -145,7 +145,7 @@ class UserAccountsList(views.APIView):
             report = None
             if helpers.is_account_admin(self.request.user) is True:
                 request_body_json = json.loads(request.body.decode("utf-8"))
-                
+                print (request_body_json)
                 page_length = request_body_json['length']                 
                 row_start = request_body_json['start']
                 draw = request_body_json['draw']
@@ -180,6 +180,7 @@ class UserAccountsList(views.APIView):
 
                 query = Q()
                 query &= Q(is_active=active)
+                
                 if search_value:
                     if len(search_value) > 0:
                         if search_value.isnumeric() is True:
@@ -322,7 +323,10 @@ class UserAccountsLogsList(views.APIView):
                     account_log_row["emailuser"] = self.clean_string(acc.emailuser.first_name) +' '+ self.clean_string(acc.emailuser.last_name)
                     account_log_row["change_key"] = acc.change_key
                     account_log_row["change_value"] = acc.change_value
-                    account_log_row["change_by"] = self.clean_string(acc.change_by.first_name) +' '+ self.clean_string(acc.change_by.last_name) + ' ({})'.format(acc.change_by.id)
+                    if acc.change_by:
+                        account_log_row["change_by"] = self.clean_string(acc.change_by.first_name) +' '+ self.clean_string(acc.change_by.last_name) + ' ({})'.format(acc.change_by.id)
+                    else:
+                        account_log_row["change_by"] = ''
                     account_log_row["created"]  = acc.created.astimezone().strftime("%d %b %Y %H:%M %p")
                     accounts_log_array.append(account_log_row)
 
