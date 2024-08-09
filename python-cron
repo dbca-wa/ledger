@@ -20,7 +20,7 @@
 30 7 * * * /app/bin/backup_bpay.sh
 
 #Rotate Backups
-30 6 * * 0 /app/bin/rotate_backups.sh
+30 6 * * 7 /app/bin/rotate_backups.sh
 
 # App Monitor Client
-10 9 * * 0 python3 /app/manage_ledgergw.py appmonitor_check >> /app/logs/appmonitor_client.log 2>&1
+10 9 * * * python3 /app/manage_ledgergw.py appmonitor_check >> /app/logs/appmonitor_client.log 2>&1
