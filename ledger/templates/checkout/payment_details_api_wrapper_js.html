@@ -343,18 +343,21 @@ $("input[name='card']").change(function() {
     reset_forms();
 
     $('#id_number').on('keydown keyup',function(e){
-        if(mastercard_regex.test(e.target.value)){
-            $('.mastercard').removeClass('disabled');
-            $('.visa').addClass('disabled');
-        }
-        else if (visa_regex.test(e.target.value)){
-            $('.mastercard').addClass('disabled');
-            $('.visa').removeClass('disabled');
-        }
-        else{
-            $('.mastercard').addClass('disabled');
-            $('.visa').addClass('disabled');
-        }
+        var card_number = e.target.value.replace(/^\s+|\s+$/gm,'');
+        $('#id_number').val(card_number);
+
+        // if(mastercard_regex.test(e.target.value)){
+        //     $('.mastercard').removeClass('disabled');
+        //     $('.visa').addClass('disabled');
+        // }
+        // else if (visa_regex.test(e.target.value)){
+        //     $('.mastercard').addClass('disabled');
+        //     $('.visa').removeClass('disabled');
+        // }
+        // else{
+        //     $('.mastercard').addClass('disabled');
+        //     $('.visa').addClass('disabled');
+        // }
     });
 });
 </script>

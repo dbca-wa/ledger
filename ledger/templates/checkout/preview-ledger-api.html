@@ -3,42 +3,57 @@
 {% else %}
 <BR><BR>
 
-<div class="container rounded m-2" style='background-color: #FFFFFF; position:fixed;'>
-       <div class="row">
-             
-             <div class="col-12">
-                   <div class="row pt-4">
-                        <div class="col-10">
-                            <h3> <i class="bi bi-x-circle-fill " style='color: red; font-size: 34px;'></i> Payment Error</h3>
-                        </div>
-                        <div class="col-2 text-end">
-                            <button type="button" class="btn-close close-ledger-popup" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="col-12">
-                            &nbsp;
-                        </div>
-                   </div>
-                   <div class="row">
-                        <div class="col-12">
-                             <div class="page_inner">
 
-                              {% if error %}
-                                  <div class="alert alert-danger">
-                                      {{ error }}
-                                  </div>
-                              {% endif %}
+<div style=" position:fixed; width: 100%">
+    <div class="container">
+        <div class="rounded m-2" style='background-color: #FFFFFF; padding-left: 20px; padding-right:20px;'>
 
-                              {% include "partials/alert_messages.html" %}
+            <div class="row">
+                    
+                    <div class="col-12">
+                        <div class="row pt-4">
+                                <div class="col-10">
+                                    <h3> <i class="bi bi-x-circle-fill " style='color: red; font-size: 34px;'></i> Payment Error</h3>
+                                </div>
+                                <div class="col-2 text-end">
+                                    <button type="button" class="btn-close close-ledger-popup" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="col-12">
+                                    &nbsp;
+                                </div>
+                        </div>
+                        <div class="row">
+                                <div class="col-12">
+                                    <div class="page_inner">
 
-                           <BR>
-                           <BR>
-                           </div>
-                        </div>    
-                   </div>
-             </div>
+                                    {% if error %}
+                                        <div class="alert alert-danger">
+                                            {{ error }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if messages %}
+                                    {% for message in messages %}
+                                    <div class="alert {{ message.tags }} alert-dismissible shadow fade show" role="alert">      
+                                        {{ message | safe }}                                        
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                    
+         
+                                
+
+                                   
+                                <BR>
+                                <BR>
+                                </div>
+                                </div>    
+                        </div>
+                    </div>
+                </div>
         </div>
+    </div>
 </div>
-
 <script>
 $('.close-ledger-popup').click(function() { 
          $('#ledger-payment-overtop').hide();
