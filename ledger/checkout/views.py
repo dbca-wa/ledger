@@ -287,7 +287,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         if not self.checkout_session.checkout_token():
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
-                messages.error(request, "Invalid submission")
+                messages.error(request, "The was an issue with the card information provided.   Please check the details are correct and try again.")
                 if self.request.COOKIES.get('payment_api_wrapper') == 'true':
                           return self.render_payment_message(self.request, error=None,)
                           #HttpResponse("ERROR PLEASE CHECK")
