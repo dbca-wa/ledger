@@ -321,6 +321,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
                                     verbose_name="position title", help_text='Automatically synced from AD,  please contact service desk to update.')
     mobile_number = models.CharField(max_length=50, null=True, blank=True,
                                      verbose_name="mobile number", help_text='')
+    staff_phone_number = models.CharField(max_length=50, null=True, blank=True,
+                                    verbose_name="staff phone number", help_text='')
+    staff_mobile_number = models.CharField(max_length=50, null=True, blank=True,
+                                     verbose_name="staff mobile number", help_text='')                                     
     fax_number = models.CharField(max_length=50, null=True, blank=True,
                                   verbose_name="fax number", help_text='')
     organisation = models.CharField(max_length=300, null=True, blank=True,
