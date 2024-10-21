@@ -1810,7 +1810,7 @@ def create_get_emailuser(request,apikey):
                 else:
                     raise ValidationError('Error: the email address provided is invalid.')                                      
                 
-                eu = models.EmailUser.objects.filter(email=email)
+                eu = models.EmailUser.objects.filter(email__iexact=email)
                 status = ''
                 if eu.count():
                     status = 'existing'
