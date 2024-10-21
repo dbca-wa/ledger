@@ -66,8 +66,8 @@ class Command(BaseCommand):
                                          u.first_name = first_name
                                          u.last_name = last_name
                                          u.is_staff = True
-                                         u.phone_number = phone
-                                         u.mobile_number = mobile
+                                         u.staff_phone_number = phone
+                                         u.staff_mobile_number = mobile
                                          u.position_title = position_title
                                          u.manager_name = manager_name
                                          u.manager_email = manager_email
