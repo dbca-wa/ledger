@@ -50,6 +50,7 @@ urlpatterns = [
     url(r'^ledgergw/invoice-pdf/(?P<api_key>\w+)/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
     url(r'^api/reports/refunds$', api.RefundsReportView.as_view(), name='refunds-report'),
     url(r'^api/reports/settlements$', api.SettlementReportView.as_view(), name='settlements-report'),
+    url(r'^api/reports/itemised-transactions$', api.ItemisedTransactionReportView.as_view(), name='itemised-transaction-report'),
     url(r'^api/oracle_job$', api.OracleJob.as_view(), name='get-oracle'),
     url(r'^api/queue-report-job$', api.QueuePayemntAuditReportJob, name='queue-report-job'),
     url(r'^ledgergw/ip-check/', api.ip_check),

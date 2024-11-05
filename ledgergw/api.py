@@ -1681,14 +1681,11 @@ def process_refund(request,apikey):
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response
 
-
-
 def ip_check(request):
     ledger_json  = {}
     ipaddress = ledgerapi_utils.get_client_ip(request)
     jsondata = {'status': 200, 'ipaddress': str(ipaddress)}
     return HttpResponse(json.dumps(jsondata), content_type='application/json')
-
 
 class SettlementReportView(views.APIView):
     renderer_classes = (JSONRenderer,)
@@ -1698,26 +1695,67 @@ class SettlementReportView(views.APIView):
             http_status = status.HTTP_200_OK
             # parse and validate data
             system = request.GET.get('system')
-            report = None
-            data = {
-                "date": request.GET.get('date'),
-            }
-            serializer = SettlementReportSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            filename = 'Settlement Report-{}'.format(str(serializer.validated_data['date']))
-            # Generate Report
-            report = reports.booking_bpoint_settlement_report(serializer.validated_data['date'],system)
-            if report:
-                response = HttpResponse(FileWrapper(report), content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
-                return response
-            else:
-                raise serializers.ValidationError('No report was generated.')
+
+            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system)
+            if ois.count() > 0:            
+                isp = payments_utils.get_oracle_interface_system_permissions(system,self.request.user.email)    
+                if isp["reports_access"] is True or isp["all_access"] is True:
+                    report = None
+                    data = {
+                        "date": request.GET.get('date'),
+                    }
+                    serializer = SettlementReportSerializer(data=data)
+                    serializer.is_valid(raise_exception=True)
+                    filename = 'Settlement Report-{}'.format(str(serializer.validated_data['date']))
+                    # Generate Report
+                    report = reports.booking_bpoint_settlement_report(serializer.validated_data['date'],system)
+                    if report:
+                        response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                        response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                        return response
+                    else:
+                        raise serializers.ValidationError('No report was generated.')
+                else:
+                    raise serializers.ValidationError('Forbidden Access.')
         except serializers.ValidationError:
             raise
         except Exception as e:
             traceback.print_exc()
 
+class ItemisedTransactionReportView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+
+    def get(self, request, format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            # parse and validate data
+            system = request.GET.get('system')
+            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system)
+            if ois.count() > 0:            
+                isp = payments_utils.get_oracle_interface_system_permissions(system,self.request.user.email)    
+                if isp["reports_access"] is True or isp["all_access"] is True:
+
+                    report = None
+                    data = {
+                        "date": request.GET.get('date'),
+                    }
+                    serializer = SettlementReportSerializer(data=data)
+                    serializer.is_valid(raise_exception=True)
+                    filename = 'Itemised-Transaction-Report-{}'.format(str(serializer.validated_data['date']))
+                    # Generate Report
+                    report = reports.itemised_transaction_report(serializer.validated_data['date'],system)
+                    if report:
+                        response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                        response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                        return response
+                    else:
+                        raise serializers.ValidationError('No report was generated.')
+                else:
+                    raise serializers.ValidationError('Forbidden Access.')                    
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
 
 class RefundsReportView(views.APIView):
     renderer_classes = (JSONRenderer,)
@@ -1728,21 +1766,29 @@ class RefundsReportView(views.APIView):
             # parse and validate data
             report = None
             system = request.GET.get('system')
-            data = {
-                "start": request.GET.get('start'),
-                "end": request.GET.get('end'),
-            }
-            serializer = ReportSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            filename = 'Refunds Report-{}-{}'.format(str(serializer.validated_data['start']), str(serializer.validated_data['end']))
-            # Generate Report
-            report = reports.booking_refunds(serializer.validated_data['start'], serializer.validated_data['end'],system)
-            if report:
-                response = HttpResponse(FileWrapper(report), content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
-                return response
-            else:
-                raise serializers.ValidationError('No report was generated.')
+
+            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system)
+            if ois.count() > 0:            
+                isp = payments_utils.get_oracle_interface_system_permissions(system,self.request.user.email)    
+                if isp["reports_access"] is True or isp["all_access"] is True:
+
+                    data = {
+                        "start": request.GET.get('start'),
+                        "end": request.GET.get('end'),
+                    }
+                    serializer = ReportSerializer(data=data)
+                    serializer.is_valid(raise_exception=True)
+                    filename = 'Refunds Report-{}-{}'.format(str(serializer.validated_data['start']), str(serializer.validated_data['end']))
+                    # Generate Report
+                    report = reports.booking_refunds(serializer.validated_data['start'], serializer.validated_data['end'],system)
+                    if report:
+                        response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                        response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                        return response
+                    else:
+                        raise serializers.ValidationError('No report was generated.')
+                else:
+                    raise serializers.ValidationError('Forbidden Access.')                     
         except serializers.ValidationError:
             raise
         except Exception as e:
@@ -1756,17 +1802,24 @@ class OracleJob(views.APIView):
     def get(self, request, format=None):
         try:
             system = request.GET.get('system')
-            ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api', enabled=True, system_id=system)
-            data = {
-                "date": request.GET.get("date"),
-                "override": request.GET.get("override")
-            }
-            
-            serializer = OracleSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            ledgergw_utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'), serializer.validated_data['override'], system, ois[0].system_name)
-            data = {'successful': True}
-            return Response(data)
+            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system)
+            if ois.count() > 0:            
+                isp = payments_utils.get_oracle_interface_system_permissions(system,request.user.email)    
+                if isp["reports_access"] is True or isp["all_access"] is True:
+
+                    ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api', enabled=True, system_id=system)
+                    data = {
+                        "date": request.GET.get("date"),
+                        "override": request.GET.get("override")
+                    }
+                    
+                    serializer = OracleSerializer(data=data)
+                    serializer.is_valid(raise_exception=True)
+                    ledgergw_utils.oracle_integration(serializer.validated_data['date'].strftime('%Y-%m-%d'), serializer.validated_data['override'], system, ois[0].system_name)
+                    data = {'successful': True}
+                    return Response(data)
+                else:
+                    raise serializers.ValidationError('Forbidden Access.')                       
         except serializers.ValidationError:
             print(traceback.print_exc())
             raise
@@ -2197,9 +2250,9 @@ def update_ledger_oracle_invoice(request,apikey):
     ledger_user_json  = {}
     print ('update_ledger_oracle_invoice')
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
-        print ("YES 1")
+        
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
-            print ("YES 2")
+        
             ois_obj = {}
             org_array = []
             data = json.loads(request.POST.get('data', "{}"))

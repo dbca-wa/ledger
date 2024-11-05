@@ -1160,6 +1160,7 @@ def get_oracle_interface_system_permissions(system_id, email):
         'view_ledger_tools' : False,
         'manage_ledger_tool' : False,
         'view_payment_totals' : False,
+        'reports_access' : False,
     }
 
     ois = OracleInterfaceSystem.objects.filter(system_id=system_id) 
@@ -1174,6 +1175,8 @@ def get_oracle_interface_system_permissions(system_id, email):
                 system_interface_permssions['manage_ledger_tool'] = True                
             if oisp.access_type == 'view_payment_totals':
                 system_interface_permssions['view_payment_totals'] = True                  
+            if oisp.access_type == 'reports_access':
+                system_interface_permssions['reports_access'] = True                     
     return system_interface_permssions
 
 

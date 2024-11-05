@@ -18,7 +18,9 @@ from ledger.payments.invoice.models import Invoice, InvoiceBPAY
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
 from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode, RefundFailed, OracleInterfaceSystem, PaymentTotal
+from ledger.payments import models as payment_models
 from ledger.payments.utils import systemid_check, update_payments, ledger_payment_invoice_calulations 
+from ledger.payments import utils as payments_utils
 from ledger.payments.invoice import utils as invoice_utils
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv, generate_items_csv_allocated
@@ -768,40 +770,49 @@ class ReportCreateView(views.APIView):
     def get(self,request,format=None):
         try:
             http_status = status.HTTP_200_OK
-            #parse and validate data
-            report = None
-            data = {
-                "start":request.GET.get('start'),
-                "end":request.GET.get('end'),
-                "banked_start":request.GET.get('banked_start',None),
-                "banked_end":request.GET.get('banked_end',None),
-                "system":request.GET.get('system'),
-                "items": request.GET.get('items', False),
-                "region": request.GET.get('region'),
-                "district": request.GET.get('district')
-            }
-            serializer = ReportSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
-            # Generate Report
-            if serializer.validated_data['items']:
-                report = generate_items_csv(systemid_check(serializer.validated_data['system']),
-                                            serializer.validated_data['start'],
-                                            serializer.validated_data['end'],
-                                            serializer.validated_data['banked_start'],
-                                            serializer.validated_data['banked_end'],
-                                            district = serializer.validated_data['district'])
-            else:
-                report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
-                                            ,serializer.validated_data['start'],
-                                            serializer.validated_data['end'],
-                                            district = serializer.validated_data['district'])
-            if report:
-                response = HttpResponse(FileWrapper(report), content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
-                return response
-            else:
-                raise serializers.ValidationError('No report was generated.')
+            system = request.GET.get('system')
+
+            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system)
+            if ois.count() > 0:            
+                isp = payments_utils.get_oracle_interface_system_permissions(system,request.user.email)    
+                if isp["reports_access"] is True or isp["all_access"] is True:
+
+                    #parse and validate data
+                    report = None
+                    data = {
+                        "start":request.GET.get('start'),
+                        "end":request.GET.get('end'),
+                        "banked_start":request.GET.get('banked_start',None),
+                        "banked_end":request.GET.get('banked_end',None),
+                        "system":request.GET.get('system'),
+                        "items": request.GET.get('items', False),
+                        "region": request.GET.get('region'),
+                        "district": request.GET.get('district')
+                    }
+                    serializer = ReportSerializer(data=data)
+                    serializer.is_valid(raise_exception=True)
+                    filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
+                    # Generate Report
+                    if serializer.validated_data['items']:
+                        report = generate_items_csv(systemid_check(serializer.validated_data['system']),
+                                                    serializer.validated_data['start'],
+                                                    serializer.validated_data['end'],
+                                                    serializer.validated_data['banked_start'],
+                                                    serializer.validated_data['banked_end'],
+                                                    district = serializer.validated_data['district'])
+                    else:
+                        report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
+                                                    ,serializer.validated_data['start'],
+                                                    serializer.validated_data['end'],
+                                                    district = serializer.validated_data['district'])
+                    if report:
+                        response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                        response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                        return response
+                    else:
+                        raise serializers.ValidationError('No report was generated.')
+                else:
+                    raise serializers.ValidationError('Forbidden Access.')                    
         except serializers.ValidationError:
             raise
         except Exception as e:
@@ -815,39 +826,49 @@ class ReportCreateAllocatedView(views.APIView):
         try:
             http_status = status.HTTP_200_OK
             #parse and validate data
-            report = None
-            data = {
-                "start":request.GET.get('start'),
-                "end":request.GET.get('end'),
-                "banked_start":request.GET.get('banked_start',None),
-                "banked_end":request.GET.get('banked_end',None),
-                "system":request.GET.get('system'),
-                "items": request.GET.get('items', False),
-                "region": request.GET.get('region'),
-                "district": request.GET.get('district')
-            }
-            serializer = ReportSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
-            # Generate Report
-            if serializer.validated_data['items']:
-                report = generate_items_csv_allocated(systemid_check(serializer.validated_data['system']),
-                                            serializer.validated_data['start'],
-                                            serializer.validated_data['end'],
-                                            serializer.validated_data['banked_start'],
-                                            serializer.validated_data['banked_end'],
-                                            district = serializer.validated_data['district'])
-            else:
-                report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
-                                            ,serializer.validated_data['start'],
-                                            serializer.validated_data['end'],
-                                            district = serializer.validated_data['district'])
-            if report:
-                response = HttpResponse(FileWrapper(report), content_type='text/csv')
-                response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
-                return response
-            else:
-                raise serializers.ValidationError('No report was generated.')
+            system = request.GET.get('system')
+
+            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system)
+            if ois.count() > 0:            
+                isp = payments_utils.get_oracle_interface_system_permissions(system,request.user.email)    
+                if isp["reports_access"] is True or isp["all_access"] is True:
+
+                    report = None
+                    data = {
+                        "start":request.GET.get('start'),
+                        "end":request.GET.get('end'),
+                        "banked_start":request.GET.get('banked_start',None),
+                        "banked_end":request.GET.get('banked_end',None),
+                        "system":request.GET.get('system'),
+                        "items": request.GET.get('items', False),
+                        "region": request.GET.get('region'),
+                        "district": request.GET.get('district')
+                    }
+                    serializer = ReportSerializer(data=data)
+                    serializer.is_valid(raise_exception=True)
+                    filename = 'report-{}-{}'.format(str(serializer.validated_data['start']),str(serializer.validated_data['end']))
+                    # Generate Report
+                    if serializer.validated_data['items']:
+                        report = generate_items_csv_allocated(systemid_check(serializer.validated_data['system']),
+                                                    serializer.validated_data['start'],
+                                                    serializer.validated_data['end'],
+                                                    serializer.validated_data['banked_start'],
+                                                    serializer.validated_data['banked_end'],
+                                                    district = serializer.validated_data['district'])
+                    else:
+                        report = generate_trans_csv(systemid_check(serializer.validated_data['system'])
+                                                    ,serializer.validated_data['start'],
+                                                    serializer.validated_data['end'],
+                                                    district = serializer.validated_data['district'])
+                    if report:
+                        response = HttpResponse(FileWrapper(report), content_type='text/csv')
+                        response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
+                        return response
+                    else:
+                        raise serializers.ValidationError('No report was generated.')
+                else:
+                    raise serializers.ValidationError('Forbidden Access.')          
+
         except serializers.ValidationError:
             raise
         except Exception as e:
