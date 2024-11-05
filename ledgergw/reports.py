@@ -10,7 +10,7 @@ from ledger.payments.models import OracleParser,OracleParserInvoice, CashTransac
 from datetime import timedelta
 from django.db.models import Q, Min
 #from oscar.apps.order.models import Order
-from ledger.order.models import Order
+from ledger.order.models import Order, Line as OrderLine
 
 
 def outstanding_bookings():
@@ -432,6 +432,37 @@ def booking_bpoint_settlement_report(_date,system):
         return strIO
     except:
         raise
+
+
+def itemised_transaction_report(_date,system):
+    try:        
+        invoices = Invoice.objects.filter(settlement_date=_date,reference__startswith=system)
+
+        strIO = StringIO()
+        fieldnames = ['Invoice Number','Order Number','Oracle code','Description','Settlement Date','Quantity','Tax Incl','Tax Excl']
+        
+        writer = csv.writer(strIO)
+        writer.writerow(fieldnames)
+        for i in invoices:
+            print (i.reference)
+            try:
+                # invoice = Invoice.objects.get(reference=b.crn1)
+                order_obj = Order.objects.filter(number=i.order_number) 
+                order_lines = OrderLine.objects.filter(order=order_obj[0])
+                for ol in order_lines:                    
+                    writer.writerow([i.reference,i.order_number,ol.oracle_code,ol.title, i.settlement_date.strftime('%d/%m/%Y'),ol.quantity, ol.unit_price_incl_tax, ol.unit_price_excl_tax])
+            except Invoice.DoesNotExist:
+                pass
+            except Exception as e:
+                print ("ERROR: Generate Itemisation Transaction Report")
+                print (e)
+
+        strIO.flush()
+        strIO.seek(0)
+        return strIO
+    except:
+        raise
+
 
 def bookings_report(_date):
     try:
