@@ -162,6 +162,15 @@ class Remittance(Flowable):
         self.current_y = current_y
 
     def __footer_line(self):
+        total_cols = 4
+        try:            
+            print (self.invoice.due_date.strftime(DATE_FORMAT))
+            total_cols = 5
+            
+        except Exception as e:
+            # if not valid date we keep totals cols at 4
+            pass
+
         canvas = self.canv
         current_y, current_x = self.current_y, self.current_x
         current_y -= 2 * inch
@@ -169,16 +178,27 @@ class Remittance(Flowable):
         canvas.setFont(DEFAULT_FONTNAME, LARGE_FONTSIZE)
         canvas.setFillColor(colors.black)
         canvas.drawString(current_x, current_y, 'Invoice Number')
-        canvas.drawString(PAGE_WIDTH/4, current_y, 'Invoice Date')
-        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, 'GST included')
-        canvas.drawString((PAGE_WIDTH/4) * 3, current_y, 'Invoice Total')
+        canvas.drawString(PAGE_WIDTH/total_cols, current_y, 'Invoice Date')
+        nextrow = 2
+        if self.invoice.due_date:
+            canvas.drawString((PAGE_WIDTH/total_cols) * nextrow, current_y, 'Due Date')
+            nextrow = nextrow + 1
+        canvas.drawString((PAGE_WIDTH/total_cols) * nextrow, current_y, 'GST included')
+        nextrow = nextrow + 1
+        canvas.drawString((PAGE_WIDTH/total_cols) * nextrow, current_y, 'Invoice Total')
         current_y -= 20
         canvas.setFont(DEFAULT_FONTNAME, MEDIUM_FONTSIZE)
         canvas.drawString(current_x, current_y, self.invoice.reference)
-        canvas.drawString(PAGE_WIDTH/4, current_y, self.invoice.created.strftime(DATE_FORMAT))
+        canvas.drawString(PAGE_WIDTH/total_cols, current_y, self.invoice.created.strftime(DATE_FORMAT))
+        nextrow = 2
+        if self.invoice.due_date:
+            canvas.drawString((PAGE_WIDTH/total_cols) * nextrow, current_y, self.invoice.due_date.strftime(DATE_FORMAT))
+            nextrow = nextrow + 1
         #canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(self.invoice.amount - calculate_excl_gst(self.invoice.amount)))
-        canvas.drawString((PAGE_WIDTH/4) * 2, current_y, currency(total_gst_tax))
-        canvas.drawString((PAGE_WIDTH/4) * 3, current_y, currency(self.invoice.amount))
+        
+        canvas.drawString((PAGE_WIDTH/total_cols) * nextrow, current_y, currency(total_gst_tax))
+        nextrow = nextrow + 1
+        canvas.drawString((PAGE_WIDTH/total_cols) * nextrow, current_y, currency(self.invoice.amount))
 
     def draw(self):
         if settings.BPAY_ALLOWED:
@@ -219,26 +239,42 @@ def _create_header(canvas, doc, draw_page_number=True):
          canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),    invoice.order.organisation.name)
          canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) *2,    invoice.order.organisation.abn)
 
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3,invoice.owner.get_full_name())
+    invoice_name = invoice.owner.get_full_name()
+    if invoice.invoice_name:
+        if len(invoice.invoice_name) > 0:
+            invoice_name = invoice.invoice_name
+
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3,invoice_name)
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4,invoice.owner.username)
 
     current_x += 452
     #write Invoice details
+    nextrowcount = 2
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),'Date')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.created.strftime(DATE_FORMAT))
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, 'Page')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 2, str(canvas.getPageNumber()))
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, 'Invoice Number')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3, invoice.reference)
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, 'Total (AUD)')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4, currency(invoice.amount))
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, 'GST included (AUD)')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),invoice.created.strftime(DATE_FORMAT))    
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, 'Page')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, str(canvas.getPageNumber()))
+    nextrowcount = nextrowcount + 1
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, 'Invoice Number')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, invoice.reference)
+    
+    if invoice.due_date:
+        nextrowcount = nextrowcount + 1
+        canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, 'Due Date')        
+        canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, invoice.due_date.strftime(DATE_FORMAT))
+    nextrowcount = nextrowcount + 1
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, 'Total (AUD)')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, currency(invoice.amount))
+    nextrowcount = nextrowcount + 1
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, 'GST included (AUD)')
     #canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, currency(invoice.amount - calculate_excl_gst(invoice.amount)))
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 5, currency(total_gst_tax))
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, 'Paid (AUD)')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 6, currency(invoice.payment_amount))
-    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, 'Outstanding (AUD)')
-    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 7, currency(invoice.balance))
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, currency(total_gst_tax))
+    nextrowcount = nextrowcount + 1
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, 'Paid (AUD)')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, currency(invoice.payment_amount))
+    nextrowcount = nextrowcount + 1
+    canvas.drawRightString(current_x + 20, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, 'Outstanding (AUD)')
+    canvas.drawString(current_x + invoice_details_offset, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * nextrowcount, currency(invoice.balance))
     canvas.restoreState()
 
 def _create_invoice(invoice_buffer, invoice):

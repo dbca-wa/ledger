@@ -1306,7 +1306,19 @@ def process_create_future_invoice(request,apikey):
             basket_id = request.POST.get('basket_id','')
             invoice_text = request.POST.get('invoice_text', '')
             return_preload_url = request.POST.get('return_preload_url', '')
+            invoice_name = request.POST.get('invoice_name', '')
+            due_date_string = request.POST.get('due_date', None)
+            print ("DUE DATE")
+            print (due_date_string)
 
+            due_date = None
+            if due_date_string:
+                try:
+                    due_date = datetime.strptime(due_date_string, "%d/%m/%Y")
+                    print (due_date)
+                except Exception as e:
+                    print (e)
+            
             basket_obj = basket_models.Basket.objects.filter(id=basket_id)
             if basket_obj.count() > 0:
                 get_basket = basket_models.Basket.objects.get(id=basket_id)
@@ -1323,7 +1335,6 @@ def process_create_future_invoice(request,apikey):
             get_basket.notification_url = return_preload_url
             get_basket.save()
 
-
             crn_string = '{0}{1}'.format(systemid_check(get_basket.system),order_number)
             invoice = invoice_facade.create_invoice_crn(
                 order_number,
@@ -1331,8 +1342,11 @@ def process_create_future_invoice(request,apikey):
                 crn_string,
                 get_basket.system,
                 invoice_text,
-                None
+                None,
+                invoice_name,
+                due_date
             )
+
             LinkedInvoiceCreate(invoice, get_basket.id)
             jsondata['status'] = 200
             jsondata['message'] = 'success'

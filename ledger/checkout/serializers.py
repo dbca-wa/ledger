@@ -75,6 +75,7 @@ class CheckoutSerializer(serializers.Serializer):
     icrn_format = serializers.ChoiceField(choices=['ICRNAMT', 'ICRNDATE', 'ICRNAMTDATE'], default='ICRNAMT')
     icrn_date = serializers.DateField(required=False, default=None)
     invoice_text = serializers.CharField(required=False, default=None)
+    invoice_name = serializers.CharField(required=False, default=None)
     check_url = serializers.URLField(required=False, default=None)
     amount_override=serializers.FloatField(required=False, default=None)
     session_type = serializers.ChoiceField(choices=['standard', 'ledger_api'], default='standard')
