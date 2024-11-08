@@ -216,6 +216,7 @@ def create_checkout_session(request, parameters):
     session_data.icrn_using(serializer.validated_data['icrn_format'])
     session_data.bpay_by(serializer.validated_data['icrn_date'])
     session_data.set_invoice_text(serializer.validated_data['invoice_text'])
+    session_data.set_invoice_name(serializer.validated_data['invoice_name'])
 
     session_data.set_last_check(serializer.validated_data['check_url'])
     session_data.set_amount_override(serializer.validated_data['amount_override']) 
@@ -375,6 +376,15 @@ class CheckoutSessionData(CoreCheckoutSessionData):
 
     def get_invoice_text(self):
         return self._get('ledger','invoice_text')
+
+
+    # Invoice Name Override Account Name
+    # ==========================
+    def set_invoice_name(self,text):
+        self._set('ledger','invoice_name',text)
+
+    def get_invoice_name(self):
+        return self._get('ledger','invoice_name')
 
     # Last check url per system 
     # ==========================

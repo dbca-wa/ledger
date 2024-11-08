@@ -362,7 +362,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 crn_string,
                 system,
                 self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '',
-                self.checkout_session.payment_method() if self.checkout_session.payment_method() else None
+                self.checkout_session.payment_method() if self.checkout_session.payment_method() else None,
+                self.checkout_session.get_invoice_name() if self.checkout_session.get_invoice_name() else ''
             )
             self.createInvoiceLinks(invoice)
             return invoice
@@ -375,7 +376,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
                 icrn_format,
                 system,
                 self.checkout_session.get_invoice_text() if self.checkout_session.get_invoice_text() else '',
-                self.checkout_session.payment_method() if self.checkout_session.payment_method() else None
+                self.checkout_session.payment_method() if self.checkout_session.payment_method() else None,
+                self.checkout_session.get_invoice_name() if self.checkout_session.get_invoice_name() else ''
             )
             self.createInvoiceLinks(invoice)
             return invoice

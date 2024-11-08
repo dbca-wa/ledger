@@ -13,13 +13,15 @@ def _get_payment_choice(payment_method):
         return Invoice.PAYMENT_METHOD_OTHER
     return None
 
-def create_invoice_crn(order_number, amount, crn_string, system, text, payment_method=None):
+def create_invoice_crn(order_number, amount, crn_string, system, text, payment_method=None, invoice_name='', due_date=None):
     '''Make a new Invoice object using crn
     '''
     inv,created = Invoice.objects.get_or_create(
         order_number=order_number,
         amount=amount,
-        reference = getCRN(crn_string)
+        reference = getCRN(crn_string),
+        invoice_name=invoice_name,
+        due_date=due_date
     )
 
     print ("create_invoice_crn!!! <<- JASON")
@@ -38,7 +40,7 @@ def create_invoice_crn(order_number, amount, crn_string, system, text, payment_m
             inv.save()
     return inv
 
-def create_invoice_icrn(order_number, amount, crn_string, _format, system, text, payment_method=None):
+def create_invoice_icrn(order_number, amount, crn_string, _format, system, text, payment_method=None, invoice_name='', due_date=None):
     '''Make a new Invoice object using icrn
     '''
     if _format in ['ICRNDATE','ICRNAMTDATE']:
@@ -48,7 +50,9 @@ def create_invoice_icrn(order_number, amount, crn_string, _format, system, text,
     inv, created = Invoice.objects.get_or_create(
         order_number=order_number,
         amount=amount,
-        reference = icrn
+        reference = icrn,
+        invoice_name=invoice_name,
+        due_date=due_date  
     )
     if created:
         if payment_method:

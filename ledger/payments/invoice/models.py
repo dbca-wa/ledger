@@ -56,6 +56,7 @@ class Invoice(models.Model):
         (PAYMENT_METHOD_OTHER, 'Other'),
     )
 
+    invoice_name = models.CharField(max_length=255, blank=True,null=True, default='', help_text="Is used to override the customer account name.")
     created = models.DateTimeField(auto_now_add=True)
     text = models.TextField(null=True,blank=True)
     amount = models.DecimalField(decimal_places=2,max_digits=12)
@@ -66,6 +67,7 @@ class Invoice(models.Model):
     voided = models.BooleanField(default=False)
     previous_invoice = models.ForeignKey('self',null=True,blank=True)
     settlement_date = models.DateField(blank=True, null=True)
+    due_date = models.DateField(blank=True, null=True)
     payment_method = models.SmallIntegerField(choices=PAYMENT_METHOD_CHOICES, default=0)
     oracle_invoice_number = models.CharField(max_length=255, default='', null=True, blank=True)
     oracle_invoice_file = models.ForeignKey(OracleInvoiceDocument, null=True, blank=True, on_delete=models.SET_NULL, related_name='oracle_invoice_file')
