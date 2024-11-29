@@ -439,7 +439,7 @@ def itemised_transaction_report(_date,system):
         invoices = Invoice.objects.filter(settlement_date=_date,reference__startswith=system)
 
         strIO = StringIO()
-        fieldnames = ['Invoice Number','Order Number','Oracle code','Description','Settlement Date','Quantity','Tax Incl','Tax Excl']
+        fieldnames = ['Invoice Number','Invoice Date','Order Number','Oracle code','Description','Settlement Date','Quantity','Tax Incl','Tax Excl','GST']
         
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
@@ -449,8 +449,9 @@ def itemised_transaction_report(_date,system):
                 # invoice = Invoice.objects.get(reference=b.crn1)
                 order_obj = Order.objects.filter(number=i.order_number) 
                 order_lines = OrderLine.objects.filter(order=order_obj[0])
-                for ol in order_lines:                    
-                    writer.writerow([i.reference,i.order_number,ol.oracle_code,ol.title, i.settlement_date.strftime('%d/%m/%Y'),ol.quantity, ol.unit_price_incl_tax, ol.unit_price_excl_tax])
+                for ol in order_lines:  
+                    calculate_tax_portion = ol.unit_price_incl_tax - ol.unit_price_excl_tax                  
+                    writer.writerow([i.reference,i.created.strftime('%d/%m/%Y'), i.order_number,ol.oracle_code,ol.title, i.settlement_date.strftime('%d/%m/%Y'),ol.quantity, ol.unit_price_incl_tax, ol.unit_price_excl_tax,calculate_tax_portion])
             except Invoice.DoesNotExist:
                 pass
             except Exception as e:
