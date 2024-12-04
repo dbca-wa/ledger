@@ -13,11 +13,10 @@ class Command(BaseCommand):
         try:
             query_string = Q(extension='') | Q(extension=None)
             pd = PrivateDocument.objects.filter(query_string)
-            print (pd.count())
+            print ("Total Results"+pd.count())
             for p  in pd:
 
-                print (p.id)
-                print (p.upload.path)
+
                 ext = ''
                 if p.upload.path[-4] == '.':
                     ext = p.upload.path[-4:]
@@ -26,6 +25,8 @@ class Command(BaseCommand):
 
                 print (ext)
                 if len(ext) > 0:
+                    print (p.id)
+                    print (p.upload.path)                    
                     p.extension = ext
                     p.name = 'file'+ext
                     eu = EmailUser.objects.filter(identification2=p.id)
