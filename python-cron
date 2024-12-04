@@ -24,3 +24,6 @@
 
 # App Monitor Client
 10 9 * * * python3 /app/manage_ledgergw.py appmonitor_check >> /app/logs/appmonitor_client.log 2>&1
+
+# Fix private documents information
+10 * * * *  python /app/manage_ledgergw.py clean_privatedocuments >> /app/logs/clean_privatedocuments.log
