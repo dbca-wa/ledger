@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from ledger.address.models import UserAddress
 from ledger.accounts.models import PrivateDocument,EmailUser
+from django.db.models import Q
 
 class Command(BaseCommand):
     help = 'Cleans up private documents table.'
@@ -10,7 +11,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            pd = PrivateDocument.objects.filter(extension='')
+            query_string = Q(extension='') | Q(extension=None)
+            pd = PrivateDocument.objects.filter(query_string)
             print (pd.count())
             for p  in pd:
 
