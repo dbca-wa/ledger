@@ -13,7 +13,7 @@ class Command(BaseCommand):
         try:
             query_string = Q(extension='') | Q(extension=None)
             pd = PrivateDocument.objects.filter(query_string)
-            print ("Total Results"+pd.count())
+            print ("Total Results"+str(pd.count()))
             for p  in pd:
 
 
