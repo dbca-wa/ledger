@@ -13,7 +13,7 @@ class Command(BaseCommand):
         try:
             query_string = Q(extension='') | Q(extension=None)
             pd = PrivateDocument.objects.filter(query_string)
-            print ("Total Results"+str(pd.count()))
+            print ("Total Results: "+str(pd.count()))
             for p  in pd:
 
 
@@ -23,7 +23,7 @@ class Command(BaseCommand):
                 if p.upload.path[-5] == '.':
                     ext = p.upload.path[-5:]
 
-                print (ext)
+                
                 if len(ext) > 0:
                     print (p.id)
                     print (p.upload.path)                    
