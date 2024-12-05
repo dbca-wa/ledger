@@ -16,16 +16,21 @@ def _get_payment_choice(payment_method):
 def create_invoice_crn(order_number, amount, crn_string, system, text, payment_method=None, invoice_name='', due_date=None):
     '''Make a new Invoice object using crn
     '''
-    inv,created = Invoice.objects.get_or_create(
-        order_number=order_number,
-        amount=amount,
-        reference = getCRN(crn_string),
-        invoice_name=invoice_name,
-        due_date=due_date
-    )
 
-    print ("create_invoice_crn!!! <<- JASON")
-    print (inv)
+    inv_lookup = Invoice.objects.filter(order_number=order_number)
+    if inv_lookup.count() > 0:
+        inv = Invoice.objects.get(order_number=order_number)        
+        created = inv.created
+    else:
+        Invoice.objects.create(
+            order_number=order_number,
+            amount=amount,
+            reference = getCRN(crn_string),
+            invoice_name=invoice_name,
+            due_date=due_date
+        )
+        inv = Invoice.objects.get(order_number=order_number)  
+        created = inv.created
     
     if created:
         if payment_method:
@@ -47,13 +52,23 @@ def create_invoice_icrn(order_number, amount, crn_string, _format, system, text,
         if not date:
             raise ValueError('Date is required to generate ICRN number')
     icrn = getICRN(crn_string,amount,_format)
-    inv, created = Invoice.objects.get_or_create(
-        order_number=order_number,
-        amount=amount,
-        reference = icrn,
-        invoice_name=invoice_name,
-        due_date=due_date  
-    )
+
+
+    inv_lookup = Invoice.objects.filter(order_number=order_number)
+    if inv_lookup.count() > 0:
+        inv = Invoice.objects.get(order_number=order_number)   
+        created = inv.created     
+    else:
+        Invoice.objects.create(
+            order_number=order_number,
+            amount=amount,
+            reference = icrn,
+            invoice_name=invoice_name,
+            due_date=due_date  
+        )
+        inv = Invoice.objects.get(order_number=order_number)  
+        created = inv.created
+
     if created:
         if payment_method:
             inv.payment_method = _get_payment_choice(payment_method)
