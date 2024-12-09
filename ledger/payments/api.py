@@ -771,12 +771,11 @@ class ReportCreateView(views.APIView):
         try:
             http_status = status.HTTP_200_OK
             system = request.GET.get('system')
-
-            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system)
-            if ois.count() > 0:            
+            system = system.replace("S","0")
+            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system)            
+            if ois.count() > 0:     
                 isp = payments_utils.get_oracle_interface_system_permissions(system,request.user.email)    
                 if isp["reports_access"] is True or isp["all_access"] is True:
-
                     #parse and validate data
                     report = None
                     data = {
@@ -805,13 +804,13 @@ class ReportCreateView(views.APIView):
                                                     ,serializer.validated_data['start'],
                                                     serializer.validated_data['end'],
                                                     district = serializer.validated_data['district'])
-                    if report:
+                    if report:                        
                         response = HttpResponse(FileWrapper(report), content_type='text/csv')
                         response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
                         return response
                     else:
                         raise serializers.ValidationError('No report was generated.')
-                else:
+                else:                                
                     raise serializers.ValidationError('Forbidden Access.')                    
         except serializers.ValidationError:
             raise
