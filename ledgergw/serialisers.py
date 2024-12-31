@@ -7,7 +7,8 @@ class ReportSerializer(serializers.Serializer):
     end = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
 
 class SettlementReportSerializer(serializers.Serializer):
-    date = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
+    date_from = serializers.DateTimeField(input_formats=['%d/%m/%Y'])
+    date_to= serializers.DateTimeField(input_formats=['%d/%m/%Y'])
 
 class OracleSerializer(serializers.Serializer):
     date = serializers.DateField(input_formats=['%d/%m/%Y','%Y-%m-%d'])
