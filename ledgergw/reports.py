@@ -434,9 +434,9 @@ def booking_bpoint_settlement_report(_date,system):
         raise
 
 
-def itemised_transaction_report(_date,system):
+def itemised_transaction_report(_date_from,_date_to,system):
     try:        
-        invoices = Invoice.objects.filter(settlement_date=_date,reference__startswith=system)
+        invoices = Invoice.objects.filter(settlement_date__gte=_date_from,settlement_date__lte=_date_to,reference__startswith=system).order_by('settlement_date')
 
         strIO = StringIO()
         fieldnames = ['Invoice Number','Invoice Date','Order Number','Oracle code','Description','Settlement Date','Quantity','Tax Incl','Tax Excl','GST']

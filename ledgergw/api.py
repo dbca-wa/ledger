@@ -1751,21 +1751,34 @@ class ItemisedTransactionReportView(views.APIView):
 
                     report = None
                     data = {
-                        "date": request.GET.get('date'),
+                        "date_to": request.GET.get('settlement_date_to'),
+                        "date_from": request.GET.get('settlement_date_from'),
                     }
+                    
+
                     serializer = SettlementReportSerializer(data=data)
                     serializer.is_valid(raise_exception=True)
-                    filename = 'Itemised-Transaction-Report-{}'.format(str(serializer.validated_data['date']))
+                    
+                    diff_between_dates = (serializer.validated_data['date_to'] - serializer.validated_data['date_from'])
+                    diff_between_dates_in_days = diff_between_dates.days
+                    if diff_between_dates_in_days > 31:
+                        raise serializers.ValidationError('This report has a max limit of 31 days.  Please try a smaller date range.')
+                        
+                    if diff_between_dates_in_days < 0:
+                        raise serializers.ValidationError('There is an error with the dates you entered.   Please check your dates and try again.')
+                        
+                    filename = 'Itemised-Transaction-Report-from-{}-to-{}'.format(serializer.validated_data['date_from'].strftime("%Y-%m-%d"),serializer.validated_data['date_to'].strftime("%Y-%m-%d"))
                     # Generate Report
-                    report = reports.itemised_transaction_report(serializer.validated_data['date'],system)
+                    report = reports.itemised_transaction_report(serializer.validated_data['date_from'],serializer.validated_data['date_to'],system)
                     if report:
                         response = HttpResponse(FileWrapper(report), content_type='text/csv')
                         response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
                         return response
                     else:
-                        raise serializers.ValidationError('No report was generated.')
+                        raise serializers.ValidationError('No report was generated.')                        
                 else:
-                    raise serializers.ValidationError('Forbidden Access.')                    
+                    raise serializers.ValidationError('Forbidden Access.') 
+                    
         except serializers.ValidationError:
             raise
         except Exception as e:
