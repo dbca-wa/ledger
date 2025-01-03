@@ -826,6 +826,7 @@ class ReportCreateAllocatedView(views.APIView):
             http_status = status.HTTP_200_OK
             #parse and validate data
             system = request.GET.get('system')
+            system = system.replace("S","0")
 
             ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=system)
             if ois.count() > 0:            
