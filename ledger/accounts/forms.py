@@ -130,7 +130,7 @@ class EmailUserLegacyForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         email_required = kwargs.pop('email_required', True)
 
-        super(EmailUserForm, self).__init__(*args, **kwargs)
+        super(EmailUserLegacyForm, self).__init__(*args, **kwargs)
 
         self.fields['email'].required = email_required
 
