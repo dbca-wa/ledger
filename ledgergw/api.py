@@ -1883,9 +1883,10 @@ def create_get_emailuser(request,apikey):
                 regex_one_dot = '^[a-z0-9\._+\-]+[@][\w\-]+[.]\w+$'  
                 regex_two_dot = '^[a-z0-9\._+\-]+[@][\w\-]+[.]\w+[.]\w+$'
                 regex_three_dot = '^[a-z0-9\._+\-]+[@]\w+[.]\w{2,3}[.]\w{2,3}\w[.]\w{2}$'
-                regex_four_dot = '^[a-z0-9\._+\-]+[@][\w\-]+[.][\w\-]+[.]\w+\w[.]\w+$'
+                regex_four_dot = '^[a-z0-9\._+\-]+[@][\w\-]+[.][\w\-]+[.]\w+[.]\w+$'
+                regex_five_dot = '^[a-z0-9\._+\-]+[@][\w\-]+[.][\w\-]+[.][\w\-]+[.]\w+[.]\w+$'
 
-                if re.match(regex_one_dot,email) or re.match(regex_two_dot,email) or re.match(regex_three_dot,email) or re.match(regex_four_dot,email):
+                if re.match(regex_one_dot,email) or re.match(regex_two_dot,email) or re.match(regex_three_dot,email) or re.match(regex_four_dot,email) or re.match(regex_five_dot,email):
                     print ("Valid Email Address")
                 else:
                     raise ValidationError('Error: the email address provided is invalid.')                                      
