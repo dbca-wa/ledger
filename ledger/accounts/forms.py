@@ -122,6 +122,21 @@ class ProfileForm(ProfileBaseForm):
             self.fields['email'].initial = initial_email
 
 
+class EmailUserLegacyForm(forms.ModelForm):
+    class Meta:
+        model = EmailUser
+        fields = ['email', 'first_name', 'last_name', 'title', 'dob', 'phone_number', 'mobile_number', 'fax_number']
+
+    def __init__(self, *args, **kwargs):
+        email_required = kwargs.pop('email_required', True)
+
+        super(EmailUserLegacyForm, self).__init__(*args, **kwargs)
+
+        self.fields['email'].required = email_required
+
+        # some form renderers use widget's is_required field to set required attribute for input element
+        self.fields['email'].widget.is_required = email_required
+
 class EmailUserForm(forms.ModelForm):
     
     identification2 = FileField(label='Upload Identification', required=False, max_length=128, widget=AjaxFileUploader(attrs={'single':'single'})) 
