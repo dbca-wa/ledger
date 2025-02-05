@@ -386,14 +386,13 @@ def booking_refunds_old(start,end, system):
     except:
         raise
 
-def booking_bpoint_settlement_report(_date,system):
+def booking_bpoint_settlement_report(date_from,date_to,system):
     try:
         bpoint, cash = [], []
-        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date=_date,response_code=0,crn1__startswith=system).exclude(crn1__endswith='_test')])
-        cash = CashTransaction.objects.filter(created__date=_date,invoice__reference__startswith=system).exclude(type__in=['move_out','move_in'])
-
+        bpoint.extend([x for x in BpointTransaction.objects.filter(settlement_date__gte=date_from,settlement_date__lte=date_to,response_code=0,crn1__startswith=system).exclude(crn1__endswith='_test')])
+        cash = CashTransaction.objects.filter(created__date=date_from,invoice__reference__startswith=system).exclude(type__in=['move_out','move_in'])
         strIO = StringIO()
-        fieldnames = ['Payment Date','Settlement Date','Confirmation Number','Name','Type','Amount','Invoice']
+        fieldnames = ['Payment Date','Settlement Date','Type','Amount','Invoice']
         writer = csv.writer(strIO)
         writer.writerow(fieldnames)
         for b in bpoint:
@@ -409,9 +408,9 @@ def booking_bpoint_settlement_report(_date,system):
                 #    pass
                     
                 #if booking:
-                b_name = u'{} {}'.format('First NAME' ,'Last NAME')
+                
                 created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-                writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'BOOKIGN CONFIURMATION NUMBER',b_name.encode('utf-8'),str(b.action),b.amount,invoice.reference])
+                writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),str(b.action),b.amount,invoice.reference])
                 #else:
                 #    writer.writerow([b.created.strftime('%d/%m/%Y %H:%M:%S'),b.settlement_date.strftime('%d/%m/%Y'),'','',str(b.action),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
@@ -421,9 +420,9 @@ def booking_bpoint_settlement_report(_date,system):
             try:
                 invoice = b.invoice 
                     
-                b_name = u'{} {}'.format('First NAME 1','Last NAME 2')
+               
                 created = timezone.localtime(b.created, pytz.timezone('Australia/Perth'))
-                writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),'BOOKIGN CONFIURMATION NUMBER',b_name.encode('utf-8'),str(b.type),b.amount,invoice.reference])
+                writer.writerow([created.strftime('%d/%m/%Y %H:%M:%S'),b.created.strftime('%d/%m/%Y'),str(b.type),b.amount,invoice.reference])
             except Invoice.DoesNotExist:
                 pass
 
