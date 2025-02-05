@@ -26,7 +26,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer
 from decimal import Decimal
-from ledgergw.serialisers import ReportSerializer, SettlementReportSerializer, OracleSerializer
+from ledgergw.serialisers import ReportSerializer, SettlementReportSerializer, OracleSerializer,ItemisedSettlementReportSerializer
 from ledgergw import utils as ledgergw_utils
 from django.http import HttpResponse
 from wsgiref.util import FileWrapper
@@ -1716,13 +1716,25 @@ class SettlementReportView(views.APIView):
                 if isp["reports_access"] is True or isp["all_access"] is True:
                     report = None
                     data = {
-                        "date": request.GET.get('date'),
+                        "date_from": request.GET.get('from_date'),
+                        "date_to": request.GET.get('to_date'),
                     }
                     serializer = SettlementReportSerializer(data=data)
                     serializer.is_valid(raise_exception=True)
-                    filename = 'Settlement Report-{}'.format(str(serializer.validated_data['date']))
+
+                    
+                    diff_between_dates = (serializer.validated_data['date_to'] - serializer.validated_data['date_from'])
+                    diff_between_dates_in_days = diff_between_dates.days
+                    if diff_between_dates_in_days > 31:
+                        raise serializers.ValidationError('This report has a max limit of 31 days.  Please try a smaller date range.')
+
+                    if diff_between_dates_in_days < 0:
+                        raise serializers.ValidationError('There is an error with the dates you entered.   Please check your dates and try again.')
+
+                    filename = 'Settlement Report-{}-{}'.format(str(serializer.validated_data['date_from']),serializer.validated_data['date_to'])
+
                     # Generate Report
-                    report = reports.booking_bpoint_settlement_report(serializer.validated_data['date'],system)
+                    report = reports.booking_bpoint_settlement_report(serializer.validated_data['date_from'],serializer.validated_data['date_to'],system)
                     if report:
                         response = HttpResponse(FileWrapper(report), content_type='text/csv')
                         response['Content-Disposition'] = 'attachment; filename="{}.csv"'.format(filename)
@@ -1756,7 +1768,7 @@ class ItemisedTransactionReportView(views.APIView):
                     }
                     
 
-                    serializer = SettlementReportSerializer(data=data)
+                    serializer = ItemisedSettlementReportSerializer(data=data)
                     serializer.is_valid(raise_exception=True)
                     
                     diff_between_dates = (serializer.validated_data['date_to'] - serializer.validated_data['date_from'])

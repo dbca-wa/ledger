@@ -155,17 +155,51 @@
                                     <div class="col-sm-6">
                                             <h3 style="margin-bottom:20px;">Settlement Report</h3>
                                             <div class="form-group">
-                                              <label for="">Date</label>
-                                              <div class="input-group date" id='bookingSettlementsDatePicker'>
-                                                  <input type="text" class="form-control" name="booking_settlement_date"  id='booking_settlement_date' placeholder="DD/MM/YYYY" autocomplete='off' required>
-                                                   <span class="input-group-addon input-group-text">
-                                                       <span class="bi bi-calendar2-range-fill"></span>
-                                                   </span>
-                                              </div>
+                                         
+
+                                              <div class="row">
+                                                <div class="col-lg-12">
+                                                    <div class="row">
+                                                    <div class="col-sm-6">
+                                                        <div class="form-group">
+                                                          <label for="">Settlement From Date:</label>
+                                                          <div class="input-group date" id='bookingSettlementsFromDatePicker'>
+                                                            <input type="text" class="form-control" name="booking_settlement_date"  id='booking_settlement_date' placeholder="DD/MM/YYYY" autocomplete='off' required>
+                                                             <span class="input-group-addon input-group-text">
+                                                                 <span class="bi bi-calendar2-range-fill"></span>
+                                                             </span>
+                                                        </div>
+                                                        </div>
+                        
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <div class="form-group">
+                                                          <label for="">Settlement To Date:</label>
+                                                          <div class="input-group date" id='bookingSettlementsToDatePicker'>
+                                                            <input type="text" class="form-control" name="booking_settlement_date"  id='booking_settlement_date' placeholder="DD/MM/YYYY" autocomplete='off' required>
+                                                             <span class="input-group-addon input-group-text">
+                                                                 <span class="bi bi-calendar2-range-fill"></span>
+                                                             </span>
+                                                        </div>
+                                                        </div>
+                                                    </div>
+                        
+                                                    <div class="col-sm-12">
+                                                        <br>
+                                                        <div class="form-group">
+                                                            <button onclick="reports.getBookingSettlementsReport()" class="btn btn-primary pull-left" >Generate Settlement Report</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                </div>
                                             </div>
-                                            <div class="form-group">
-                                                <button onclick="reports.getBookingSettlementsReport()" class="btn btn-primary pull-left" >Generate Settlement Report</button>
+
+                                              
+                                              
+
+
                                             </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -336,7 +370,6 @@
                                             </span>
                                   </div>
                                 </div>
-
                             </div>
 
                             <div class="col-sm-12">
@@ -390,7 +423,8 @@
                                    oracleDatePicker: null,
                                    booking_settlements_form: null,
                                    bookings_form: null,
-                                   bookingSettlementsDatePicker: null,
+                                   bookingSettlementsFromDatePicker: null,
+                                   bookingSettlementsToDatePicker: null,
                                    bookingsDatePicker: null,
                                    accountsDateStartPicker:null,
                                    accountsDateEndPicker:null,
@@ -430,7 +464,8 @@
                                 reports.var.refundsStartPicker = $('#refundsStartPicker').datepicker(reports.var.datepickerOptions);
                                 reports.var.refundsEndPicker = $('#refundsEndPicker').datepicker(reports.var.datepickerOptions);
                                 reports.var.oracleDatePicker = $('#oracleDatePicker').datepicker(reports.var.datepickerOptions);
-                                reports.var.bookingSettlementsDatePicker = $('#bookingSettlementsDatePicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.bookingSettlementsFromDatePicker = $('#bookingSettlementsFromDatePicker').datepicker(reports.var.datepickerOptions);
+                                reports.var.bookingSettlementsToDatePicker = $('#bookingSettlementsToDatePicker').datepicker(reports.var.datepickerOptions);
                                 reports.var.paymentauditDatePicker = $('#paymentauditDatePicker').datepicker(reports.var.datepickerOptions);
                                 reports.var.timepaymentauditreportDatePicker = $('#timepaymentauditreportDatePicker').datepicker(reports.var.datepickerOptions);
                                 reports.var.itemisedtransreportDatePicker = $('#itemisedtransreportDatePicker').datepicker(reports.var.datepickerOptions);
@@ -457,9 +492,47 @@
                                 });
                         },
                         getBookingSettlementsReport() {
-                            var settlement_date = moment(reports.var.bookingSettlementsDatePicker.datepicker("getDate")).format('DD/MM/YYYY');
-                            var report_url = reports.var.settlement_report_url+"?system="+reports.var.system_id+"&date="+settlement_date;
-                            window.location.assign(report_url);
+                            var settlement_from_date = moment(reports.var.bookingSettlementsFromDatePicker.datepicker("getDate")).format('DD/MM/YYYY');
+                            var settlement_to_date = moment(reports.var.bookingSettlementsToDatePicker.datepicker("getDate")).format('DD/MM/YYYY');
+                            var report_url = reports.var.settlement_report_url+"?system="+reports.var.system_id+"&from_date="+settlement_from_date+"&to_date="+settlement_to_date;
+                            // window.location.assign(report_url);
+
+                            fetch(report_url)
+                                .then(resp => { 
+
+                                    if (resp.status != 200) {
+                                      
+                                        return resp.text() ;
+                                      
+                                    }
+                                    return resp.blob();
+                                }
+                                
+                                )
+                                .then(blob => {                                                                    
+                                   
+                                    if (typeof blob == 'string') {
+                                        return Promise.reject(blob);
+                                    }
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.style.display = 'none';
+                                    a.href = url;
+                                    // the filename you want
+                                    a.download = 'settlement_transaction_report_'+moment(reports.var.bookingSettlementsFromDatePicker.datepicker("getDate")).format('DD-MM-YYYY')+'-'+moment(reports.var.bookingSettlementsToDatePicker.datepicker("getDate")).format('DD-MM-YYYY')+'.csv';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                    alert('File downloaded successfully!');
+
+                            })
+                            .catch(err => { 
+                                alert('ERROR: '+err)
+                             
+                            });
+
+
+
                         },
                         generateRefundReport:function () {
                             let vm =this;

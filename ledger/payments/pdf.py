@@ -19,6 +19,7 @@ from django.conf import settings
 
 from ledger.accounts.models import Document
 from ledger.checkout.utils import calculate_excl_gst
+from ledger.payments import models as payments_models
 
 #DPAW_HEADER_LOGO = os.path.join(settings.PROJECT_DIR, 'payments','static', 'payments', 'img','dbca_logo.jpg')
 #DPAW_HEADER_LOGO_SM = os.path.join(settings.PROJECT_DIR, 'payments','static', 'payments', 'img','dbca_logo_small.png')
@@ -26,6 +27,7 @@ from ledger.checkout.utils import calculate_excl_gst
 
 DPAW_HEADER_LOGO = os.path.join(settings.STATIC_ROOT, 'payments','img', 'dbca_logo.jpg')
 DPAW_HEADER_LOGO_SM = os.path.join(settings.STATIC_ROOT, 'payments','img','dbca_logo_small.png')
+ROTTNEST_ISLAND_LOGO = os.path.join(settings.STATIC_ROOT, 'payments','img', 'rottnest_island_70h.png')
 BPAY_LOGO = os.path.join(settings.STATIC_ROOT, 'payments','img', 'BPAY_2012_PORT_BLUE.png')
 
 
@@ -208,26 +210,45 @@ class Remittance(Flowable):
 
 
 def _create_header(canvas, doc, draw_page_number=True):
+    invoice = doc.invoice
+    ois = payments_models.OracleInterfaceSystem.objects.filter(system_id=invoice.system)
+    invoice_template = 'dbca_template'
+    abn = "38 052 249 024"
+    if ois.count() > 0:
+        invoice_template = ois[0].invoice_template
+        if ois[0].abn:
+            if len(ois[0].abn) > 2:
+               abn = ois[0].abn
+    
+            
     canvas.saveState()
     canvas.setTitle('Invoice')
     canvas.setFont(BOLD_FONTNAME, LARGE_FONTSIZE)
 
     current_y = PAGE_HEIGHT - HEADER_MARGIN
-
+       
     dpaw_header_logo = ImageReader(DPAW_HEADER_LOGO)
-    dpaw_header_logo_size = dpaw_header_logo.getSize()
-    canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - (dpaw_header_logo_size[1]/2),width=dpaw_header_logo_size[0]/2, height=dpaw_header_logo_size[1]/2, mask='auto')
+    if invoice_template == 'ria':
+        current_y -= 10 
+        dpaw_header_logo = ImageReader(ROTTNEST_ISLAND_LOGO)
+        dpaw_header_logo_size = dpaw_header_logo.getSize()
+        canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 4, current_y - (dpaw_header_logo_size[1]/2),width=dpaw_header_logo_size[0]/1.7, height=dpaw_header_logo_size[1]/1.7, mask='auto')
+    else:
+        dpaw_header_logo_size = dpaw_header_logo.getSize()
+        canvas.drawImage(dpaw_header_logo, PAGE_WIDTH / 3, current_y - (dpaw_header_logo_size[1]/2),width=dpaw_header_logo_size[0]/2, height=dpaw_header_logo_size[1]/2, mask='auto')
+
+   
 
     current_y -= 70
     canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'TAX INVOICE / RECEIPT')
 
-    current_y -= 20
-    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'ABN: 38 052 249 024')
+    current_y -= 20    
+    canvas.drawCentredString(PAGE_WIDTH / 2, current_y - LARGE_FONTSIZE, 'ABN: {}'.format(abn))
 
     # Invoice address details
     invoice_details_offset = 37
     current_y -= 20
-    invoice = doc.invoice
+    
     total_gst_tax = invoice.order.total_incl_tax - invoice.order.total_excl_tax
 
     canvas.setFont(BOLD_FONTNAME, SMALL_FONTSIZE)
@@ -279,7 +300,7 @@ def _create_header(canvas, doc, draw_page_number=True):
 
 def _create_invoice(invoice_buffer, invoice):
     every_page_frame = Frame(PAGE_MARGIN, PAGE_MARGIN + 250, PAGE_WIDTH - 2 * PAGE_MARGIN,
-                             PAGE_HEIGHT -450 , id='EveryPagesFrame',showBoundary=0)
+                             PAGE_HEIGHT -460 , id='EveryPagesFrame',showBoundary=0)
     remit_frame = Frame(PAGE_MARGIN, PAGE_MARGIN, PAGE_WIDTH - 2 * PAGE_MARGIN,
                              PAGE_HEIGHT - 600, id='RemitFrame',showBoundary=0)
     every_page_template = PageTemplate(id='EveryPages', frames=[every_page_frame,remit_frame], onPage=_create_header)
