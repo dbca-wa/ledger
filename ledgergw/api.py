@@ -38,6 +38,7 @@ from ledger.payments.bpoint.gateway import Gateway
 from ledger.basket.middleware import BasketMiddleware
 from ledger.address.models import Country
 from django.db.models import Q, Max
+from ledger.accounts.models import PrivateDocument
 import base64
 import traceback
 import json
@@ -161,6 +162,28 @@ def update_user_info_id(request, userid,apikey):
                     residential_address_obj = json.loads(request.POST.get('residential_address'))
                 if 'postal_address' in post_list:
                     postal_address_obj = json.loads(request.POST.get('postal_address'))
+                if 'identification' in post_list:
+                    identification_obj = json.loads(request.POST.get('identification'))
+                    extension = ''
+                    if identification_obj['filename'][-4:-3] == '.':
+                        extension = identification_obj['filename'][-4:]
+                    if identification_obj['filename'][-5:-4] == '.':
+                        extension = identification_obj['filename'][-5:]
+
+                    randomfile_name = get_random_string(length=5, allowed_chars=u'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+                    b64data = identification_obj['base64'].split(",")
+                    cfile = ContentFile(base64.b64decode(b64data[1]), name=randomfile_name+'-'+identification_obj['filename'])
+                    doc = PrivateDocument()
+                    doc.upload = cfile
+                    doc.name = identification_obj['filename']
+                    doc.file_group = int(1)
+                    doc.file_group_ref_id =int(ledger_obj.id)
+                    doc.extension = extension
+                    doc.save()
+                    ledger_obj.identification2 = doc
+                    ledger_obj.save()
+                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="identification2", change_value="ledger_api_client_"+api_key_obj_update_key+": " +identification_obj['filename'],change_by=ledger_changeuser_obj)
+
                 if 'dob' in post_list:
                     dob = request.POST.get('dob')
                     date_dob = datetime.strptime(dob, '%d/%m/%Y').date()
@@ -344,6 +367,11 @@ def user_info_id(request, userid,apikey):
                     ledger_user_json['mobile_number'] = ledger_obj.mobile_number
                     ledger_user_json['fax_number'] = ledger_obj.fax_number
                     ledger_user_json['organisation'] = ledger_obj.organisation
+                    identification2 = ''
+                    if ledger_obj.identification2:
+                        identification2 = ledger_obj.identification2.name
+
+                    ledger_user_json['identification']  = identification2
                     #ledger_user_json['identification'] = ledger_obj.identification
                     #ledger_user_json['senior_card'] = ledger_obj.senior_card
                     ledger_user_json['character_flagged'] = ledger_obj.character_flagged
@@ -402,7 +430,8 @@ def user_info_id(request, userid,apikey):
                     ledger_user_json['groups'] = ledger_user_group                    
                     jsondata['information_status'] = {"personal_details_completed" : False,
                                                               "address_details_completed": False,
-                                                              "contact_details_completed": False,                                                              
+                                                              "contact_details_completed": False,    
+                                                              "identification_details_completed" : False                                                       
                                                              }
                     
                     # if len(ledger_user_json['dob']) == 10:
@@ -1701,6 +1730,7 @@ def ip_check(request):
     jsondata = {'status': 200, 'ipaddress': str(ipaddress)}
     return HttpResponse(json.dumps(jsondata), content_type='application/json')
 
+
 class SettlementReportView(views.APIView):
     renderer_classes = (JSONRenderer,)
 
@@ -2259,6 +2289,9 @@ def QueuePayemntAuditReportJob(request, *args, **kwargs):
                 if job_type == 'timed_audit_report': 
                     job_cmd = "bpoint_ledger_time_seperated_report_segregated"
                     parameters_json=[str(job_date),str(system_id),]
+                if job_type == 'unpaid_invoice_report': 
+                    job_cmd = "unpaid_invoice_report"
+                    parameters_json=[str(system_id),]                    
                 
                 ledgergw_models.JobQueue.objects.create(
                     job_cmd=job_cmd,

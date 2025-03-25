@@ -50,14 +50,20 @@ class JobQueue(CronJobBase):
             except Exception as e:
                 print (e)
             print (params_array)   
-            try:             
-                management.call_command(jq.job_cmd, params_array[0], params_array[1])
-                print ("HERE")
+            try:     
+
+                if len(params_array) == 1:
+                    management.call_command(jq.job_cmd, params_array[0])
+                else:
+                    management.call_command(jq.job_cmd, params_array[0], params_array[1])
+                print ("Job Completed {}".format(str(jq.id)))                
                 jq.processed_dt = datetime.now()
                 jq.status = 2
                 jq.save()
             except Exception as e:                
                 print (e)
+                jq.status = 3
+                jq.save()
                 tb = traceback.format_exc()
                 cron_response = cron_response + str(tb)
         

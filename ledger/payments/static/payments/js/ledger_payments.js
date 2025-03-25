@@ -44,7 +44,7 @@ var ledger_payments = {
                                                                 line_price_incl_tax_color = '#157347';
                                                         }
 
-                                                        orderdata += "<tr><td>" + data.data.order[i].order_number + "</td><td>" + data.data.order[i].title + "</td><td>" + data.data.order[i].oracle_code + "</td><td style='background-color: " + line_price_incl_tax_color + "; color: #FFFFFF;'>$" + data.data.order[i].line_price_incl_tax + "</td><td>$" + data.data.order[i].rolling_total + "</td><td>" + data.data.order[i].order_date + "</td></tr>";
+                                                        orderdata += "<tr><td>" + data.data.order[i].order_number + "</td><td>" + data.data.order[i].title + "</td><td>" + data.data.order[i].oracle_code + "</td><td style='background-color: " + line_price_incl_tax_color + "; color: #FFFFFF;'>$" + data.data.order[i].tax_amount + "</td><td style='background-color: " + line_price_incl_tax_color + "; color: #FFFFFF;'>$" + data.data.order[i].line_price_incl_tax + "</td><td>$" + data.data.order[i].rolling_total + "</td><td>" + data.data.order[i].order_date + "</td></tr>";
                                                         // console.log(data.data.order[i]); 
                                                 }
 
@@ -60,7 +60,7 @@ var ledger_payments = {
                                         }
                                         if (data.data.linked_payments.length > 0) {
                                                 for (let i = 0; i < data.data.linked_payments.length; i++) {
-                                                        linked_invoices += "<tr><td>" + data.data.linked_payments[i].invoice_reference + " - " + data.data.linked_payments[i].oracle_invoice_number + "</td><td>" + data.data.linked_payments[i].booking_reference + "</td><td>" + data.data.linked_payments[i].booking_reference_linked + "</td><td>" + data.data.linked_payments[i].settlement_date + "</td></tr>";
+                                                        linked_invoices += "<tr><td><A href='/ledger/payments/invoice-pdf/" + data.data.linked_payments[i].invoice_reference + "' target='_pdf_invoice_" + data.data.linked_payments[i].invoice_reference + "'>" + data.data.linked_payments[i].invoice_reference + "</a> - " + data.data.linked_payments[i].oracle_invoice_number + "</td><td>" + data.data.linked_payments[i].booking_reference + "</td><td>" + data.data.linked_payments[i].booking_reference_linked + "</td><td>" + data.data.linked_payments[i].settlement_date + "</td></tr>";
 
                                                 }
 
