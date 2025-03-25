@@ -5,7 +5,7 @@ from oscar.core.loading import get_class, get_model
 from oscar.apps.order.utils import OrderCreator as CoreOrderCreator
 from oscar.apps.order import exceptions
 from oscar.apps.checkout.calculators import OrderTotalCalculator
-from ledger.checkout.utils import create_basket_session, create_checkout_session, place_order_submission, get_cookie_basket
+from ledger.checkout.utils import create_basket_session, create_basket_session_v2, create_checkout_session, place_order_submission, get_cookie_basket
 from ledger.payments.invoice import facade as invoice_facade
 from ledger.payments.models import Invoice
 from ledger.payments.utils import systemid_check, update_payments, LinkedInvoiceCreate
@@ -211,14 +211,21 @@ def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=N
             'system': system_id,
             'custom_basket': True,
             'booking_reference': booking_reference,
-            'booking_reference_link': booking_reference_linked
+            'booking_reference_link': booking_reference_linked,
+            'custom_basket': True,
+            'tax_override': True,
+            'line_status': True
         }
 
-        basket, basket_hash = create_basket_session(request, basket_params)
+        # basket, basket_hash = create_basket_session(request, basket_params)
+        basket, basket_hash = create_basket_session_v2(request.user.id, basket_params)
+        
+        if invoice_text is None:
+            invoice_text='Oracle Allocation Pools'
         ci = CreateInvoiceBasket()
         if system_id:
             ci.system = system_id
-        order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text='Oracle Allocation Pools', )
+        order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text=invoice_text, )
         new_invoice = Invoice.objects.get(order_number=order.number)
         update_payments(new_invoice.reference)
         return order

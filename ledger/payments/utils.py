@@ -996,7 +996,8 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
                              if o.oracle_code == 'NNP449 GST':
                                  total_unallocated = total_unallocated + o.line_price_incl_tax
                              rolling_total = rolling_total + o.line_price_incl_tax
-                             row = {'id': o.id, 'order_number': o.order.number, 'title': o.title, 'line_price_incl_tax': str(o.line_price_incl_tax), 'line_price_excl_tax': str(o.line_price_incl_tax), 'owner_id': str(owner_id),'oracle_code': o.oracle_code, 'rolling_total': str(rolling_total), 'order_date': o.order.date_placed.strftime("%d/%m/%Y %H:%M:%S")}
+                             tax_amount = o.line_price_incl_tax - o.line_price_excl_tax
+                             row = {'id': o.id, 'order_number': o.order.number, 'title': o.title, 'line_price_incl_tax': str(o.line_price_incl_tax), 'line_price_excl_tax': str(o.line_price_excl_tax), 'owner_id': str(owner_id),'oracle_code': o.oracle_code, 'rolling_total': str(rolling_total), 'tax_amount': str(tax_amount), 'order_date': o.order.date_placed.strftime("%d/%m/%Y %H:%M:%S")}
                              order_array.append(row)
 
                              if o.oracle_code not in oracle_code_totals:

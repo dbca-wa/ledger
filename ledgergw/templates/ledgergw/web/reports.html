@@ -332,6 +332,41 @@
 
 </div>  
 
+<!--- START -->
+
+<br>
+<div class="card">
+      <div class="card-body">
+
+      <form ref="oracle_form" id='oracle_form' onsubmit="event.preventDefault();">
+        <div class="well well-sm">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="col-lg-12">
+                        <h3 style="margin-bottom:20px;">Unpaid Invoice Report (Debtor Report)</h3>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="col-sm-6">
+
+                                <div class="form-group">
+                                    <button onclick="reports.UnpaidInvoiceReportJob()" class="btn btn-primary pull-left" >Run Job</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+
+
+</div>  
+
+<!-- end -->
 
 
 <br>
@@ -412,6 +447,7 @@
 	var reports = { "var": {
 		                   system_id: "{{ system_id }}",
                            queue_report_job_url: "/api/queue-report-job",
+                           unpaid_invoice_report_url: "/api/reports/unpaid-invoices",
                            itemised_transactions_url: "/api/reports/itemised-transactions",
 		                   refund_report_url: "/api/reports/refunds",
 		                   settlement_report_url: "/api/reports/settlements",
@@ -638,6 +674,33 @@
                                     },
                                 });
                             }
+
+                        },
+                        UnpaidInvoiceReportJob: function() {
+                            // var oracle_date = moment(reports.var.timepaymentauditreportDatePicker.datepicker("getDate")).format('YYYY-MM-DD');
+                            // if (oracle_date.length > 0) { 
+                            $('#LoadingPopup').modal('show');
+                            var report_url = reports.var.queue_report_job_url+"?system="+reports.var.system_id+"&job_type=unpaid_invoice_report";
+                            $.ajax({
+                                    url: report_url,
+                                    method: 'GET',
+                                    dataType: 'json',
+                                    contentType: 'application/json',
+                                    // data: "{}",
+                                    success: function (response) {
+                                        setTimeout("$('#LoadingPopup').modal('hide')",800);
+                                        if (response['data']['status'] == 200) {
+                                                setTimeout("$('#SuccessPopupBox').modal('show')",1000);
+                                                console.log(response['data']['message']);
+                                        }
+                                },
+                                error: function (error) {
+                                        setTimeout("$('#LoadingPopup').modal('hide');",600);
+                                        setTimeout("$('#ErrorPopupBox').modal('show');",1000);
+                                        console.log('Error running oracle job');
+                                },
+                            });
+                            //}
 
                         },
                         ItemisedTransactionReport: function() {

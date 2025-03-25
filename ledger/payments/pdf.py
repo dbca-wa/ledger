@@ -210,6 +210,8 @@ class Remittance(Flowable):
 
 
 def _create_header(canvas, doc, draw_page_number=True):
+    invoice_name = ''
+    invoice_username = ''
     invoice = doc.invoice
     ois = payments_models.OracleInterfaceSystem.objects.filter(system_id=invoice.system)
     invoice_template = 'dbca_template'
@@ -260,13 +262,16 @@ def _create_header(canvas, doc, draw_page_number=True):
          canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER),    invoice.order.organisation.name)
          canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) *2,    invoice.order.organisation.abn)
 
-    invoice_name = invoice.owner.get_full_name()
+    if invoice.owner:
+        invoice_name = invoice.owner.get_full_name()
+        invoice_username = invoice.owner.username
+        
     if invoice.invoice_name:
         if len(invoice.invoice_name) > 0:
             invoice_name = invoice.invoice_name
 
     canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 3,invoice_name)
-    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4,invoice.owner.username)
+    canvas.drawString(current_x, current_y - (SMALL_FONTSIZE + HEADER_SMALL_BUFFER) * 4,invoice_username)
 
     current_x += 452
     #write Invoice details

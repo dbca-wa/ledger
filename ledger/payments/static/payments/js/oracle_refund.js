@@ -34,10 +34,12 @@ var refund_booking =  {
 
                var html = "<tr id='money_row"+refund_booking.var.row_id+"' >";
                     html += "<td><span id='oracle-error"+refund_booking.var.row_id+"'>";
-                    html += "<select class='form-control input-sm' id='from-money-oracle-code"+refund_booking.var.row_id+"' onchange='refund_booking.input_oracle_code_change("+refund_booking.var.row_id+")' >"+money_from_dropdown+"</select>";
+                    html += "<select class='form-control input-sm' id='from-money-oracle-code"+refund_booking.var.row_id+"' onchange='refund_booking.input_oracle_code_change(this.id)' >"+money_from_dropdown+"</select>";
                     html += "</span></td>";
                     html += "<td><input style='width: 100%' class='form-control input-sm' type='text' id='from-money-line-text"+refund_booking.var.row_id+"' ></td>";
-                    html += "<td ><div style='display:flex'><span class='money_sign' style='padding-top:6px;'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='from-money-line-amount"+refund_booking.var.row_id+"' ></div></td>";
+                    
+                    html += "<td ><div style='display:flex'><span class='money_sign' style='padding-top:6px;'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='from-money-line-tax"+refund_booking.var.row_id+"' disabled=true ></div></td>";
+                    html += "<td ><div style='display:flex'><span class='money_sign' style='padding-top:6px;'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='from-money-line-amount"+refund_booking.var.row_id+"' ></div></td>";                    
                     html += "<td><button type='button'  class='btn btn-danger' onclick='refund_booking.remove_row("+'"money_row'+refund_booking.var.row_id+'"'+")'  ><i class='bi bi-x-lg'></i></button></td>";
                     html += "</tr>";
                $("#from-money-booking tbody").append(html);
@@ -45,8 +47,9 @@ var refund_booking =  {
           to_money_add_row: function() {
                refund_booking.var.row_id = refund_booking.var.row_id + 1;
                var html = "<tr id='money_row"+refund_booking.var.row_id+"' >";
-                    html += "<td><span id='oracle-error"+refund_booking.var.row_id+"'><input style='width: 200px;' class='form-control input-sm' type='text' id='to-money-oracle-code"+refund_booking.var.row_id+"' onblur='refund_booking.input_oracle_code_change("+refund_booking.var.row_id+")' ></span></td>";
+                    html += "<td><span id='oracle-error"+refund_booking.var.row_id+"'><input style='width: 200px;' class='form-control input-sm' type='text' id='to-money-oracle-code"+refund_booking.var.row_id+"' onblur='refund_booking.input_oracle_code_change(this.id)' ></span></td>";
                     html += "<td><input style='width: 100%' type='text' class='form-control input-sm' id='to-money-line-text"+refund_booking.var.row_id+"'></td>";
+                    html += "<td><div style='display:flex'><span class='money_sign'  style='padding-top:6px;'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='to-money-line-tax"+refund_booking.var.row_id+"' disabled=true></div></td>";
                     html += "<td><div style='display:flex'><span class='money_sign'  style='padding-top:6px;'>$</span><input style='width: 100px;' class='form-control input-sm money' type='number' step='0.01' value='0.00' onblur='refund_booking.money_update(this);' id='to-money-line-amount"+refund_booking.var.row_id+"'></div></td>";
                     html += "<td><button type='button' class='btn btn-danger' onclick='refund_booking.remove_row("+'"money_row'+refund_booking.var.row_id+'"'+")' ><i class='bi bi-x-lg'></i></button></td>";
                     html += "</tr>";
@@ -132,12 +135,17 @@ var refund_booking =  {
                 refund_booking.var.total_from_money = parseFloat('0.00');
                 $('#total_from_money').html('$'+refund_booking.format_money(refund_booking.var.total_from_money));
                 $("#from-money-booking").find('input').each(function() {
+                         console.log(this.id);
                          if (this.type == 'number') {
                               if (this.value > 0 ) {
                               } else {
                                   this.value = '0.00';
                               }
-                              refund_booking.var.total_from_money = refund_booking.var.total_from_money + parseFloat(this.value);
+
+                              if ((this.id.substring(0,22) == 'from-money-line-amount') || (this.id == 'unallocated_pool_refund')) {
+                                   refund_booking.var.total_from_money = refund_booking.var.total_from_money + parseFloat(this.value);
+                              }
+
                               $('#total_from_money').html('$'+refund_booking.format_money(refund_booking.var.total_from_money));
    		      }
                 });
@@ -150,8 +158,10 @@ var refund_booking =  {
                               if (this.value > 0 ) { 
    	                   } else {
                                   this.value = '0.00'; 
-                              } 
-                              refund_booking.var.total_to_money = refund_booking.var.total_to_money + parseFloat(this.value);
+                              }
+                              if (this.id.substring(0,20) == 'to-money-line-amount') {
+                                   refund_booking.var.total_to_money = refund_booking.var.total_to_money + parseFloat(this.value);
+                              }
                               $('#total_to_money').html('$'+refund_booking.format_money(refund_booking.var.total_to_money));
                          }
                 });
@@ -173,23 +183,66 @@ var refund_booking =  {
               } else {
                   return (neg ? "-" : '') + parseFloat(total, 10).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, "$1").toString();
    	   } 
-           },
-           money_update: function(item) {
-                              item.value = refund_booking.format_money(item.value, false);
-                              refund_booking.total_from_money();
-                              refund_booking.total_to_money();
-                              refund_booking.total_bpoint_money();
-                              refund_booking.total_cash_money();
-                              var unallocated_pool_refund = $('#unallocated_pool_refund').val();
-                              if (parseFloat(unallocated_pool_refund) > parseFloat(refund_booking.var.booking_allocation_pool)) {
-                                  $('.tooltiptext').show();
-   			   } else {
-                                  $('.tooltiptext').hide();
-   			   }
-   	},
-           input_oracle_code_change: function(row_id) {
+     },
+     money_update: function(item) {
+                    var rowid_val;
+                    var gst_value = 0.00;
+                    console.log(item.id);
+                    if (item.id.substring(0,22) == 'from-money-line-amount') {
+                         rowid_val = item.id.replace('from-money-line-amount','')                    
+                    
+                         var oracle_code_value = $('#from-money-oracle-code'+rowid_val).val();                    
+                         if (oracle_code_value.indexOf('EXEMPT') !== -1) {
+                              gst_value = 0.00;
+                         } else {
+                              gst_value = item.value / 11;
+                         }
+                         
+                         $('#from-money-line-tax'+rowid_val).val(gst_value.toFixed(2));  
+                    }    
+                    if (item.id.substring(0,20) == 'to-money-line-amount') {
+                         rowid_val = item.id.replace('to-money-line-amount','')
+                    
+                         console.log(item.value);
+                         var oracle_code_value = $('#to-money-oracle-code'+rowid_val).val();                    
+                         if (oracle_code_value.indexOf('EXEMPT') !== -1) {
+                              gst_value = 0.00;
+                         } else {
+                              gst_value = item.value / 11;
+                         }
+                         
+                         $('#to-money-line-tax'+rowid_val).val(gst_value.toFixed(2));  
+                    }    
+
+                    if (item.id == 'unallocated_pool_refund') {                                                                 
+                         var oracle_code_value = $('#oracle_code_refund_allocation_pool').val();   
+                         console.log(oracle_code_value)                 
+                         if (oracle_code_value.indexOf('EXEMPT') !== -1) {
+                              gst_value = 0.00;
+                         } else {
+                              gst_value = item.value / 11;
+                         }                         
+                         $('#unallocated_pool_refund_tax').val(gst_value.toFixed(2));  
+                    }    
+
+                    item.value = refund_booking.format_money(item.value, false);
+                    refund_booking.format_money($('#from-money-line-tax'+rowid_val).val(), false);
+                    refund_booking.total_from_money();
+                    refund_booking.total_to_money();
+                    refund_booking.total_bpoint_money();
+                    refund_booking.total_cash_money();
+
+                    var unallocated_pool_refund = $('#unallocated_pool_refund').val();
+                    if (parseFloat(unallocated_pool_refund) > parseFloat(refund_booking.var.booking_allocation_pool)) {
+                         $('.tooltiptext').show();
+                    } else {
+                         $('.tooltiptext').hide();
+                    }
+   	     },
+           input_oracle_code_change_old: function(row_id) {
+                  alert(row_id);
                   var item = $('#oracle-code'+row_id);
-                  
+                  alert(item.val());
                   var code_found = refund_booking.check_oracle_code(item.val()); 
                   if (code_found == true) { 
                        $('#oracle-error'+row_id).css('border','none');
@@ -201,6 +254,36 @@ var refund_booking =  {
                   }
 
    	},
+        input_oracle_code_change: function(element_id) {          
+          var item = $('#'+element_id); 
+          console.log(item.val());         
+          var code_found = refund_booking.check_oracle_code(item.val()); 
+          console.log(code_found);
+          // console.unique_oracle_code_on_booking(element_id);
+          if (code_found == true) {   
+               $('#'+element_id).css('border','');
+               console.log(element_id);
+               if (element_id.substring(0,22) == 'from-money-oracle-code') {
+                    rowid_val = element_id.replace('from-money-oracle-code','');             
+                    var amount_item = document.getElementById('from-money-line-amount'+rowid_val);
+                    refund_booking.money_update(amount_item);
+               }
+               if (element_id.substring(0,20) == 'to-money-oracle-code') {
+                    
+                    rowid_val = element_id.replace('to-money-oracle-code','');             
+                    var amount_item = document.getElementById('to-money-line-amount'+rowid_val);
+                    
+                    refund_booking.money_update(amount_item);
+               }               
+               
+          } else { 
+               $('#'+element_id).css('border','2px solid red');
+               $('#'+element_id).css('border-radius','4px');
+               // $('#'+element_id).css('position','absolute');
+          }
+
+          },
+
            check_oracle_code: function(oracle_code) {
                     var found = false; 
                     $.ajax({
@@ -383,6 +466,7 @@ var refund_booking =  {
                     var bpoint_trans_split_array = [];
                     var notification_message = "";
                     var un_pool = $('#unallocated_pool_refund').val();
+                    var un_pool_tax =  $('unallocated_pool_refund_tax').val();
                     var trans_method = $('input[name="trans_method"]:checked').val();
                     var settlement_date_form = $('#settlement_date').val();
                     var settlement_override = $('#settlement_override').prop('checked');
@@ -613,7 +697,7 @@ var refund_booking =  {
 
 				    } else {
                                         var unallocated_text = $('#unallocated-text').val();
-                                        from_money_pool_array.push({'oracle-code': refund_booking.var.oracle_code_refund_allocation_pool, 'line-text': unallocated_text, 'line-amount': un_pool});
+                                        from_money_pool_array.push({'oracle-code': refund_booking.var.oracle_code_refund_allocation_pool, 'line-text': unallocated_text, 'line-amount': un_pool, 'line-tax': un_pool_tax});
 
                                         $("#from-money-booking").find('input, select').each(function() {
                                                  input_id = this.id;
@@ -625,8 +709,9 @@ var refund_booking =  {
                                                       if (idvalname == 'from-money-oracle-code') {
                                                              var oracle_code = $('#from-money-oracle-code'+rowid).val();
                                                              var line_text = $('#from-money-line-text'+rowid).val();
+                                                             var line_tax = $('#from-money-line-tax'+rowid).val();
                                                              var line_amount = $('#from-money-line-amount'+rowid).val();
-                                                             from_money_pool_array.push({'oracle-code': oracle_code, 'line-text': line_text, 'line-amount': line_amount});
+                                                             from_money_pool_array.push({'oracle-code': oracle_code, 'line-text': line_text, 'line-amount': line_amount, 'line-tax': line_tax});
                                                       }
                                                  }
                                         });
@@ -642,8 +727,9 @@ var refund_booking =  {
                                                       if (idvalname == 'to-money-oracle-code') {
                                                              var oracle_code = $('#to-money-oracle-code'+rowid).val();
                                                              var line_text = $('#to-money-line-text'+rowid).val();
+                                                             var line_tax = $('#to-money-line-tax'+rowid).val();
                                                              var line_amount = $('#to-money-line-amount'+rowid).val();
-                                                             to_money_pool_array.push({'oracle-code': oracle_code, 'line-text': line_text, 'line-amount': line_amount});
+                                                             to_money_pool_array.push({'oracle-code': oracle_code, 'line-text': line_text, 'line-amount': line_amount, 'line-tax': line_tax});
                                                       }
                                                  }
                                         });

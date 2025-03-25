@@ -34,7 +34,9 @@ def create_basket_session_v2(emailuser_id, parameters):
 
     if 'tax_override' in parameters:
         if parameters['tax_override'] is True:
-             ledger_product_custom_fields = ('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code')
+            ledger_product_custom_fields = ('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code')
+        if parameters['line_status'] is True:
+            ledger_product_custom_fields = ('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code', 'line_status')
 
     user_obj = EmailUser.objects.get(id=int(emailuser_id))
     serializer = serializers.BasketSerializer(data=parameters)
@@ -559,9 +561,10 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         if ledger_product_custom_fields:
                 ledger_product_default_fields = ledger_product_custom_fields
 
-        for p in product_list:
+        for p in product_list:            
             if not all(d in p for d in ledger_product_default_fields):
                 raise ValidationError('Please make sure that the product format is valid')
+
             if ledger_product_custom_fields:
                  if 'price_excl_tax' in ledger_product_custom_fields:
                      # dont calculate tax as this should be included in the product list
@@ -656,7 +659,7 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
                 ledger_product_default_fields = ledger_product_custom_fields
 
         for p in product_list:
-            if not all(d in p for d in ledger_product_default_fields):
+            if not all(d in p for d in ledger_product_default_fields):                
                 raise ValidationError('Please make sure that the product format is valid')
             if ledger_product_custom_fields:
                  if 'price_excl_tax' in ledger_product_custom_fields:

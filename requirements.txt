@@ -58,3 +58,4 @@ requests==2.31.0
 setuptools==59.6.0
 wheel==0.37.1
 django-tables2==1.16.0
+git+https://github.com/dbca-wa/wagov_utils.git#egg=wagov_utils

@@ -375,6 +375,7 @@
                 <tr>
                   <th style='width: 200px;'>Oracle Code</th>
                   <th>Line Description</th>
+                  <th style='width: 100px;'>Tax</th>
                   <th style='width: 100px;'>Amount</th>
 		              <th style='width: 10px;'><button id='from-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;"><i class="bi bi-plus-lg"></i></button></th>
                 </tr>
@@ -382,12 +383,18 @@
         <tbody>
 
            <tr>
-                <td>{{ oracle_code_refund_allocation_pool }}</td>
+                <td>{{ oracle_code_refund_allocation_pool }}<input id='oracle_code_refund_allocation_pool' name='oracle_code_refund_allocation_pool' value='{{ oracle_code_refund_allocation_pool }}' type='hidden'></td>
                 <td><input style='width: 100%' type='hidden' id='unallocated-text' value="Unallocated Pool" class='form-control input-sm'>Unallocated Pool</td>
+                <td  >
+                  <div style='display:flex;'>
+                  <span class='money_sign'>$</span><input style='width: 100px;' type='number' id='unallocated_pool_refund_tax' step='0.01' class='form-control input-sm money' value='{{ invoice_line_items.total_booking_allocation_pool }}' onblur='refund_booking.money_update(this);' disabled=true>
+                  </div>
+                </td>
                 <td><div class='tooltip2'  align='left' style='display:flex;'>
                                          
                 <span class="tooltiptext">Cannot be greater than the Unallocated Pool Amount</span>
 					      <span class='money_sign'>$</span>
+                
                 <input style='width: 100px;' type='number' id='unallocated_pool_refund' step='0.01' class='form-control input-sm money' value='{{ invoice_line_items.total_booking_allocation_pool }}' onblur='refund_booking.money_update(this);'>
 
             </div>
@@ -417,6 +424,7 @@
                 <tr>
                   <th style='width: 200px;'>Oracle Code</th>
                   <th>Line Description</th>
+                  <th style='width: 100px;'>Tax</th>
                   <th style='width: 100px;'>Amount</th>
 		  <th style='width: 10px;'><button id='to-money-booking-button' type="button" class="btn btn-success" style=" margin-bottom: 5px;"><i class="bi bi-plus-lg"></i></button></th>
                 </tr>
@@ -593,7 +601,8 @@
       <th scope="col">Order No</th>
       <th scope="col">Line Item (All Bookings)</th>
       <th scope="col">Oracle Code</th>
-      <th scope="col">Price (inc tax)</th>
+      <th scope="col">Tax</th>
+      <th scope="col">Amount (incl tax)</th>
       <th scope="col">Rolling Total</th>
       <th scope="col">Order Date</th>
     </tr>
