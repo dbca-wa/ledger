@@ -50,5 +50,6 @@ class JobQueueAdmin(ModelAdmin):
      search_fields = ('job_cmd','parameters_json',)
      list_filter = ('system_id','created')  
      ordering = ('id',)
+     raw_id_fields = ['user']
 
 
