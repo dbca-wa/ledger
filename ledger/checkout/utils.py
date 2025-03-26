@@ -35,8 +35,9 @@ def create_basket_session_v2(emailuser_id, parameters):
     if 'tax_override' in parameters:
         if parameters['tax_override'] is True:
             ledger_product_custom_fields = ('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code')
-        if parameters['line_status'] is True:
-            ledger_product_custom_fields = ('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code', 'line_status')
+        if 'line_status' in parameters:
+            if parameters['line_status'] is True:
+                ledger_product_custom_fields = ('ledger_description','quantity','price_incl_tax','price_excl_tax','oracle_code', 'line_status')
 
     user_obj = EmailUser.objects.get(id=int(emailuser_id))
     serializer = serializers.BasketSerializer(data=parameters)
