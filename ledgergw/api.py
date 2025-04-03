@@ -138,7 +138,7 @@ def update_user_info_id(request, userid,apikey):
     ledger_user_json  = {}
     
     post_list = list(request.POST)
-    print (post_list)
+    
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         api_key_obj = ledgerapi_models.API.objects.filter(api_key=apikey,active=1)
         api_key_obj_update_key = "{} ({}) ".format(api_key_obj[0].system_id,api_key_obj[0].id)
@@ -186,6 +186,7 @@ def update_user_info_id(request, userid,apikey):
 
                 if 'dob' in post_list:
                     dob = request.POST.get('dob')
+                    dob = ledgergw_utils.remove_html_tags(dob)
                     date_dob = datetime.strptime(dob, '%d/%m/%Y').date()
                     
                     if ledger_obj.dob != date_dob:                            
@@ -193,9 +194,7 @@ def update_user_info_id(request, userid,apikey):
 
                     ledger_obj.dob = date_dob
                 if 'residential_address' in post_list:
-
                     if ledger_obj.residential_address is None:
-
                         if Country.objects.filter(iso_3166_1_a2=residential_address_obj['residential_country']).count() > 0:
                             pass 
                         else:
@@ -203,20 +202,20 @@ def update_user_info_id(request, userid,apikey):
                         
                         
                         residential_address =  models.Address.objects.create(user=ledger_obj,
-                                                  line1=residential_address_obj['residential_line1'],
-                                                  locality=residential_address_obj['residential_locality'],
-                                                  state=residential_address_obj['residential_state'],
-                                                  postcode=residential_address_obj['residential_postcode'],
-                                                  country=residential_address_obj['residential_country'],
+                                                  line1=ledgergw_utils.remove_html_tags(residential_address_obj['residential_line1']),
+                                                  locality=ledgergw_utils.remove_html_tags(residential_address_obj['residential_locality']),
+                                                  state=ledgergw_utils.remove_html_tags(residential_address_obj['residential_state']),
+                                                  postcode=ledgergw_utils.remove_html_tags(residential_address_obj['residential_postcode']),
+                                                  country=ledgergw_utils.remove_html_tags(residential_address_obj['residential_country']),
                                                  )
                         
                         
                             
-                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_line1", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_line1'],change_by=ledger_changeuser_obj)
-                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_locality", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_locality'],change_by=ledger_changeuser_obj)
-                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_state", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_state'],change_by=ledger_changeuser_obj)
-                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_postcode", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_postcode'],change_by=ledger_changeuser_obj)
-                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_country", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_country'],change_by=ledger_changeuser_obj)                            
+                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_line1", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_line1']),change_by=ledger_changeuser_obj)
+                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_locality", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_locality']),change_by=ledger_changeuser_obj)
+                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_state", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_state']),change_by=ledger_changeuser_obj)
+                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_postcode", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_postcode']),change_by=ledger_changeuser_obj)
+                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_country", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_country']),change_by=ledger_changeuser_obj)                            
 
                         ledger_obj.residential_address = residential_address
                     else:
@@ -224,25 +223,25 @@ def update_user_info_id(request, userid,apikey):
                         if 'residential_line1' in residential_address_obj:
                                    
                                 if ledger_obj.residential_address.line1 != residential_address_obj['residential_line1']:                                        
-                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_line1", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_line1'],change_by=ledger_changeuser_obj)                               
-                                ledger_obj.residential_address.line1 =residential_address_obj['residential_line1']
+                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_line1", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_line1']),change_by=ledger_changeuser_obj)                               
+                                ledger_obj.residential_address.line1 =ledgergw_utils.remove_html_tags(residential_address_obj['residential_line1'])
                         if 'residential_locality' in residential_address_obj:
                                                                                                 
                                 if ledger_obj.residential_address.locality != residential_address_obj['residential_locality']: 
-                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_locality", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_locality'],change_by=ledger_changeuser_obj)                                
-                                ledger_obj.residential_address.locality = residential_address_obj['residential_locality']
+                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_locality", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_locality']),change_by=ledger_changeuser_obj)                                
+                                ledger_obj.residential_address.locality = ledgergw_utils.remove_html_tags(residential_address_obj['residential_locality'])
                         if 'residential_state' in residential_address_obj:                                
                                 if ledger_obj.residential_address.state != residential_address_obj['residential_state']: 
-                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_state", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_state'],change_by=ledger_changeuser_obj)    
-                                ledger_obj.residential_address.state = residential_address_obj['residential_state']
+                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_state", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_state']),change_by=ledger_changeuser_obj)    
+                                ledger_obj.residential_address.state = ledgergw_utils.remove_html_tags(residential_address_obj['residential_state'])
                         if 'residential_postcode' in residential_address_obj:                                   
                                 if ledger_obj.residential_address.postcode != residential_address_obj['residential_postcode']: 
-                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_postcode", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_postcode'],change_by=ledger_changeuser_obj) 
-                                ledger_obj.residential_address.postcode = residential_address_obj['residential_postcode']                                 
+                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_postcode", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_postcode']),change_by=ledger_changeuser_obj) 
+                                ledger_obj.residential_address.postcode = ledgergw_utils.remove_html_tags(residential_address_obj['residential_postcode'])                                 
                         if 'residential_country' in residential_address_obj:                                
                                 if ledger_obj.residential_address.country != residential_address_obj['residential_country']: 
-                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_country", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['residential_country'],change_by=ledger_changeuser_obj) 
-                                ledger_obj.residential_address.country = residential_address_obj['residential_country']                                
+                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="residential_country", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['residential_country']),change_by=ledger_changeuser_obj) 
+                                ledger_obj.residential_address.country = ledgergw_utils.remove_html_tags(residential_address_obj['residential_country'])                                
                         ledger_obj.residential_address.save()
                 if 'postal_address' in post_list: 
                     if ledger_obj.postal_address is None:
@@ -254,18 +253,18 @@ def update_user_info_id(request, userid,apikey):
                                 postal_address_obj['postal_country'] = "AU"        
                             
                             postal_address =  models.Address.objects.create(user=ledger_obj,
-                                                  line1=postal_address_obj['postal_line1'],
-                                                  locality=postal_address_obj['postal_locality'],
-                                                  state=postal_address_obj['postal_state'],
-                                                  postcode=postal_address_obj['postal_postcode'],
-                                                  country=postal_address_obj['postal_country'],
+                                                  line1=ledgergw_utils.remove_html_tags(postal_address_obj['postal_line1']),
+                                                  locality=ledgergw_utils.remove_html_tags(postal_address_obj['postal_locality']),
+                                                  state=ledgergw_utils.remove_html_tags(postal_address_obj['postal_state']),
+                                                  postcode=ledgergw_utils.remove_html_tags(postal_address_obj['postal_postcode']),
+                                                  country=ledgergw_utils.remove_html_tags(postal_address_obj['postal_country']),
                                                  )
                             ledger_obj.postal_address = postal_address
-                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_line1", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['postal_line1'],change_by=ledger_changeuser_obj)
-                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_locality", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['postal_locality'],change_by=ledger_changeuser_obj)
-                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_state", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['postal_state'],change_by=ledger_changeuser_obj)
-                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_postcode", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['postal_postcode'],change_by=ledger_changeuser_obj)
-                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_country", change_value="ledger_api_client_"+api_key_obj_update_key+": " +residential_address_obj['postal_country'],change_by=ledger_changeuser_obj)                         
+                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_line1", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['postal_line1']),change_by=ledger_changeuser_obj)
+                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_locality", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['postal_locality']),change_by=ledger_changeuser_obj)
+                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_state", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['postal_state']),change_by=ledger_changeuser_obj)
+                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_postcode", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['postal_postcode']),change_by=ledger_changeuser_obj)
+                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_country", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(residential_address_obj['postal_country']),change_by=ledger_changeuser_obj)                         
                         except Exception as e:
                             print (str(e))
                             jsondata['status'] = '404'
@@ -277,31 +276,32 @@ def update_user_info_id(request, userid,apikey):
                             if 'postal_line1' in postal_address_obj:
 
                                 if ledger_obj.postal_address.line1 != postal_address_obj['postal_line1']: 
-                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_line1", change_value="ledger_api_client_"+api_key_obj_update_key+": "+postal_address_obj['postal_line1'],change_by=ledger_changeuser_obj) 
-                                ledger_obj.postal_address.line1 =postal_address_obj['postal_line1']
+                                    models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_line1", change_value="ledger_api_client_"+api_key_obj_update_key+": "+ledgergw_utils.remove_html_tags(postal_address_obj['postal_line1']),change_by=ledger_changeuser_obj) 
+                                ledger_obj.postal_address.line1 = ledgergw_utils.remove_html_tags(postal_address_obj['postal_line1'])
                             if 'postal_locality' in postal_address_obj:
 
                                     if ledger_obj.postal_address.locality != postal_address_obj['postal_locality']: 
-                                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_locality", change_value="ledger_api_client_"+api_key_obj_update_key+": " +postal_address_obj['postal_locality'],change_by=ledger_changeuser_obj)                                
-                                    ledger_obj.postal_address.locality = postal_address_obj['postal_locality']
+                                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_locality", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(postal_address_obj['postal_locality']),change_by=ledger_changeuser_obj)                                
+                                    ledger_obj.postal_address.locality = ledgergw_utils.remove_html_tags(postal_address_obj['postal_locality'])
                             if 'postal_state' in postal_address_obj:
 
                                     if ledger_obj.postal_address.state != postal_address_obj['postal_state']: 
-                                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_state", change_value="ledger_api_client_"+api_key_obj_update_key+": " +postal_address_obj['postal_state'],change_by=ledger_changeuser_obj)                                  
-                                    ledger_obj.postal_address.state = postal_address_obj['postal_state']
+                                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_state", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(postal_address_obj['postal_state']),change_by=ledger_changeuser_obj)                                  
+                                    ledger_obj.postal_address.state = ledgergw_utils.remove_html_tags(postal_address_obj['postal_state'])
                             if 'postal_postcode' in postal_address_obj:
 
                                     if ledger_obj.postal_address.postcode != postal_address_obj['postal_postcode']: 
-                                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_postcode", change_value="ledger_api_client_"+api_key_obj_update_key+": " +postal_address_obj['postal_postcode'],change_by=ledger_changeuser_obj)                                  
-                                    ledger_obj.postal_address.postcode = postal_address_obj['postal_postcode']
+                                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_postcode", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(postal_address_obj['postal_postcode']),change_by=ledger_changeuser_obj)                                  
+                                    ledger_obj.postal_address.postcode = ledgergw_utils.remove_html_tags(postal_address_obj['postal_postcode'])
                             if 'postal_country' in postal_address_obj:
                                     if ledger_obj.postal_address.country != postal_address_obj['postal_country']: 
-                                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_country", change_value="ledger_api_client_"+api_key_obj_update_key+": " +postal_address_obj['postal_country'],change_by=ledger_changeuser_obj)                                   
-                                    ledger_obj.postal_address.country = postal_address_obj['postal_country']
+                                        models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_country", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(postal_address_obj['postal_country']),change_by=ledger_changeuser_obj)                                   
+                                    ledger_obj.postal_address.country = ledgergw_utils.remove_html_tags(postal_address_obj['postal_country'])
                             if 'postal_same_as_residential' in postal_address_obj:                                    
                                     if ledger_obj.postal_same_as_residential != postal_address_obj['postal_same_as_residential']: 
                                         models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_same_as_residential", change_value="ledger_api_client_"+api_key_obj_update_key+": " +str(postal_address_obj['postal_same_as_residential']),change_by=ledger_changeuser_obj)                                   
-                                    ledger_obj.postal_same_as_residential = postal_address_obj['postal_same_as_residential']
+                                    ledger_obj.postal_same_as_residential = ledgergw_utils.remove_html_tags(postal_address_obj['postal_same_as_residential'])
+
                             ledger_obj.postal_address.save()
                         except Exception as e:
                             print (str(e))
@@ -312,15 +312,15 @@ def update_user_info_id(request, userid,apikey):
                         
                         phone_number = request.POST.get('phone_number')
                         if ledger_obj.phone_number != phone_number: 
-                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="phone_number", change_value="ledger_api_client_"+api_key_obj_update_key+": " +str(phone_number),change_by=ledger_changeuser_obj)                                   
+                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="phone_number", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(str(phone_number)),change_by=ledger_changeuser_obj)                                   
                                     
-                        ledger_obj.phone_number = request.POST.get('phone_number')
+                        ledger_obj.phone_number = ledgergw_utils.remove_html_tags(request.POST.get('phone_number'))
                     
                     if 'mobile_number' in post_list:
                         mobile_number = request.POST.get('mobile_number')
                         if ledger_obj.mobile_number != mobile_number: 
-                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="mobile_number", change_value="ledger_api_client_"+api_key_obj_update_key+": " +str(mobile_number),change_by=ledger_changeuser_obj)                        
-                        ledger_obj.mobile_number = request.POST.get('mobile_number')
+                            models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="mobile_number", change_value="ledger_api_client_"+api_key_obj_update_key+": " +ledgergw_utils.remove_html_tags(str(mobile_number)),change_by=ledger_changeuser_obj)                        
+                        ledger_obj.mobile_number = ledgergw_utils.remove_html_tags(request.POST.get('mobile_number'))
                 except Exception as e:
                     print (str(e))
                     jsondata['status'] = '404'
@@ -2035,13 +2035,13 @@ def update_organisation(request,apikey):
             if models.Organisation.objects.filter(id=organisation_id).count() > 0:
                     org_obj = models.Organisation.objects.get(id=organisation_id)
                     if organisation_name:
-                        org_obj.name = organisation_name
+                        org_obj.name = ledgergw_utils.remove_html_tags(organisation_name)
                     if organisation_abn:
-                        org_obj.abn = organisation_abn                                    
+                        org_obj.abn = ledgergw_utils.remove_html_tags(organisation_abn)                                    
                     if organisation_email:
-                        org_obj.email = organisation_email
+                        org_obj.email = ledgergw_utils.remove_html_tags(organisation_email)
                     if organisation_trading_name:
-                        org_obj.trading_name = organisation_trading_name                                
+                        org_obj.trading_name = ledgergw_utils.remove_html_tags(organisation_trading_name)                                
                     if postal_address:
 
                         if Country.objects.filter(iso_3166_1_a2=postal_address['postal_country']).count() > 0:
@@ -2050,20 +2050,20 @@ def update_organisation(request,apikey):
                             postal_address['postal_country'] = "AU" 
 
                         if org_obj.postal_address:
-                            org_obj.postal_address.line1 = postal_address['postal_line1']
-                            org_obj.postal_address.locality = postal_address['postal_locality']
-                            org_obj.postal_address.state = postal_address['postal_state']
-                            org_obj.postal_address.postcode = postal_address['postal_postcode']
-                            org_obj.postal_address.country = postal_address['postal_country']
+                            org_obj.postal_address.line1 = ledgergw_utils.remove_html_tags(postal_address['postal_line1'])
+                            org_obj.postal_address.locality = ledgergw_utils.remove_html_tags(postal_address['postal_locality'])
+                            org_obj.postal_address.state = ledgergw_utils.remove_html_tags(postal_address['postal_state'])
+                            org_obj.postal_address.postcode = ledgergw_utils.remove_html_tags(postal_address['postal_postcode'])
+                            org_obj.postal_address.country = ledgergw_utils.remove_html_tags(postal_address['postal_country'])
                             org_obj.postal_address.save()                            
                         else:                            
                             try:
                                 postal_address = models.OrganisationAddress.objects.create(organisation=org_obj,
-                                                  line1=postal_address['postal_line1'],
-                                                  locality=postal_address['postal_locality'],
-                                                  state=postal_address['postal_state'],
-                                                  postcode=postal_address['postal_postcode'],
-                                                  country=postal_address['postal_country'],
+                                                  line1=ledgergw_utils.remove_html_tags(postal_address['postal_line1']),
+                                                  locality=ledgergw_utils.remove_html_tags(postal_address['postal_locality']),
+                                                  state=ledgergw_utils.remove_html_tags(postal_address['postal_state']),
+                                                  postcode=ledgergw_utils.remove_html_tags(postal_address['postal_postcode']),
+                                                  country=ledgergw_utils.remove_html_tags(postal_address['postal_country']),
                                                  )    
                                 org_obj.postal_address = postal_address                            
                             except Exception as e:
@@ -2074,8 +2074,7 @@ def update_organisation(request,apikey):
                                 jsondata['data'] = {"message": "error saving organisation postal address details"}
 
                             #org_obj.postal_address = postal_address
-                            #org_obj.postal_address.save()
-                            
+                            #org_obj.postal_address.save()                            
 
                     if billing_address:
                         if Country.objects.filter(iso_3166_1_a2=billing_address['billing_country']).count() > 0:
@@ -2084,20 +2083,20 @@ def update_organisation(request,apikey):
                             billing_address['billing_country'] = "AU" 
 
                         if org_obj.billing_address:
-                            org_obj.billing_address.line1 = billing_address['billing_line1']
-                            org_obj.billing_address.locality = billing_address['billing_locality']
-                            org_obj.billing_address.state = billing_address['billing_state']
-                            org_obj.billing_address.postcode = billing_address['billing_postcode']
-                            org_obj.billing_address.country = billing_address['billing_country']
+                            org_obj.billing_address.line1 = ledgergw_utils.remove_html_tags(billing_address['billing_line1'])
+                            org_obj.billing_address.locality = ledgergw_utils.remove_html_tags(billing_address['billing_locality'])
+                            org_obj.billing_address.state = ledgergw_utils.remove_html_tags(billing_address['billing_state'])
+                            org_obj.billing_address.postcode = ledgergw_utils.remove_html_tags(billing_address['billing_postcode'])
+                            org_obj.billing_address.country = ledgergw_utils.remove_html_tags(billing_address['billing_country'])
                             org_obj.billing_address.save()                            
                         else:                            
                             try:
                                 billing_address = models.OrganisationAddress.objects.create(organisation=org_obj,
-                                                  line1=billing_address['billing_line1'],
-                                                  locality=billing_address['billing_locality'],
-                                                  state=billing_address['billing_state'],
-                                                  postcode=billing_address['billing_postcode'],
-                                                  country=billing_address['billing_country'],
+                                                  line1=ledgergw_utils.remove_html_tags(billing_address['billing_line1']),
+                                                  locality=ledgergw_utils.remove_html_tags(billing_address['billing_locality']),
+                                                  state=ledgergw_utils.remove_html_tags(billing_address['billing_state']),
+                                                  postcode=ledgergw_utils.remove_html_tags(billing_address['billing_postcode']),
+                                                  country=ledgergw_utils.remove_html_tags(billing_address['billing_country']),
                                                  )    
                                 org_obj.billing_address = billing_address                            
 
