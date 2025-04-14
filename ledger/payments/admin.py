@@ -138,12 +138,19 @@ class OracleInterfacePermissionInline(admin.TabularInline):
 @admin.register(models.OracleInterfaceSystem)
 class OracleInterfaceSystemAdmin(admin.ModelAdmin):
     list_display = ('system_name','system_id')
+    search_fields = ('system_name','system_id')
     inlines = [OracleInterfacePermissionInline, OracleInterfaceRecipientInline, OracleInterfaceReportReceipientInline, OracleInterfaceDeductionInline, ] 
 
 @admin.register(models.OracleAccountCode)
 class OracleAccountCode(admin.ModelAdmin):
     list_display = ('active_receivables_activities',)
+    search_fields = ('active_receivables_activities',)
 
+@admin.register(models.OracleAccountCodeTax)
+class OracleAccountCodeTax(admin.ModelAdmin):
+    list_display = ('oracle_code','tax_type','created')
+    list_filter = ('tax_type','created')
+    search_fields = ('oracle_code',)    
 
 @admin.register(models.LinkedInvoice)
 class LinkedInvoiceAdmin(admin.ModelAdmin):
@@ -163,6 +170,7 @@ class PaymentTotal(admin.ModelAdmin):
      list_filter = ('oracle_system','settlement_date',)
      raw_id_fields = ('oracle_system',)
      ordering = ('-settlement_date',)
+     search_fields = ('oracle_system__system_id','settlement_date','oracle_system__system_name')
 
      def discrepancy(self, obj):
             if obj.bpoint_gateway_total != obj.oracle_receipt_total:

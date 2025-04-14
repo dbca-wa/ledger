@@ -21,7 +21,8 @@ var refund_booking =  {
                booking_reference: '',
                booking_reference_linked: '',
                csrf_token: '',
-               invoice_group_id: ''
+               invoice_group_id: '',
+               oracle_code_tax_status: {}
           }, 
    	     from_money_add_row:  function() {
                refund_booking.var.row_id = refund_booking.var.row_id + 1;
@@ -191,11 +192,20 @@ var refund_booking =  {
                     if (item.id.substring(0,22) == 'from-money-line-amount') {
                          rowid_val = item.id.replace('from-money-line-amount','')                    
                     
-                         var oracle_code_value = $('#from-money-oracle-code'+rowid_val).val();                    
-                         if (oracle_code_value.indexOf('EXEMPT') !== -1) {
-                              gst_value = 0.00;
+                         var oracle_code_value = $('#from-money-oracle-code'+rowid_val).val();     
+                         
+                         if (refund_booking.var.oracle_code_tax_status.hasOwnProperty(oracle_code_value) == true) {
+                               if (refund_booking.var.oracle_code_tax_status[oracle_code_value] == 'tax_exempt') {                                    
+                                    gst_value = 0.00;
+                               } else {
+                                    gst_value = item.value / 11;
+                               }
                          } else {
-                              gst_value = item.value / 11;
+                              if (oracle_code_value.indexOf('EXEMPT') !== -1) {
+                                   gst_value = 0.00;
+                              } else {
+                                   gst_value = item.value / 11;
+                              }
                          }
                          
                          $('#from-money-line-tax'+rowid_val).val(gst_value.toFixed(2));  
@@ -205,10 +215,20 @@ var refund_booking =  {
                     
                          console.log(item.value);
                          var oracle_code_value = $('#to-money-oracle-code'+rowid_val).val();                    
-                         if (oracle_code_value.indexOf('EXEMPT') !== -1) {
-                              gst_value = 0.00;
-                         } else {
-                              gst_value = item.value / 11;
+
+                         if (refund_booking.var.oracle_code_tax_status.hasOwnProperty(oracle_code_value) == true) {
+                              if (refund_booking.var.oracle_code_tax_status[oracle_code_value] == 'tax_exempt') {                                    
+                                   gst_value = 0.00;
+                              } else {
+                                   gst_value = item.value / 11;
+                              }
+                        } else {
+
+                              if (oracle_code_value.indexOf('EXEMPT') !== -1) {
+                                   gst_value = 0.00;
+                              } else {
+                                   gst_value = item.value / 11;
+                              }
                          }
                          
                          $('#to-money-line-tax'+rowid_val).val(gst_value.toFixed(2));  
@@ -217,11 +237,20 @@ var refund_booking =  {
                     if (item.id == 'unallocated_pool_refund') {                                                                 
                          var oracle_code_value = $('#oracle_code_refund_allocation_pool').val();   
                          console.log(oracle_code_value)                 
-                         if (oracle_code_value.indexOf('EXEMPT') !== -1) {
-                              gst_value = 0.00;
+
+                         if (refund_booking.var.oracle_code_tax_status.hasOwnProperty(oracle_code_value) == true) {
+                              if (refund_booking.var.oracle_code_tax_status[oracle_code_value] == 'tax_exempt') {                                    
+                                   gst_value = 0.00;
+                              } else {
+                                   gst_value = item.value / 11;
+                              }
                          } else {
-                              gst_value = item.value / 11;
-                         }                         
+                              if (oracle_code_value.indexOf('EXEMPT') !== -1) {
+                                   gst_value = 0.00;
+                              } else {
+                                   gst_value = item.value / 11;
+                              }                         
+                         }
                          $('#unallocated_pool_refund_tax').val(gst_value.toFixed(2));  
                     }    
 
@@ -466,7 +495,7 @@ var refund_booking =  {
                     var bpoint_trans_split_array = [];
                     var notification_message = "";
                     var un_pool = $('#unallocated_pool_refund').val();
-                    var un_pool_tax =  $('unallocated_pool_refund_tax').val();
+                    var un_pool_tax =  $('#unallocated_pool_refund_tax').val();
                     var trans_method = $('input[name="trans_method"]:checked').val();
                     var settlement_date_form = $('#settlement_date').val();
                     var settlement_override = $('#settlement_override').prop('checked');
@@ -697,6 +726,7 @@ var refund_booking =  {
 
 				    } else {
                                         var unallocated_text = $('#unallocated-text').val();
+
                                         from_money_pool_array.push({'oracle-code': refund_booking.var.oracle_code_refund_allocation_pool, 'line-text': unallocated_text, 'line-amount': un_pool, 'line-tax': un_pool_tax});
 
                                         $("#from-money-booking").find('input, select').each(function() {

@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
 from six.moves.urllib.parse import urlparse
 #
-from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, OracleInterfacePermission, BpointTransaction, BpayTransaction, OracleAccountCode, OracleOpenPeriod, OracleInterfaceDeduction, OracleInterfaceSystem, LinkedInvoiceGroupIncrementer, LinkedInvoice
+from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, OracleInterfacePermission, BpointTransaction, BpayTransaction, OracleAccountCode, OracleAccountCodeTax,OracleOpenPeriod, OracleInterfaceDeduction, OracleInterfaceSystem, LinkedInvoiceGroupIncrementer, LinkedInvoice
 #from ledger.payments.invoice import utils
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
@@ -1107,6 +1107,13 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
                                row['amount'] = str(cash_array_invoices[ca])
                                cai.append(row)
 
+                         oact_obj = {}
+                         oact = OracleAccountCodeTax.objects.all()
+                         for ca in oact: 
+                            if len(ca.oracle_code) > 2:
+                                oact_obj[ca.oracle_code] = ca.tax_type                             
+                                                     
+                         data['data']['oracle_code_tax_status'] = oact_obj
                          data['data']['linked_payments'] = linked_payments
                          data['data']['total_gateway_amount'] = str(total_gateway_amount)
                          data['data']['total_oracle_amount'] = str(rolling_total)
