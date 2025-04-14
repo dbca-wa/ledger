@@ -143,6 +143,7 @@ class OracleInterfacePermission(models.Model):
     def __str__(self):
         return '{} - {}'.format(str(self.system),self.email)    
 
+
 class OracleAccountCode(models.Model):
     active_receivables_activities = models.CharField(max_length=50,primary_key=True)
     description = models.CharField(max_length=240)    
@@ -152,7 +153,21 @@ class OracleAccountCode(models.Model):
         db_table = 'payments_account_codes'
 
 
-class OracleOpenPeriod(models.Model):
+# If a oracle code ends with GST or EXEMPT then ledger will applied the automatic tax type.  This is an override table
+TAX_TYPE = (
+                ('tax_exempt', 'Tax Exempt'),
+                ('tax_gst', '10% GST Tax'),
+)
+
+class OracleAccountCodeTax(models.Model):
+    oracle_code = models.CharField(max_length=50,unique=True)
+    tax_type = models.CharField(choices=TAX_TYPE, null=True, blank=True, default=None, max_length=100)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{} - {}'.format(str(self.oracle_code), str(self.tax_type))   
+
+class OracleOpenPeriod(models.Model):   
     _DATABASE = "oracle_finance"
     period_name = models.CharField(max_length=240,primary_key=True)
     closing_status = models.CharField(max_length=1)

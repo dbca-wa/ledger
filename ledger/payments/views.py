@@ -108,8 +108,6 @@ class OraclePayments(generic.TemplateView):
                     li = LinkedInvoice.objects.filter(invoice_reference=crn1)
                     if li.count() > 0:
                         system_id = li[0].invoice_reference[0:4]
-
-
             
             ois = payments_models.OracleInterfaceSystem.objects.filter(system_id=system_id) 
             ois_found = False

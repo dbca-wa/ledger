@@ -85,7 +85,8 @@ var ledger_payments = {
                                         refund_booking.var.unique_oracle_code_on_booking = data.data.oracle_code_totals;
                                         refund_booking.var.booking_reference = data.data.booking_reference;
                                         refund_booking.var.booking_reference_linked = data.data.booking_reference_linked;
-                                        refund_booking.var.invoice_group_id = data.data.invoice_group_id;
+                                        refund_booking.var.invoice_group_id = data.data.invoice_group_id;                                        
+                                        refund_booking.var.oracle_code_tax_status = data.data.oracle_code_tax_status;
                                         refund_booking.re_init();
 
                                         if (data.data.invoice_group_checks_total > 1) {
