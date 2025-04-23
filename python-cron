@@ -27,3 +27,6 @@
 
 # Fix private documents information
 10 * * * *  python /app/manage_ledgergw.py clean_privatedocuments >> /app/logs/clean_privatedocuments.log
+
+# Send Debtor Report
+01 0 * * * python manage_ledgergw.py unpaid_invoice_report >> /app/logs/unpaid_invoice_report.log
