@@ -69,6 +69,7 @@ class OracleInterfaceSystem(models.Model):
     system_name = models.CharField(max_length=128)
     enabled = models.BooleanField(default=False)
     deduct_percentage = models.BooleanField(default=False)
+    send_debtor_report = models.NullBooleanField(default=False)
     source = models.CharField(max_length=30)
     method = models.CharField(max_length=30)
     integration_type = models.CharField(max_length=20, choices=INTEGRATION_TYPE, default='no_api', null=True,blank=True)
