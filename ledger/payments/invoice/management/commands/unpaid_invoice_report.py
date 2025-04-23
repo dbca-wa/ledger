@@ -38,38 +38,38 @@ class Command(BaseCommand):
             else:
                 # print ("No system id provided")
                 # return
-                ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True)
-                        
-            plaintext = str(datetime.now()) # Must be a string, doesn't need to have utf-8 encoding
-            md5hash = md5(plaintext.encode('utf-8')).hexdigest()
-            if os.path.isdir(str(settings.BASE_DIR)+'/tmp/') is False:
-                os.makedirs(str(settings.BASE_DIR)+'/tmp/')
-            excel_file = str(settings.BASE_DIR)+'/tmp/'+md5hash+'.xlsx'
-            print (excel_file)
-            workbook = xlsxwriter.Workbook(excel_file)                        
-            worksheet = workbook.add_worksheet("Unpaid Invoice Report")
-            format = workbook.add_format()
-            format.set_pattern(1)
-            format.set_bg_color('black')
-            format.set_font_color('white') 
-            format.set_bold()
-            col = 0 
-            row = 0
-            worksheet.write(row, col, "CREATED", format)
-            worksheet.set_column(0, 0, 12)
-            worksheet.write(row, col + 1, "INVOICE NO",format)
-            worksheet.set_column(1, 1, 30)
-            worksheet.write(row, col + 2, "AMOUNT",format)
-            worksheet.set_column(2, 2, 30)
-            worksheet.write(row, col + 3, "PAYMENT STATUS",format)
-            worksheet.set_column(3, 3, 20)
-            worksheet.write(row, col + 4, "DUE DATE",format)
-            worksheet.set_column(4, 4, 20)       
-            worksheet.write(row, col + 5, "DUE STATUS",format)
-            worksheet.set_column(5, 5, 20)               
-            row += 1
+                ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True,send_debtor_report=True)
+            for oracle_system in ois:         
+                plaintext = str(datetime.now()) # Must be a string, doesn't need to have utf-8 encoding
+                md5hash = md5(plaintext.encode('utf-8')).hexdigest()
+                if os.path.isdir(str(settings.BASE_DIR)+'/tmp/') is False:
+                    os.makedirs(str(settings.BASE_DIR)+'/tmp/')
+                excel_file = str(settings.BASE_DIR)+'/tmp/'+md5hash+'.xlsx'
+                print (excel_file)
+                workbook = xlsxwriter.Workbook(excel_file)                        
+                worksheet = workbook.add_worksheet("Unpaid Invoice Report")
+                format = workbook.add_format()
+                format.set_pattern(1)
+                format.set_bg_color('black')
+                format.set_font_color('white') 
+                format.set_bold()
+                col = 0 
+                row = 0
+                worksheet.write(row, col, "CREATED", format)
+                worksheet.set_column(0, 0, 12)
+                worksheet.write(row, col + 1, "INVOICE NO",format)
+                worksheet.set_column(1, 1, 30)
+                worksheet.write(row, col + 2, "AMOUNT",format)
+                worksheet.set_column(2, 2, 30)
+                worksheet.write(row, col + 3, "PAYMENT STATUS",format)
+                worksheet.set_column(3, 3, 20)
+                worksheet.write(row, col + 4, "DUE DATE",format)
+                worksheet.set_column(4, 4, 20)       
+                worksheet.write(row, col + 5, "DUE STATUS",format)
+                worksheet.set_column(5, 5, 20)               
+                row += 1
 
-            for oracle_system in ois:
+            # for oracle_system in ois:
                 print (oracle_system)
                 SYSTEM_ID = oracle_system.system_id
                 print (SYSTEM_ID)
