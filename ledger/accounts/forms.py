@@ -137,6 +137,24 @@ class EmailUserLegacyForm(forms.ModelForm):
         # some form renderers use widget's is_required field to set required attribute for input element
         self.fields['email'].widget.is_required = email_required
 
+class EmailUserCreateForm(forms.ModelForm):
+    
+    class Meta:
+        model = EmailUser
+        fields = ['email',]
+
+    def __init__(self, *args, **kwargs):
+        super(EmailUserCreateForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+
+        for f in self.fields:            
+            self.fields[f].widget.attrs['class'] = 'form-control'
+            self.fields[f].widget.attrs['label_class'] = 'form-control'
+
+        self.helper.add_input(Submit('save', 'Create', css_class='btn-lg'))
+        self.helper.add_input(Submit('cancel', 'Cancel', css_class='btn-lg btn-danger'))
+
+
 class EmailUserForm(forms.ModelForm):
     
     identification2 = FileField(label='Upload Identification', required=False, max_length=128, widget=AjaxFileUploader(attrs={'single':'single'})) 
