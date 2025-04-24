@@ -113,7 +113,56 @@ class AccountManagement(generic.TemplateView):
         else:
             self.template_name = 'dpaw_payments/forbidden.html'
         return ctx
+
+
+class AccountCreate(LoginRequiredMixin, CreateView):
+   
+    template_name = 'ledger/accounts/account_create.html'
+    model = EmailUser
+    form_class = app_forms.EmailUserCreateForm    
+
+
+    def get_initial(self):
+        initial = super(AccountCreate, self).get_initial()
+        return initial
     
+    def get_context_data(self, **kwargs):
+        ctx = super(AccountCreate,self).get_context_data(**kwargs)
+
+        if helpers.is_account_admin(self.request.user) is True:
+            pass
+
+        else:
+            self.template_name = 'dpaw_payments/forbidden.html'
+        return ctx
+    
+    def get_absolute_url(self):       
+        
+        return "/ledger/account-management/"
+
+    def get_absolute_account_url(self):        
+        id = self.object.id
+        return "/ledger/account-management/{}/change/".format(id)
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('cancel'):            
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(AccountCreate, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if helpers.is_account_admin(self.request.user) is True:
+            self.object = form.save(commit=False)                        
+            self.object.save()
+            EmailUserChangeLog.objects.create(emailuser=self.object, change_key="email", change_value=str(self.object.email),change_by=self.request.user)            
+            messages.success(self.request, "Succesfully created {} <a href='{}' class='btn btn-sm btn-primary'>Change</a> ".format(self.object.email,self.get_absolute_account_url()))            
+            return HttpResponseRedirect(self.get_absolute_account_url())
+        else:            
+            return HttpResponseRedirect(self.get_absolute_account_url())
+    
+
+
+
+
 class AccountChange(LoginRequiredMixin, UpdateView):
    
     template_name = 'ledger/accounts/account_change.html'
@@ -152,11 +201,11 @@ class AccountChange(LoginRequiredMixin, UpdateView):
         if request.POST.get('cancel'):            
             return HttpResponseRedirect(self.get_absolute_url())
 
-        first_name  = request.POST.get('first_name', '')
-        last_name = request.POST.get('last_name', '')
+        # first_name  = request.POST.get('first_name', '')
+        # last_name = request.POST.get('last_name', '')
         
-        if len(first_name) < 1 and len(last_name) < 1:             
-            messages.error(self.request, "No Given name or last name data")
+        # if len(first_name) < 1 and len(last_name) < 1:             
+        #     messages.error(self.request, "No Given name or last name data")
 
         return super(AccountChange, self).post(request, *args, **kwargs)
 
