@@ -204,6 +204,8 @@ class EmailUserForm(forms.ModelForm):
 
         # some form renderers use widget's is_required field to set required attribute for input element
         self.fields['email'].widget.is_required = email_required
+        self.fields['first_name'].required = False
+        self.fields['last_name'].required = False
 
         crispy_boxes.append(HTML("<label>Email</label><div class='p-1'>{}</div>".format(self.initial['email'])))
         crispy_boxes.append(HTML("<label>Given Name(s)</label><div class='p-1'>{}</div>".format(self.initial['first_name'])))
@@ -244,6 +246,21 @@ class EmailUserForm(forms.ModelForm):
         crispy_boxes.append(HTML("<BR>"))
 
         self.helper.layout = Layout(crispy_boxes)
+
+    def clean_last_name(self):        
+        cleaned_data = self.clean()
+        last_name = cleaned_data.get('last_name')
+        if last_name is None:
+            last_name = ''
+        return last_name
+
+    def clean_first_name(self):        
+        cleaned_data = self.clean()
+        first_name = cleaned_data.get('first_name')
+        if first_name is None:
+            first_name = ''
+        return first_name
+
 
 class DocumentForm(forms.ModelForm):
     class Meta:
