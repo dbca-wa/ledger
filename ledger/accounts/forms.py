@@ -5,6 +5,7 @@ from django.forms import Form, ModelForm, ChoiceField, FileField, CharField, Tex
 from ledger.widgets import ClearableMultipleFileInput, RadioSelectWithCaptions, AjaxFileUploader
 from django_countries.widgets import CountrySelectWidget
 from .models import Address, Profile, EmailUser, Document
+from ledgergw import utils as ledgergw_utils
 
 class BaseFormHelper(FormHelper):
     form_class = 'form-control formlabels'
@@ -154,6 +155,12 @@ class EmailUserCreateForm(forms.ModelForm):
         self.helper.add_input(Submit('save', 'Create', css_class='btn-lg'))
         self.helper.add_input(Submit('cancel', 'Cancel', css_class='btn-lg btn-danger'))
 
+    def clean_email(self):
+        cleaned_data = self.clean()        
+        email = ledgergw_utils.remove_html_tags(cleaned_data.get('email'))
+        return email
+
+
 
 class EmailUserForm(forms.ModelForm):
     
@@ -260,6 +267,36 @@ class EmailUserForm(forms.ModelForm):
         if first_name is None:
             first_name = ''
         return first_name
+    
+    def clean_legal_first_name(self):
+        cleaned_data = self.clean()        
+        legal_first_name = ledgergw_utils.remove_html_tags(cleaned_data.get('legal_first_name'))
+        return legal_first_name
+
+    def clean_legal_last_name(self):
+        cleaned_data = self.clean()        
+        legal_last_name = ledgergw_utils.remove_html_tags(cleaned_data.get('legal_last_name'))
+        return legal_last_name
+    
+    def clean_title(self):
+        cleaned_data = self.clean()        
+        title = ledgergw_utils.remove_html_tags(cleaned_data.get('title'))
+        return title
+    
+    def clean_phone_number(self):
+        cleaned_data = self.clean()        
+        phone_number = ledgergw_utils.remove_html_tags(cleaned_data.get('phone_number'))
+        return phone_number
+
+    def clean_mobile_number(self):
+        cleaned_data = self.clean()        
+        mobile_number = ledgergw_utils.remove_html_tags(cleaned_data.get('mobile_number'))
+        return mobile_number    
+
+    def clean_fax_number(self):
+        cleaned_data = self.clean()        
+        fax_number = ledgergw_utils.remove_html_tags(cleaned_data.get('fax_number'))
+        return fax_number    
 
 
 class DocumentForm(forms.ModelForm):
