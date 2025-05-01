@@ -14,6 +14,7 @@ from ledger.payments.cash.models import REGION_CHOICES
 from ledger.payments.utils import systemid_check, update_payments, ledger_payment_invoice_calulations 
 from ledger.payments import utils as payments_utils
 from ledger.payments.bpoint.models import BpointTransaction
+from ledger.checkout.utils import calculate_excl_gst
 #
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
@@ -289,7 +290,11 @@ class LinkedPaymentIssue(generic.TemplateView):
                         if D(gr['total_amount']) < 0:
                             line_status = 3                                                
                         lines = []
-                        lines.append({'ledger_description':str("Payment disrephency for settlement date {}".format(gr['settlement_date'])),"quantity":1,"price_incl_tax":D('{:.2f}'.format(float(gr['total_amount']))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': line_status})
+                        price_excl_tax = float(gr['total_amount'])
+                        if 'GST' in settings.UNALLOCATED_ORACLE_CODE:
+                            price_excl_tax =  calculate_excl_gst(float(gr['total_amount']))                        
+                        
+                        lines.append({'ledger_description':str("Payment disrephency for settlement date {}".format(gr['settlement_date'])),"quantity":1,"price_incl_tax":D('{:.2f}'.format(float(gr['total_amount']))),"price_excl_tax":D('{:.2f}'.format(float(price_excl_tax))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': line_status})
                         order = invoice_utils.allocate_refund_to_invoice(request, lpic['data']['booking_reference'], lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=lpic['data']['booking_reference_linked'],system_id=lpic['data']['system_id'])
                         new_invoice = Invoice.objects.get(order_number=order.number)
                         new_invoice.settlement_date = datetime.strptime(gr['settlement_date'], '%d/%m/%Y').date()
