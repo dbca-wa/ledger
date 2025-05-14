@@ -5,7 +5,7 @@ from django.forms import Form, ModelForm, ChoiceField, FileField, CharField, Tex
 from ledger.widgets import ClearableMultipleFileInput, RadioSelectWithCaptions, AjaxFileUploader
 from django_countries.widgets import CountrySelectWidget
 from .models import Address, Profile, EmailUser, Document
-from ledgergw import utils as ledgergw_utils
+from ledger.accounts import utils as ledger_accounts_utils
 
 class BaseFormHelper(FormHelper):
     form_class = 'form-control formlabels'
@@ -157,7 +157,7 @@ class EmailUserCreateForm(forms.ModelForm):
 
     def clean_email(self):
         cleaned_data = self.clean()        
-        email = ledgergw_utils.remove_html_tags(cleaned_data.get('email'))
+        email = ledger_accounts_utils.remove_html_tags(cleaned_data.get('email'))
         return email
 
 
