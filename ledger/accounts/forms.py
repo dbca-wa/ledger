@@ -273,7 +273,7 @@ class EmailUserForm(forms.ModelForm):
         legal_first_name = cleaned_data.get('legal_first_name')
         if legal_first_name is None:
             legal_first_name = ""
-        legal_first_name = ledgergw_utils.remove_html_tags(legal_first_name)
+        legal_first_name = ledger_accounts_utils.remove_html_tags(legal_first_name)
         
         return legal_first_name
 
@@ -282,7 +282,7 @@ class EmailUserForm(forms.ModelForm):
         legal_last_name = cleaned_data.get('legal_last_name')
         if legal_last_name is None:
             legal_last_name = ""
-        legal_last_name = ledgergw_utils.remove_html_tags(legal_last_name)            
+        legal_last_name = ledger_accounts_utils.remove_html_tags(legal_last_name)            
         return legal_last_name
     
     def clean_title(self):
@@ -290,7 +290,7 @@ class EmailUserForm(forms.ModelForm):
         title = cleaned_data.get('title')
         if title is None:
             title = ""
-        title = ledgergw_utils.remove_html_tags(title)
+        title = ledger_accounts_utils.remove_html_tags(title)
         return title
     
     def clean_phone_number(self):
@@ -298,7 +298,7 @@ class EmailUserForm(forms.ModelForm):
         phone_number = cleaned_data.get('phone_number')
         if phone_number is None:
             phone_number = ""
-        phone_number = ledgergw_utils.remove_html_tags(phone_number)
+        phone_number = ledger_accounts_utils.remove_html_tags(phone_number)
         return phone_number
 
     def clean_mobile_number(self):
@@ -306,7 +306,7 @@ class EmailUserForm(forms.ModelForm):
         mobile_number = cleaned_data.get('mobile_number') 
         if mobile_number is None:
            mobile_number="" 
-        mobile_number = ledgergw_utils.remove_html_tags(mobile_number)
+        mobile_number = ledger_accounts_utils.remove_html_tags(mobile_number)
         return mobile_number    
 
     def clean_fax_number(self):
@@ -314,7 +314,7 @@ class EmailUserForm(forms.ModelForm):
         fax_number = cleaned_data.get('fax_number')
         if fax_number is None:
             fax_number = "" 
-        fax_number = ledgergw_utils.remove_html_tags(fax_number)
+        fax_number = ledger_accounts_utils.remove_html_tags(fax_number)
         return fax_number    
 
 
