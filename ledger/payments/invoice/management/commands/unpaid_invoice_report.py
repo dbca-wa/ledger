@@ -73,7 +73,7 @@ class Command(BaseCommand):
                 print (oracle_system)
                 SYSTEM_ID = oracle_system.system_id
                 print (SYSTEM_ID)
-                iv = Invoice.objects.filter(reference__startswith=SYSTEM_ID)                
+                iv = Invoice.objects.filter(reference__startswith=SYSTEM_ID, voided=False)                
                     
                 for i in iv:
                     
