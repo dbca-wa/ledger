@@ -14,14 +14,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import list_route,detail_route
 
 from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollection
-from ledger.payments.invoice.models import Invoice, InvoiceBPAY
+from ledger.payments.invoice.models import Invoice, InvoiceBPAY, UnpaidInvoice
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
-from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode, RefundFailed, OracleInterfaceSystem, PaymentTotal
+from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode, RefundFailed, OracleInterfaceSystem, PaymentTotal, OracleInterfacePermission
 from ledger.payments import models as payment_models
 from ledger.payments.utils import systemid_check, update_payments, ledger_payment_invoice_calulations 
 from ledger.payments import utils as payments_utils
 from ledger.payments.invoice import utils as invoice_utils
+from ledger.payments import models as payments_models
 from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv, generate_items_csv_allocated
 from ledger.payments.emails import send_refund_email
@@ -1091,6 +1092,32 @@ def LedgerPayments(request, *args, **kwargs):
 
     return HttpResponse(json.dumps(data), content_type='application/json')
 
+def CancelInvoice(request, *args, **kwargs):
+    if helpers.is_payment_admin(request.user) is True:
+        invoice_reference = request.GET.get('invoice_reference','')
+        try:
+            system_id = invoice_reference[0:4]
+            ois = payments_models.OracleInterfaceSystem.objects.filter(system_id=system_id) 
+            ois_found = False
+            ois_permissions = []
+            if ois.count() > 0:
+                ois_found = True
+                isp = payments_utils.get_oracle_interface_system_permissions(system_id,request.user.email)  
+                if isp["manage_ledger_tool"] is True or isp["all_access"] is True:
+                    if Invoice.objects.filter(reference=invoice_reference, voided=False).count() > 0:                                    
+                        inv = Invoice.objects.filter(reference=invoice_reference).update(voided=True)
+                        inv = UnpaidInvoice.objects.filter(invoice_reference=invoice_reference).update(voided=True)
+                        return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')
+                    else:
+                        return HttpResponse(json.dumps({'status': 404, 'message': 'Invoice not found'}), content_type='application/json', status=404)
+                else:
+                    return HttpResponse(json.dumps({'status': 401, 'message': 'Access Denied'}), content_type='application/json', status=401)
+                
+        except Exception as e:
+            print(traceback.print_exc())
+            return HttpResponse(json.dumps({'status': 500, 'message': 'Invoice update error'}), content_type='application/json', status=500)
+    return HttpResponse(json.dumps({'status': 401, 'message': 'Access Denied'}), content_type='application/json', status=401)
+
 def CheckOracleCodeView(request, *args, **kwargs):
     print ("CheckOracleCodeView 1.1")
     if helpers.is_payment_admin(request.user) is True:
@@ -1123,6 +1150,57 @@ def FailedTransactionCompleted(request, *args, **kwargs):
             print(traceback.print_exc())
             return HttpResponse(json.dumps({'status': 500, 'message': 'error'}), content_type='application/json', status=500)
             raise
+
+def UnpaidInvoices(request, *args, **kwargs):
+    system_id = request.GET.get('system_id', None)
+    
+    rf_array = {'status': 404, 'data': {'rows': [], 'totalrows': 0}}  
+    try:
+        ois = OracleInterfaceSystem.objects.filter(system_id=system_id) 
+        if ois.count() > 0:
+            ois_permissions = OracleInterfacePermission.objects.filter(system=ois[0],email=request.user.email)   
+            
+            query = Q()
+            pagestart = int(request.GET.get('pagestart',0))
+            pageend = int(request.GET.get('pageend',10))                       
+            keyword = request.GET.get('keyword', None)
+         
+            # if len(status) > 0:
+            #     query &= Q(status=status)
+            # if len(system) > 0:
+            query &= Q(system=system_id)
+            query &= Q(voided=False)
+            if keyword:
+                if len(keyword) > 0:                  
+                    query &= Q(Q(invoice_reference__icontains=keyword)  | Q(due_status__icontains=keyword))
+                    if keyword.isnumeric():
+                        query |= Q(id=int(keyword))
+                    
+            pageend_plus = pageend + pagestart
+            rf = UnpaidInvoice.objects.filter(query).order_by('-created')[pagestart:pageend_plus]
+            rf_array['data']['totalrows'] = UnpaidInvoice.objects.filter(query).count() 
+            
+            for r in rf: 
+                row = {}
+                row['id'] = r.id
+                row['invoice_reference'] = r.invoice_reference
+                row['system_id'] = r.system                 
+                row['amount'] = str(r.amount)
+                row['due_status'] = r.due_status
+                row['due_date'] = r.due_date.strftime('%d %b %Y') 
+                row['created'] = r.created.strftime('%d %b %Y')      
+                rf_array['data']['rows'].append(row)
+            rf_array['status'] = 200
+        else:
+            rf_array = {'status': 401, 'message': 'Access Denied', 'data': {'rows': [], 'totalrows': 0}}
+
+        return HttpResponse(json.dumps(rf_array), content_type='application/json')
+        
+
+    except Exception as e:
+        print(traceback.print_exc())
+        raise
+
 
 def PaymentTotals(request, *args, **kwargs):
     if helpers.is_payment_admin(request.user) is True:

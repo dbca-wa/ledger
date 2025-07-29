@@ -5,7 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField, IntegerRangeField
 from ledger.payments.bpay.models import BpayTransaction, BpayFile, BillerCodeRecipient, BillerCodeSystem,BpayJobRecipient
-from ledger.payments.invoice.models import Invoice, InvoiceBPAY
+from ledger.payments.invoice.models import Invoice, InvoiceBPAY, UnpaidInvoice
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction
 from ledger.accounts.models import EmailUser
