@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from ledger.payments.models import Invoice
+from ledger.payments.models import Invoice, UnpaidInvoice
 from ledger.order.models import Order, Line as OrderLine
 #from oscar.apps.order.models import Order
 # from ledger.basket.models import Basket
@@ -39,7 +39,9 @@ class Command(BaseCommand):
                 # print ("No system id provided")
                 # return
                 ois = payment_models.OracleInterfaceSystem.objects.filter(integration_type='bpoint_api',enabled=True,send_debtor_report=True)
-            for oracle_system in ois:         
+            for oracle_system in ois: 
+                print ("SYSTEM LOOP")        
+                print (oracle_system)
                 plaintext = str(datetime.now()) # Must be a string, doesn't need to have utf-8 encoding
                 md5hash = md5(plaintext.encode('utf-8')).hexdigest()
                 if os.path.isdir(str(settings.BASE_DIR)+'/tmp/') is False:
@@ -73,7 +75,9 @@ class Command(BaseCommand):
                 print (oracle_system)
                 SYSTEM_ID = oracle_system.system_id
                 print (SYSTEM_ID)
-                iv = Invoice.objects.filter(reference__startswith=SYSTEM_ID, voided=False)                
+                iv = Invoice.objects.filter(reference__startswith=SYSTEM_ID, due_date__isnull=False)                
+                print ("IV COUINT")
+                print (iv.count())
                     
                 for i in iv:
                     
@@ -104,6 +108,21 @@ class Command(BaseCommand):
                             else:
                                 due_status = "Unknown"
                         worksheet.write(row, col + 5, due_status)
+                        # Add line here to ammend to unpaid invoices
+                        ui_array = UnpaidInvoice.objects.filter(invoice=i)
+                        if ui_array.count() > 0:
+                            ui = UnpaidInvoice.objects.get(invoice=i)
+                            ui.due_date =i.due_date
+                            ui.due_status = due_status
+                            ui.amount = i.amount
+                            ui.save()
+                        else:
+                            if due_status != "Paid":
+                                UnpaidInvoice.objects.create(invoice=i,invoice_reference=i.reference,system=i.system,due_status=due_status,due_date=i.due_date, amount=i.amount)
+
+                        if due_status == 'Paid':
+                            UnpaidInvoice.objectsfilter(invoice=i).delete()
+                        
                         row += 1
 
 
@@ -140,53 +159,53 @@ class Command(BaseCommand):
                 worksheet2.set_column(10, 10, 20)                                                              
                 row += 1
 
-                for oracle_system in ois:
-                    print (oracle_system)
-                    SYSTEM_ID = oracle_system.system_id
-                    print (SYSTEM_ID)
-                    iv = Invoice.objects.filter(reference__startswith=SYSTEM_ID)                
-                        
-                    for i in iv:
-                        
-        
-                        payment_status = i.payment_status
-                        
-                        if payment_status == 'paid' or payment_status == 'over_paid' or payment_status == 'cancelled':  
-                            pass
-                        else:  
-                            print ("Adding Order: "+i.order_number)                                                 
-                            orders = Order.objects.filter(number=i.order_number)
-                            for o in orders:
-                                order_lines = OrderLine.objects.filter(order=o)
-                                for ol in order_lines:                                                
-                                    calculate_tax_portion = ol.unit_price_incl_tax - ol.unit_price_excl_tax    
-                                    worksheet2.write(row, col, i.reference)              
-                                    worksheet2.write(row, col + 1, i.created.astimezone().strftime('%d/%m/%Y'))
-                                    worksheet2.write(row, col + 2, i.order_number)
-                                    worksheet2.write(row, col + 3, ol.oracle_code)
-                                    worksheet2.write(row, col + 4, ol.title)                                    
-                                    worksheet2.write(row, col + 5, ol.quantity)
-                                    worksheet2.write(row, col + 6, ol.unit_price_incl_tax)
-                                    worksheet2.write(row, col + 7, ol.unit_price_excl_tax)
-                                    worksheet2.write(row, col + 8, calculate_tax_portion)                                    
+                # for oracle_system in ois:
+                #     print (oracle_system)
+                #     SYSTEM_ID = oracle_system.system_id
+                #     print (SYSTEM_ID)
+                iv = Invoice.objects.filter(reference__startswith=SYSTEM_ID, due_date__isnull=False)                
+                    
+                for i in iv:
+                    
+    
+                    payment_status = i.payment_status
+                    
+                    if payment_status == 'paid' or payment_status == 'over_paid' or payment_status == 'cancelled':  
+                        pass
+                    else:  
+                        print ("Adding Order: "+i.order_number)                                                 
+                        orders = Order.objects.filter(number=i.order_number)
+                        for o in orders:
+                            order_lines = OrderLine.objects.filter(order=o)
+                            for ol in order_lines:                                                
+                                calculate_tax_portion = ol.unit_price_incl_tax - ol.unit_price_excl_tax    
+                                worksheet2.write(row, col, i.reference)              
+                                worksheet2.write(row, col + 1, i.created.astimezone().strftime('%d/%m/%Y'))
+                                worksheet2.write(row, col + 2, i.order_number)
+                                worksheet2.write(row, col + 3, ol.oracle_code)
+                                worksheet2.write(row, col + 4, ol.title)                                    
+                                worksheet2.write(row, col + 5, ol.quantity)
+                                worksheet2.write(row, col + 6, ol.unit_price_incl_tax)
+                                worksheet2.write(row, col + 7, ol.unit_price_excl_tax)
+                                worksheet2.write(row, col + 8, calculate_tax_portion)                                    
 
-                                    due_date = ""
-                                    if i.due_date is not None:
-                                        due_date = i.due_date.strftime('%d/%m/%Y')
-                                    worksheet2.write(row, col + 9, due_date)
-                                    due_status  = "Not Due"
-                                    if payment_status == 'paid' or payment_status == 'over_paid':                        
-                                        due_status  = "Paid"
-                                    else:
-                                        if i.due_date:
-                                            if datetime.now().date() > i.due_date:
-                                                due_status  = "Overdue"
-                                            else:
-                                                due_status  = "Not Due"
+                                due_date = ""
+                                if i.due_date is not None:
+                                    due_date = i.due_date.strftime('%d/%m/%Y')
+                                worksheet2.write(row, col + 9, due_date)
+                                due_status  = "Not Due"
+                                if payment_status == 'paid' or payment_status == 'over_paid':                        
+                                    due_status  = "Paid"
+                                else:
+                                    if i.due_date:
+                                        if datetime.now().date() > i.due_date:
+                                            due_status  = "Overdue"
                                         else:
-                                            due_status = "Unknown"
-                                    worksheet2.write(row, col + 10, due_status)
-                                    row += 1
+                                            due_status  = "Not Due"
+                                    else:
+                                        due_status = "Unknown"
+                                worksheet2.write(row, col + 10, due_status)
+                                row += 1
 
 
                 workbook.close()     

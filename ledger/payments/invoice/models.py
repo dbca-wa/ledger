@@ -536,3 +536,17 @@ class InvoiceBPAYListener(object):
                     del item.payment_details['bpay'][r]
                 item.save()
 
+
+
+class UnpaidInvoice(models.Model):
+    invoice = models.ForeignKey(Invoice)
+    invoice_reference = models.CharField(max_length=80,null=True,blank=True)
+    system = models.CharField(max_length=4,blank=True,null=True)
+    amount = models.DecimalField(decimal_places=2,max_digits=12, default='0.00')
+    due_status = models.CharField(max_length=80,null=True,blank=True)
+    due_date = models.DateField(blank=True, null=True)
+    voided = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    def __str__(self):
+        return str(self.invoice.reference)

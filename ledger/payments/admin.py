@@ -36,6 +36,17 @@ class InvoiceAdmin(admin.ModelAdmin):
 class InvoiceBpayAdmin(admin.ModelAdmin):
     pass
 
+@admin.register(models.UnpaidInvoice)
+class UnpaidInvoiceAdmin(admin.ModelAdmin):
+    list_display = ('id','invoice_reference','system','due_status','due_date','amount','created' )
+    search_fields = ('invoice',)
+    raw_id_fields = ('invoice',)
+    # list_filter = ('system'),        
+    list_per_page = 30
+
+    def invoice_number(self, obj):
+        return '%s'%(obj.invoice.reference)            
+
 @admin.register(models.BpayTransaction)
 class BpayTransactionAdmin(admin.ModelAdmin):
     list_display = (

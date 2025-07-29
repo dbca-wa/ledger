@@ -1,0 +1,290 @@
+{% extends "ledgergw/web/base_b5.html" %}
+
+{% block content %}
+
+{% if ois_found is True %}
+
+
+{% if system_interface_permssions.all_access is True or system_interface_permssions.view_payment_totals is True %}
+
+<link href="/static/common/node_modules/simplicite-bootstrap-datetimepicker/bootstrap5/css/bootstrap-datetimepicker.min.css?ver={{ settings.GIT_COMMIT_HASH }}" rel="stylesheet"/>
+<link href="/static/common/node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css?ver={{ settings.GIT_COMMIT_HASH }}" rel="stylesheet"/>
+
+<script  type="text/javascript" src="/static/common/node_modules/moment/min/moment.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/eonasdan-bootstrap-datetimepicker/src/js/bootstrap-datetimepicker.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/simplicite-bootstrap-datetimepicker/bootstrap5/js/bootstrap-datetimepicker.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script  type="text/javascript" src="/static/common/node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+
+<textarea id='system_interface_permssions' rows="4" cols="50" style='display:none'>
+  {{ system_interface_permssions_json }}
+</textarea>
+
+    <div class="container">
+        <h1 class="mb-4">Unpaid Invoices</h1>
+
+        <div class="mb-3 d-flex justify-content-between align-items-center">
+            <input type="text" class="form-control me-2" id="searchInput" placeholder="Search invoices...">
+            <select class="form-select w-auto" id="itemsPerPageSelect">
+                <option value="5">5 per page</option>
+                <option value="10" selected>10 per page</option>
+                <option value="25">25 per page</option>
+                <option value="50">50 per page</option>
+            </select>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="unpaidInvoicesTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Invoice Reference</th>
+                        <th>System ID</th>
+                        <th>Amount</th>
+                        <th>Due Status</th>
+                        <th>Due Date</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="loadingSpinner" class="text-center d-none">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading invoices...</p>
+        </div>
+
+        <div id="noResults" class="alert alert-info d-none">
+            No matching invoices found.
+        </div>
+
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-3">
+                <li class="page-item" id="prevPage">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled"><span class="page-link" id="currentPageDisplay">Page 1</span></li>
+                <li class="page-item" id="nextPage">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="text-center pagination-info" id="paginationSummary"></div>
+        </nav>
+
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            const baseUrl = '/ledger/payments/api/ledger/unpaid-invoices?system_id={{ system_id }}&pagestart=0&pageend=10'; // Base URL for API endpoint
+            const $tableBody = $('#unpaidInvoicesTable tbody');
+            const $searchInput = $('#searchInput');
+            const $itemsPerPageSelect = $('#itemsPerPageSelect');
+            const $loadingSpinner = $('#loadingSpinner');
+            const $noResults = $('#noResults');
+            const $prevPage = $('#prevPage');
+            const $nextPage = $('#nextPage');
+            const $currentPageDisplay = $('#currentPageDisplay');
+            const $paginationSummary = $('#paginationSummary');
+            const $cancelInvoiceBtn = $('#cancel_invoice_btn');
+
+            let currentPage = 1;
+            let itemsPerPage = parseInt($itemsPerPageSelect.val());
+            let totalRows = 0; // Total rows from the API response
+
+            function CancelInvoice(invoice_reference) { 
+                    console.log("Cancel Invoice Button Clicked for invoice_reference: " + invoice_reference);
+                    $.ajax({
+                        url: '/ledger/payments/api/ledger/cancel-invoice?invoice_reference=' + encodeURIComponent(invoice_reference),
+                        method: 'GET',
+                        //data: JSON.stringify({ invoice_reference: invoice_reference }),
+                        contentType: 'application/json',
+                        success: function(response) {
+                            if (response.status === 200) {
+                                alert('Invoice cancelled successfully.');
+                                console.log("Invoice cancelled successfully for invoice_reference: " + invoice_reference);
+                                fetchInvoices(); // Refresh the invoice list after cancellation
+                            } else {
+                                alert('Error cancelling invoice: ' + response.message);
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            alert('Error cancelling invoice: ' + textStatus + ' - ' + errorThrown);
+                            console.error("AJAX Error: ", textStatus, errorThrown);
+                            fetchInvoices();
+                        }
+                    });
+                    
+
+            }
+
+            // Function to fetch invoices with optional search term and pagination parameters
+            function fetchInvoices() {
+                $loadingSpinner.removeClass('d-none');
+                $noResults.addClass('d-none');
+                $tableBody.empty(); // Clear existing rows
+
+                const searchTerm = $searchInput.val();
+                const offset = (currentPage - 1) * itemsPerPage; // Calculate pagestart (offset)
+                const limit = itemsPerPage;                      // Calculate pageend (limit)
+
+                let url = baseUrl;
+                if (searchTerm) {
+                    url += `&keyword=${encodeURIComponent(searchTerm)}`;
+                }
+                // Add pagination parameters
+                url += `&pagestart=${offset}&pageend=${limit}`;
+
+                $.ajax({
+                    url: url,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(response) {
+                        $loadingSpinner.addClass('d-none');
+                        if (response.status === 200 && response.data && response.data.rows) {
+                            totalRows = response.data.totalrows || 0; // Get total rows from API
+                            displayInvoices(response.data.rows);
+                            updatePaginationControls();
+                        } else {
+                            $noResults.text('Error: No data received or invalid format.').removeClass('d-none');
+                            totalRows = 0; // Reset total rows on error
+                            updatePaginationControls();
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        $loadingSpinner.addClass('d-none');
+                        $noResults.text('Error fetching data: ' + textStatus + ' - ' + errorThrown).removeClass('d-none');
+                        console.error("AJAX Error: ", textStatus, errorThrown);
+                        totalRows = 0; // Reset total rows on error
+                        updatePaginationControls();
+                    }
+                });
+            }
+
+            // Function to display invoices
+            function displayInvoices(invoicesToDisplay) {
+                $tableBody.empty();
+                if (invoicesToDisplay.length === 0 && totalRows === 0) {
+                    $noResults.text('No invoices found.').removeClass('d-none');
+                    return;
+                }
+                if (invoicesToDisplay.length === 0 && totalRows > 0) {
+                     // This could happen if you go past the last page with current settings
+                     $noResults.text('No invoices found on this page.').removeClass('d-none');
+                     return;
+                }
+                $noResults.addClass('d-none');
+
+                invoicesToDisplay.forEach(function(invoice) {
+                    const row = `
+                        <tr>
+                            <td>${invoice.id}</td>
+                            <td>${invoice.invoice_reference}</td>
+                            <td>${invoice.system_id}</td>
+                            <td>${invoice.amount}</td>
+                            <td>${invoice.due_status}</td>
+                            <td>${invoice.due_date}</td>
+                            <td>${invoice.created}</td>
+                            <td><button class='btn btn-sm btn-primary cancel_button' id="cancel_invoice_btn" data-invoice-reference="${invoice.invoice_reference}" >Cancel</button></td>
+                        </tr>
+                    `;
+                    $tableBody.append(row);
+                });
+                
+                $(".cancel_button").click(function() {                                    
+                    invoice_reference = $(this).data("invoice-reference");
+                    CancelInvoice(invoice_reference);
+                });
+            }
+            
+
+
+            // Function to update pagination buttons and info
+            function updatePaginationControls() {
+                const totalPages = Math.ceil(totalRows / itemsPerPage);
+                
+                $currentPageDisplay.text(`Page ${currentPage} of ${totalPages || 1}`);
+                
+                const startItem = (currentPage - 1) * itemsPerPage + 1;
+                const endItem = Math.min(currentPage * itemsPerPage, totalRows);
+                $paginationSummary.text(`Showing ${startItem} to ${endItem} of ${totalRows} entries`);
+
+                if (currentPage <= 1) {
+                    $prevPage.addClass('disabled');
+                } else {
+                    $prevPage.removeClass('disabled');
+                }
+
+                if (currentPage >= totalPages || totalRows === 0) {
+                    $nextPage.addClass('disabled');
+                } else {
+                    $nextPage.removeClass('disabled');
+                }
+            }
+
+
+            //
+            $cancelInvoiceBtn.on('click', function(e) {
+                //CancelInvoice('${invoice.invoice_reference}');
+                console.log("Cancel Invoice Button Clicked");
+                CancelInvoice();
+            });
+            // Event Listeners
+            $searchInput.on('keyup', function() {
+                currentPage = 1; // Reset to first page on new search
+                fetchInvoices();
+            });
+
+            $itemsPerPageSelect.on('change', function() {
+                itemsPerPage = parseInt($(this).val());
+                currentPage = 1; // Reset to first page when items per page changes
+                fetchInvoices();
+            });
+
+            $prevPage.on('click', function(e) {
+                e.preventDefault();
+                if (currentPage > 1) {
+                    currentPage--;
+                    fetchInvoices();
+                }
+            });
+
+            $nextPage.on('click', function(e) {
+                e.preventDefault();
+                const totalPages = Math.ceil(totalRows / itemsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    fetchInvoices();
+                }
+            });
+
+            // Initial fetch of invoices when the page loads
+            fetchInvoices();
+        });
+    </script>
+
+
+
+{% else %}
+<br>
+  <div class="alert alert-danger" role="alert">
+      You don't have permission to access this page.
+  </div>
+{% endif %}
+
+{% else %}
+<br>
+<div class="alert alert-danger" role="alert">
+  The system identifier does not exist.
+</div>
+
+
+{% endif %}
+{% endblock %}

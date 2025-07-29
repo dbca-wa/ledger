@@ -13,7 +13,7 @@ from ledger.payments import utils as payments_utils
 from ledger.payments.invoice import utils as utils_ledger_payment_invoice
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
-from ledger.payments.invoice.models import Invoice, OracleInvoiceDocument
+from ledger.payments.invoice.models import Invoice, OracleInvoiceDocument, UnpaidInvoice
 from ledger.payments import models as payment_models
 from ledger.payments.bpoint import models as payment_bpoint_models
 from ledger.basket import models as basket_models
@@ -1907,6 +1907,85 @@ def get_countries(request):
          countries_list.append({'country_name' : c.printable_name, 'country_code' : c.iso_3166_1_a2 })
      resp['data'] = countries_list
      return HttpResponse(json.dumps(resp), content_type='application/json')
+
+
+@csrf_exempt
+def cancel_invoice(request,apikey):
+    # Due to auth2,  given_name and last_name are auto populated by auth2
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        invoice_reference = request.POST.get('invoice_reference','')
+        api_key_obj = ledgerapi_models.API.objects.filter(api_key=apikey,active=1)
+        api_key_obj_update_key = "{} ({}) ".format(api_key_obj[0].system_id,api_key_obj[0].id)        
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            try:
+                    if Invoice.objects.filter(reference=invoice_reference, voided=False).count() > 0:                                    
+                        inv = Invoice.objects.filter(reference=invoice_reference).update(voided=True)
+                        inv = UnpaidInvoice.objects.filter(invoice_reference=invoice_reference).update(voided=True)                        
+                        return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json', status=200)
+                    else:
+                        return HttpResponse(json.dumps({'status': 404, 'message': 'Invoice not found'}), content_type='application/json', status=404)
+                
+            except Exception as e:
+                jsondata['status'] = 501
+                jsondata['message'] = 'Error'     
+                jsondata['data'] = {'message': str(e)}
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json', status=jsondata['status'])
+    return response
+
+@csrf_exempt
+def change_user_invoice_ownership(request,apikey):
+    # Due to auth2,  given_name and last_name are auto populated by auth2
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        current_email = request.POST.get('current_email','')
+        new_email = request.POST.get('new_email','')
+        print (new_email)
+        api_key_obj = ledgerapi_models.API.objects.filter(api_key=apikey,active=1)
+        api_key_obj_update_key = "{} ({}) ".format(api_key_obj[0].system_id,api_key_obj[0].id)        
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            ois_obj = {}
+            try:    
+                    eu = models.EmailUser.objects.filter(email__iexact=current_email)
+                    ne = models.EmailUser.objects.filter(email__iexact=new_email)
+
+                    if eu.count() > 0 and ne.count() > 0:
+                        user_orders = Order.objects.filter(user=eu[0])
+                        for order in user_orders:
+                            print (order.number)
+                            invoices = Invoice.objects.filter(order_number=order.number)
+                            for invoice in invoices:
+                                invoice_systemid = invoice.reference[0:4]
+                                if api_key_obj[0].system_id == invoice_systemid:  
+                                    print ("Found Invoice :{} to change user ownership".format(invoice.reference))                                                               
+                                    order.user = ne[0]
+                                    order.save()
+                                    models.EmailUserChangeLog.objects.create(emailuser=eu[0], change_key="moveinvoice", change_value="ledger_api_client_"+api_key_obj_update_key+": "+invoice.reference+" to "+ne[0].email,change_by=None)
+
+
+                        return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json', status=200)
+ 
+                    return HttpResponse(json.dumps({'status': 404, 'message': 'User rename issue'}), content_type='application/json', status=404)    
+
+            except Exception as e:
+                jsondata['status'] = 501
+                jsondata['message'] = 'Error'     
+                jsondata['data'] = {'message': str(e)}
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json', status=jsondata['status'])
+    return response
 
 @csrf_exempt
 def create_get_emailuser(request,apikey):
