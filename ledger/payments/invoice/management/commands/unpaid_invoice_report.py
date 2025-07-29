@@ -78,6 +78,7 @@ class Command(BaseCommand):
                 iv = Invoice.objects.filter(reference__startswith=SYSTEM_ID, due_date__isnull=False)                
                 print ("IV COUINT")
                 print (iv.count())
+                    
                 for i in iv:
                     
     
