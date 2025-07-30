@@ -1917,12 +1917,15 @@ def cancel_invoice(request,apikey):
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         invoice_reference = request.POST.get('invoice_reference','')
         api_key_obj = ledgerapi_models.API.objects.filter(api_key=apikey,active=1)
-        api_key_obj_update_key = "{} ({}) ".format(api_key_obj[0].system_id,api_key_obj[0].id)        
+        api_key_obj_update_key = "{} ({}) ".format(api_key_obj[0].system_id,api_key_obj[0].id)       
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             ois_obj = {}
             try:
                     if Invoice.objects.filter(reference=invoice_reference, voided=False).count() > 0:                                    
-                        inv = Invoice.objects.filter(reference=invoice_reference).update(voided=True)
+                        inv = Invoice.objects.filter(reference=invoice_reference)
+                        for i in inv:
+                            i.voided=True
+                            i.save()
                         inv = UnpaidInvoice.objects.filter(invoice_reference=invoice_reference).update(voided=True)                        
                         return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json', status=200)
                     else:

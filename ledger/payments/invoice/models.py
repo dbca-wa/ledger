@@ -19,6 +19,7 @@ from django.core.cache import cache
 import json
 from ledger.payments import trans_hash
 from django.core.files.storage import FileSystemStorage
+from datetime import datetime
 
 #from ledger.payments import trans_hash
 
@@ -67,7 +68,9 @@ class Invoice(models.Model):
     voided = models.BooleanField(default=False)
     previous_invoice = models.ForeignKey('self',null=True,blank=True)
     settlement_date = models.DateField(blank=True, null=True)
+    voided_settlement_date = models.DateField(blank=True, null=True)
     due_date = models.DateField(blank=True, null=True)
+    voided_dt = models.DateTimeField(blank=True, null=True)
     payment_method = models.SmallIntegerField(choices=PAYMENT_METHOD_CHOICES, default=0)
     oracle_invoice_number = models.CharField(max_length=255, default='', null=True, blank=True)
     oracle_invoice_file = models.ForeignKey(OracleInvoiceDocument, null=True, blank=True, on_delete=models.SET_NULL, related_name='oracle_invoice_file')
@@ -368,6 +371,12 @@ class Invoice(models.Model):
         from ledger.payments.utils import systemid_check
         if self.pk:
             self.system = systemid_check(self.system)
+        if self.voided is True:
+            if self.voided_settlement_date is None:
+                self.voided_settlement_date = datetime.now().date()
+                self.voided_dt = datetime.now()
+
+
         super(Invoice,self).save(*args,**kwargs)
 
     def make_payment(self):
