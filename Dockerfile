@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM ubuntu:24.04 as builder_base_ledgergw
+FROM ubuntu:24.10 as builder_base_ledgergw
 MAINTAINER asi@dbca.wa.gov.au
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
