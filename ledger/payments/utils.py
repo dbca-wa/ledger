@@ -225,16 +225,18 @@ def oracle_parser(date,system,system_name,override=False):
             # Get the required invoices
             for b in bpoint_txns:
                 if b.crn1 not in invoice_list:
-                    invoice = Invoice.objects.get(reference=b.crn1)
-                    if invoice.system == system:
-                        invoices.append(invoice)
-                        invoice_list.append(b.crn1)
+                    if Invoice.objects.filter(reference=b.crn1).count() > 0:
+                        invoice = Invoice.objects.get(reference=b.crn1)
+                        if invoice.system == system:
+                            invoices.append(invoice)
+                            invoice_list.append(b.crn1)
             for b in bpay_txns:
                 if b.crn not in invoice_list:
-                    invoice = Invoice.objects.get(reference=b.crn)
-                    if invoice.system == system:
-                        invoices.append(invoice)
-                        invoice_list.append(b.crn)
+                    if Invoice.objects.filter(reference=b.crn1).count() > 0:
+                        invoice = Invoice.objects.get(reference=b.crn)
+                        if invoice.system == system:
+                            invoices.append(invoice)
+                            invoice_list.append(b.crn)
             for invoice in invoices:
                 if invoice.order:
                     if invoice.reference not in parser_codes.keys():
