@@ -2448,3 +2448,59 @@ def update_ledger_oracle_invoice(request,apikey):
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response   
 
+
+
+@csrf_exempt
+def check_oracle_code(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    print ('update_ledger_oracle_invoice')
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            try:
+                oracle_code = request.POST.get('oracle_code','')
+                print (oracle_code)
+                if payment_models.OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() > 0:
+                        json_obj = {'found': True, 'code': oracle_code}
+                else:
+                        json_obj = {'found': False, 'code': oracle_code}
+
+                jsondata['status'] = 200
+                jsondata['message'] = 'Success'
+                jsondata['data'] = json_obj                
+            except Exception as e:
+                print ("CheckOracleCodeView 1.4")
+                print(traceback.print_exc())
+                jsondata['status'] = 500
+                jsondata['message'] = 'Error: {}'.format(str(e))
+                jsondata['data'] = {}  
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response   
+
+
+
+# def CheckOracleCodeView(request, *args, **kwargs):
+#     print ("CheckOracleCodeView 1.1")
+#     if helpers.is_payment_admin(request.user) is True:
+#         print ("CheckOracleCodeView 1.2")
+#         try:
+#            oracle_code = request.GET.get('oracle_code','')
+#            if OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() > 0:
+#                  json_obj = {'found': True, 'code': oracle_code}
+#            else:
+#                  json_obj = {'found': False, 'code': oracle_code}
+#            print ("CheckOracleCodeView 1.3")
+#            return HttpResponse(json.dumps(json_obj), content_type='application/json')
+#         except Exception as e:
+#            print ("CheckOracleCodeView 1.4")
+#            print(traceback.print_exc())
+#            raise
+
+        
