@@ -232,7 +232,7 @@ def oracle_parser(date,system,system_name,override=False):
                             invoice_list.append(b.crn1)
             for b in bpay_txns:
                 if b.crn not in invoice_list:
-                    if Invoice.objects.filter(reference=b.crn1).count() > 0:
+                    if Invoice.objects.filter(reference=b.crn).count() > 0:
                         invoice = Invoice.objects.get(reference=b.crn)
                         if invoice.system == system:
                             invoices.append(invoice)
