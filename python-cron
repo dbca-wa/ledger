@@ -30,3 +30,6 @@
 
 # Send Debtor Report
 01 0 * * * python manage_ledgergw.py unpaid_invoice_report >> /app/logs/unpaid_invoice_report.log
+
+# Log Rotate
+1 0 * * *  /bin/log_rotate.sh  >> /app/logs/log_rotate.log 2>&1
