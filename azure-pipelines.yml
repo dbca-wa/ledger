@@ -42,4 +42,5 @@ stages:
               ledger_dev_latest
               ledger_dev_$(tagDate)              
         containerRegistry: DockerHub
-        repository: dbcawa/docker_app_dev     
+        repository: ghcr.io/dbca-wa/docker_app_dev
+        
