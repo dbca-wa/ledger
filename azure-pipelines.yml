@@ -32,7 +32,7 @@ stages:
               latest
               $(tagDate)
         containerRegistry: DockerGitHub
-        repository: ghcr.io/dbcawa/ledgergw
+        repository: ghcr.io/dbca-wa/ledger
     - task: Docker@2
       displayName: Dev Build image and Push
       inputs:
