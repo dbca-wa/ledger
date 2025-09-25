@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM ubuntu:24.04 as builder_base_ledgergw
+FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu2404_base_latest as builder_base_ledgergw
 MAINTAINER asi@dbca.wa.gov.au
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
