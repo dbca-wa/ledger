@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 import oscar.models.fields
 from django.conf import settings
-
+import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
@@ -53,8 +53,8 @@ class Migration(migrations.Migration):
                 ('num_orders', models.PositiveIntegerField(default=0, verbose_name='Number of Orders')),
                 ('hash', models.CharField(max_length=255, editable=False, db_index=True, verbose_name='Address Hash')),
                 ('date_created', models.DateTimeField(auto_now_add=True, verbose_name='Date Created')),
-                ('country', models.ForeignKey(verbose_name='Country', to='address.Country')),
-                ('user', models.ForeignKey(verbose_name='User', related_name='addresses', to=settings.AUTH_USER_MODEL)),
+                ('country', models.ForeignKey(verbose_name='Country', to='address.Country', on_delete=django.db.models.deletion.DO_NOTHING)),
+                ('user', models.ForeignKey(verbose_name='User', related_name='addresses', to=settings.AUTH_USER_MODEL, on_delete=django.db.models.deletion.DO_NOTHING)),
             ],
             options={
                 'ordering': ['-num_orders'],

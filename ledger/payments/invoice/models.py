@@ -8,7 +8,7 @@ from django.db.models.functions import Coalesce
 from django.conf import settings
 from django.dispatch import receiver
 from django.db.models.signals import post_delete, pre_save, post_save
-from django.utils.encoding import python_2_unicode_compatible
+# from django.utils.encoding import python_2_unicode_compatible
 from django.core.exceptions import ValidationError
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
@@ -25,7 +25,7 @@ from datetime import datetime
 
 upload_storage = FileSystemStorage(location=settings.LEDGER_PRIVATE_MEDIA_ROOT, base_url=settings.LEDGER_PRIVATE_MEDIA_URL)
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class OracleInvoiceDocument(models.Model):
 
     upload = models.FileField(max_length=512, upload_to='oracleinvoice/%Y/%m/%d', storage=upload_storage)
@@ -66,7 +66,7 @@ class Invoice(models.Model):
     system = models.CharField(max_length=4,blank=True,null=True)
     token = models.CharField(max_length=80,null=True,blank=True)
     voided = models.BooleanField(default=False)
-    previous_invoice = models.ForeignKey('self',null=True,blank=True)
+    previous_invoice = models.ForeignKey('self',null=True,blank=True, on_delete=models.DO_NOTHING, related_name='previous_invoice_fk_id', help_text='Previous invoice in the chain of invoices.')
     settlement_date = models.DateField(blank=True, null=True)
     voided_settlement_date = models.DateField(blank=True, null=True)
     due_date = models.DateField(blank=True, null=True)
@@ -376,7 +376,6 @@ class Invoice(models.Model):
                 self.voided_settlement_date = datetime.now().date()
                 self.voided_dt = datetime.now()
 
-
         super(Invoice,self).save(*args,**kwargs)
 
     def make_payment(self):
@@ -490,8 +489,8 @@ class Invoice(models.Model):
 class InvoiceBPAY(models.Model):
     ''' Link between unmatched bpay payments and invoices
     '''
-    invoice = models.ForeignKey(Invoice)
-    bpay = models.ForeignKey('bpay.BpayTransaction')
+    invoice = models.ForeignKey(Invoice, related_name='bpay_invoice', on_delete=models.DO_NOTHING)
+    bpay = models.ForeignKey('bpay.BpayTransaction', related_name='bpay_invoice_transaction', on_delete=models.DO_NOTHING)
 
     class Meta:
         db_table = 'payments_invoicebpay'
@@ -548,7 +547,7 @@ class InvoiceBPAYListener(object):
 
 
 class UnpaidInvoice(models.Model):
-    invoice = models.ForeignKey(Invoice)
+    invoice = models.ForeignKey(Invoice, related_name='unpaid_invoice', on_delete=models.DO_NOTHING)
     invoice_reference = models.CharField(max_length=80,null=True,blank=True)
     system = models.CharField(max_length=4,blank=True,null=True)
     amount = models.DecimalField(decimal_places=2,max_digits=12, default='0.00')

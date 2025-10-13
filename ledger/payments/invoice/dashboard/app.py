@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-from django.conf.urls import url
+# from django.conf.urls import url
+from django.urls import path, re_path, include
 from django.contrib.admin.views.decorators import staff_member_required
 
 from oscar.core.application import Application
@@ -13,8 +14,8 @@ class InvoiceApplication(Application):
     
     def get_urls(self):
         url_patterns = [
-            url(r'^invoices/$', self.list_view.as_view(), name='invoices-list'),
-            url(r'^invoice/(?P<order>\d+)/$', self.detail_view.as_view(), name='invoices-detail'),
+            re_path(r'^invoices/$', self.list_view.as_view(), name='invoices-list'),
+            re_path(r'^invoice/(?P<order>\d+)/$', self.detail_view.as_view(), name='invoices-detail'),
         ]
         return self.post_process_urls(url_patterns)
     

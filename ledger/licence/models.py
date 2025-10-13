@@ -1,15 +1,15 @@
 from __future__ import unicode_literals
 from django.conf import settings
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
+# from django.utils.encoding import python_2_unicode_compatible
 from django.contrib.postgres.fields import ArrayField
 
-from dpaw_utils.models import ActiveMixin
+from dbca_utils.models import ActiveMixin
 
 from ledger.accounts.models import RevisionedMixin
 
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class LicenceType(RevisionedMixin, ActiveMixin):
     name = models.CharField(max_length=256)
     short_name = models.CharField(max_length=30, blank=True, null=True,
@@ -43,7 +43,7 @@ class LicenceType(RevisionedMixin, ActiveMixin):
         unique_together = ('short_name', 'version')
 
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class Licence(RevisionedMixin, ActiveMixin):
     holder = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='holder')
     issuer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='issuer',
@@ -54,7 +54,7 @@ class Licence(RevisionedMixin, ActiveMixin):
     issue_date = models.DateField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
-    is_renewable = models.NullBooleanField(blank=True)
+    is_renewable = models.BooleanField(blank=True,null=True)
 
     class Meta:
         unique_together = ('licence_number', 'licence_sequence')

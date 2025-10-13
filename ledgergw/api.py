@@ -664,6 +664,8 @@ def get_private_document(request, apikey):
 def create_basket_session(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
     ledger_user_json  = {}
+    print ("create_basket_session")
+    print (request.COOKIES)
     if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
         if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
             print ("API create_basket_session")
@@ -671,6 +673,9 @@ def create_basket_session(request,apikey):
             emailuser_id = request.POST.get('emailuser_id', None)
             try: 
                  basket, basket_hash = utils.create_basket_session_v2(emailuser_id,parameters)
+
+                 print ("BASKET CREATED")
+                 print (basket)
                  jsondata['status'] = 200
                  jsondata['message'] = 'Success'
                  jsondata['data'] = {'basket_hash': basket_hash}
@@ -875,7 +880,7 @@ def get_basket_for_future_invoice(request,apikey, reference):
                                   if order_obj[0].basket:
                                        if order_obj[0].basket.status == 'Saved': 
                                             basket_id = order_obj[0].basket.id
-                                            basket_middleware = BasketMiddleware().get_basket_hash(basket_id) 
+                                            basket_middleware = BasketMiddleware(None).get_basket_hash(basket_id) 
                                             jsondata['status'] = 200
                                             jsondata['message'] = 'Success'
                                             jsondata['data'] = {"basket_hash": basket_middleware}
@@ -1260,7 +1265,8 @@ def process_zero(request,apikey):
             basket_hash_split = basket_hash.split("|")
             basket_obj = basket_models.Basket.objects.filter(id=basket_hash_split[0])
             order_response = utils.place_order_submission(request)
-            new_order = Order.objects.get(basket=basket_obj)
+            print ("line 1269 needs to be look at as we added [0] to make sure nothing breaks in ledger/api.py")
+            new_order = Order.objects.get(basket=basket_obj[0])
             new_invoice = Invoice.objects.get(order_number=new_order.number)
 
             if order_response:
@@ -2448,3 +2454,36 @@ def update_ledger_oracle_invoice(request,apikey):
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response   
 
+@csrf_exempt
+def check_oracle_code(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    ledger_user_json  = {}
+    print ('update_ledger_oracle_invoice')
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            try:
+                oracle_code = request.POST.get('oracle_code','')
+                print (oracle_code)
+                if payment_models.OracleAccountCode.objects.filter(active_receivables_activities=oracle_code).count() > 0:
+                        json_obj = {'found': True, 'code': oracle_code}
+                else:
+                        json_obj = {'found': False, 'code': oracle_code}
+
+                jsondata['status'] = 200
+                jsondata['message'] = 'Success'
+                jsondata['data'] = json_obj                
+            except Exception as e:
+                print ("CheckOracleCodeView 1.4")
+                print(traceback.print_exc())
+                jsondata['status'] = 500
+                jsondata['message'] = 'Error: {}'.format(str(e))
+                jsondata['data'] = {}  
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    else:
+        pass
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response   

@@ -8,14 +8,12 @@ import json
 from django.forms.utils import flatatt, to_current_timezone
 from django.utils.html import conditional_escape, format_html, html_safe
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy as ugettext_lazy
 from django.forms import Media, MediaDefiningClass, Widget, CheckboxInput
 from django.utils.safestring import SafeText
 from ledger.validationchecks import is_json
 
-from django.utils.encoding import (
-      force_str, force_text, python_2_unicode_compatible,
-)
+from django.utils.encoding import force_str as force_text 
 
 __all__ = (
     'ClearableMultipleFileInput', 'FileInput', 'RendererMixin', 'ChoiceFieldRenderer' 
@@ -457,7 +455,6 @@ class Select(Widget):
         return '\n'.join(output)
 
 @html_safe
-@python_2_unicode_compatible
 class ChoiceFieldRenderer(object):
     """
     An object used by RadioSelect to enable customization of radio widgets.
@@ -533,7 +530,6 @@ class SubWidget(object):
             args.append(self.choices)
         return self.parent_widget.render(*args)
 
-@python_2_unicode_compatible
 class ChoiceInput(SubWidget):
     """
     An object used by ChoiceFieldRenderer that represents a single

@@ -2,7 +2,7 @@ import datetime
 import decimal
 from pytz import timezone
 from django.db import IntegrityError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from oscar.apps.payment.exceptions import UnableToTakePayment, InvalidGatewayRequestError
 from django.core.exceptions import ValidationError
 

@@ -3,7 +3,8 @@ import traceback
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField, IntegerRangeField
+# from django.contrib.postgres.fields import JSONField, IntegerRangeField
+from django.db.models import JSONField
 from ledger.payments.bpay.models import BpayTransaction, BpayFile, BillerCodeRecipient, BillerCodeSystem,BpayJobRecipient
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY, UnpaidInvoice
 from ledger.payments.bpoint.models import BpointTransaction, BpointToken
@@ -22,7 +23,7 @@ class OracleParser(models.Model):
         return str(self.date_parsed)
 
 class OracleParserInvoice(models.Model):
-    parser = models.ForeignKey(OracleParser,related_name='invoices')
+    parser = models.ForeignKey(OracleParser,related_name='invoices', on_delete=models.DO_NOTHING)
     reference = models.CharField(max_length=50)
     details = JSONField() 
 
@@ -69,7 +70,7 @@ class OracleInterfaceSystem(models.Model):
     system_name = models.CharField(max_length=128)
     enabled = models.BooleanField(default=False)
     deduct_percentage = models.BooleanField(default=False)
-    send_debtor_report = models.NullBooleanField(default=False)
+    send_debtor_report = models.BooleanField(default=False,null=True, blank=True)
     source = models.CharField(max_length=30)
     method = models.CharField(max_length=30)
     integration_type = models.CharField(max_length=20, choices=INTEGRATION_TYPE, default='no_api', null=True,blank=True)
@@ -83,7 +84,7 @@ class OracleInterfaceSystem(models.Model):
     bpoint_username = models.CharField(max_length=256, default="", null=True,blank=True)
     bpoint_password = models.CharField(max_length=256, default="", null=True,blank=True)
     bpoint_merchant_num = models.CharField(max_length=256, default="", null=True,blank=True)
-    bpoint_test = models.NullBooleanField(default=True) 
+    bpoint_test = models.BooleanField(default=True,null=True, blank=True) 
     # sage configuration will need to be created below.
 
 
@@ -91,7 +92,7 @@ class OracleInterfaceSystem(models.Model):
         return '{} - {}'.format(self.system_name, self.system_id)
 
 class OracleInterfaceDeduction(models.Model):
-    oisystem = models.ForeignKey(OracleInterfaceSystem, related_name='deductions')
+    oisystem = models.ForeignKey(OracleInterfaceSystem, related_name='deductions', on_delete=models.DO_NOTHING)
     percentage = models.PositiveIntegerField(validators=[MaxValueValidator(99), MinValueValidator(0)],null=True,blank=True)
     percentage_account_code = models.CharField(max_length=50,null=True,blank=True)
     destination_account_code = models.CharField(max_length=50,null=True,blank=True)
@@ -103,7 +104,7 @@ class OracleInterfaceDeduction(models.Model):
         return '{} - {}'.format(self.oisystem, self.destination_account_code)
 
 class OracleInterfaceRecipient(models.Model):
-    system = models.ForeignKey(OracleInterfaceSystem,related_name='recipients')
+    system = models.ForeignKey(OracleInterfaceSystem,related_name='recipients', on_delete=models.DO_NOTHING)
     email = models.EmailField()
 
     def __str__(self):
@@ -111,7 +112,7 @@ class OracleInterfaceRecipient(models.Model):
 
 
 class OracleInterfaceReportReceipient(models.Model):
-    system = models.ForeignKey(OracleInterfaceSystem,related_name='report_recipients')
+    system = models.ForeignKey(OracleInterfaceSystem,related_name='report_recipients', on_delete=models.DO_NOTHING)
     email = models.EmailField()
 
     def __str__(self):
@@ -130,7 +131,7 @@ class OracleInterfacePermission(models.Model):
                 ('reports_access', 'Reports Access')
     )
 
-    system = models.ForeignKey(OracleInterfaceSystem,related_name='oracle_interface_permission_recipients')    
+    system = models.ForeignKey(OracleInterfaceSystem,related_name='oracle_interface_permission_recipients', on_delete=models.DO_NOTHING)    
     email = models.EmailField()
     access_type = models.CharField(choices=ACCESS_TYPE, null=True, blank=True, default=None, max_length=100)
     active = models.BooleanField(
@@ -208,21 +209,21 @@ class TrackRefund(models.Model):
         (2,'Bpoint'),
         (3,'Bpay')
     )
-    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, related_name='refund_tracking_user')
     type = models.SmallIntegerField(choices=REFUND_TYPES)
     refund_id = models.PositiveIntegerField()
     details = models.TextField()
 
 class LinkedInvoiceGroupIncrementer(models.Model):
-      system_identifier = models.ForeignKey(OracleInterfaceSystem)
+      system_identifier = models.ForeignKey(OracleInterfaceSystem, on_delete=models.DO_NOTHING)
       created = models.DateTimeField(auto_now_add=True)
 
 class LinkedInvoice(models.Model):
     invoice_reference = models.CharField(max_length=1000) 
-    system_identifier = models.ForeignKey(OracleInterfaceSystem)
+    system_identifier = models.ForeignKey(OracleInterfaceSystem, on_delete=models.DO_NOTHING)
     booking_reference = models.CharField(max_length=1000)
     booking_reference_linked = models.CharField(max_length=1000, null=True,blank=True)
-    invoice_group_id = models.ForeignKey(LinkedInvoiceGroupIncrementer)
+    invoice_group_id = models.ForeignKey(LinkedInvoiceGroupIncrementer, on_delete=models.DO_NOTHING, related_name='linked_invoice_group')
     created = models.DateTimeField(auto_now_add=True)
 
 class RefundFailed(models.Model):
@@ -232,20 +233,20 @@ class RefundFailed(models.Model):
         (1, 'Refund Completed'),
     )
 
-    invoice_group = models.ForeignKey(LinkedInvoiceGroupIncrementer, related_name='refund_failed_invoice_group')
+    invoice_group = models.ForeignKey(LinkedInvoiceGroupIncrementer, related_name='refund_failed_invoice_group', on_delete=models.DO_NOTHING)
     booking_reference = models.CharField(max_length=1000)
     invoice_reference = models.CharField(max_length=50, null=True, blank=True, default='')
     refund_amount = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
     status = models.SmallIntegerField(choices=STATUS, default=0)
     basket_json = JSONField(null=True,blank=True)
-    system_identifier = models.ForeignKey(OracleInterfaceSystem)
+    system_identifier = models.ForeignKey(OracleInterfaceSystem, on_delete=models.DO_NOTHING, related_name='refund_failed_system_identifier')
     created = models.DateTimeField(auto_now_add=True)
     completed_date = models.DateTimeField(null=True, blank=True)
-    completed_by = models.ForeignKey(EmailUser, blank=True, null=True)
+    completed_by = models.ForeignKey(EmailUser, blank=True, null=True, on_delete=models.DO_NOTHING, related_name='refund_failed_completed_by')
 
 class PaymentTotal(models.Model):
 
-    oracle_system = models.ForeignKey(OracleInterfaceSystem)
+    oracle_system = models.ForeignKey(OracleInterfaceSystem, on_delete=models.DO_NOTHING, related_name='payment_total_oracle_system')
     settlement_date = models.DateField(blank=True, null=True)
     bpoint_gateway_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)
     ledger_bpoint_total = models.DecimalField(max_digits=8, decimal_places=2, default='0.00', blank=False, null=False)

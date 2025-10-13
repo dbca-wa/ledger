@@ -4,4 +4,4 @@ from django.apps import AppConfig
 
 
 class BpayConfig(AppConfig):
-    name = 'bpay'
+    name = 'ledger.payments.bpay'

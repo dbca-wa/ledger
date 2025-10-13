@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 from django.conf import settings
-
+import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
@@ -18,25 +18,25 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='lineattribute',
             name='option',
-            field=models.ForeignKey(verbose_name='Option', to='catalogue.Option'),
+            field=models.ForeignKey(verbose_name='Option', to='catalogue.Option', on_delete=django.db.models.deletion.DO_NOTHING),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='line',
             name='basket',
-            field=models.ForeignKey(verbose_name='Basket', related_name='lines', to='basket.Basket'),
+            field=models.ForeignKey(verbose_name='Basket', related_name='lines', to='basket.Basket', on_delete=django.db.models.deletion.DO_NOTHING),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='line',
             name='product',
-            field=models.ForeignKey(verbose_name='Product', related_name='basket_lines', to='catalogue.Product'),
+            field=models.ForeignKey(verbose_name='Product', related_name='basket_lines', to='catalogue.Product', on_delete=django.db.models.deletion.DO_NOTHING),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='line',
             name='stockrecord',
-            field=models.ForeignKey(related_name='basket_lines', to='partner.StockRecord'),
+            field=models.ForeignKey(related_name='basket_lines', to='partner.StockRecord', on_delete=django.db.models.deletion.DO_NOTHING),
             preserve_default=True,
         ),
         migrations.AlterUniqueTogether(
@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='basket',
             name='owner',
-            field=models.ForeignKey(verbose_name='Owner', related_name='baskets', to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(verbose_name='Owner', related_name='baskets', to=settings.AUTH_USER_MODEL, null=True, on_delete=django.db.models.deletion.DO_NOTHING),
             preserve_default=True,
         ),
     ]

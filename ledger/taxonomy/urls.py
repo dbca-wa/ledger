@@ -1,6 +1,6 @@
-from django.conf.urls import url
+from django.urls import path, re_path, include
 from .views import SpeciesNamesJSON
 
 urlpatterns = [
-    url(r'species_name', SpeciesNamesJSON.as_view(), name='species_names_json'),
+    re_path(r'species_name', SpeciesNamesJSON.as_view(), name='species_names_json'),
 ]

@@ -76,7 +76,7 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         # FIXME: replace with basket one-time secret
         if return_preload_url:
             try:
-                basket = BasketMiddleware().get_basket(self.request)
+                basket = BasketMiddleware(None).get_basket(self.request)
                 basket.notification_url = '{}?invoice={}'.format(return_preload_url, invoice.reference)
                 basket.save()
                 resp = requests.get('{}?invoice={}'.format(return_preload_url, invoice.reference),

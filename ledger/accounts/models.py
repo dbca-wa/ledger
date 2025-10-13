@@ -4,9 +4,10 @@ import os
 import zlib
 
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
-from django.contrib.postgres.fields import JSONField
+# from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 from django.db import models, IntegrityError, transaction
-from django.utils.encoding import python_2_unicode_compatible
+# from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 from django.dispatch import receiver
 from django.db.models import Q
@@ -17,7 +18,7 @@ from reversion import revisions
 from reversion.models import Version
 from django_countries.fields import CountryField
 
-from social_django.models import UserSocialAuth
+# from social_django.models import UserSocialAuth
 
 from datetime import datetime, date
 
@@ -67,7 +68,7 @@ class EmailUserManager(BaseUserManager):
         return self._create_user(email, password, True, True, **extra_fields)
 
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class Document(models.Model):
     name = models.CharField(max_length=100, blank=True,
                             verbose_name='name', help_text='')
@@ -89,7 +90,7 @@ class Document(models.Model):
 
 upload_storage = FileSystemStorage(location=settings.LEDGER_PRIVATE_MEDIA_ROOT, base_url=settings.LEDGER_PRIVATE_MEDIA_URL)
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class PrivateDocument(models.Model):
 
     FILE_GROUP = (
@@ -156,7 +157,7 @@ class DocumentListener(object):
             delattr(instance, "_original_instance")
 
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class BaseAddress(models.Model):
     """Generic address model, intended to provide billing and shipping
     addresses.
@@ -261,25 +262,25 @@ class BaseAddress(models.Model):
 
 
 class Address(BaseAddress):
-    user = models.ForeignKey('EmailUser', related_name='profile_addresses')
-    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses')
+    user = models.ForeignKey('EmailUser', related_name='profile_addresses',on_delete=models.CASCADE)
+    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses', on_delete=models.CASCADE)
     class Meta:
         verbose_name_plural = 'addresses'
         unique_together = ('user','hash')
 
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class EmailIdentity(models.Model):
     """Table used for matching access email address with EmailUser.
     """
-    user = models.ForeignKey('EmailUser', null=True)
+    user = models.ForeignKey('EmailUser', null=True, on_delete=models.DO_NOTHING)
     email = models.EmailField(unique=True)
 
     def __str__(self):
         return self.email
 
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class EmailUser(AbstractBaseUser, PermissionsMixin):
     """Custom authentication model for the ledger project.
     Password and email are required. Other fields are optional.
@@ -330,11 +331,11 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     organisation = models.CharField(max_length=300, null=True, blank=True,
                                     verbose_name="organisation", help_text='organisation, institution or company')
 
-    residential_address = models.ForeignKey(Address, null=True, blank=False, related_name='+')
-    postal_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
-    postal_same_as_residential = models.NullBooleanField(default=False) 
-    billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+')
-    billing_same_as_residential = models.NullBooleanField(default=False)
+    residential_address = models.ForeignKey(Address, null=True, blank=False, related_name='+', on_delete=models.CASCADE)
+    postal_address = models.ForeignKey(Address, null=True, blank=True, related_name='+', on_delete=models.CASCADE)
+    postal_same_as_residential = models.BooleanField(default=False,null=True, blank=True)
+    billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+', on_delete=models.CASCADE)
+    billing_same_as_residential = models.BooleanField(default=False,null=True, blank=True)
 
     identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
     identification2 = models.ForeignKey(PrivateDocument, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document_2')
@@ -561,9 +562,9 @@ def query_emailuser_by_args(**kwargs):
 
 
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class UserAction(models.Model):
-    who = models.ForeignKey(EmailUser, null=False, blank=False)
+    who = models.ForeignKey(EmailUser, null=False, blank=False, on_delete=models.DO_NOTHING)
     when = models.DateTimeField(null=False, blank=False, auto_now_add=True)
     what = models.TextField(blank=False)
 
@@ -585,7 +586,7 @@ class EmailUserAction(UserAction):
     ACTION_POSTAL_ADDRESS_UPDATE = "User {} Postal Address Updated"
     ACTION_ID_UPDATE = "User {} Identification Updated"
 
-    emailuser = models.ForeignKey(EmailUser, related_name='action_logs')
+    emailuser = models.ForeignKey(EmailUser, related_name='action_logs', on_delete=models.DO_NOTHING)
 
     class Meta:
         app_label = 'accounts'
@@ -600,10 +601,10 @@ class EmailUserAction(UserAction):
         )
 
 class EmailUserChangeLog(models.Model):
-    emailuser = models.ForeignKey(EmailUser, related_name='change_log_email_user')
+    emailuser = models.ForeignKey(EmailUser, related_name='change_log_email_user', on_delete=models.DO_NOTHING)
     change_key = models.CharField(max_length=1024, blank=True, null=True)
     change_value = models.CharField(max_length=1024, blank=True, null=True)
-    change_by = models.ForeignKey(EmailUser, related_name='change_log_request_user', blank=True, null=True)
+    change_by = models.ForeignKey(EmailUser, related_name='change_log_request_user', blank=True, null=True, on_delete=models.DO_NOTHING)
     created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:
@@ -635,8 +636,8 @@ class CommunicationsLogEntry(models.Model):
     subject = models.CharField(max_length=200, blank=True, verbose_name="Subject / Description")
     text = models.TextField(blank=True)
 
-    customer = models.ForeignKey(EmailUser, null=True, related_name='+')
-    staff = models.ForeignKey(EmailUser, null=True, related_name='+')
+    customer = models.ForeignKey(EmailUser, null=True, related_name='+' , on_delete=models.DO_NOTHING)
+    staff = models.ForeignKey(EmailUser, null=True, related_name='+' , on_delete=models.DO_NOTHING)
 
     created = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 
@@ -645,7 +646,7 @@ class CommunicationsLogEntry(models.Model):
 
 
 class EmailUserLogEntry(CommunicationsLogEntry):
-    emailuser = models.ForeignKey(EmailUser, related_name='comms_logs')
+    emailuser = models.ForeignKey(EmailUser, related_name='comms_logs', on_delete=models.DO_NOTHING)
 
     def save(self, **kwargs):
         # save the request id if the reference not provided
@@ -661,7 +662,7 @@ def update_emailuser_comms_log_filename(instance, filename):
     return 'emailusers/{}/communications/{}/{}'.format(instance.log_entry.emailuser.id,instance.id,filename)
 
 class EmailUserLogDocument(Document):
-    log_entry = models.ForeignKey('EmailUserLogEntry',related_name='documents')
+    log_entry = models.ForeignKey('EmailUserLogEntry',related_name='documents', on_delete=models.SET_NULL, null=True, blank=True)
     _file = models.FileField(upload_to=update_emailuser_comms_log_filename)
 
     class Meta:
@@ -680,7 +681,7 @@ class EmailUserListener(object):
         # delete the profile's email from email identity and social auth
         if not instance.is_dummy_user:
             EmailIdentity.objects.filter(email=instance.email, user=instance).delete()
-            UserSocialAuth.objects.filter(provider="email", uid=instance.email, user=instance).delete()
+            # UserSocialAuth.objects.filter(provider="email", uid=instance.email, user=instance).delete()
 
     @staticmethod
     @receiver(pre_save, sender=EmailUser)
@@ -698,16 +699,16 @@ class EmailUserListener(object):
         # add user's email to email identity and social auth if not exist
         if not instance.is_dummy_user:
             EmailIdentity.objects.get_or_create(email=instance.email, user=instance)
-            if not UserSocialAuth.objects.filter(user=instance, provider="email", uid=instance.email).exists():
-                user_social_auth = UserSocialAuth.create_social_auth(instance, instance.email, 'email')
-                user_social_auth.extra_data = {'email': [instance.email]}
-                user_social_auth.save()
+            # if not UserSocialAuth.objects.filter(user=instance, provider="email", uid=instance.email).exists():
+            #     user_social_auth = UserSocialAuth.create_social_auth(instance, instance.email, 'email')
+            #     user_social_auth.extra_data = {'email': [instance.email]}
+            #     user_social_auth.save()
 
         if original_instance and original_instance.email != instance.email:
             if not original_instance.is_dummy_user:
                 # delete the user's email from email identity and social auth
                 EmailIdentity.objects.filter(email=original_instance.email, user=original_instance).delete()
-                UserSocialAuth.objects.filter(provider="email", uid=original_instance.email, user=original_instance).delete()
+                # UserSocialAuth.objects.filter(provider="email", uid=original_instance.email, user=original_instance).delete()
             # update profile's email if profile's email is original email
             Profile.objects.filter(email=original_instance.email, user=instance).update(email=instance.email)
 
@@ -745,9 +746,9 @@ class RevisionedMixin(models.Model):
         abstract = True
 
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class Profile(RevisionedMixin):
-    user = models.ForeignKey(EmailUser, verbose_name='User', related_name='profiles')
+    user = models.ForeignKey(EmailUser, verbose_name='User', related_name='profiles', on_delete=models.DO_NOTHING)
     name = models.CharField('Display Name', max_length=100, help_text='e.g Personal, Work, University, etc')
     email = models.EmailField('Email')
     postal_address = models.ForeignKey(Address, verbose_name='Postal Address', on_delete=models.PROTECT, related_name='profiles')
@@ -777,7 +778,7 @@ class Profile(RevisionedMixin):
         else:
             return '{}'.format(self.email)
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class Organisation(models.Model):
     """This model represents the details of a company or other organisation.
     Management of these objects will be delegated to 0+ EmailUsers.
@@ -800,7 +801,7 @@ class Organisation(models.Model):
         return self.name
 
 class OrganisationAddress(BaseAddress):
-    organisation = models.ForeignKey(Organisation, null=True,blank=True, related_name='adresses')
+    organisation = models.ForeignKey(Organisation, null=True,blank=True, related_name='adresses', on_delete=models.DO_NOTHING)
     class Meta:
         verbose_name_plural = 'organisation addresses'
         #unique_together = ('organisation','hash')
@@ -820,7 +821,7 @@ class ProfileListener(object):
 
         # delete the profile's email from email identity and social auth
         EmailIdentity.objects.filter(email=instance.email, user=instance.user).delete()
-        UserSocialAuth.objects.filter(provider="email", uid=instance.email, user=instance.user).delete()
+        # UserSocialAuth.objects.filter(provider="email", uid=instance.email, user=instance.user).delete()
 
     @staticmethod
     @receiver(pre_save, sender=Profile)
@@ -847,15 +848,15 @@ class ProfileListener(object):
         if auth_identity:
             # add email to email identity and social auth if not exist
             EmailIdentity.objects.get_or_create(email=instance.email, user=instance.user)
-            if not UserSocialAuth.objects.filter(user=instance.user, provider="email", uid=instance.email).exists():
-                user_social_auth = UserSocialAuth.create_social_auth(instance.user, instance.email, 'email')
-                user_social_auth.extra_data = {'email': [instance.email]}
-                user_social_auth.save()
+            # if not UserSocialAuth.objects.filter(user=instance.user, provider="email", uid=instance.email).exists():
+            #     user_social_auth = UserSocialAuth.create_social_auth(instance.user, instance.email, 'email')
+            #     user_social_auth.extra_data = {'email': [instance.email]}
+            #     user_social_auth.save()
 
         if original_instance and (original_instance.email != instance.email or not auth_identity):
             # delete the profile's email from email identity and social auth
             EmailIdentity.objects.filter(email=original_instance.email, user=original_instance.user).delete()
-            UserSocialAuth.objects.filter(provider="email", uid=original_instance.email, user=original_instance.user).delete()
+            # UserSocialAuth.objects.filter(provider="email", uid=original_instance.email, user=original_instance.user).delete()
 
         if not original_instance:
             address = instance.postal_address
@@ -980,7 +981,7 @@ class AddressListener(object):
                 else:
                     raise
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class EmailUserReport(models.Model):
     hash = models.TextField(primary_key=True)
     occurence = models.IntegerField()

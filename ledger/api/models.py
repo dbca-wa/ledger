@@ -1,5 +1,6 @@
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
-from django.contrib.postgres.fields import JSONField
+# from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 from django.db import models, IntegrityError, transaction
 from django.utils import timezone
 from django.dispatch import receiver

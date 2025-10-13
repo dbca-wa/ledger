@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 from django.views import generic
 from django.contrib import messages
-from django.core.urlresolvers import reverse, reverse_lazy
+# from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
 from django import http
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.shortcuts import get_object_or_404
 
 from ledger.payments.bpoint.models import *

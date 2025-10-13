@@ -4,14 +4,16 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
+# from django.core.urlresolvers import reverse
+from django.urls import reverse
 from wsgiref.util import FileWrapper
 from rest_framework import viewsets, serializers, status, generics, views
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import list_route,detail_route
+# from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 
 from ledger.payments.bpay.models import BpayTransaction, BpayFile, BpayCollection
 from ledger.payments.invoice.models import Invoice, InvoiceBPAY, UnpaidInvoice
@@ -261,7 +263,8 @@ class BpointTransactionViewSet(viewsets.ModelViewSet):
     def create(self,request):
         pass
 
-    @detail_route(methods=['POST'])
+    # @detail_route(methods=['POST'])
+    @action(detail=True, methods=['POST'])
     def refund(self,request,*args,**kwargs):
         try:
             http_status = status.HTTP_200_OK
@@ -629,7 +632,8 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
     serializer_class = InvoiceTransactionSerializer
     lookup_field = 'reference'
 
-    @detail_route(methods=['get'])
+    # @detail_route(methods=['get'])
+    @action(detail=True, methods=['GET'])
     def linked_bpay(self, request, *args, **kwargs):
         try:
             invoice = self.get_object()
@@ -645,7 +649,8 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError(e)
 
-    @detail_route(methods=['get'])
+    # @detail_route(methods=['get'])
+    @action(detail=True, methods=['GET'])
     def payments(self, request, *args, **kwargs):
         try:
             invoice = self.get_object()
@@ -694,7 +699,8 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
             traceback.print_exc()
             raise serializers.ValidationError(e)
 
-    @detail_route(methods=['post'])
+    # @detail_route(methods=['post'])
+    @action(detail=True, methods=['POST'])
     def link(self, request, *args, **kwargs):
         try:
             invoice = self.get_object()

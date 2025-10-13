@@ -64,7 +64,7 @@ class JobQueue(models.Model):
     status = models.SmallIntegerField(choices=STATUS, default=0) 
     parameters_json = models.TextField(null=True, blank=True)
     processed_dt = models.DateTimeField(default=None,null=True, blank=True )
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,default=None,null=True, blank=True )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,default=None,null=True, blank=True , related_name='job_queue_user', on_delete=models.DO_NOTHING)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -18,11 +18,12 @@ INSTALLED_APPS += [
     'crispy_forms',
     'ledgergw',
     'webtemplate_dbca',
-    'appmonitor_client'
+    'appmonitor_client',
+    'dbca_utils'
 ]
 
 MIDDLEWARE_CLASSES += [
-        'ledgergw.middleware.CacheControlMiddleware',
+       # 'ledgergw.middleware.CacheControlMiddleware',
         'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
@@ -140,3 +141,24 @@ MESSAGE_TAGS = {
     messages.WARNING: 'alert-warning',
     messages.ERROR: 'alert-danger',
 }
+
+MIDDLEWARE = MIDDLEWARE_CLASSES
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# settings.py
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "django.core.files.storage.FileSystemStorage",
+#     },
+#     "staticfiles": {
+#         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+#     },
+#     # Add other custom storages as needed for sorl-thumbnail or other apps
+#     # Example for S3 with django-storages:
+#     # "thumbnails": {
+#     #     "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+#     #     "OPTIONS": {
+#     #         "bucket_name": "your-thumbnail-bucket",
+#     #     },
+#     # },
+# }

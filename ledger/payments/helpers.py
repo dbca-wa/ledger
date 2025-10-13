@@ -29,7 +29,7 @@ def belongs_to(user, group_name):
 
 
 def is_payment_admin(user):
-    return user.is_authenticated() and (belongs_to(user, settings.PAYMENT_OFFICERS_GROUP) or user.is_superuser)
+    return user.is_authenticated and (belongs_to(user, settings.PAYMENT_OFFICERS_GROUP) or user.is_superuser)
 
 def is_payment_oracle_admin(user):
-    return user.is_authenticated() and user.is_staff and (belongs_to(user, settings.PAYMENT_ORACLE_ADMIN_GROUP))
+    return user.is_authenticated and user.is_staff and (belongs_to(user, settings.PAYMENT_ORACLE_ADMIN_GROUP))

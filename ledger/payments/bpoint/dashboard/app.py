@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from django.conf.urls import url
+from django.urls import path, re_path, include
 from django.contrib.admin.views.decorators import staff_member_required
 
 from oscar.core.application import Application
@@ -13,8 +13,8 @@ class BPOINTApplicationDash(Application):
     
     def get_urls(self):
         url_patterns = [
-            url(r'^bpoint/transactions$', self.list_view.as_view(), name='bpoint-dash-list'),
-            url(r'^bpoint/transaction/(?P<txn_number>\d+)/$', self.detail_view.as_view(), name='bpoint-dash-detail'),
+            re_path(r'^bpoint/transactions$', self.list_view.as_view(), name='bpoint-dash-list'),
+            re_path(r'^bpoint/transaction/(?P<txn_number>\d+)/$', self.detail_view.as_view(), name='bpoint-dash-detail'),
         ]
         return self.post_process_urls(url_patterns)
     

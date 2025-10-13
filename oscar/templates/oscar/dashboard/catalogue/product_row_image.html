@@ -1,0 +1,12 @@
+{% load thumbnail %}
+{% if record.primary_image.original.url %}
+    {% with image=record.primary_image %}
+        {% thumbnail image.original "70x70" upscale=False as thumb %}
+        <a href="#" data-original="{{ image.original.url }}" class="sub-image">
+            <img src="{{ thumb.url }}" alt="{% if image.caption %}{{ image.caption }}{% else %}{{ record.get_title }}{% endif %}" height="{{ thumb.height }}" width="{{ thumb.width }}">
+        </a>
+        {% endthumbnail %}
+    {% endwith %}
+{% else %}
+    —
+{% endif %}
