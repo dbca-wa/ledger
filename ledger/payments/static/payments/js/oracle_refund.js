@@ -889,4 +889,6 @@ var refund_booking =  {
 
    	}
    }
-   window.onload = function() { refund_booking.init(); }
+   document.addEventListener('DOMContentLoaded', function() {
+     refund_booking.init(); 
+   });

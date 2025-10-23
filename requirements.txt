@@ -1,7 +1,8 @@
 setuptools==80.9.0
 Django==5.2.5
 django-extensions==4.1
-webtemplate-dbca==1.8.2
+# webtemplate-dbca==1.8.2
+git+https://github.com/dbca-wa/webtemplate2.git#egg=webtemplate_dbca
 coverage==4.3.1
 coveralls==1.1
 reportlab==4.2.5

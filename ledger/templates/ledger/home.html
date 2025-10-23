@@ -1,9 +1,14 @@
-{% extends "ledgergw/web/base_b5.html" %}
+{% extends "webtemplate_dbca/base_b5_auth_session.html" %}
+
+{% block menu_items_left_brand %}
+{% endblock %}
+{% block menu_spacer %}
+&nbsp;
+{% endblock %}
+
 {% block content %}
+<div class='container'>
 
-
-
-<br>
 <h1>Payment Portal</h1>
 <br>
 <div class='col-sm-12'>
@@ -11,7 +16,6 @@ Welcome to the payment portal for Department of Biodiversity, Conservation and A
 
 </div>
 <br>
-
 
 {% for pa in pil_array %}
 
@@ -39,7 +43,8 @@ Welcome to the payment portal for Department of Biodiversity, Conservation and A
             </div>
         </div>  
     </div>  
-</div>  
+ 
+</div>
 {% endfor %}
 
 
