@@ -22,7 +22,7 @@ RUN update-ca-certificates
 RUN apt-get install --no-install-recommends -y postgresql-client mtr htop vim ssh
 
 RUN add-apt-repository ppa:deadsnakes/ppa
-RUN apt-get install --no-install-recommends -y python3.7 python3.7-dev python3.7-distutils
+# RUN apt-get install --no-install-recommends -y python3.7 python3.7-dev python3.7-distutils
 # RUN ln -s /usr/bin/python3.7 /usr/bin/python && python3.7 -m pip install --upgrade pip==21.3.1
 RUN apt-get update
 RUN groupadd -g 5000 oim
