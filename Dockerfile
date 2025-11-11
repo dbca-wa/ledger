@@ -57,16 +57,16 @@ RUN chmod 755 /bin/scheduler.py
 FROM builder_base_ledgergw as python_libs_ledgergw
 WORKDIR /app
 USER oim
-RUN virtualenv -p python3.7 /app/venv
+RUN virtualenv /app/venv
 ENV PATH=/app/venv/bin:$PATH
 COPY --chown=oim:oim requirements.txt ./
 RUN whereis python
-RUN python3.7 -V
+RUN python -V
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY --chown=oim:oim libgeos.py.patch /app/
-RUN patch /app/venv/lib/python3.7/site-packages/django/contrib/gis/geos/libgeos.py /app/libgeos.py.patch
-RUN rm /app/libgeos.py.patch
+# COPY --chown=oim:oim libgeos.py.patch /app/
+# RUN patch /app/venv/lib/python3.12/site-packages/django/contrib/gis/geos/libgeos.py /app/libgeos.py.patch
+# RUN rm /app/libgeos.py.patch
 
 # Install the project (ensure that frontend projects have been built prior to this step).
 FROM python_libs_ledgergw
