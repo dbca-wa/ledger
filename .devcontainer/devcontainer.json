@@ -1,6 +1,6 @@
 {
 	"name": "Ledger GW Development",
-	"image": "dbcawa/docker_app_dev:ledger_dev_latest",
+	"image": "dbcawa/docker_app_dev:ledger_dev_django5_latest",
 	"remoteUser": "container",
 	"workspaceFolder": "/data/data/projects/ledger",
 	"mounts": ["type=bind,source=/data/,target=/data/",
