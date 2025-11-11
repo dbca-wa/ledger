@@ -3,7 +3,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
-- master
+- django_5_upgrade
 
 resources:
 - repo: self
@@ -11,7 +11,7 @@ resources:
 variables:
   tag: '$(Build.BuildId)'
   tagDate: $[ format('{0:yyyy}.{0:MM}.{0:dd}.{0:HH}.{0:mm}{0:ss}', pipeline.startTime) ]
-  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/django_5_upgrade')]
   
 stages:
 - stage: Build
@@ -39,7 +39,7 @@ stages:
         command: buildAndPush
         dockerfile: '$(Build.SourcesDirectory)/dockerdev/Dockerfile'
         tags: | 
-              ledger_dev_latest
-              ledger_dev_$(tagDate)              
+              ledger_dev_django5_latest
+              ledger_dev_django5_$(tagDate)              
         containerRegistry: DockerHub
         repository: dbcawa/docker_app_dev     
