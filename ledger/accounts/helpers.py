@@ -13,4 +13,4 @@ def belongs_to(user, group_name):
     return user.groups.filter(name=group_name).exists()
 
 def is_account_admin(user):    
-    return user.is_authenticated() and (belongs_to(user, settings.ACCOUNT_OFFICERS_GROUP) or user.is_superuser)
+    return user.is_authenticated and (belongs_to(user, settings.ACCOUNT_OFFICERS_GROUP) or user.is_superuser)

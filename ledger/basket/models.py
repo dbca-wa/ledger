@@ -1,6 +1,8 @@
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
-from django.utils.translation import ugettext_lazy as _
+# from django.utils.encoding import python_2_unicode_compatible
+# from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
+
 from oscar.apps.basket.abstract_models import AbstractBasket as CoreAbstractBasket, AbstractLine as CoreAbstractLine
 from oscar.models.fields.slugfield import SlugField
 from ledger.catalogue.models import Product
@@ -12,12 +14,12 @@ class Basket(CoreAbstractBasket):
     custom_ledger = models.BooleanField(default=False)
     booking_reference = models.CharField(max_length=254, blank=True, null=True)
     booking_reference_link = models.CharField(max_length=254, blank=True, null=True)
-    no_oracle=models.NullBooleanField(default=False)
+    no_oracle=models.BooleanField(default=False,null=True, blank=True)
     notification_url = models.CharField(max_length=1024, blank=True, null=True) 
     notification_count = models.IntegerField(default=0, null=True) 
     notification_next = models.DateTimeField(default=datetime.datetime.now(), null=True)
-    notification_completed = models.NullBooleanField(default=False)
-    organisation = models.ForeignKey(Organisation, null=True,blank=True, related_name='basket_organisation')
+    notification_completed = models.BooleanField(default=False,null=True, blank=True)
+    organisation = models.ForeignKey(Organisation, null=True,blank=True, related_name='basket_organisation', on_delete=models.DO_NOTHING)
 
     def all_lines(self):
         """
@@ -57,7 +59,7 @@ class Basket(CoreAbstractBasket):
                     return True
         return False
 
-@python_2_unicode_compatible
+# @python_2_unicode_compatible
 class Line(CoreAbstractLine):
 
     LINE_STATUS = (

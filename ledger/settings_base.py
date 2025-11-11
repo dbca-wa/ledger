@@ -35,13 +35,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
-    'social_django',
+    # 'social_django',
     'django_extensions',
     'reversion',
     'widget_tweaks',
     'django_countries',
     'django_cron',
-    ] + get_core_apps([  # django-oscar overrides
+    ]  + get_core_apps([  # django-oscar overrides
         'ledger.basket',
         'ledger.order',
         'ledger.checkout',
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
         'ledger.catalogue',
         'ledger.dashboard.catalogue',
         'ledger.payment'
-    ]) + [
+    ]) + [        
     'ledger.accounts',   #  Defines custom user model, passwordless auth pipeline.
     'ledger.api',
     'ledger.licence',
@@ -67,53 +67,53 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'dpaw_utils.middleware.SSOLoginMiddleware',
-    'dpaw_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
+    'dbca_utils.middleware.SSOLoginMiddleware',
+    # 'dbca_utils.middleware.AuditMiddleware',  # Sets model creator/modifier field values.
     'ledger.basket.middleware.BasketMiddleware',
-    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
+    # 'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 ]
 
 # Authentication settings
 LOGIN_URL = '/'
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.email.EmailAuth',
+    # 'social_core.backends.email.EmailAuth',
     'django.contrib.auth.backends.ModelBackend',
 )
 AUTH_USER_MODEL = 'accounts.EmailUser'
 # for reference, django.conf.settings.X == backend.setting('X')
 # this one prevents the email auth backend from creating EmailUsers with a username param
 USER_FIELDS = ['email']
-SOCIAL_AUTH_STRATEGY = 'social_django.strategy.DjangoStrategy'
-SOCIAL_AUTH_STORAGE = 'social_django.models.DjangoStorage'
-SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/'
-SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'ledger.accounts.mail.send_validation'
-SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/ledger/validation-sent/'
-SOCIAL_AUTH_EMAIL_VALIDATION_ALLOW_REUSE = True
-SOCIAL_AUTH_EMAIL_VALIDATION_EXPIRED_THRESHOLD = env('EMAIL_VALIDATION_EXPIRY', 86400)
-SOCIAL_AUTH_PASSWORDLESS = True
-SOCIAL_AUTH_SESSION_EXPIRATION = env('SESSION_EXPIRATION', False)
-SOCIAL_AUTH_MAX_SESSION_LENGTH = env('MAX_SESSION_LENGTH', 1209600)     # two weeks
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
-SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
-SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
-SOCIAL_AUTH_PIPELINE = (
-    'social_core.pipeline.social_auth.social_details',
-    'ledger.accounts.pipeline.lower_email_address',
-    'ledger.accounts.pipeline.logout_previous_session',
-    'social_core.pipeline.social_auth.social_uid',
-    'social_core.pipeline.social_auth.auth_allowed',
-    'social_core.pipeline.social_auth.social_user',
-    'social_core.pipeline.user.get_username',
-    'ledger.accounts.pipeline.mail_validation',
-    'ledger.accounts.pipeline.user_by_email',
-    'social_core.pipeline.user.create_user',
-    'ledger.accounts.pipeline.user_is_new_session',
-    'social_core.pipeline.social_auth.associate_user',
-    'social_core.pipeline.social_auth.load_extra_data',
-)
+# SOCIAL_AUTH_STRATEGY = 'social_django.strategy.DjangoStrategy'
+# SOCIAL_AUTH_STORAGE = 'social_django.models.DjangoStorage'
+# SOCIAL_AUTH_EMAIL_FORM_URL = '/ledger/'
+# SOCIAL_AUTH_EMAIL_VALIDATION_FUNCTION = 'ledger.accounts.mail.send_validation'
+# SOCIAL_AUTH_EMAIL_VALIDATION_URL = '/ledger/validation-sent/'
+# SOCIAL_AUTH_EMAIL_VALIDATION_ALLOW_REUSE = True
+# SOCIAL_AUTH_EMAIL_VALIDATION_EXPIRED_THRESHOLD = env('EMAIL_VALIDATION_EXPIRY', 86400)
+# SOCIAL_AUTH_PASSWORDLESS = True
+# SOCIAL_AUTH_SESSION_EXPIRATION = env('SESSION_EXPIRATION', False)
+# SOCIAL_AUTH_MAX_SESSION_LENGTH = env('MAX_SESSION_LENGTH', 1209600)     # two weeks
+# SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
+# SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
+# SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['first_name', 'last_name', 'email']
+# SOCIAL_AUTH_PIPELINE = (
+#     'social_core.pipeline.social_auth.social_details',
+#     'ledger.accounts.pipeline.lower_email_address',
+#     'ledger.accounts.pipeline.logout_previous_session',
+#     'social_core.pipeline.social_auth.social_uid',
+#     'social_core.pipeline.social_auth.auth_allowed',
+#     'social_core.pipeline.social_auth.social_user',
+#     'social_core.pipeline.user.get_username',
+#     'ledger.accounts.pipeline.mail_validation',
+#     'ledger.accounts.pipeline.user_by_email',
+#     'social_core.pipeline.user.create_user',
+#     'ledger.accounts.pipeline.user_is_new_session',
+#     'social_core.pipeline.social_auth.associate_user',
+#     'social_core.pipeline.social_auth.load_extra_data',
+# )
 
 SESSION_COOKIE_DOMAIN = env('SESSION_COOKIE_DOMAIN', None)
 if SESSION_COOKIE_DOMAIN:
@@ -121,7 +121,7 @@ if SESSION_COOKIE_DOMAIN:
 
 
 # Email settings
-ADMINS = ('asi@dpaw.wa.gov.au',)
+ADMINS = ('asi@dbca.wa.gov.au',)
 EMAIL_HOST = env('EMAIL_HOST', 'email.host')
 EMAIL_PORT = env('EMAIL_PORT', 25)
 EMAIL_FROM = env('EMAIL_FROM', ADMINS[0])
@@ -144,7 +144,7 @@ TEMPLATES = [
 
                 # django-oscar default templates
                 'oscar.apps.search.context_processors.search_form',
-                'oscar.apps.promotions.context_processors.promotions',
+                # 'oscar.apps.promotions.context_processors.promotions',
                 'oscar.apps.checkout.context_processors.checkout',
                 'oscar.apps.customer.notifications.context_processors.notifications',
                 'oscar.core.context_processors.metadata',
@@ -388,3 +388,15 @@ if DJANGO_HTTPS is True:
 LEDGER_PRIVATE_MEDIA_ROOT = os.path.join(BASE_DIR, 'private-media')
 LEDGER_PRIVATE_MEDIA_URL = '/private-media/view/'
 
+# settings.py
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage", # Or your custom storage backend
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+# You might also need to explicitly set THUMBNAIL_STORAGE if it's not picking up 'default'
+THUMBNAIL_STORAGE = 'default' # Refers to the 'default' key in STORAGES

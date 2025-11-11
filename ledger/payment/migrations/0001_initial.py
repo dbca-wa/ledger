@@ -5,7 +5,7 @@ from django.db import models, migrations
 import oscar.models.fields.autoslugfield
 from django.conf import settings
 from decimal import Decimal
-
+import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('number', models.CharField(max_length=32, verbose_name='Number')),
                 ('expiry_date', models.DateField(verbose_name='Expiry Date')),
                 ('partner_reference', models.CharField(max_length=255, verbose_name='Partner Reference', blank=True)),
-                ('user', models.ForeignKey(verbose_name='User', related_name='bankcards', to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(verbose_name='User', related_name='bankcards', to=settings.AUTH_USER_MODEL, on_delete=django.db.models.deletion.DO_NOTHING)),
             ],
             options={
                 'verbose_name_plural': 'Bankcards',
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
                 ('amount_refunded', models.DecimalField(default=Decimal('0.00'), max_digits=12, decimal_places=2, verbose_name='Amount Refunded')),
                 ('reference', models.CharField(max_length=128, verbose_name='Reference', blank=True)),
                 ('label', models.CharField(max_length=128, verbose_name='Label', blank=True)),
-                ('order', models.ForeignKey(verbose_name='Order', related_name='sources', to='order.Order')),
+                ('order', models.ForeignKey(verbose_name='Order', related_name='sources', to='order.Order', on_delete=django.db.models.deletion.DO_NOTHING)),
             ],
             options={
                 'verbose_name_plural': 'Sources',
@@ -75,7 +75,7 @@ class Migration(migrations.Migration):
                 ('reference', models.CharField(max_length=128, verbose_name='Reference', blank=True)),
                 ('status', models.CharField(max_length=128, verbose_name='Status', blank=True)),
                 ('date_created', models.DateTimeField(auto_now_add=True, verbose_name='Date Created')),
-                ('source', models.ForeignKey(verbose_name='Source', related_name='transactions', to='payment.Source')),
+                ('source', models.ForeignKey(verbose_name='Source', related_name='transactions', to='payment.Source', on_delete=django.db.models.deletion.DO_NOTHING)),
             ],
             options={
                 'ordering': ['-date_created'],
@@ -88,7 +88,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='source',
             name='source_type',
-            field=models.ForeignKey(verbose_name='Source Type', related_name='sources', to='payment.SourceType'),
+            field=models.ForeignKey(verbose_name='Source Type', related_name='sources', to='payment.SourceType', on_delete=django.db.models.deletion.DO_NOTHING),
             preserve_default=True,
         ),
     ]

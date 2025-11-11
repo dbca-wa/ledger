@@ -5,8 +5,8 @@ from django.db import models,transaction
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from ledger.payments.bpoint import settings as bpoint_settings
-from django.utils.encoding import python_2_unicode_compatible
-#from oscar.apps.order.models import Order
+# from django.utils.encoding import python_2_unicode_compatible
+# from oscar.apps.order.models import Order
 from ledger.order.models import Order
 from ledger.accounts.models import EmailUser
 from ledger.payments.emails import send_refund_email
@@ -69,7 +69,7 @@ class BpointTransaction(models.Model):
     dvtoken = models.CharField(max_length=128,null=True,blank=True,help_text='Stored card dv token')
     last_digits = models.CharField(max_length=4,blank=True,null=True,help_text='Last four digits of card used during checkout')
     is_test = models.BooleanField(default=False,help_text='Transaction is in test mode')
-    integrity_check = models.NullBooleanField(default=False)
+    integrity_check = models.BooleanField(default=False,null=True, blank=True)
 
     class Meta:
         ordering = ('-created',)
@@ -265,7 +265,7 @@ class BpointToken(models.Model):
         ('VC','Visa')
     )
 
-    user = models.ForeignKey(EmailUser, related_name='stored_cards')
+    user = models.ForeignKey(EmailUser, related_name='stored_cards', on_delete=models.DO_NOTHING)
     DVToken = models.CharField(max_length=128)
     masked_card = models.CharField(max_length=50)
     expiry_date = models.DateField()
@@ -301,8 +301,8 @@ class UsedBpointToken(models.Model):
         db_table = 'payments_usedbpointtoken'
 
 class BpointTokenPrimary(models.Model):
-    user = models.OneToOneField(EmailUser, related_name='user_primary_card')
-    bpoint_token = models.ForeignKey(BpointToken, related_name='bpoint_token_primary')
+    user = models.OneToOneField(EmailUser, related_name='user_primary_card', on_delete=models.DO_NOTHING)
+    bpoint_token = models.ForeignKey(BpointToken, related_name='bpoint_token_primary', on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     
     

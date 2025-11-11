@@ -13,16 +13,16 @@ def belongs_to(user, group_name):
 
 
 def is_officer(user):
-    return user.is_authenticated() and user.is_staff
+    return user.is_authenticated and user.is_staff
 
 def is_inventory(user):
-    return user.is_authenticated() and belongs_to(user, "Mooring Inventory")
+    return user.is_authenticated and belongs_to(user, "Mooring Inventory")
 
 def is_admin(user):
-    return user.is_authenticated() and belongs_to(user, "Mooring Admin")
+    return user.is_authenticated and belongs_to(user, "Mooring Admin")
 
 def is_payment_officer(user):
-    return user.is_authenticated() and belongs_to(user, "Payments Officers")
+    return user.is_authenticated and belongs_to(user, "Payments Officers")
 
 def is_customer(user):
     """
@@ -32,7 +32,7 @@ def is_customer(user):
     :param user:
     :return:
     """
-    return user.is_authenticated() and not is_officer(user)
+    return user.is_authenticated and not is_officer(user)
 
 
 def get_all_officers():

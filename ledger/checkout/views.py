@@ -7,11 +7,12 @@ from decimal import Decimal as D
 from django.db import transaction
 from django.conf import settings
 from django.core.validators import URLValidator
-from django.utils import six
+import six
 from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse, HttpResponseRedirect
-from django.core.urlresolvers import reverse, reverse_lazy
-from django.utils.translation import ugettext as _
+# from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
+from django.utils.translation import gettext as _
 from django.template.loader import get_template
 #
 from ledger.payment import forms, models
@@ -57,7 +58,7 @@ class IndexView(CoreIndexView):
         if isLedgerURL(url):
             return HttpResponseRedirect(url)
         else:
-            return HttpResponseRedirect(reverse('payments:payments-error'))
+            return HttpResponseRedirect(reverse('ledger.payments:payments-error'))
 
     def get(self, request, *args, **kwargs):
         # We redirect immediately to shipping address stage if the user is
@@ -164,7 +165,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         # only load stored cards if the user is an admin or has legitimately logged in
         if self.checkout_session.basket_owner() and is_payment_admin(self.request.user):
             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
-        elif self.request.user.is_authenticated():
+        elif self.request.user.is_authenticated:
             user = self.request.user
         elif self.checkout_session.get_user_logged_in():
             if 'LEDGER_API_KEY' in self.request.COOKIES:
@@ -296,6 +297,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
         if self.request.COOKIES.get('payment_api_wrapper') == 'true':
             try:
                 submission = self.build_submission()
+                print ("submission")
+                print (submission)
                 if not self.checkout_session.checkout_token():
                        submission['payment_kwargs']['bankcard'] = bankcard_form.bankcard
                 return self.submit(**submission)

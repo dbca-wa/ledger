@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.signing import BadSignature, Signer
 from django.utils.functional import SimpleLazyObject, empty
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from oscar.core.compat import MiddlewareMixin, user_is_authenticated
 from oscar.core.loading import get_class, get_model
@@ -19,10 +19,12 @@ from oscar.apps.basket.middleware import BasketMiddleware as CoreBasketMiddlewar
 
 class BasketMiddleware(CoreBasketMiddleware):
 
+    def __init__(self, get_response):            
+        self.get_response = get_response
     # required for python 3
-    def __init__(self):
-        #response = self.get_response(request)
-        return None
+    # def process_request(self):
+    #     #response = self.get_response(request)
+        #return None
 
     def get_cookie_basket(self, cookie_key, request, manager):
         """
@@ -32,8 +34,13 @@ class BasketMiddleware(CoreBasketMiddleware):
         it to the list to be deleted.
         """
         basket = None
+        print ("COOK ME")
+        print (request.COOKIES)
         if cookie_key in request.COOKIES:
+            print ("COOKIE KEYS")
+            print (request.COOKIES)
             basket_hash = request.COOKIES[cookie_key]
+            print (basket_hash)
             try:
                 basket_id = Signer(sep='|').unsign(basket_hash)
                 #basket = Basket.objects.get(pk=basket_id, owner=None, status=Basket.OPEN)
@@ -47,25 +54,32 @@ class BasketMiddleware(CoreBasketMiddleware):
         return basket
 
     def get_basket_hash(self, basket_id):
+        print (basket_id)
         return Signer(sep='|').sign(basket_id)
 
     def get_basket(self, request):
         """
         Return the open basket for this request
         """
+        print ("GET BASK")
+        print (request._basket_cache)
         if request._basket_cache is not None:
             return request._basket_cache
-
+        print (" GET BASK 2")
         num_baskets_merged = 0
         manager = Basket.open
+        print (" GET BASK 3")
         cookie_key = self.get_cookie_key(request)
         cookie_basket = self.get_cookie_basket(cookie_key, request, manager)
-
+        print (cookie_basket)
         if cookie_basket:
+            print (" GET BASK 4")
             basket = cookie_basket
         else:
-
-            if hasattr(request, 'user') and user_is_authenticated(request.user):
+            print (" GET BASK 5")
+            print (request.user.is_authenticated)
+            if hasattr(request, 'user') and request.user.is_authenticated:
+                print (" GET BASK 5.1")
                 # Signed-in user: if they have a cookie basket too, it means
                 # that they have just signed in and we need to merge their cookie
                 # basket into their user basket, then delete the cookie.
@@ -90,10 +104,15 @@ class BasketMiddleware(CoreBasketMiddleware):
                 #    request.cookies_to_delete.append(cookie_key)
 
             else:
+                print (" GET BASK 5.2")
                 # Anonymous user with no basket - instantiate a new basket
                 # instance.  No need to save yet.
                 basket = Basket()
-
+                try:
+                    print (basket)
+                except Exception as e:
+                    print (e)
+        print (" GET BASK 9")
         # Cache basket instance for the during of this request
         request._basket_cache = basket
 
@@ -101,5 +120,8 @@ class BasketMiddleware(CoreBasketMiddleware):
             messages.add_message(request, messages.WARNING,
                                  _("We have merged a basket from a previous session. Its contents "
                                    "might have changed."))
+        print (" GET BASK 20 END")
+        print ("BASKET")
+        print (basket)
         return basket
 

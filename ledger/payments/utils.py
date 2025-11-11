@@ -10,7 +10,8 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import resolve
+# from django.core.urlresolvers import resolve
+from django.urls import resolve
 from six.moves.urllib.parse import urlparse
 #
 from ledger.payments.models import OracleParser, OracleParserInvoice, Invoice, OracleInterface, OracleInterfaceSystem, OracleInterfacePermission, BpointTransaction, BpayTransaction, OracleAccountCode, OracleAccountCodeTax,OracleOpenPeriod, OracleInterfaceDeduction, OracleInterfaceSystem, LinkedInvoiceGroupIncrementer, LinkedInvoice
@@ -232,7 +233,7 @@ def oracle_parser(date,system,system_name,override=False):
                             invoice_list.append(b.crn1)
             for b in bpay_txns:
                 if b.crn not in invoice_list:
-                    if Invoice.objects.filter(reference=b.crn1).count() > 0:
+                    if Invoice.objects.filter(reference=b.crn).count() > 0:
                         invoice = Invoice.objects.get(reference=b.crn)
                         if invoice.system == system:
                             invoices.append(invoice)
@@ -961,7 +962,9 @@ def ledger_payment_invoice_calulations(invoice_group_id, invoice_no, booking_ref
                              settlement_date = ''
                              oracle_invoice_number = ''
                              if inv.count() > 0:
-                                 settlement_date = inv[0].settlement_date.strftime("%d/%m/%Y")
+                                 settlement_date = ''
+                                 if inv[0].settlement_date:
+                                    settlement_date = inv[0].settlement_date.strftime("%d/%m/%Y")
                                  oracle_invoice_number = inv[0].oracle_invoice_number
                              linked_payments.append({'id': li.id, 'invoice_reference': li.invoice_reference, 'system_identifier_id': li.system_identifier.id, 'system_identifier_system': li.system_identifier.system_id, 'booking_reference': li.booking_reference, 'booking_reference_linked': li.booking_reference_linked, 'invoice_group_id': li.invoice_group_id.id,'settlement_date': settlement_date, 'oracle_invoice_number': oracle_invoice_number})
                              if li.booking_reference not in linked_payments_booking_references:

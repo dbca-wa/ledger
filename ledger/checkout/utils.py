@@ -83,14 +83,20 @@ def create_basket_session_v2(emailuser_id, parameters):
                                     serializer.validated_data['system'],
                                     serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link, organisation_id)
     else:
+        print ("CREATE BASKET")
         if custom:
+            print ("CREATE BASKET 1.2")
             basket = createCustomBasketv2(serializer.validated_data['products'],
                                         user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link, organisation_id, ledger_product_custom_fields)
         else:
+            print ("CREATE BASKET 1.3")
             basket = createBasket(serializer.validated_data['products'],
                                     user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link, organisation_id)
 
-    return basket, BasketMiddleware().get_basket_hash(basket.id)
+    print ("HAS BASKET LOADED")
+    print (basket)
+    print ("HAS BASKET LOADED 2")
+    return basket, BasketMiddleware(None).get_basket_hash(basket.id)
 
 
 # create a basket in Oscar.
@@ -180,7 +186,10 @@ def create_checkout_session(request, parameters):
     except Exception as e:
         raise ValidationError(str(e))
     try:
+        print ("checkout.utils.create_checkout_session")
         session_data = CheckoutSessionData(request)
+        print (session_data)
+        print (serializer.validated_data['basket_owner'] )
     except Exception as e:
         raise ValidationError(str(e))
     # reset method of payment when creating a new session
@@ -191,7 +200,7 @@ def create_checkout_session(request, parameters):
     session_data.owned_by(serializer.validated_data['basket_owner'])
     # FIXME: replace internal user ID with email address once lookup/alias issues sorted
     email = None
-    if serializer.validated_data['basket_owner'] and request.user.is_anonymous():
+    if serializer.validated_data['basket_owner'] and request.user.is_anonymous:
         email = EmailUser.objects.get(id=serializer.validated_data['basket_owner']).email
     if email is None: 
         if 'session_type' in parameters:
@@ -282,6 +291,8 @@ class CheckoutSessionData(CoreCheckoutSessionData):
         self._set('ledger','system_id',system_id)
         
     def system(self):
+        print ("GET SYSTEM")
+        
         return self._get('ledger','system_id')
     
     # BPAY Methods
@@ -608,6 +619,7 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
     print ("HERE 1")
     #import pdb; pdb.set_trace()
     try:
+        print ("createCustomBasketv2 1.0")
         old_basket = basket = None
         valid_products = []
         User = get_user_model()
@@ -619,7 +631,7 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
             open_baskets = Basket.objects.filter(status='Open',system=system,owner=owner).count()
             if open_baskets > 0:
                 old_basket = Basket.objects.filter(status='Open',system=system,owner=owner)[0]
-
+        print ("createCustomBasketv2 2.0")
         # Use the previously open basket if its present or create a new one
         if old_basket:
             if system.lower() == old_basket.system.lower() or not old_basket.system:
@@ -633,6 +645,7 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
         # Set the owner and strategy being used to create the basket
         if isinstance(owner, User):
             basket.owner = owner
+        print ("createCustomBasketv2 10.0")
         basket.system = system
         basket.strategy = selector.strategy(user=owner)
         basket.booking_reference = booking_reference
@@ -651,7 +664,7 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
         #ledger_product_custom_fields = env('LEDGER_PRODUCT_CUSTOM_FIELDS', None)
         if ledger_product_custom_fields is None:
                 ledger_product_custom_fields = ('ledger_description','quantity','price_incl_tax','oracle_code')
-
+        print ("createCustomBasketv2 11.0")
         #UPDATE_PAYMENT_ALLOCATION = env('UPDATE_PAYMENT_ALLOCATION', False)
         #if UPDATE_PAYMENT_ALLOCATION is True:
         #     ledger_product_default_fields = ('ledger_description','quantity','price_incl_tax','oracle_code','line_status')
@@ -670,8 +683,10 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
                      p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
             else:
                  p['price_excl_tax'] = calculate_excl_gst(p['price_incl_tax'])
+        print ("createCustomBasketv2 12.0")
         # Save the basket
         basket.save()
+        print (basket)
         # Add the valid products to the basket
         for p in product_list:
             basket.addNonOscarProduct(p)
@@ -682,8 +697,11 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
             for v in vouchers:
                 basket.vouchers.add(Voucher.objects.get(code=v["code"]))
             basket.save()
+        print ("createCustomBasketv2 13.0")
+        print (basket)
         return basket
     except Product.DoesNotExist:
+        print ("Product Does Not Exist")
         raise
     except Exception as e:
         raise

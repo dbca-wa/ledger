@@ -1,8 +1,7 @@
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.utils.http import is_safe_url
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from oscar.forms import widgets
 
