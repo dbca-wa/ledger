@@ -74,6 +74,7 @@ COPY --chown=oim:oim .git .git
 COPY --chown=oim:oim python-cron python-cron
 COPY gunicorn.ini manage_ledgergw.py ./
 COPY ledger ./ledger
+COPY oscar ./oscar
 RUN find /app/
 
 COPY --chown=oim:oim bin /app/bin
