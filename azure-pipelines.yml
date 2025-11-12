@@ -31,8 +31,8 @@ stages:
         tags: | 
               django5_latest
               $(tagDate)
-        containerRegistry: DockerHub
-        repository: dbcawa/ledgergw
+        containerRegistry: DockerGitHub
+        repository: ghcr.io/dbca-wa/ledger
     - task: Docker@2
       displayName: Dev Build image and Push
       inputs:
@@ -41,5 +41,5 @@ stages:
         tags: | 
               ledger_dev_django5_latest
               ledger_dev_django5_$(tagDate)              
-        containerRegistry: DockerHub
-        repository: dbcawa/docker_app_dev     
+        containerRegistry: DockerGitHub
+        repository: ghcr.io/dbca-wa/docker_app_dev   
