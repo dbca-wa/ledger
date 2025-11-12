@@ -30,7 +30,7 @@ stages:
         dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
         tags: | 
               django5_latest
-              $(tagDate)
+              django5_$(tagDate)
         containerRegistry: DockerGitHub
         repository: ghcr.io/dbca-wa/ledger
     - task: Docker@2
