@@ -60,7 +60,7 @@ class Command(BaseCommand):
                     if oi.reference in invoice_store_obj:
                          pass
                     else:
-                        audit_totals[oi.reference] = {"oracle_total": 0, "invoice_total": 0}
+                        audit_totals[oi.reference] = {"oracle_total": 0, "invoice_total": 0, "bpoint_total": 0}
                     details_json = json.loads(oi.details)
 
                     for id_key in details_json.keys():
@@ -70,23 +70,37 @@ class Command(BaseCommand):
                         #for oracle_code_key in details_json[id_key].keys():
                         #    print (oracle_code_key)
                         #print ("INV")
-                        invoice_obj = Invoice.objects.get(reference=oi.reference)
+                        
                         #print (invoice_obj.amount)
                         #print (oracle_invoice_total)
+                    invoice_obj = Invoice.objects.get(reference=oi.reference)
+                    bpoint_payment = BpointTransaction.objects.filter(crn1=oi.reference)
+                    if bpoint_payment[0].action == 'refund':
+                        bpoint_payment_total = bpoint_payment[0].amount - bpoint_payment[0].amount - bpoint_payment[0].amount
+                    else:
+                        bpoint_payment_total = bpoint_payment[0].amount
+
                     oracle_invoice_in_decimal = D("{:.2f}".format(oracle_invoice_total))
                     audit_totals[oi.reference]["oracle_total"] = oracle_invoice_in_decimal
                     audit_totals[oi.reference]["invoice_total"] = invoice_obj.amount
+                    audit_totals[oi.reference]["bpoint_total"] = bpoint_payment_total
+                    
+
                     if oracle_invoice_in_decimal != invoice_obj.amount:
                         print ("Descrpency")
                         print (oi.reference)
                         print (audit_totals[oi.reference])
+                    if oracle_invoice_in_decimal != bpoint_payment_total:
+                        print ("Descrpency")
+                        print (oi.reference)
+                        print (audit_totals[oi.reference])                         
 
 
-                invoices = Invoice.objects.filter(settlement_date=settlement_date_search_obj,reference__startswith=oracle_system.system_id)
-                for inv in invoices:
-                    if inv.reference not in invoice_store_obj:
-                        bpoint_payment_exists = BpointTransaction.objects.filter(crn1=inv.reference).exists()
-                        print ("Not in store obj : {} {} {}".format(inv.reference, inv.amount, bpoint_payment_exists))
+                # invoices = Invoice.objects.filter(settlement_date=settlement_date_search_obj,reference__startswith=oracle_system.system_id)
+                # for inv in invoices:
+                #     if inv.reference not in invoice_store_obj:
+                #         bpoint_payment_exists = BpointTransaction.objects.filter(crn1=inv.reference).exists()
+                #         print ("Not in store obj : {} {} {}".format(inv.reference, inv.amount, bpoint_payment_exists))
                          
 
                 # print (audit_totals)
