@@ -85,7 +85,8 @@ class Command(BaseCommand):
                 invoices = Invoice.objects.filter(settlement_date=settlement_date_search_obj,reference__startswith=oracle_system.system_id)
                 for inv in invoices:
                     if inv.reference not in invoice_store_obj:
-                        print ("Not in store obj : {} {}".format(inv.reference, inv.amount))
+                        bpoint_payment_exists = BpointTransaction.objects.filter(crn1=inv.reference).exists()
+                        print ("Not in store obj : {} {} {}".format(inv.reference, inv.amount, bpoint_payment_exists))
                          
 
                 # print (audit_totals)
