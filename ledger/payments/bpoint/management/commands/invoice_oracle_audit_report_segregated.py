@@ -81,23 +81,14 @@ class Command(BaseCommand):
                         print (oi.reference)
                         print (audit_totals[oi.reference])
 
+
+                invoices = Invoice.objects.filter(settlement_date=settlement_date_search_obj,reference__startswith=oracle_system.system_id)
+                for inv in invoices:
+                    if inv.reference not in invoice_store_obj:
+                        print ("Not in store obj : {} {}".format(inv.reference, inv.amount))
+                         
+
                 # print (audit_totals)
-
-
-                # invoices = Invoice.objects.filter(settlement_date=settlement_date_search_obj, reference__startswith=oracle_system.system_id)
-                # invoices = Invoice.objects.filter(settlement_date=settlement_date_search_obj)
-
-                #linked_invoices = LinkedInvoice.objects.filter(invoice_group_id=68682).values('invoice_group_id').distinct()
-                    
-                # for inv in invoices:
-                #     print (inv.amount)
-                    # orders = Order.objects.filter(number=inv.order_number)
-                    # for o in orders:
-                    #     order_lines = OrderLine.objects.filter(order=o)
-                    #     for ol in order_lines:
-                    #         if 'order' in ol.payment_details:
-                    #             for pd_key,pd_val in ol.payment_details['order'].items():
-                    #                 linked_invoice_group_totals[li['invoice_group_id']]["oracle_order_total"] = linked_invoice_group_totals[li['invoice_group_id']]["oracle_order_total"] + D(pd_val)
 
                 # rows = []
                 # for ligt in linked_invoice_group_totals:
