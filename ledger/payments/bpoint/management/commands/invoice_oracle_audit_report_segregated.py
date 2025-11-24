@@ -95,7 +95,12 @@ class Command(BaseCommand):
                     if oracle_invoice_in_decimal != bpoint_payment_total:
                         print ("Descrpency")
                         print (oi.reference)
-                        print (audit_totals[oi.reference])                         
+                        print (audit_totals[oi.reference])                 
+
+                    if invoice_obj.amount != bpoint_payment_total:
+                        print ("Descrpency")
+                        print (oi.reference)
+                        print (audit_totals[oi.reference])                                     
 
 
                 # invoices = Invoice.objects.filter(settlement_date=settlement_date_search_obj,reference__startswith=oracle_system.system_id)
