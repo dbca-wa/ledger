@@ -75,11 +75,13 @@ class Command(BaseCommand):
                         #print (oracle_invoice_total)
                     invoice_obj = Invoice.objects.get(reference=oi.reference)
                     bpoint_payment = BpointTransaction.objects.filter(crn1=oi.reference)
-                    if bpoint_payment[0].action == 'refund':
-                        bpoint_payment_total = bpoint_payment[0].amount - bpoint_payment[0].amount - bpoint_payment[0].amount
+                    if bpoint_payment.count() > 0:
+                        if bpoint_payment[0].action == 'refund':
+                            bpoint_payment_total = bpoint_payment[0].amount - bpoint_payment[0].amount - bpoint_payment[0].amount
+                        else:
+                            bpoint_payment_total = bpoint_payment[0].amount
                     else:
-                        bpoint_payment_total = bpoint_payment[0].amount
-
+                        bpoint_payment_total = D("0.00")
                     oracle_invoice_in_decimal = D("{:.2f}".format(oracle_invoice_total))
                     audit_totals[oi.reference]["oracle_total"] = oracle_invoice_in_decimal
                     audit_totals[oi.reference]["invoice_total"] = invoice_obj.amount
