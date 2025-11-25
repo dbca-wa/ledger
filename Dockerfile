@@ -88,7 +88,8 @@ RUN cd /app/ledgergw/static/common; npm install
 RUN python manage_ledgergw.py collectstatic --noinput
 # RUN service rsyslog start
 USER root 
-RUN  rm -rf /var/lib/{apt,dpkg,cache,log}/ /tmp/* /var/tmp/*
+# RUN  rm -rf /var/lib/{apt,dpkg,cache,log}/ /tmp/* /var/tmp/*
+RUN rm -rf /tmp/* /var/tmp/*
 USER oim
 
 EXPOSE 8080

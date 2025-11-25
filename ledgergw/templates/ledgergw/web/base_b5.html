@@ -177,8 +177,12 @@
 {% endblock %}
 
 
-<div class="container">
+
+
+ 
   {% block messages %}
+  <div class="container">
+
   <BR>
   {% for message in messages %}
   <div class="alert {{ message.tags }} alert-dismissible shadow fade show" role="alert">      
@@ -186,6 +190,7 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
   {% endfor %}
+  </div>
   {% endblock %}
 
 
@@ -193,6 +198,6 @@
     {% endblock %}
 
 
-</div>
+
 </body>
 </html>
