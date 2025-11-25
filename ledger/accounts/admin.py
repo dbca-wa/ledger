@@ -10,10 +10,9 @@ from reversion.admin import VersionAdmin
 from ledger.accounts.models import EmailUser,EmailUserAction, UserAction, EmailUserChangeLog, Document, PrivateDocument, Address, Profile, Organisation, OrganisationAddress 
 from ledger.accounts.forms import ProfileAdminForm
 
-
 @admin.register(EmailUser)
 class EmailUserAdmin(UserAdmin):
-    change_list_template = "ledger/accounts/change_emailuser_list.html"
+    # change_list_template = "ledger/accounts/change_emailuser_list.html" # (disabled due to breaking styling in django admin)
 
     raw_id_fields=('identification','identification2','senior_card','senior_card2','residential_address','postal_address','billing_address',)
 

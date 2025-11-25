@@ -158,7 +158,7 @@ class AjaxFileUploader(FileInput):
     initial_text = ugettext_lazy('Currently testing')
     input_text = ugettext_lazy('Change')
     clear_checkbox_label = ugettext_lazy('Clear')
-
+    template_name = ''
     template_with_initial = (
         '%(initial_text)s: <a href="%(initial_url)s">%(initial)s</a>'
         '%(clear_template)s<br />%(input_text)s: %(input)s %(ajax_uploader)s'
@@ -166,6 +166,11 @@ class AjaxFileUploader(FileInput):
 
     template_with_clear = '%(clear)s <label for="%(clear_checkbox_id)s">%(clear_checkbox_label)s</label>'
    
+   
+    def __init__(self, attrs=None):
+        super().__init__(attrs)
+
+
     def clear_checkbox_name(self, name):
         """
         Given the name of the file input, return the name of the clear checkbox
@@ -195,14 +200,14 @@ class AjaxFileUploader(FileInput):
         #}
 
 
-    def render(self, name, value, attrs=None):
-
-        substitutions = {
+    def render(self, name, value, attrs=None, *args, **kwargs):
+        substitutions = self.get_context(name, value, attrs)
+        substitutions.update({
             'initial_text': self.initial_text,
             'input_text': self.input_text,
             'clear_template': '',
             'clear_checkbox_label': self.clear_checkbox_label,
-        }
+        })
 
         #if 'multiple' in attrs:
         #final_attrs = self.build_attrs(attrs, type=self.input_type, name=name,)
