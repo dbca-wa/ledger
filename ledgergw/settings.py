@@ -145,6 +145,9 @@ MESSAGE_TAGS = {
 MIDDLEWARE = MIDDLEWARE_CLASSES
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CSRF_TRUSTED_ORIGINS_STRING = decouple.config("CSRF_TRUSTED_ORIGINS", default='[]')
+CSRF_TRUSTED_ORIGINS = json.loads(str(CSRF_TRUSTED_ORIGINS_STRING))
+
 # settings.py
 # STORAGES = {
 #     "default": {
