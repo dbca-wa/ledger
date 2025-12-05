@@ -878,6 +878,11 @@ def get_basket_for_future_invoice(request,apikey, reference):
                              basket_id = None
                              if order_obj.count() > 0:
                                   if order_obj[0].basket:
+
+                                       if order_obj[0].basket.status == 'Open':
+                                            basket_models.Basket.objects.filter(id=order_obj[0].basket.id).update(status='Saved')
+                                            order_obj[0].basket = "Saved"                                    
+                                      
                                        if order_obj[0].basket.status == 'Saved': 
                                             basket_id = order_obj[0].basket.id
                                             basket_middleware = BasketMiddleware(None).get_basket_hash(basket_id) 
