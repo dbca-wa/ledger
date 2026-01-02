@@ -1,5 +1,5 @@
 # Prepare the base environment.
-FROM dbcawa/ledgergw:django5_latest as builder_base_ledgergwdev
+FROM ghcr.io/dbca-wa/ledger:django5_latest as builder_base_ledgergwdev
 USER root
 
 RUN apt-get update
