@@ -3,7 +3,7 @@
 # Start the first process
 # env > /etc/.cronenv
 # sed -i 's/\"/\\"/g' /etc/.cronenv
-cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 32 | head -n 1 > /app/git_hash
+openssl rand -hex 32 > /app/git_hash
 
 if [ $ENABLE_CRON == "True" ];
 then
