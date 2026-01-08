@@ -60,8 +60,7 @@ USER oim
 RUN virtualenv /app/venv
 ENV PATH=/app/venv/bin:$PATH
 COPY --chown=oim:oim requirements.txt ./
-RUN whereis python
-RUN python -V
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # COPY --chown=oim:oim libgeos.py.patch /app/
