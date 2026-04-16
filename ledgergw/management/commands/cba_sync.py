@@ -40,7 +40,7 @@ class Command(BaseCommand):
                     print ("removing "+lbf)
                     os.remove(local_bank_directory+lbf)
                 
-                result = subprocess.check_output('echo "ls '+remote_bank_directory+'" | sftp  -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -o StrictHostKeyChecking=no -i /tmp/bank.key '+sftp_username+'@'+sftp_host, shell=True, text=True)
+                result = subprocess.check_output('echo "ls '+remote_bank_directory+'" | sftp   -o Ciphers=aes256-ctr -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -o StrictHostKeyChecking=no -i /tmp/bank.key '+sftp_username+'@'+sftp_host, shell=True, text=True)
                 sftpfiles = result.split("\n")
                 for file in sftpfiles:
                     sftp_file = file.strip()
