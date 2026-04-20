@@ -300,7 +300,8 @@ def update_user_info_id(request, userid,apikey):
                             if 'postal_same_as_residential' in postal_address_obj:                                    
                                     if ledger_obj.postal_same_as_residential != postal_address_obj['postal_same_as_residential']: 
                                         models.EmailUserChangeLog.objects.create(emailuser=ledger_user[0], change_key="postal_same_as_residential", change_value="ledger_api_client_"+api_key_obj_update_key+": " +str(postal_address_obj['postal_same_as_residential']),change_by=ledger_changeuser_obj)                                   
-                                    ledger_obj.postal_same_as_residential = ledgergw_utils.remove_html_tags(postal_address_obj['postal_same_as_residential'])
+                                    if isinstance(postal_address_obj['postal_same_as_residential'], bool):
+                                        ledger_obj.postal_same_as_residential = postal_address_obj['postal_same_as_residential']
 
                             ledger_obj.postal_address.save()
                         except Exception as e:
