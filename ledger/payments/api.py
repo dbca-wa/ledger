@@ -32,6 +32,8 @@ from ledger.checkout.utils import calculate_excl_gst
 from ledger.payments import helpers
 from django.db.models import Q
 
+from ledger.basket.models import Basket
+
 from ledger.accounts.models import EmailUser
 from ledger.order import models as order_model 
 #from oscar.apps.order.models import Order
@@ -1293,8 +1295,57 @@ def FailedTransactions(request, *args, **kwargs):
             raise
 
 def TakePayment(request, *args, **kwargs):
-    print("WORK IN PROGRESS")
-    return HttpResponse("WORK IN PROGRESS", content_type='application/json')
+    try:
+        if helpers.is_payment_admin(request.user) is True:
+            print("WORK IN PROGRESS")
+
+            invoice_group_id = request.POST.get('invoice_group_id',None)
+            booking_reference = request.POST.get('booking_reference',None)
+            booking_reference_linked = request.POST.get('booking_reference_linked',None)
+            money = request.POST.get('money',[])
+
+            money_json = json.loads(money)
+
+            system_id = None
+            li = LinkedInvoice.objects.filter(booking_reference=booking_reference)
+            if li.count() > 0:
+                system_id = li[0].system_identifier.system_id 
+
+            for u in li:                    
+                iv = Invoice.objects.get(reference=u.invoice_reference)                    
+                o = Order.objects.get(number=iv.order_number)
+                if o.user:
+                    user=o.user
+                    break    
+
+            lines = []
+            for m in money_json:
+                money_total = Decimal(m['line-amount'])
+                money_tax_total = Decimal(m['line-tax']) 
+                money_tax_excl_total = money_total - money_tax_total
+
+                lines.append({'ledger_description':m['line-text'],"quantity":1,"price_incl_tax":m['line-amount'], "price_excl_tax": money_tax_excl_total,"oracle_code":m['oracle-code'], 'line_status': 1})
+
+            order = invoice_utils.create_take_payment_future_invoice(
+                request, 
+                booking_reference, 
+                lines, 
+                invoice_text=None, 
+                internal=False, 
+                order_total='0.00',
+                user=user,  
+                booking_reference_linked=booking_reference_linked, 
+                system_id=system_id
+            )
+
+            return HttpResponse("WORK IN PROGRESS", content_type='application/json')
+        else:
+            raise serializers.ValidationError('Permission Denied.')
+    except:
+        print ("ERROR Making Take Payment request")
+        print (traceback.print_exc())
+        raise
+    
 
 def RefundOracleView(request, *args, **kwargs):
         try:

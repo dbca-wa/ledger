@@ -55,6 +55,8 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
         refund_booking.var.csrf_token = '{{ csrf_token }}';
         take_payment.var.csrf_token = '{{ csrf_token }}';
 
+        take_payment.var.current_invoice_group_id = '{{ invoice_group_id }}';
+
         refund_booking.var.api_url = '/ledger/payments/api/ledger/oracle-payment-transfer';
         refund_booking.var.cash_refund_url = '/ledger/payments/api/cash.json';
         refund_booking.var.cash_payment_url = '/ledger/payments/api/cash.json';

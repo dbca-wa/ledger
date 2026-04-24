@@ -204,6 +204,23 @@ class CreateInvoiceBasket(CoreOrderCreator):
         )
 
 
+def create_take_payment_invoice(request, booking_reference, lines, invoice_text=None, user=None, booking_reference_linked=None, system_id=None):
+    basket_params = {
+        'products': lines,
+        'vouchers': [],
+        'system': system_id,
+        'custom_basket': True,
+        'booking_reference': booking_reference,
+        'booking_reference_link': booking_reference_linked,
+        'custom_basket': True,
+        'tax_override': True,
+        'line_status': True
+    }
+
+    basket, basket_hash = create_basket_session_v2(request.user.id, basket_params)
+
+    #TODO create future invoice
+
 def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=None, system_id=None):
         basket_params = {
             'products': lines,

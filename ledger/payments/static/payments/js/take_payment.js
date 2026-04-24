@@ -2,8 +2,7 @@ var take_payment =  {
      var: { 
           row_id: 0,
           total_money: parseFloat('0.00'),
-          booking_id: 0,
-          newest_booking_id: 0,
+          current_invoice_group_id: '',
           booking_reference: '',
           booking_reference_linked: '',
           csrf_token: '',
@@ -198,6 +197,7 @@ var take_payment =  {
                     data: {
                          csrfmiddlewaretoken: take_payment.var.csrf_token,
                          money: JSON.stringify(money_pool_array),
+                         invoice_group_id: take_payment.var.current_invoice_group_id,
                          booking_reference: take_payment.var.booking_reference,
                          booking_reference_linked: take_payment.var.booking_reference_linked,
                     },
