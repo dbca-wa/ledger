@@ -23,6 +23,7 @@ var ledger_payments = {
 
         },
         load_payment_info: function () {
+                console.log("load_payment_info")
                 data = {}
                 $('#LoadingPopup').modal('show');
                 $.ajax({
@@ -88,6 +89,10 @@ var ledger_payments = {
                                         refund_booking.var.invoice_group_id = data.data.invoice_group_id;                                        
                                         refund_booking.var.oracle_code_tax_status = data.data.oracle_code_tax_status;
                                         refund_booking.re_init();
+
+                                        take_payment.var.booking_reference = data.data.booking_reference;
+                                        take_payment.var.booking_reference_linked = data.data.booking_reference_linked;
+                                        take_payment.re_init();
 
                                         if (data.data.invoice_group_checks_total > 1) {
                                                 $('#oracle-payments-data-error-message').html("<B>Error</B> Linked invoice grouping issues.  Please fix before making any monetary changes or payment refunds.");

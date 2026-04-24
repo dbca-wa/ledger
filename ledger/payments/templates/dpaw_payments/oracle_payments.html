@@ -42,6 +42,7 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
 {% if system_interface_permssions.all_access is True or system_interface_permssions.view_ledger_tools is True or system_interface_permssions.manage_ledger_tool  is True %}
 
 <script src="/static/payments/js/oracle_refund.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
+<script src="/static/payments/js/take_payment.js?ver={{ settings.GIT_COMMIT_HASH }}"></script>
 <script>
 	   document.addEventListener('DOMContentLoaded', function() {
         ledger_payments.var.current_invoice_group_id = '{{ invoice_group_id }}';
@@ -49,8 +50,10 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
         ledger_payments.var.current_booking_reference = '{{ booking_reference }}';
         ledger_payments.var.receipt_no = '{{ receipt_no }}';
         ledger_payments.var.txn_number = '{{ txn_number }}'; 
+        
         ledger_payments.var.csrf_token = '{{ csrf_token }}';
         refund_booking.var.csrf_token = '{{ csrf_token }}';
+        take_payment.var.csrf_token = '{{ csrf_token }}';
 
         refund_booking.var.api_url = '/ledger/payments/api/ledger/oracle-payment-transfer';
         refund_booking.var.cash_refund_url = '/ledger/payments/api/cash.json';
@@ -76,7 +79,7 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
 
       <div class="modal-body">
         <div class="col-sm-12 col-md-12 col-lg-12">
-               <h4>To Money Pool</h4>
+               <h4>Order Lines</h4>
         </div>
 
         <div class="col-sm-12 col-md-12 col-lg-12">

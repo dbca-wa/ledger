@@ -1292,6 +1292,10 @@ def FailedTransactions(request, *args, **kwargs):
             print(traceback.print_exc())
             raise
 
+def TakePayment(request, *args, **kwargs):
+    print("WORK IN PROGRESS")
+    return HttpResponse("WORK IN PROGRESS", content_type='application/json')
+
 def RefundOracleView(request, *args, **kwargs):
         try:
            if helpers.is_payment_admin(request.user) is True:
