@@ -2,7 +2,6 @@ var take_payment =  {
      var: { 
           row_id: 0,
           total_money: parseFloat('0.00'),
-          current_invoice_group_id: '',
           booking_reference: '',
           booking_reference_linked: '',
           csrf_token: '',
@@ -161,17 +160,6 @@ var take_payment =  {
 
                $("#take-payment").show();
                $("#take-payment-wait").hide();
-               
-               //TODO validation
-               //notification_message = "WORK IN PROGRESS"
-
-               if (notification_message.length > 0) {
-                    $('#error-message').html(notification_message);
-                    $("#MessageBox").modal("show");
-                    $('#notification-body').html(notification_message);
-                    $('.modal-backdrop').show();
-                    $('#notification-box').show();
-               } 
 
                $("#money-booking").find('input').each(function() {
                     input_id = this.id;
@@ -185,40 +173,61 @@ var take_payment =  {
                               var line_text = $('#money-line-text'+rowid).val();
                               var line_tax = $('#money-line-tax'+rowid).val();
                               var line_amount = $('#money-line-amount'+rowid).val();
+                              console.log(!oracle_code)
+                              if (!oracle_code) {
+                                   notification_message = "Missing Oracle Code."
+                              }
+                              if (!line_text) {
+                                   notification_message = "Missing Line Description."
+                              }
                               money_pool_array.push({'oracle-code': oracle_code, 'line-text': line_text, 'line-amount': line_amount, 'line-tax': line_tax});
                          }
                     }
                });
 
-			$('#LoadingPopup').modal('show');
-               $.ajax({  
-                    url: "/ledger/payments/api/ledger/take-payment", //TODO add endpoint
-                    headers: {'X-CSRFToken' : take_payment.var.csrf_token },
-                    data: {
-                         csrfmiddlewaretoken: take_payment.var.csrf_token,
-                         money: JSON.stringify(money_pool_array),
-                         invoice_group_id: take_payment.var.current_invoice_group_id,
-                         booking_reference: take_payment.var.booking_reference,
-                         booking_reference_linked: take_payment.var.booking_reference_linked,
-                    },
+               if (notification_message.length > 0) {
+                    $('#error-message').html(notification_message);
+                    $("#MessageBox").modal("show");
+                    $('#notification-body').html(notification_message);
+                    $('.modal-backdrop').show();
+                    $('#notification-box').show();
+               } else {
 
-                    error: function(data) {
-                         $('#notification-body').html("There was a system error, attempting to process your request please try again later.");
-                         $('.modal-backdrop').show();
-                         $('#notification-box').show();
-                         ledger_payments.load_payment_info();
-                    },
-                    dataType: 'json',
-                    success: function(data) {
-                         $('#notification-body-success').html("Take Payment request completed successfully");
-                         $('.modal-backdrop').show();
-                         $('#notification-box-success').show();
-                         ledger_payments.load_payment_info();
-                    },
-                    type: 'post'
-               })
+                    $('#LoadingPopup').modal('show');
+                    $.ajax({  
+                         url: "/ledger/payments/api/ledger/take-payment",
+                         headers: {'X-CSRFToken' : take_payment.var.csrf_token },
+                         data: {
+                              csrfmiddlewaretoken: take_payment.var.csrf_token,
+                              money: JSON.stringify(money_pool_array),
+                              booking_reference: take_payment.var.booking_reference,
+                              booking_reference_linked: take_payment.var.booking_reference_linked,
+                         },
 
-               console.log('Take Payment Button Clicked');
+                         error: function(data) {
+                              notification_message = "There was a system error, please review your submission and try again.";
+                              $('#error-message').html(notification_message);
+                              $('#notification-body').html("There was a system error, attempting to process your request please try again later.");
+                              $("#MessageBox").modal("show");
+                              $('.modal-backdrop').show();
+                              $('#notification-box').show();
+                              ledger_payments.load_payment_info();
+                         },
+                         dataType: 'json',
+                         success: function(data) {
+                              notification_message = "Take Payment request completed successfully.";
+                              $('#success-message').html(notification_message);
+                              $('#notification-body-success').html("Take Payment request completed successfully.");
+                              $("#SuccessMessageBox").modal("show");
+                              $('.modal-backdrop').show();
+                              $('#notification-box-success').show();
+                              ledger_payments.load_payment_info();
+                         },
+                         type: 'post'
+                    })
+
+                    console.log('Take Payment Button Clicked');
+               }
           });
    	}
 }

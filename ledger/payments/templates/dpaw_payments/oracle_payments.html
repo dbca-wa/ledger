@@ -55,8 +55,6 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
         refund_booking.var.csrf_token = '{{ csrf_token }}';
         take_payment.var.csrf_token = '{{ csrf_token }}';
 
-        take_payment.var.current_invoice_group_id = '{{ invoice_group_id }}';
-
         refund_booking.var.api_url = '/ledger/payments/api/ledger/oracle-payment-transfer';
         refund_booking.var.cash_refund_url = '/ledger/payments/api/cash.json';
         refund_booking.var.cash_payment_url = '/ledger/payments/api/cash.json';
@@ -175,6 +173,29 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
   </div>
 </div>
 
+<div class="modal fade" id="SuccessMessageBox" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class='col-12'>
+            <center>
+            <i class="bi bi-check-circle-fill text-center" style='color: blue; font-size: 100px;'></i>
+            <h2 id='success-title'>Success</h2>
+            <div id='success-message'></div>
+            <br>
+            <button type="button" class="btn btn-primary" id='group-close-modal' data-bs-dismiss="modal">Close</button>
+
+                    <div class="spinner-border text-primary" role="status" style='display:none' id='peakgroup_progress_loader_create'>
+                  <span class="visually-hidden">Loading...</span>
+        </div>
+            <br>
+            <br>
+            </center>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="container" id='oracle-payments-data-error' style='display:none'>
 	<BR><BR>
@@ -200,7 +221,7 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
           <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
             <li><a class="dropdown-item" id='fix-linked-invoice-grouping-link' href="#">Fix Linked Invoice Grouping</a></li>
             <li><a class="dropdown-item" id='fix-linked-payment-issues' href="#">Payment Discrephency</a></li>
-            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#TakePayment">Take Payment - WORK IN PROGRESS</a></li>  <!--TODO make this open a modal-->          
+            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#TakePayment">Take Payment</a></li>  <!--TODO make this open a modal-->          
           </ul>
         </div>
       </div>

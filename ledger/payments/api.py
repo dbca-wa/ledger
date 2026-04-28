@@ -1297,9 +1297,6 @@ def FailedTransactions(request, *args, **kwargs):
 def TakePayment(request, *args, **kwargs):
     try:
         if helpers.is_payment_admin(request.user) is True:
-            print("WORK IN PROGRESS")
-
-            invoice_group_id = request.POST.get('invoice_group_id',None)
             booking_reference = request.POST.get('booking_reference',None)
             booking_reference_linked = request.POST.get('booking_reference_linked',None)
             money = request.POST.get('money',[])
@@ -1326,19 +1323,16 @@ def TakePayment(request, *args, **kwargs):
 
                 lines.append({'ledger_description':m['line-text'],"quantity":1,"price_incl_tax":m['line-amount'], "price_excl_tax": money_tax_excl_total,"oracle_code":m['oracle-code'], 'line_status': 1})
 
-            order = invoice_utils.create_take_payment_future_invoice(
+            json_obj = invoice_utils.create_take_payment_future_invoice(
                 request, 
                 booking_reference, 
                 lines, 
-                invoice_text=None, 
-                internal=False, 
-                order_total='0.00',
                 user=user,  
                 booking_reference_linked=booking_reference_linked, 
                 system_id=system_id
             )
 
-            return HttpResponse("WORK IN PROGRESS", content_type='application/json')
+            return HttpResponse(json.dumps(json_obj), content_type='application/json')
         else:
             raise serializers.ValidationError('Permission Denied.')
     except:

@@ -13,6 +13,9 @@ from ledger.accounts import models as accounts_models
 from decimal import Decimal
 import datetime
 import re
+from oscar.apps.checkout.mixins import OrderPlacementMixin
+from oscar.apps.shipping.methods import NoShippingRequired
+from oscar.apps.checkout.calculators import OrderTotalCalculator
 
 Order = get_model('order', 'Order')
 Line = get_model('order', 'Line')
@@ -204,7 +207,7 @@ class CreateInvoiceBasket(CoreOrderCreator):
         )
 
 
-def create_take_payment_invoice(request, booking_reference, lines, invoice_text=None, user=None, booking_reference_linked=None, system_id=None):
+def create_take_payment_future_invoice(request, booking_reference, lines, user, booking_reference_linked=None, system_id=None):
     basket_params = {
         'products': lines,
         'vouchers': [],
@@ -213,13 +216,48 @@ def create_take_payment_invoice(request, booking_reference, lines, invoice_text=
         'booking_reference': booking_reference,
         'booking_reference_link': booking_reference_linked,
         'custom_basket': True,
-        'tax_override': True,
         'line_status': True
     }
 
-    basket, basket_hash = create_basket_session_v2(request.user.id, basket_params)
+    if not user:
+        user = request.user
 
-    #TODO create future invoice
+    basket, _ = create_basket_session_v2(user.id, basket_params)
+    
+    basket_id = basket.id
+    invoice_text = "Take Payment Request"
+    invoice_name = user.get_full_name() if user else None
+
+    basket_obj = models.Basket.objects.filter(id=basket_id)
+    if basket_obj.count() > 0:
+        get_basket = models.Basket.objects.get(id=basket_id)
+    
+    shipping_method = NoShippingRequired()
+    shipping_charge = shipping_method.calculate(get_basket)
+
+    otc = OrderTotalCalculator()
+    order_total = otc.calculate(get_basket, shipping_charge)
+    opm = OrderPlacementMixin()
+    order_number = opm.generate_order_number(get_basket)
+    opm.place_order(order_number, get_basket.owner, get_basket, None, shipping_method, shipping_charge, order_total, billing_address=None)
+    get_basket.status = 'Saved'
+    get_basket.save()
+    
+    crn_string = '{0}{1}'.format(systemid_check(get_basket.system),order_number)
+    invoice = invoice_facade.create_invoice_crn(
+        order_number,
+        order_total.incl_tax,
+        crn_string,
+        get_basket.system,
+        invoice_text,
+        None,
+        invoice_name,
+        due_date=None
+    )
+
+    LinkedInvoiceCreate(invoice, get_basket.id)
+
+    return {'order': order_number, 'basket_id': get_basket.id, 'invoice': invoice.reference}
 
 def allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=None, booking_reference_linked=None, system_id=None):
         basket_params = {
