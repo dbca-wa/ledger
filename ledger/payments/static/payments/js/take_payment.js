@@ -215,7 +215,8 @@ var take_payment =  {
                          },
                          dataType: 'json',
                          success: function(data) {
-                              notification_message = "Take Payment request completed successfully.";
+                              console.log(data)
+                              notification_message = "Take Payment request completed successfully. Invoice Ref: "+data.invoice;
                               $('#success-message').html(notification_message);
                               $('#notification-body-success').html("Take Payment request completed successfully.");
                               $("#SuccessMessageBox").modal("show");
