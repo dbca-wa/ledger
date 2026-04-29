@@ -215,7 +215,7 @@ var take_payment =  {
                          },
                          dataType: 'json',
                          success: function(data) {
-                              notification_message = "Take Payment request completed successfully. Invoice Ref: "+data.invoice;
+                              notification_message = "Take Payment request completed successfully. Invoice Ref: "+data.invoice+". Redirecting to Email Invoice page...";
                               $('#success-message').html(notification_message);
                               $('#notification-body-success').html("Take Payment request completed successfully.");
                               $("#SuccessMessageBox").modal("show");
@@ -224,7 +224,12 @@ var take_payment =  {
                               ledger_payments.load_payment_info();
 
                               //redirect to invoice email form
-                              //window.location.href =
+                              if (data.invoice) {
+                                   setTimeout(
+                                   function () {window.location.href = "/ledger/payments/invoice/email?invoice_no="+data.invoice},
+                                   5000,
+                                   )
+                              }
                          },
                          type: 'post'
                     })
