@@ -1,5 +1,9 @@
 {%  extends 'dpaw_payments/emails/base.txt' %}
 
 {% block content %}
-Work in progress
+Please find attached a copy of invoice {{reference}}.
+
+Outstanding payment due is ${{payment_due|floatformat:2}}.
+
+Payment can be made here {{payment_link}}.
 {% endblock %}

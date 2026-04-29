@@ -24,15 +24,24 @@ def send_invoice_order_email(invoice,email,payment_link=None):
     email_obj.html_template = 'dpaw_payments/emails/invoice_order.html'
     email_obj.txt_template = 'dpaw_payments/emails/invoice_order.txt'
 
-    #TODO email template details
-    #TODO attach invoice
+    attachments = []
+    try:
+        from ledger.payments.pdf import create_invoice_pdf_bytes
+        invoice_pdf = create_invoice_pdf_bytes('invoice.pdf',invoice)
+        attachment = ('invoice#{}.pdf'.format(invoice.reference), invoice_pdf, 'application/pdf')
+        attachments.append(attachment)
+    except Exception as e:
+        print(e)
+        
     #TODO provide payment link
 
     if email:
         context = {
             'reference': invoice.reference,
+            'payment_due': invoice.balance,
+            'payment_link': "",
         }
-        email_obj.send([email], from_address=ledger_email, context=context) 
+        email_obj.send([email], from_address=ledger_email, context=context, attachments=attachments) 
 
 def send_refund_email(invoice,refund_type,amount,card_ending=None):
     if refund_type == 'card;' and not card_ending:
