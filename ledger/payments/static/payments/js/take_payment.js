@@ -226,7 +226,11 @@ var take_payment =  {
                               //redirect to invoice email form
                               if (data.invoice) {
                                    setTimeout(
-                                   function () {window.location.href = "/ledger/payments/invoice/email?invoice_no="+data.invoice},
+                                   function () {
+                                        $('#notification-box-success').hide();
+                                        $("#SuccessMessageBox").modal("hide");
+                                        window.location.href = "/ledger/payments/invoice/email?invoice_no="+data.invoice
+                                   },
                                    5000,
                                    )
                               }

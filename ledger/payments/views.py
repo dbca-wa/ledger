@@ -29,7 +29,8 @@ from django.db.models import Q
 from decimal import Decimal as D
 from django.db.models import Count
 from ledger.payments.invoice import utils as invoice_utils
-#
+from ledger.payments.emails import send_invoice_order_email
+
 from confy import env
 from datetime import datetime
 #
@@ -97,9 +98,11 @@ class InvoiceEmail(generic.TemplateView):
                 return self.render_to_response(context)
 
             try:
-                pass
-                #TODO email func call here
-            except:
+                invoice_no = request.GET.get('invoice_no','')
+                invoice = get_object_or_404(Invoice, reference=invoice_no)
+                send_invoice_order_email(invoice,email)
+            except Exception as e:
+                print(e)
                 context["message"] = "System encountered an error while attempting to send the requested email, please try again later"
                 context["error"] = True 
                 return self.render_to_response(context)

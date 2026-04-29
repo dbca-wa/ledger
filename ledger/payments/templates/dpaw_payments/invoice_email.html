@@ -62,7 +62,7 @@
         <div class="col-sm-3">Payment Status:</div><div class="col-sm-3">{{invoice.payment_status}}</div>
     </div>
 
-    {% if not invoice.voided %}
+    {% if not invoice.voided and invoice.payment_status != 'paid' and invoice.payment_status != 'over_paid' %}
     <div class="row">
         <h5>Email Invoice</h5>
         <form id="email_invoice_form" method="POST">
