@@ -72,7 +72,7 @@ class InvoiceEmail(generic.TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super(InvoiceEmail,self).get_context_data(**kwargs)
-        if helpers.is_payment_admin(self.request.user) is True:
+        if helpers.is_payment_admin(self.request.user):
             invoice_no = self.request.GET.get('invoice_no','')
             invoice = get_object_or_404(Invoice, reference=invoice_no)
             ctx['invoice'] = invoice
@@ -82,29 +82,29 @@ class InvoiceEmail(generic.TemplateView):
     
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
+        if helpers.is_payment_admin(self.request.user):
+            email = request.POST.get('email','')
 
-        email = request.POST.get('email','')
+            if not email:
+                context["message"] = "Valid email address not provided"
+                context["error"] = True 
+                return self.render_to_response(context)
+            
+            email_user_qs = accounts_models.EmailUser.objects.filter(email__iexact=email)
+            if not email_user_qs.exists():
+                context["message"] = "Provided email address not available among existing user records"
+                context["error"] = True 
+                return self.render_to_response(context)
 
-        if not email:
-            context["message"] = "Valid email address not provided"
-            context["error"] = True 
-            return self.render_to_response(context)
-        
-        email_user_qs = accounts_models.EmailUser.objects.filter(email__iexact=email)
-        if not email_user_qs.exists():
-            context["message"] = "Provided email address not available among existing user records"
-            context["error"] = True 
-            return self.render_to_response(context)
+            try:
+                pass
+                #TODO email func call here
+            except:
+                context["message"] = "System encountered an error while attempting to send the requested email, please try again later"
+                context["error"] = True 
+                return self.render_to_response(context)
 
-        try:
-            pass
-            #TODO email func call here
-        except:
-            context["message"] = "System encountered an error while attempting to send the requested email, please try again later"
-            context["error"] = True 
-            return self.render_to_response(context)
-
-        context["message"] = "Invoice and payment link sent to email: {} (WORK IN PROGRESS)".format(email)
+            context["message"] = "Invoice and payment link sent to email: {} (WORK IN PROGRESS)".format(email)
         return self.render_to_response(context)
 
 class OraclePayments(generic.TemplateView):
