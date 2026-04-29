@@ -215,7 +215,6 @@ var take_payment =  {
                          },
                          dataType: 'json',
                          success: function(data) {
-                              console.log(data)
                               notification_message = "Take Payment request completed successfully. Invoice Ref: "+data.invoice;
                               $('#success-message').html(notification_message);
                               $('#notification-body-success').html("Take Payment request completed successfully.");
@@ -223,6 +222,9 @@ var take_payment =  {
                               $('.modal-backdrop').show();
                               $('#notification-box-success').show();
                               ledger_payments.load_payment_info();
+
+                              //redirect to invoice email form
+                              //window.location.href =
                          },
                          type: 'post'
                     })

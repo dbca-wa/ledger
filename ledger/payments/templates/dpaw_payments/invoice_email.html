@@ -1,0 +1,106 @@
+{% extends "ledgergw/web/base_b5.html" %}
+
+{% load static %} 
+{% load dpaw_extras %}
+{% block title %}
+
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    {% if message %}
+    {% if error %}
+    <div class="row mb-4 alert alert-danger" role="alert">
+    {{message}}
+    </div>
+    {% else %}
+    <div class="row mb-4 alert alert-primary" role="alert">
+    {{message}}
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <div class="row">
+        <h5>{{invoice.text}}</h5>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">Invoice Number:</div><div class="col-sm-3"><a target="_blank" href="/ledger/payments/invoice-pdf/{{invoice.reference}}">{{invoice.reference}}</a></div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3">Order Number:</div><div class="col-sm-3">{{invoice.order_number}}</div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-sm-3">Date:</div><div class="col-sm-3">{{invoice.created.date}}</div>
+    </div>
+
+    {% if invoice.due_date %}
+    <div class="row mb-4">
+        <div class="col-sm-3">Due Date:</div><div class="col-sm-3">{{invoice.due_date}}</div>
+    </div>
+    {% endif %}    
+
+    <div class="row">
+        <div class="col-sm-3">Total (AUD):</div><div class="col-sm-3">${{invoice.amount}}</div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3">Paid (AUD):</div><div class="col-sm-3">${{invoice.payment_amount}}</div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-sm-3">Outstanding (AUD):</div><div class="col-sm-3">${{invoice.balance}}</div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">Owner:</div><div class="col-sm-3">{{invoice.invoice_name}}</div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-sm-3">Email Address:</div><div class="col-sm-3">{{invoice.owner.email}}</div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-sm-3">Payment Status:</div><div class="col-sm-3">{{invoice.payment_status}}</div>
+    </div>
+
+    {% if not invoice.voided %}
+    <div class="row">
+        <h5>Email Invoice</h5>
+        <form id="email_invoice_form" method="POST">
+            {% csrf_token %}
+            <div class="row">
+            <div class="col-sm-3"><label class="form-label">Send invoice email to:</label></div>
+            <div class="col-sm-6"><input class="form-control" id="email" name="email" type="email" value="{{invoice.owner.email}}"/></div>
+            </div>
+            <button id="submit_button" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#confirm_modal">Send</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="confirm_modal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Invoice</h5>
+            </div>
+            <div class="modal-body">
+                <p id="confirm_text"></p>
+                <button id="ok_button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                <button id="cancel_button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById("submit_button").addEventListener("click", function () {
+  var form_email = document.getElementById("email").value;
+  document.getElementById("confirm_text").innerHTML = "Send Invoice Email to " + form_email + "?";
+});
+
+document.getElementById("ok_button").addEventListener("click", function () {
+  document.getElementById("email_invoice_form").submit();
+});
+</script>
+
+{% endblock %}

@@ -72,6 +72,7 @@ urlpatterns = [
     re_path(r'payments/oracle/payments/linked-invoice-issues/(?P<linked_invoice_group_id>\d+)/$', views.LinkedInvoiceIssue.as_view(), name='linked-invoice-issues'),
     re_path(r'payments/oracle/payments/linked-payment-issues/(?P<linked_invoice_group_id>\d+)/$', views.LinkedPaymentIssue.as_view(), name='linked-payment-issues'),
     re_path(r'payments/oracle/payments$', views.OraclePayments.as_view(), name='oracle-payments'),
+    re_path(r'payments/invoice/email$', views.InvoiceEmail.as_view(), name='invoice-email'),
     
     re_path(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
     re_path(r'payments/oracle/failed-transactions$', views.FailedTransaction.as_view(), name='failed-transactions'),
