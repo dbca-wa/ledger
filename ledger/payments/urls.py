@@ -14,6 +14,7 @@ from ledger.payments.api import (
                 ReportCreateAllocatedView,
                 LedgerPayments,
                 CheckOracleCodeView,
+                TakePayment,
                 RefundOracleView,
                 FailedTransactions,
                 FailedTransactionCompleted,
@@ -44,6 +45,7 @@ api_patterns = [
     re_path(r'api/ledger/payments-info$', LedgerPayments, name='ledger-payment-information'),
     re_path(r'api/ledger/oracle-codes-lookup$', CheckOracleCodeView, name='ledger-oracle-codes'),
     re_path(r'api/ledger/oracle-payment-transfer$', RefundOracleView, name='ledger-oracle-refunds'),
+    re_path(r'api/ledger/take-payment$', TakePayment, name='take-payment'),
     re_path(r'api/ledger/failed-transactions$', FailedTransactions, name='failed-transactions'),
     re_path(r'api/ledger/payment-totals$', PaymentTotals, name='payment-totals'),
     re_path(r'api/ledger/unpaid-invoices$', UnpaidInvoices, name='unpaid-invoices'),
@@ -70,6 +72,7 @@ urlpatterns = [
     re_path(r'payments/oracle/payments/linked-invoice-issues/(?P<linked_invoice_group_id>\d+)/$', views.LinkedInvoiceIssue.as_view(), name='linked-invoice-issues'),
     re_path(r'payments/oracle/payments/linked-payment-issues/(?P<linked_invoice_group_id>\d+)/$', views.LinkedPaymentIssue.as_view(), name='linked-payment-issues'),
     re_path(r'payments/oracle/payments$', views.OraclePayments.as_view(), name='oracle-payments'),
+    re_path(r'payments/invoice/email$', views.InvoiceEmail.as_view(), name='invoice-email'),
     
     re_path(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
     re_path(r'payments/oracle/failed-transactions$', views.FailedTransaction.as_view(), name='failed-transactions'),

@@ -1,0 +1,9 @@
+{%  extends 'dpaw_payments/emails/base.html' %}
+
+{% block content %}
+<p>Please find attached a copy of invoice {{reference}}.</p>
+
+<p>Outstanding payment due is ${{payment_due|floatformat:2}}.</p>
+
+<p>Payment can be made <a href="{{payment_link}}">here</a>.</p>
+{% endblock %}
