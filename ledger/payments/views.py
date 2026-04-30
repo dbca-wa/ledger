@@ -33,8 +33,9 @@ from ledger.payments.emails import send_invoice_order_email
 
 from confy import env
 from datetime import datetime
-#
-
+from ledger.api import models as ledgerapi_models
+from ledger.api import utils as ledgerapi_utils
+from django.core.exceptions import PermissionDenied
 
 class InvoicePDFView(InvoiceOwnerMixin,generic.View):
     def get(self, request, *args, **kwargs):
@@ -438,38 +439,50 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
                 pass
         return ctx
 
-#TODO check key
 class RefundPaymentView(generic.TemplateView):
     template_name = 'checkout/refund_payment_api_wrapper.html'
 
     def get(self, request, *args, **kwargs):
-         basket = None
-         basket_hash = request.COOKIES.get('ledgergw_basket','')
-         basket_hash_split = basket_hash.split("|")
-         basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
-         return render(request, self.template_name, {'basket': basket})
 
-#TODO check key
+        apikey = request.COOKIES.get('LEDGER_API_KEY','')
+        if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+            if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+                basket = None
+                basket_hash = request.COOKIES.get('ledgergw_basket','')
+                basket_hash_split = basket_hash.split("|")
+                basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
+                return render(request, self.template_name, {'basket': basket})
+        raise PermissionDenied
+
 class ZeroPaymentView(generic.TemplateView):
     template_name = 'checkout/zero_payment_api_wrapper.html'
 
     def get(self, request, *args, **kwargs):
-         basket = None
-         basket_hash = request.COOKIES.get('ledgergw_basket','')
-         basket_hash_split = basket_hash.split("|")
-         basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
-         return render(request, self.template_name, {'basket': basket})
 
-#TODO check key
+        apikey = request.COOKIES.get('LEDGER_API_KEY','')
+        if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+            if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+                basket = None
+                basket_hash = request.COOKIES.get('ledgergw_basket','')
+                basket_hash_split = basket_hash.split("|")
+                basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
+                return render(request, self.template_name, {'basket': basket})
+        raise PermissionDenied
+
 class NoPaymentView(generic.TemplateView):
     template_name = 'checkout/no_payment_api_wrapper.html'
 
     def get(self, request, *args, **kwargs):
-         basket = None
-         basket_hash = request.COOKIES.get('ledgergw_basket','')
-         basket_hash_split = basket_hash.split("|")
-         basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
-         return render(request, self.template_name, {'basket': basket})
+         
+        apikey = request.COOKIES.get('LEDGER_API_KEY','')
+        if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+            if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+                basket = None
+                basket_hash = request.COOKIES.get('ledgergw_basket','')
+                basket_hash_split = basket_hash.split("|")
+                basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
+                return render(request, self.template_name, {'basket': basket})
+        raise PermissionDenied
 
 class PaymentTotals(generic.TemplateView):
     template_name = 'dpaw_payments/payment_totals.html'
