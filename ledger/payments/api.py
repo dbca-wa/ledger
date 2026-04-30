@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 # from django.core.urlresolvers import reverse
 from django.urls import reverse
 from wsgiref.util import FileWrapper
-from rest_framework import viewsets, serializers, status, generics, views
+from rest_framework import viewsets, serializers, status, generics, views, mixins
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication
@@ -44,6 +44,8 @@ from confy import env
 from datetime import datetime
 import traceback
 import six
+
+from ledger.payments.permissions import PaymentAdminPermission
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
@@ -113,6 +115,7 @@ class BpayTransactionViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = (
         '=crn',
     )
+    permission_classes = [PaymentAdminPermission]
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -188,6 +191,7 @@ class BpayCollectionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = BpayCollectionSerializer
     renderer_classes = (JSONRenderer,)
     lookup_field = 'created'
+    permission_classes = [PaymentAdminPermission]
 
     def retrieve(self, request, created=None, format=None):
         try:
@@ -205,6 +209,7 @@ class BpayFileList(viewsets.ReadOnlyModelViewSet):
     queryset = BpayFile.objects.all()
     serializer_class = BpayFileSerializer
     renderer_classes = (JSONRenderer,)
+    permission_classes = [PaymentAdminPermission]
 
 #######################################################
 #                                                     #
@@ -257,10 +262,11 @@ class AmountSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
     details = serializers.CharField(trim_whitespace=True)
 
-class BpointTransactionViewSet(viewsets.ModelViewSet):
+class BpointTransactionViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     queryset = BpointTransaction.objects.all()
     serializer_class = BpointTransactionSerializer
     renderer_classes = (JSONRenderer,)
+    permission_classes = [PaymentAdminPermission]
 
     def create(self,request):
         pass
@@ -344,6 +350,7 @@ class BpointPaymentCreateView(generics.CreateAPIView):
     '''
     serializer_class = BpointPaymentSerializer
     renderer_classes = (JSONRenderer,)
+    #TODO check usage, add permission (may not be required)
 
     class Bankcard(object):
         def __init__(self,number,cvn,expiry,name=None):
@@ -471,7 +478,7 @@ class CashSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('details are required for a refund')
         return data
 
-class CashViewSet(viewsets.ModelViewSet):
+class CashViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     '''Used to create a cash payment using the api:
         Example of json request:
         {
@@ -484,6 +491,7 @@ class CashViewSet(viewsets.ModelViewSet):
     '''
     queryset = CashTransaction.objects.all()
     serializer_class = CashSerializer
+    permission_classes = [PaymentAdminPermission]
 
     def create(self,request,format=None):
         try:
@@ -629,7 +637,7 @@ class BpayLinkSerializer(serializers.Serializer):
 
         return val
 
-class InvoiceTransactionViewSet(viewsets.ModelViewSet):
+class InvoiceTransactionViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceTransactionSerializer
     lookup_field = 'reference'
@@ -1167,7 +1175,7 @@ def UnpaidInvoices(request, *args, **kwargs):
         ois = OracleInterfaceSystem.objects.filter(system_id=system_id) 
         if ois.count() > 0:
             ois_permissions = OracleInterfacePermission.objects.filter(system=ois[0],email=request.user.email)   
-            
+            #TODO check ois_permissions
             query = Q()
             pagestart = int(request.GET.get('pagestart',0))
             pageend = int(request.GET.get('pageend',10))                       

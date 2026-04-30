@@ -438,6 +438,7 @@ class InvoicePaymentView(InvoiceOwnerMixin,generic.TemplateView):
                 pass
         return ctx
 
+#TODO check key
 class RefundPaymentView(generic.TemplateView):
     template_name = 'checkout/refund_payment_api_wrapper.html'
 
@@ -448,6 +449,7 @@ class RefundPaymentView(generic.TemplateView):
          basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
          return render(request, self.template_name, {'basket': basket})
 
+#TODO check key
 class ZeroPaymentView(generic.TemplateView):
     template_name = 'checkout/zero_payment_api_wrapper.html'
 
@@ -458,6 +460,7 @@ class ZeroPaymentView(generic.TemplateView):
          basket = basket_models.Basket.objects.get(id=basket_hash_split[0])
          return render(request, self.template_name, {'basket': basket})
 
+#TODO check key
 class NoPaymentView(generic.TemplateView):
     template_name = 'checkout/no_payment_api_wrapper.html'
 
