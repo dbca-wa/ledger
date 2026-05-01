@@ -4,7 +4,7 @@ MAINTAINER asi@dbca.wa.gov.au
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Australia/Perth
-ENV PRODUCTION_EMAIL=True
+ENV PRODUCTION_EMAIL=False
 ENV SECRET_KEY="ThisisNotRealKey"
 
 # # Use Australian Mirrors
