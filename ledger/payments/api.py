@@ -350,7 +350,6 @@ class BpointPaymentCreateView(generics.CreateAPIView):
     '''
     serializer_class = BpointPaymentSerializer
     renderer_classes = (JSONRenderer,)
-    #TODO check usage, add permission (may not be required)
 
     class Bankcard(object):
         def __init__(self,number,cvn,expiry,name=None):
@@ -1175,7 +1174,7 @@ def UnpaidInvoices(request, *args, **kwargs):
         ois = OracleInterfaceSystem.objects.filter(system_id=system_id) 
         if ois.count() > 0:
             ois_permissions = OracleInterfacePermission.objects.filter(system=ois[0],email=request.user.email)   
-            #TODO check ois_permissions
+            #TODO check ois_permissions (to be discussed)
             query = Q()
             pagestart = int(request.GET.get('pagestart',0))
             pageend = int(request.GET.get('pageend',10))                       
