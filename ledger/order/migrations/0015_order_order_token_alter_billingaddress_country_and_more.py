@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0040_alter_address_id_and_more'),
+        ('accounts', '0041_alter_address_id_and_more'),
         ('address', '0006_alter_useraddress_country_alter_useraddress_id_and_more'),
         ('customer', '0005_alter_communicationeventtype_id_alter_email_id_and_more'),
         ('order', '0014_auto_20230105_1730'),

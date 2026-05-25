@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0040_alter_address_id_and_more'),
+        ('accounts', '0041_alter_address_id_and_more'),
         ('basket', '0024_auto_20230105_1729'),
         ('catalogue', '0014_auto_20210104_1151'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

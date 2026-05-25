@@ -21,6 +21,9 @@ class Basket(CoreAbstractBasket):
     notification_completed = models.BooleanField(default=False,null=True, blank=True)
     organisation = models.ForeignKey(Organisation, null=True,blank=True, related_name='basket_organisation', on_delete=models.DO_NOTHING)
     basket_token = models.CharField(_("Basket Token"), max_length=1024,null=True,blank=True)
+    invoice_name = models.CharField(max_length=255, blank=True,null=True, default='', help_text="Is used to override the customer account name.")
+    invoice_text = models.TextField(null=True,blank=True)
+
 
     def all_lines(self):
         """

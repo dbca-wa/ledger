@@ -819,26 +819,11 @@ class ProcessPaymentHPPView(views.APIView):
                         pass
                     else:
                         raise ValueError("Basket status is not valid")
-                    
-                    
 
-                    print ("DDF")
-                    # print (basket_id)
-                    print (basket)
-                    print ("TOTALS")
+
                     basket_total = str(basket.total_incl_tax).replace(".","")
-                    print (basket_total)
-                    # OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
-                    # order_number = OrderNumberGenerator().order_number(basket)
-                    # # order_number = self.generate_order_number(basket)
-                    # checkout_session.set_order_number(order_number)
-                    # print ("OOOR")
-                    # print (order_number)
-                    
-                    # order_obj = Order.objects.get(basket_id=basket_id)
-                    # print (order_obj)
-                # except (BadSignature, Basket.DoesNotExist):
-                #     request.cookies_to_delete.append(cookie_key)
+
+
                 except Exception as e:
                     print (e)
 
@@ -969,12 +954,13 @@ class ProcessPaymentHPPView(views.APIView):
                                     # "returnBarLabel": "Go Back",
                                     # "returnBarUrl": "https://xxx.dbca.wa.gov.au/api/test",
                                     "webhook": {
-                                        "url": "https://xxx.dbca.wa.gov.au/ledger/payments/api/test?version=8",                                        
+                                        "url": settings.BPOINT_WEBHOOK_URL+"/ledger/payments/api/bpoint-webhook/payment-success/{}/".format(basket.basket_token),                                        
                                         "version": "5"
-                                        }
+                                        } 
                                     }
+                            
                                 resp = requests.put(attach_hpp_config_url, headers=headers, data=json.dumps(payload), timeout=30)
-                                print (resp.text)
+                             
                                 try:
                                     data = resp.json()
                                 except Exception:

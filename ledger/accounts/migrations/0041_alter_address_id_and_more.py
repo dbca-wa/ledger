@@ -9,10 +9,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0039_auto_20241021_1023'),
+        ('accounts', '0040_4_remove_ps_test_view'),
     ]
-
-    operations = [
+   
+    operations = [               
         migrations.AlterField(
             model_name='address',
             name='id',

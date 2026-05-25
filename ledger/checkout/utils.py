@@ -47,6 +47,8 @@ def create_basket_session_v2(emailuser_id, parameters):
     booking_reference = None
     booking_reference_link = None
     organisation_id=None
+    invoice_name=None
+    invoice_text=None
 
     if 'booking_reference' in parameters:
         booking_reference = serializer.validated_data['booking_reference']
@@ -56,6 +58,12 @@ def create_basket_session_v2(emailuser_id, parameters):
 
     if 'organisation' in parameters:
         organisation_id = serializer.validated_data['organisation']
+
+    if 'invoice_name' in parameters:
+        invoice_name = serializer.validated_data['invoice_name']        
+
+    if 'invoice_text' in parameters:
+        invoice_text = serializer.validated_data['invoice_text']           
 
     # validate product list
     if custom:
@@ -78,7 +86,7 @@ def create_basket_session_v2(emailuser_id, parameters):
         if custom:
             basket = createCustomBasketv2(serializer.validated_data['products'],
                                         user_obj, serializer.validated_data['system'],
-                                        serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link, organisation_id, ledger_product_custom_fields)
+                                        serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link, organisation_id, invoice_name, invoice_text,  ledger_product_custom_fields)
         else:
             basket = createBasket(serializer.validated_data['products'], user_obj,
                                     serializer.validated_data['system'],
@@ -86,7 +94,7 @@ def create_basket_session_v2(emailuser_id, parameters):
     else:
         if custom:
             basket = createCustomBasketv2(serializer.validated_data['products'],
-                                        user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link, organisation_id, ledger_product_custom_fields)
+                                        user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link, organisation_id, invoice_name, invoice_text, ledger_product_custom_fields)
         else:
             basket = createBasket(serializer.validated_data['products'],
                                     user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link, organisation_id)
@@ -579,7 +587,7 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         if ledger_product_custom_fields:
                 ledger_product_default_fields = ledger_product_custom_fields
 
-        for p in product_list:            
+        for p in product_list:                   
             if not all(d in p for d in ledger_product_default_fields):
                 raise ValidationError('Please make sure that the product format is valid')
 
@@ -612,7 +620,7 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
 
 
 
-def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None,organisation_id=None, ledger_product_custom_fields=None):
+def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=True, booking_reference=None, booking_reference_link=None,organisation_id=None, invoice_name=None, invoice_text=None, ledger_product_custom_fields=None):
     ''' Create a basket so that a user can check it out.
         @param product_list - [
             {
@@ -656,6 +664,9 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
         basket.booking_reference = booking_reference
         basket.booking_reference_link = booking_reference_link
         basket.basket_token = secrets.token_hex(20)
+        basket.invoice_name = invoice_name
+        basket.invoice_text = invoice_text
+
         if organisation_id:
             try:
                org_obj = Organisation.objects.get(id=organisation_id)
@@ -679,6 +690,9 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
                 ledger_product_default_fields = ledger_product_custom_fields
 
         for p in product_list:
+            print ("DEGF")
+            print (ledger_product_default_fields)
+            print (p)
             if not all(d in p for d in ledger_product_default_fields):                
                 raise ValidationError('Please make sure that the product format is valid')
             if ledger_product_custom_fields:

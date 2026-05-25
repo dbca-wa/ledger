@@ -5,6 +5,7 @@ from django.db import models,transaction
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from ledger.payments.bpoint import settings as bpoint_settings
+from ledger.payments.bpoint.BPOINT_V5 import Request as BpointRequest
 # from django.utils.encoding import python_2_unicode_compatible
 # from oscar.apps.order.models import Order
 from ledger.order.models import Order
@@ -175,6 +176,60 @@ class BpointTransaction(models.Model):
                 None,
                 replay=True
             )
+
+    def refund_bpointv5(self,info,user,matched=True):                
+        from ledger.payments.models import TrackRefund, Invoice, OracleInterfaceSystem
+        
+        LEDGER_REFUND_EMAIL = env('LEDGER_REFUND_EMAIL', False)
+        LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE =env('LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE', '')
+        crn_number = self.crn1[:4]
+
+        ois = OracleInterfaceSystem.objects.get(system_id=crn_number)
+        
+            
+
+        with transaction.atomic():
+            amount = info['amount']
+            details = info['details']
+            try:
+                txn = None
+                print ("5.0")
+                if ois.integration_type == 'bpoint_api':                    
+                    if self.action == 'payment' or self.action == 'capture':
+                        if amount <= self.refundable_amount:
+
+                            print ("5.1")
+                            txn = BpointRequest.refund_transaction(ois,self.txn_number,str(amount),self.crn1)
+                            print (txn)
+                            print ("5.2")
+                            if txn.approved:                                                     
+                                    print ("5.3")
+                                    TrackRefund.objects.create(user=user,type=2,refund_id=txn.id,details=details)
+                                    if len(LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE) != 0:
+                                        try:
+                                            ltc = LEDGER_REFUND_TRANSACTION_CALLBACK_MODULE.split(":")
+                                            exec('import '+str(ltc[0]))
+                                            exec(ltc[1]+"('"+self.crn1+"',"+str(self.id)+")")
+                                        except Exception as e:
+                                            print (e) 
+
+                                    if LEDGER_REFUND_EMAIL is True:
+                                        # Disabled as requested by Walter and then enabled again for parkstay
+                                        send_refund_email(Invoice.objects.get(reference=self.crn1),'card',txn.amount,card_ending=self.last_digits)
+                                        pass
+                            else:
+                                raise ValidationError('A refund cannot be made to an unnapproved tranascation.')
+                        else:
+                            raise ValidationError('The refund amount is greater than the amount refundable on this card.')
+
+                    else:
+                        raise ValidationError('The transaction has to be either a payment or capture in order to make a refund.')
+                    return txn 
+            except:
+                raise
+
+
+
 
     def refund(self,info,user,matched=True):
         from ledger.payments.facade import bpoint_facade 
