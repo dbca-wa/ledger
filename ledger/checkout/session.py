@@ -6,7 +6,6 @@ from django.contrib import messages
 from oscar.core.loading import get_class
 from decimal import Decimal as D
 
-
 CoreCheckoutSessionMixin = get_class('checkout.session', 'CheckoutSessionMixin')
 
 class CheckoutSessionMixin(CoreCheckoutSessionMixin):

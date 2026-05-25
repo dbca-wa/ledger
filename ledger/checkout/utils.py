@@ -11,13 +11,14 @@ from ledger.checkout import serializers
 from ledger.catalogue.models import Product
 from ledger.basket.models import Basket
 from ledger.basket.middleware import BasketMiddleware
-from ledger.payments.models import Invoice
+from ledger.payments.models import Invoice, OracleInterfaceSystem
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
 from django.core.signing import BadSignature, Signer
 from django.core.exceptions import ValidationError
 from confy import env
 import os
+import secrets
 
 Selector = get_class('partner.strategy', 'Selector')
 selector = Selector()
@@ -83,19 +84,13 @@ def create_basket_session_v2(emailuser_id, parameters):
                                     serializer.validated_data['system'],
                                     serializer.validated_data['vouchers'],True,booking_reference, booking_reference_link, organisation_id)
     else:
-        print ("CREATE BASKET")
         if custom:
-            print ("CREATE BASKET 1.2")
             basket = createCustomBasketv2(serializer.validated_data['products'],
                                         user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link, organisation_id, ledger_product_custom_fields)
         else:
-            print ("CREATE BASKET 1.3")
             basket = createBasket(serializer.validated_data['products'],
                                     user_obj, serializer.validated_data['system'],None,True,booking_reference, booking_reference_link, organisation_id)
 
-    print ("HAS BASKET LOADED")
-    print (basket)
-    print ("HAS BASKET LOADED 2")
     return basket, BasketMiddleware(None).get_basket_hash(basket.id)
 
 
@@ -181,20 +176,24 @@ def get_cookie_basket(cookie_key,request):
 def create_checkout_session(request, parameters):
     #print (parameters['user_logged_in'])
     serializer = serializers.CheckoutSerializer(data=parameters)
+
     try:
         serializer.is_valid(raise_exception=True)
     except Exception as e:
         raise ValidationError(str(e))
     try:
-        print ("checkout.utils.create_checkout_session")
         session_data = CheckoutSessionData(request)
-        print (session_data)
-        print (serializer.validated_data['basket_owner'] )
+        ois = OracleInterfaceSystem.objects.filter(system_id=serializer.validated_data.get('system').replace("S", "0"))
+        if ois.count() == 0:
+             raise ValidationError("Unable to find system")
+
     except Exception as e:
         raise ValidationError(str(e))
     # reset method of payment when creating a new session
     session_data.pay_by(None)
     session_data.use_system(serializer.validated_data['system'])
+    session_data.use_payment_gateway_type(ois[0].payment_gateway_type)
+    
     session_data.charge_by(serializer.validated_data['card_method'])
     session_data.use_shipping_method(serializer.validated_data['shipping_method'])
     session_data.owned_by(serializer.validated_data['basket_owner'])
@@ -285,14 +284,20 @@ class CheckoutSessionData(CoreCheckoutSessionData):
     def custom_template(self):
         return self._get('ledger','custom_template_url')
 
+    # PAYMENT GATEWAY TYPE
+    # ===========================
+    def use_payment_gateway_type(self, payment_gateway_type):
+        self._set('ledger','payment_gateway_type',payment_gateway_type)
+        
+    def payment_gateway_type(self):              
+        return self._get('ledger','payment_gateway_type')
+
     # System Methods
     # ===========================
     def use_system(self, system_id):
         self._set('ledger','system_id',system_id)
         
-    def system(self):
-        print ("GET SYSTEM")
-        
+    def system(self):              
         return self._get('ledger','system_id')
     
     # BPAY Methods
@@ -552,6 +557,7 @@ def createCustomBasket(product_list, owner, system,vouchers=None, force_flush=Tr
         basket.strategy = selector.strategy(user=owner)
         basket.booking_reference = booking_reference
         basket.booking_reference_link = booking_reference_link
+        basket.basket_token = secrets.token_hex(20)
         if organisation_id:
             try:
                org_obj = Organisation.objects.get(id=organisation_id)
@@ -616,7 +622,6 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
         ]
         @param - owner (user id or user object)
     '''
-    print ("HERE 1")
     #import pdb; pdb.set_trace()
     try:
         print ("createCustomBasketv2 1.0")
@@ -650,6 +655,7 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
         basket.strategy = selector.strategy(user=owner)
         basket.booking_reference = booking_reference
         basket.booking_reference_link = booking_reference_link
+        basket.basket_token = secrets.token_hex(20)
         if organisation_id:
             try:
                org_obj = Organisation.objects.get(id=organisation_id)
@@ -686,7 +692,6 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
         print ("createCustomBasketv2 12.0")
         # Save the basket
         basket.save()
-        print (basket)
         # Add the valid products to the basket
         for p in product_list:
             basket.addNonOscarProduct(p)
@@ -697,8 +702,6 @@ def createCustomBasketv2(product_list, owner, system,vouchers=None, force_flush=
             for v in vouchers:
                 basket.vouchers.add(Voucher.objects.get(code=v["code"]))
             basket.save()
-        print ("createCustomBasketv2 13.0")
-        print (basket)
         return basket
     except Product.DoesNotExist:
         print ("Product Does Not Exist")

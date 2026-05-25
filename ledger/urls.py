@@ -20,12 +20,14 @@ from django.views.generic import TemplateView
 from oscar.app import application
 from ledger import views
 from ledger import uploads
+from ledger.checkout import views as checkout_views
 
 urlpatterns = [
     #url(r'^ledger/admin/', admin.site.urls, name='ledger_admin'),
     re_path(r'^ledger/', include('ledger.accounts.urls')),
     re_path(r'^ledger/', include('ledger.payments.urls')),
     # url(r'^ledger/', include('social_django.urls', namespace='social')),
+    re_path(r'^ledger/checkout/payment-details-hpp/', checkout_views.ProcessPaymentHPPView.as_view()),
     re_path(r'^ledger/checkout/', application.urls),
     re_path(r'^ledger-uploads/$', uploads.PrivateMediaUploads, name='private_media_uploads'),
     re_path(r'^private-media/view/(?P<file_id>\d+)-(\w+).(?P<extension>\w\w\w)$', views.getAppFile, name='view_private_ledger_file'),

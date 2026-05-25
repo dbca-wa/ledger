@@ -20,7 +20,8 @@ from ledger.payments.api import (
                 FailedTransactionCompleted,
                 PaymentTotals,
                 UnpaidInvoices,
-                CancelInvoice
+                CancelInvoice,
+                BpointWebhookSuccess
                 )
 
 from ledger.payments.bpay.dashboard.app import application as bpay
@@ -53,6 +54,7 @@ api_patterns = [
     re_path(r'api/ledger/cancel-invoice$', CancelInvoice, name='cancel-invoice'),
     re_path(r'api/report-allocated$', ReportCreateAllocatedView.as_view(),name='ledger-report-allocated'),
     re_path(r'api/report$', ReportCreateView.as_view(),name='ledger-report'),
+    re_path(r'api/bpoint-webhook/payment-success/(?P<merchant_reference>[\w]+)/$', BpointWebhookSuccess.as_view(),name='bpoint-webhook-payment-success'),
     re_path(r'api/', include(router.urls)),
 ]
 

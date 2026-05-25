@@ -1,6 +1,7 @@
 import logging
 import requests
 import json
+import base64
 from requests.exceptions import HTTPError, ConnectionError
 import traceback
 from decimal import Decimal as D
@@ -30,8 +31,17 @@ from ledger.api import utils as ledgerapi_utils
 from ledger.payments.bpoint.gateway import Gateway
 from ledger.basket.models import Basket
 from ledger.basket.middleware import BasketMiddleware
+from django.urls import reverse
+from rest_framework import views
+from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
+from rest_framework.authentication import SessionAuthentication
+from rest_framework import viewsets, serializers, status, generics, views
+from django.core.signing import BadSignature, Signer
+from ledger.payments.bpay.crn import getCRN
+from ledger.order import utils  as order_utils
+from ledger.order.models import Order, Line as OrderLine
 
-Order = get_model('order', 'Order')
 CorePaymentDetailsView = get_class('checkout.views','PaymentDetailsView')
 CoreIndexView = get_class('checkout.views','IndexView')
 CoreThankYouView = get_class('checkout.views','ThankYouView')
@@ -46,6 +56,11 @@ CheckoutSessionData = get_class(
 
 # Standard logger for checkout events
 logger = logging.getLogger('oscar.checkout')
+
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return
 
 class IndexView(CoreIndexView):
 
@@ -82,6 +97,19 @@ class PaymentDetailsView(CorePaymentDetailsView):
         'check_shipping_data_is_captured'
     ]
 
+    def get_context_data(self, **kwargs):
+        print ("---------------------CONTEXT PAY 22222")
+        # Use the proposed submission as template context data.  Flatten the
+        # order kwargs so they are easily available too.
+        ctx = super(PaymentDetailsView, self).get_context_data()
+        # ctx.update(self.build_submission(**kwargs))
+        # ctx.update(kwargs)
+        # ctx.update(ctx['order_kwargs'])
+        # print (ctx['basket'].system)
+        print ("PAY")
+        print (ctx)
+        return ctx   
+
     def get_skip_conditions(self, request):
         if not self.preview:
             # Payment details should only be collected if necessary
@@ -105,8 +133,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
 
             # Check to see if payment is actually required for this order.
             shipping_address = self.get_shipping_address(request.basket)
-            shipping_method = self.get_shipping_method(
-                request.basket, shipping_address)
+            shipping_method = self.get_shipping_method(request.basket, shipping_address)
+
             if shipping_method:
                 shipping_charge = shipping_method.calculate(request.basket)
             else:
@@ -198,6 +226,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
         if self.checkout_session.get_session_type():
            ctx['session_type'] = self.checkout_session.get_session_type()
 
+        if self.checkout_session.payment_gateway_type():
+           ctx['payment_gateway_type'] = self.checkout_session.payment_gateway_type()
+
         if self.checkout_session.get_response_type():
            ctx['response_type'] = self.checkout_session.get_response_type()
 
@@ -288,7 +319,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
         if not self.checkout_session.checkout_token():
             bankcard_form = forms.BankcardForm(request.POST)
             if not bankcard_form.is_valid():
-                messages.error(request, "The was an issue with the card information provided.   Please check the details are correct and try again.")
+                messages.error(request, "There was an issue with the card information provided.   Please check the details are correct and try again.")
                 if self.request.COOKIES.get('payment_api_wrapper') == 'true':
                           return self.render_payment_message(self.request, error=None,)
                           #HttpResponse("ERROR PLEASE CHECK")
@@ -732,3 +763,243 @@ class ThankYouView(CoreThankYouView):
                 #del self.request.session['checkout_return_url']
 
         return order
+    
+
+class ProcessPaymentHPPView(views.APIView):
+    renderer_classes = (JSONRenderer,)
+    authentication_classes = (CsrfExemptSessionAuthentication,)
+
+    def get(self,request,format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            print (request.POST)                 
+            print (request.GET)  
+            return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')         
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+        
+    def post(self, request, *args, **kwargs):
+        print ("HPP Process payment")
+        basket_total = '0.00'
+        # print (request.POST)                 
+        # print (request.GET)         
+
+        try:     
+            print (request.session)
+            print (request.COOKIES.get('payment_api_wrapper'))
+            print (request.COOKIES.get('LEDGER_API_KEY'))
+
+            CheckoutSessionData = get_class('checkout.utils', 'CheckoutSessionData')
+            checkout_session = CheckoutSessionData(request)
+            print ("CC")
+            print (checkout_session)
+            # basket_id = checkout_session.get_submitted_basket_id()
+            # print (basket_id)
+
+            print ("BASKET")
+            basket = None
+            cookie_key = settings.OSCAR_BASKET_COOKIE_OPEN
+            print (cookie_key)
+            print (request.COOKIES)
+            if cookie_key in request.COOKIES:
+                basket_hash = request.COOKIES[cookie_key]
+                print ("BHASH")
+                print (basket_hash)
+                try:
+                    basket_id = Signer(sep='|').unsign(basket_hash)                   
+                    print (basket_id)
+                    basket = Basket.objects.get(
+                        pk=basket_id
+                    )
+                    print (basket.status)
+                    if basket.status == Basket.OPEN or basket.status == Basket.FROZEN:
+                        pass
+                    else:
+                        raise ValueError("Basket status is not valid")
+                    
+                    
+
+                    print ("DDF")
+                    # print (basket_id)
+                    print (basket)
+                    print ("TOTALS")
+                    basket_total = str(basket.total_incl_tax).replace(".","")
+                    print (basket_total)
+                    # OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
+                    # order_number = OrderNumberGenerator().order_number(basket)
+                    # # order_number = self.generate_order_number(basket)
+                    # checkout_session.set_order_number(order_number)
+                    # print ("OOOR")
+                    # print (order_number)
+                    
+                    # order_obj = Order.objects.get(basket_id=basket_id)
+                    # print (order_obj)
+                # except (BadSignature, Basket.DoesNotExist):
+                #     request.cookies_to_delete.append(cookie_key)
+                except Exception as e:
+                    print (e)
+
+
+            if request.COOKIES.get('payment_api_wrapper') == 'true':
+                if 'LEDGER_API_KEY' in request.COOKIES:
+                    apikey = request.COOKIES['LEDGER_API_KEY']
+                    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+                        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+                                PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE = request.POST.get('PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE','')
+                                PAYMENT_INTERFACE_SYSTEM_ID = request.POST.get('PAYMENT_INTERFACE_SYSTEM_ID','')
+                                ois = OracleInterfaceSystem.objects.get(id=int(PAYMENT_INTERFACE_SYSTEM_ID), system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)                                
+                                # bpoint_facade.gateway = Gateway(
+                                #     ois.bpoint_username,
+                                #     ois.bpoint_password,
+                                #     ois.bpoint_merchant_num,
+                                #     ois.bpoint_currency,
+                                #     ois.bpoint_biller_code,
+                                #     ois.bpoint_test,
+                                #     ois.id
+                                # )
+                                # Create and auth key 
+                                username = ois.bpoint_username
+                                password = ois.bpoint_password
+                                merchant = ois.bpoint_merchant_num
+                                biller_code = ois.bpoint_biller_code  
+                                currency = ois.bpoint_currency                          
+
+                                
+                                ci = order_utils.CreateOrderFromBasket()
+                                print ("H##12")
+                                if ois.system_id:
+                                    ci.system = ois.system_id
+                                    order_lookup = Order.objects.filter(basket_id=basket.id)
+                                    if order_lookup.count() > 0:
+                                        if Invoice.objects.filter(order_number=order_lookup[0].number).count() > 0:
+                                            pass     
+                                            # Required so we dont break invoice that generated as part of future payments
+                                            order = order_lookup[0]     
+                                        else:
+                                            # only recreate order for basket where basket data could change.  eg a booking site
+                                            OrderLine.objects.filter(order=order_lookup[0]).delete()
+                                            Order.objects.filter(basket_id=basket.id).delete()                                
+                                            order  = ci.create_order_from_basket(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=basket.owner, status='Frozen')      
+                                    else:
+                                        # no order exist,  create it
+                                        order  = ci.create_order_from_basket(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=basket.owner, status='Frozen')      
+                                crn_string = '{0}{1}'.format(systemid_check(ois.system_id),order.number)
+                                invoice_reference = getCRN(crn_string)     
+                                                                                          
+
+                                missing = [k for k,v in {
+                                    "BPOINT_USERNAME": username,
+                                    "BPOINT_PASSWORD": password,
+                                    "BPOINT_MERCHANT": merchant,
+                                    "BPOINT_BILLER_CODE": biller_code,
+                                }.items() if not v]
+                                if missing:
+                                    print(f"Missing required environment variables: {', '.join(missing)}", file=sys.stderr)
+                                    sys.exit(2)
+
+                                auth_header = self.build_basic_auth(username, merchant, password)
+
+                                authkeyurl = settings.BPOINT_HPP_BASE_URL+"/txns/authkeys"
+                                headers = {
+                                    "Authorization": auth_header,
+                                    "Content-Type": "application/json",
+                                    "Accept": "application/json",
+                                }
+
+                                payload = {}            
+                                resp = requests.post(authkeyurl, headers=headers, data=json.dumps(payload), timeout=30)
+                                print (resp.text)
+                                try:
+                                    data = resp.json()
+                                except Exception:
+                                    data = {"raw": resp.text}
+
+                                if not resp.ok:
+                                    raise RuntimeError(
+                                        f"Create Payment Request failed (HTTP {resp.status_code}): {data}"
+                                    )
+                                print (data)
+                                authkey = data.get('authkey')
+                                print (authkey)
+                                print ("BASKET TOKEN")
+                                print (basket.basket_token)
+                                print (basket.booking_reference)
+                                ## Create transaction details
+                                attachtransdetailsurl = settings.BPOINT_HPP_BASE_URL+"/txns/authkeys/{}/txn-details".format(authkey)
+                                payload ={
+                                        "action": "Payment",
+                                        "type": "Internet",
+                                        "subType": "Single",
+                                        "amount": basket_total,
+                                        "billerCode": biller_code,
+                                        "crn1" : invoice_reference,
+                                        "crn2": basket.booking_reference,                                        
+                                        "merchantReference": basket.basket_token,
+                                        "currency": currency,
+                                        "bypass3ds": False,
+                                        "tokenisationMode": "Default",
+                                        "emailAddress": basket.owner.email,
+                                        "storeCard": True,
+                                        "testMode": ois.bpoint_test,
+                                        "tokenisationMode": "OptIn" # or None when not logged in
+                                        }
+                                resp = requests.put(attachtransdetailsurl, headers=headers, data=json.dumps(payload), timeout=30)
+                                print (resp.text)
+                                try:
+                                    data = resp.json()
+                                except Exception:
+                                    data = {"raw": resp.text}
+
+                                if not resp.ok:
+                                    raise RuntimeError(
+                                        f"Create Payment Request failed (HTTP {resp.status_code}): {data}"
+                                    )
+
+                                attach_hpp_config_url = settings.BPOINT_HPP_BASE_URL+"/txns/authkeys/{}/hpp-configuration-with-webhook".format(authkey)
+                                payload ={
+                                    "redirectionUrl": "https://www.dbca.wa.gov.au/",
+                                    "tokeniseTxnCheckBoxDefaultValue": False,
+                                    "hideCRN1": True,
+                                    # "hideCRN2": False,
+                                    # "hideCRN3": False,
+                                    "hideBillerCode": True,
+                                    # "returnBarLabel": "Go Back",
+                                    # "returnBarUrl": "https://xxx.dbca.wa.gov.au/api/test",
+                                    "webhook": {
+                                        "url": "https://xxx.dbca.wa.gov.au/ledger/payments/api/test?version=8",                                        
+                                        "version": "5"
+                                        }
+                                    }
+                                resp = requests.put(attach_hpp_config_url, headers=headers, data=json.dumps(payload), timeout=30)
+                                print (resp.text)
+                                try:
+                                    data = resp.json()
+                                except Exception:
+                                    data = {"raw": resp.text}
+                            
+                                print (data)
+                                if not resp.ok:
+                                    raise RuntimeError(
+                                        f"Create Payment Request failed (HTTP {resp.status_code}): {data}"
+                                    )
+                                return Response({"hpp_redirect_url": data, "status": 200})
+            
+        except Exception as e:
+            print ("ERROR")
+            print (e)
+            # return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
+        return Response({"message": "CSRF check bypassed!", "status": 500})
+        
+
+
+    def build_basic_auth(self: object, username: str, merchant: str, password: str) -> str:
+        """
+        Build Authorization header value:
+        Basic base64("username|merchant:password")
+        """
+        raw = f"{username}|{merchant}:{password}".encode("utf-8")
+        return "Basic " + base64.b64encode(raw).decode("ascii")
+

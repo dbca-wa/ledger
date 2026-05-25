@@ -1514,3 +1514,98 @@ def RefundOracleView(request, *args, **kwargs):
            raise
 
 
+class BpointWebhookSuccess(views.APIView):
+    renderer_classes = (JSONRenderer,)
+    authentication_classes = (CsrfExemptSessionAuthentication,)
+
+    def get(self,request,format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            print (request.POST)                 
+            print (request.GET)  
+            return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')         
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+        
+    def post(self, request, *args, **kwargs):
+        print ("TEST JM")
+        # print (request.POST)                 
+        # print (request.GET)         
+
+        try:
+
+            if hasattr(request, '_body'):
+                raw_data = request._body
+            else:
+                raw_data = request.body
+                print (raw_data)
+
+            # 1. Parse the JSON payload from the request body
+            payload = json.loads(request.body.decode('utf-8'))
+            action = payload['data'].get('action')
+            txn_number = payload['data'].get('txnNumber')
+            receipt_number = payload['data'].get('receiptNumber')
+            crn1 = payload['data'].get('crn1')
+            
+            card_type = payload['data'].get('paymentMethod').get("card").get("scheme")
+            response_code = payload['data'].get('responseCode')   # "0" typically indicates a success state
+            response_text = payload['data'].get('responseText')
+            processed_date_time = payload['data'].get('processedDateTime')
+            settlement_date = payload['data'].get('settlementDate')
+            bpoint_type = payload['data'].get('type').lower()
+            dvtoken = payload['data'].get('paymentMethod').get("token")
+            settlement_date = payload['data'].get('settlementDate')
+            is_test_txn = payload['data'].get('isTestTxn')
+            
+
+            amount = payload['data'].get('amount')  
+            amount_original = payload['data'].get('amountOriginal')  
+        
+            bpoint_record = BpointTransaction.objects.filter(txn_number=txn_number)
+            if bpoint_record.count() > 0:
+                pass
+            else:
+                if response_text == "Approved":
+                    if action == 'Payment':
+                        bpoint_amount_nice1 = str(amount)[:-2]+'.'+str(amount)[-2:]
+                        bpoint_amount_original_nice1 = str(amount_original)[:-2]+'.'+str(amount_original)[-2:]
+                        card_type_prefix = None
+                        if card_type == "Mastercard":
+                            card_type_prefix = "MC"
+                        if card_type == "Visa":
+                            card_type_prefix = "VC"
+                                                
+                        processed_date_time_obj = datetime.fromisoformat(processed_date_time)
+
+                        BpointTransaction.objects.create(action='payment',
+                                                    amount=bpoint_amount_nice1,
+                                                    amount_original=bpoint_amount_original_nice1,
+                                                    cardtype=card_type_prefix,
+                                                    crn1=crn1,
+                                                    original_crn1=crn1, 
+                                                    response_code=response_code, 
+                                                    response_txt='Approved', 
+                                                    receipt_number=receipt_number, 
+                                                    processed=processed_date_time_obj, 
+                                                    settlement_date=datetime.strptime(settlement_date, "%Y%m%d").date(),
+                                                    type=bpoint_type, 
+                                                    txn_number=txn_number,
+                                                    original_txn=None,
+                                                    dvtoken=dvtoken,
+                                                    is_test=is_test_txn)                
+
+
+
+            print("START")
+            print (receipt_number)
+
+            print (payload)
+        except Exception as e:
+            print ("ERROR")
+            print (e)
+            # return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
+
+        return Response({"message": "CSRF check bypassed!"})

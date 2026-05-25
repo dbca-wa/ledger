@@ -415,7 +415,13 @@ class PaymentDetailsView(OrderPlacementMixin, generic.TemplateView):
     # details ready for submission.
     preview = False
 
-    def get_pre_conditions(self, request):
+    def get_context_data(self, **kwargs):
+        # Use the proposed submission as template context data.  Flatten the
+        # order kwargs so they are easily available too.
+        ctx = super(PaymentDetailsView, self).get_context_data()
+        return ctx    
+
+    def get_pre_conditions(self, request):        
         if self.preview:
             # The preview view needs to ensure payment information has been
             # correctly captured.
