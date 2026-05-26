@@ -21,7 +21,7 @@ from ledger.payments.bpoint.models import BpointTransaction, BpointToken
 from ledger.payments.cash.models import CashTransaction, Region, District, DISTRICT_CHOICES, REGION_CHOICES
 from ledger.payments.models import TrackRefund, LinkedInvoice, OracleAccountCode, RefundFailed, OracleInterfaceSystem, PaymentTotal, OracleInterfacePermission
 from ledger.payments import models as payment_models
-from ledger.payments.utils import systemid_check, update_payments, ledger_payment_invoice_calulations 
+from ledger.payments.utils import systemid_check, update_payments, ledger_payment_invoice_calulations,LinkedInvoiceCreate
 from ledger.payments import utils as payments_utils
 from ledger.payments.invoice import utils as invoice_utils
 from ledger.payments import models as payments_models
@@ -29,8 +29,10 @@ from ledger.payments.facade import bpoint_facade
 from ledger.payments.reports import generate_items_csv, generate_trans_csv, generate_items_csv_allocated
 from ledger.payments.emails import send_refund_email
 from ledger.checkout.utils import calculate_excl_gst
+from ledger.payments.facade import invoice_facade
 from ledger.payments import helpers
 from django.db.models import Q
+from django.utils import timezone
 
 from ledger.basket.models import Basket
 
@@ -44,6 +46,7 @@ from confy import env
 from datetime import datetime
 import traceback
 import six
+import threading
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
@@ -1428,17 +1431,21 @@ def RefundOracleView(request, *args, **kwargs):
                             #lines.append({'ledger_description':str("Temp fund transfer "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":Decimal('{:.2f}'.format(float(bp_txn['line-amount']))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
 
                             try:
-                                bpoint_money_to = (Decimal('{:.2f}'.format(float(bp_txn['line-amount']))) - Decimal('{:.2f}'.format(float(bp_txn['line-amount']))) - Decimal('{:.2f}'.format(float(bp_txn['line-amount']))))
+                                                               
+                                bpoint_money_to = (Decimal('{:.2f}'.format(float(bp_txn['line-amount']))) - Decimal('{:.2f}'.format(float(bp_txn['line-amount']))) - Decimal('{:.2f}'.format(float(bp_txn['line-amount']))))                                
                                 lines.append({'ledger_description':str("Payment Gateway Refund to "+bp_txn['txn_number']),"quantity":1,"price_excl_tax": calculate_excl_gst(bpoint_money_to), "price_incl_tax": bpoint_money_to,"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 3})
-                                bpoint = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])
-                                refund = bpoint.refund(info,request.user)
+                                bpoint = BpointTransaction.objects.get(txn_number=bp_txn['txn_number'])                                
+                                refund = bpoint.refund_bpointv5(info,request.user)
+                                
                             except Exception as e:
                                 print ("BPOINT REFUND EXECEPTION")
                                 print (e)
                                 failed_refund = True
                                 bpoint_failed_amount = Decimal(bp_txn['line-amount'])
                                 lines = []
-                                lines.append({'ledger_description':str("Refund failed for txn "+bp_txn['txn_number']),"quantity":1,"price_incl_tax":'0.00',"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
+                                
+                                lines.append({'ledger_description':str("Refund failed for txn "+bp_txn['txn_number']),"quantity":1, "price_excl_tax": '0.00', "price_incl_tax":'0.00',"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
+                                
                             order = invoice_utils.allocate_refund_to_invoice(request, booking_reference, lines, invoice_text=None, internal=False, order_total='0.00',user=user, booking_reference_linked=booking_reference_linked, system_id=system_id)
                             new_invoice = Invoice.objects.get(order_number=order.number)
 
@@ -1514,3 +1521,129 @@ def RefundOracleView(request, *args, **kwargs):
            raise
 
 
+class BpointWebhookSuccess(views.APIView):
+    renderer_classes = (JSONRenderer,)
+    authentication_classes = (CsrfExemptSessionAuthentication,)
+
+    def get(self,request, merchant_reference, format=None):
+        try:
+            http_status = status.HTTP_200_OK
+            return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')         
+        except serializers.ValidationError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            raise serializers.ValidationError(str(e))
+        
+    def post(self, request,merchant_reference,  *args, **kwargs):
+            
+        try:
+
+            if hasattr(request, '_body'):
+                raw_data = request._body
+            else:
+                raw_data = request.body
+                print (raw_data)
+
+            # 1. Parse the JSON payload from the request body
+            payload = json.loads(request.body.decode('utf-8'))
+            action = payload['data'].get('action')
+            txn_number = payload['data'].get('txnNumber')
+            receipt_number = payload['data'].get('receiptNumber')
+            crn1 = payload['data'].get('crn1')
+            
+            card_type = payload['data'].get('paymentMethod').get("card").get("scheme")
+            response_code = payload['data'].get('responseCode')   # "0" typically indicates a success state
+            response_text = payload['data'].get('responseText')
+            processed_date_time = payload['data'].get('processedDateTime')
+            settlement_date = payload['data'].get('settlementDate')
+            bpoint_type = payload['data'].get('type').lower()
+            dvtoken = payload['data'].get('paymentMethod').get("token")
+            settlement_date = payload['data'].get('settlementDate')
+            is_test_txn = payload['data'].get('isTestTxn')
+            
+
+            amount = payload['data'].get('amount')  
+            amount_original = payload['data'].get('amountOriginal')  
+        
+            if response_text == "Approved":
+                if action == 'Payment':
+                    basket = Basket.objects.get(basket_token=merchant_reference)
+                    if Basket.objects.filter(basket_token=merchant_reference).count() > 0:
+                        bpoint_amount_nice1 = str(amount)[:-2]+'.'+str(amount)[-2:]
+                        bpoint_amount_original_nice1 = str(amount_original)[:-2]+'.'+str(amount_original)[-2:]
+                        card_type_prefix = None
+                        if card_type == "Mastercard":
+                            card_type_prefix = "MC"
+                        if card_type == "Visa":
+                            card_type_prefix = "VC"
+                                
+                        processed = payload['data'].get('processedDateTime')
+                                    
+                        processed_date_time_obj = datetime.fromisoformat(processed)
+                                    
+                        
+                        # processed=timezone('Australia/Sydney').localize(datetime.datetime.strptime(processed[:26], "%Y-%m-%dT%H:%M:%S.%f"))
+                        bpoint_record = BpointTransaction.objects.filter(txn_number=txn_number)
+                        if bpoint_record.count() > 0: 
+                            print ("Transaction already exists")                           
+                            pass
+                        else:
+
+                            BpointTransaction.objects.create(action='payment',
+                                                        amount=bpoint_amount_nice1,
+                                                        amount_original=bpoint_amount_original_nice1,
+                                                        cardtype=card_type_prefix,
+                                                        crn1=crn1,
+                                                        original_crn1=crn1, 
+                                                        response_code=response_code, 
+                                                        response_txt='Approved', 
+                                                        receipt_number=receipt_number, 
+                                                        processed=processed_date_time_obj, 
+                                                        settlement_date=datetime.strptime(settlement_date, "%Y%m%d").date(),
+                                                        type=bpoint_type, 
+                                                        txn_number=txn_number,
+                                                        original_txn=None,
+                                                        dvtoken=dvtoken,
+                                                        is_test=is_test_txn)
+
+
+                        basket.status = 'Submitted'   
+                        basket.save()
+                        order = Order.objects.get(basket_id=basket.id)
+                        if basket.system is None:
+                            raise ValidationError("Basket has no system")
+                                                                                
+                        crn_string = '{0}{1}'.format(systemid_check(basket.system),order.number)
+                        invoice = invoice_facade.create_invoice_crn(
+                            order.number,
+                            basket.total_incl_tax,
+                            crn_string,
+                            basket.system,
+                            basket.invoice_text,
+                            None,
+                            basket.invoice_name,
+                            None
+                        )
+                        invoice.settlement_date = datetime.strptime(settlement_date, "%Y%m%d").date()
+                        invoice.save()
+                        LinkedInvoiceCreate(invoice,basket.id)
+
+                        # Send notification to ledger system about payment completion
+                        t = threading.Thread(target=payments_utils.send_payment_notifcation_completed_webhook, args=(basket,))                                            
+                        t.start()                        
+
+                    else:
+                        print ("No basket token found")
+
+
+
+
+        except Exception as e:
+            print ("ERROR")
+            print (e)
+            return HttpResponse(json.dumps({'status': 500, 'message': 'error saving bpoint payment success'}), content_type='application/json', status=500)  
+        return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')  
+
+ 
+        

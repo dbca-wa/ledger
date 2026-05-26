@@ -848,7 +848,7 @@ def bpoint_integrity_checks_completed(bpoint_id,crn1):
 
 
 def LinkedInvoiceCreate(invoice, basket_id):
-        print ("CREATING INVOICE LINK")
+        print ("Creating Linked Invoice")
         basket = Basket.objects.get(id=basket_id)
         system_id = basket.system.replace("S","0")
         ois = OracleInterfaceSystem.objects.get(system_id=system_id)
@@ -1194,3 +1194,9 @@ def get_oracle_interface_system_permissions(system_id, email):
 
 
 
+def send_payment_notifcation_completed_webhook(basket):
+    resp = requests.get(basket.notification_url, timeout=30)
+    print(f"Finished {basket.notification_url} with status {resp.status_code}")
+    if resp.status_code == 200:
+        basket.notification_completed = True
+        basket.save()

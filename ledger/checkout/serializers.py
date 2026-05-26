@@ -46,6 +46,9 @@ class BasketSerializer(serializers.Serializer):
     booking_reference = serializers.CharField(required=False)
     booking_reference_link = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     organisation = serializers.IntegerField(required=False, allow_null=True) 
+    basket_token = serializers.CharField(required=False)
+    invoice_name = serializers.CharField(required=False)
+    invoice_text = serializers.CharField(required=False)
 
     def validate_system(self, value):
         if not value:

@@ -15,7 +15,6 @@ import datetime
 import re
 from oscar.apps.checkout.mixins import OrderPlacementMixin
 from oscar.apps.shipping.methods import NoShippingRequired
-from oscar.apps.checkout.calculators import OrderTotalCalculator
 
 Order = get_model('order', 'Order')
 Line = get_model('order', 'Line')

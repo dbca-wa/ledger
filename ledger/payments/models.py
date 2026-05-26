@@ -60,6 +60,11 @@ class OracleInterfaceSystem(models.Model):
                            ("version_1", "Version 1"),
                            ("version_2", "Version 2")
                          )
+
+    PAYMENT_GATEWAY_TYPE = (
+                        ("direct_api", "DIRECT API"),
+                        ("hpp_redirect", "HPP Redirect")
+    )
     
     INVOICE_TEMPLATE = (
                            ("dbca_default", "DBCA Default"),
@@ -73,7 +78,8 @@ class OracleInterfaceSystem(models.Model):
     send_debtor_report = models.BooleanField(default=False,null=True, blank=True)
     source = models.CharField(max_length=30)
     method = models.CharField(max_length=30)
-    integration_type = models.CharField(max_length=20, choices=INTEGRATION_TYPE, default='no_api', null=True,blank=True)
+    payment_gateway_type = models.CharField(max_length=20, choices=PAYMENT_GATEWAY_TYPE, default='direct_api', null=True,blank=True)
+    integration_type = models.CharField(max_length=20, choices=INTEGRATION_TYPE, default='no_api', null=True,blank=True)    
     oracle_calculation = models.CharField(max_length=20, choices=ORACLE_CALCULATION, default='version_1', null=True,blank=True)
     invoice_template = models.CharField(max_length=20, choices=INVOICE_TEMPLATE, default='dbca_default', null=True,blank=True)
     abn = models.CharField(max_length=50, default='', null=True,blank=True)

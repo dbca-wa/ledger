@@ -72,20 +72,13 @@ class CheckoutSessionMixin(object):
         return super(CheckoutSessionMixin, self).dispatch(
             request, *args, **kwargs)
 
-    def check_pre_conditions(self, request):
-        print ("CHECK 1")
-        pre_conditions = self.get_pre_conditions(request)
-        print (pre_conditions)
-        for method_name in pre_conditions:
-            print (method_name)
-            if not hasattr(self, method_name):
-                print ("HASS ")
-                print (method_name)
+    def check_pre_conditions(self, request):        
+        pre_conditions = self.get_pre_conditions(request)        
+        for method_name in pre_conditions:            
+            if not hasattr(self, method_name):                
                 raise ImproperlyConfigured(
                     "There is no method '%s' to call as a pre-condition" % (
-                        method_name))
-                print ("PRE CHECK")
-                print (method_name)
+                        method_name))                
             getattr(self, method_name)(request)
 
     def get_pre_conditions(self, request):
@@ -115,9 +108,7 @@ class CheckoutSessionMixin(object):
 
     # Re-usable pre-condition validators
 
-    def check_basket_is_not_empty(self, request):
-        print ("check_basket_is_not_empty")
-        print (request.basket)
+    def check_basket_is_not_empty(self, request):        
         if request.basket.is_empty:
             raise exceptions.FailedPreCondition(
                 url=reverse('basket:summary'),
