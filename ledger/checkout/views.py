@@ -817,9 +817,7 @@ class ProcessPaymentHPPView(views.APIView):
                 except Exception as e:
                     print (e)
 
-            basket.notification_url = checkout_session.return_preload_url()
-            basket.success_return_url = checkout_session.return_url()
-            basket.save()
+            
             if request.COOKIES.get('payment_api_wrapper') == 'true':
                 if 'LEDGER_API_KEY' in request.COOKIES:
                     apikey = request.COOKIES['LEDGER_API_KEY']
@@ -864,7 +862,9 @@ class ProcessPaymentHPPView(views.APIView):
                                         order  = ci.create_order_from_basket(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=basket.owner, status='Frozen')      
                                 crn_string = '{0}{1}'.format(systemid_check(ois.system_id),order.number)
                                 invoice_reference = getCRN(crn_string)     
-                                                                                          
+                                basket.notification_url = checkout_session.return_preload_url() + "?invoice="+invoice_reference
+                                basket.success_return_url = checkout_session.return_url() + "?invoice="+invoice_reference
+                                basket.save()                                                                  
 
                                 missing = [k for k,v in {
                                     "BPOINT_USERNAME": username,
@@ -945,7 +945,6 @@ class ProcessPaymentHPPView(views.APIView):
                                         "version": "5"
                                         } 
                                     }
-                            
                                 resp = requests.put(attach_hpp_config_url, headers=headers, data=json.dumps(payload), timeout=30)
                              
                                 try:
