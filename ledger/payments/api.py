@@ -46,6 +46,7 @@ from confy import env
 from datetime import datetime
 import traceback
 import six
+import threading
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
@@ -1565,28 +1566,30 @@ class BpointWebhookSuccess(views.APIView):
             amount = payload['data'].get('amount')  
             amount_original = payload['data'].get('amountOriginal')  
         
-            bpoint_record = BpointTransaction.objects.filter(txn_number=txn_number)
-            if bpoint_record.count() > 0:
-                pass
-            else:
-                if response_text == "Approved":
-                    if action == 'Payment':
-                        basket = Basket.objects.get(basket_token=merchant_reference)
-                        if Basket.objects.filter(basket_token=merchant_reference).count() > 0:
-                            bpoint_amount_nice1 = str(amount)[:-2]+'.'+str(amount)[-2:]
-                            bpoint_amount_original_nice1 = str(amount_original)[:-2]+'.'+str(amount_original)[-2:]
-                            card_type_prefix = None
-                            if card_type == "Mastercard":
-                                card_type_prefix = "MC"
-                            if card_type == "Visa":
-                                card_type_prefix = "VC"
-                                  
-                            processed = payload['data'].get('processedDateTime')
-                                       
-                            processed_date_time_obj = datetime.fromisoformat(processed)
-                                       
-                            
-                            # processed=timezone('Australia/Sydney').localize(datetime.datetime.strptime(processed[:26], "%Y-%m-%dT%H:%M:%S.%f"))
+            if response_text == "Approved":
+                if action == 'Payment':
+                    basket = Basket.objects.get(basket_token=merchant_reference)
+                    if Basket.objects.filter(basket_token=merchant_reference).count() > 0:
+                        bpoint_amount_nice1 = str(amount)[:-2]+'.'+str(amount)[-2:]
+                        bpoint_amount_original_nice1 = str(amount_original)[:-2]+'.'+str(amount_original)[-2:]
+                        card_type_prefix = None
+                        if card_type == "Mastercard":
+                            card_type_prefix = "MC"
+                        if card_type == "Visa":
+                            card_type_prefix = "VC"
+                                
+                        processed = payload['data'].get('processedDateTime')
+                                    
+                        processed_date_time_obj = datetime.fromisoformat(processed)
+                                    
+                        
+                        # processed=timezone('Australia/Sydney').localize(datetime.datetime.strptime(processed[:26], "%Y-%m-%dT%H:%M:%S.%f"))
+                        bpoint_record = BpointTransaction.objects.filter(txn_number=txn_number)
+                        if bpoint_record.count() > 0: 
+                            print ("Transaction already exists")                           
+                            pass
+                        else:
+
                             BpointTransaction.objects.create(action='payment',
                                                         amount=bpoint_amount_nice1,
                                                         amount_original=bpoint_amount_original_nice1,
@@ -1605,29 +1608,33 @@ class BpointWebhookSuccess(views.APIView):
                                                         is_test=is_test_txn)
 
 
-                            basket.status = 'Submitted'   
-                            basket.save()
-                            order = Order.objects.get(basket_id=basket.id)
-                            if basket.system is None:
-                                raise ValidationError("Basket has no system")
-                                                                                    
-                            crn_string = '{0}{1}'.format(systemid_check(basket.system),order.number)
-                            invoice = invoice_facade.create_invoice_crn(
-                                order.number,
-                                basket.total_incl_tax,
-                                crn_string,
-                                basket.system,
-                                basket.invoice_text,
-                                None,
-                                basket.invoice_name,
-                                None
-                            )
-                            invoice.settlement_date = datetime.strptime(settlement_date, "%Y%m%d").date()
-                            invoice.save()
-                            LinkedInvoiceCreate(invoice,basket.id)
+                        basket.status = 'Submitted'   
+                        basket.save()
+                        order = Order.objects.get(basket_id=basket.id)
+                        if basket.system is None:
+                            raise ValidationError("Basket has no system")
+                                                                                
+                        crn_string = '{0}{1}'.format(systemid_check(basket.system),order.number)
+                        invoice = invoice_facade.create_invoice_crn(
+                            order.number,
+                            basket.total_incl_tax,
+                            crn_string,
+                            basket.system,
+                            basket.invoice_text,
+                            None,
+                            basket.invoice_name,
+                            None
+                        )
+                        invoice.settlement_date = datetime.strptime(settlement_date, "%Y%m%d").date()
+                        invoice.save()
+                        LinkedInvoiceCreate(invoice,basket.id)
 
-                        else:
-                            print ("No basket token found")
+                        # Send notification to ledger system about payment completion
+                        t = threading.Thread(target=payments_utils.send_payment_notifcation_completed_webhook, args=(basket,))                                            
+                        t.start()                        
+
+                    else:
+                        print ("No basket token found")
 
 
 
@@ -1636,5 +1643,7 @@ class BpointWebhookSuccess(views.APIView):
             print ("ERROR")
             print (e)
             return HttpResponse(json.dumps({'status': 500, 'message': 'error saving bpoint payment success'}), content_type='application/json', status=500)  
-        return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')   
+        return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')  
+
+ 
         

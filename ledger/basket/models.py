@@ -15,6 +15,7 @@ class Basket(CoreAbstractBasket):
     booking_reference = models.CharField(max_length=254, blank=True, null=True)
     booking_reference_link = models.CharField(max_length=254, blank=True, null=True)
     no_oracle=models.BooleanField(default=False,null=True, blank=True)
+    success_return_url = models.CharField(max_length=1024, blank=True, null=True) 
     notification_url = models.CharField(max_length=1024, blank=True, null=True) 
     notification_count = models.IntegerField(default=0, null=True) 
     notification_next = models.DateTimeField(default=datetime.datetime.now(), null=True)

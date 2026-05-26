@@ -788,33 +788,23 @@ class ProcessPaymentHPPView(views.APIView):
         # print (request.GET)         
 
         try:     
-            print (request.session)
-            print (request.COOKIES.get('payment_api_wrapper'))
-            print (request.COOKIES.get('LEDGER_API_KEY'))
-
             CheckoutSessionData = get_class('checkout.utils', 'CheckoutSessionData')
             checkout_session = CheckoutSessionData(request)
-            print ("CC")
-            print (checkout_session)
+
             # basket_id = checkout_session.get_submitted_basket_id()
             # print (basket_id)
-
-            print ("BASKET")
+            
             basket = None
             cookie_key = settings.OSCAR_BASKET_COOKIE_OPEN
-            print (cookie_key)
-            print (request.COOKIES)
+
             if cookie_key in request.COOKIES:
                 basket_hash = request.COOKIES[cookie_key]
-                print ("BHASH")
-                print (basket_hash)
+
                 try:
                     basket_id = Signer(sep='|').unsign(basket_hash)                   
-                    print (basket_id)
                     basket = Basket.objects.get(
                         pk=basket_id
-                    )
-                    print (basket.status)
+                    )                    
                     if basket.status == Basket.OPEN or basket.status == Basket.FROZEN:
                         pass
                     else:
@@ -827,7 +817,9 @@ class ProcessPaymentHPPView(views.APIView):
                 except Exception as e:
                     print (e)
 
-
+            basket.notification_url = checkout_session.return_preload_url()
+            basket.success_return_url = checkout_session.return_url()
+            basket.save()
             if request.COOKIES.get('payment_api_wrapper') == 'true':
                 if 'LEDGER_API_KEY' in request.COOKIES:
                     apikey = request.COOKIES['LEDGER_API_KEY']
@@ -853,8 +845,7 @@ class ProcessPaymentHPPView(views.APIView):
                                 currency = ois.bpoint_currency                          
 
                                 
-                                ci = order_utils.CreateOrderFromBasket()
-                                print ("H##12")
+                                ci = order_utils.CreateOrderFromBasket()                     
                                 if ois.system_id:
                                     ci.system = ois.system_id
                                     order_lookup = Order.objects.filter(basket_id=basket.id)
@@ -896,7 +887,7 @@ class ProcessPaymentHPPView(views.APIView):
 
                                 payload = {}            
                                 resp = requests.post(authkeyurl, headers=headers, data=json.dumps(payload), timeout=30)
-                                print (resp.text)
+                                
                                 try:
                                     data = resp.json()
                                 except Exception:
@@ -906,12 +897,8 @@ class ProcessPaymentHPPView(views.APIView):
                                     raise RuntimeError(
                                         f"Create Payment Request failed (HTTP {resp.status_code}): {data}"
                                     )
-                                print (data)
+
                                 authkey = data.get('authkey')
-                                print (authkey)
-                                print ("BASKET TOKEN")
-                                print (basket.basket_token)
-                                print (basket.booking_reference)
                                 ## Create transaction details
                                 attachtransdetailsurl = settings.BPOINT_HPP_BASE_URL+"/txns/authkeys/{}/txn-details".format(authkey)
                                 payload ={
@@ -932,7 +919,7 @@ class ProcessPaymentHPPView(views.APIView):
                                         "tokenisationMode": "OptIn" # or None when not logged in
                                         }
                                 resp = requests.put(attachtransdetailsurl, headers=headers, data=json.dumps(payload), timeout=30)
-                                print (resp.text)
+                                
                                 try:
                                     data = resp.json()
                                 except Exception:
@@ -945,7 +932,7 @@ class ProcessPaymentHPPView(views.APIView):
 
                                 attach_hpp_config_url = settings.BPOINT_HPP_BASE_URL+"/txns/authkeys/{}/hpp-configuration-with-webhook".format(authkey)
                                 payload ={
-                                    "redirectionUrl": "https://www.dbca.wa.gov.au/",
+                                    "redirectionUrl": settings.BPOINT_REDIRECT_URL+"/ledger/payments/payment-triage/{}/".format(basket.basket_token),
                                     "tokeniseTxnCheckBoxDefaultValue": False,
                                     "hideCRN1": True,
                                     # "hideCRN2": False,
@@ -954,7 +941,7 @@ class ProcessPaymentHPPView(views.APIView):
                                     # "returnBarLabel": "Go Back",
                                     # "returnBarUrl": "https://xxx.dbca.wa.gov.au/api/test",
                                     "webhook": {
-                                        "url": settings.BPOINT_WEBHOOK_URL+"/ledger/payments/api/bpoint-webhook/payment-success/{}/".format(basket.basket_token),                                        
+                                        "url": settings.BPOINT_WEBHOOK_URL+"/ledger/payments/api/bpoint-webhook/payment-success/{}/".format(basket.basket_token),                                                                                
                                         "version": "5"
                                         } 
                                     }
@@ -965,8 +952,7 @@ class ProcessPaymentHPPView(views.APIView):
                                     data = resp.json()
                                 except Exception:
                                     data = {"raw": resp.text}
-                            
-                                print (data)
+                                                            
                                 if not resp.ok:
                                     raise RuntimeError(
                                         f"Create Payment Request failed (HTTP {resp.status_code}): {data}"

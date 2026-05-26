@@ -65,6 +65,7 @@ urlpatterns = [
     re_path(r'checkout/checkout/payment-refund/', views.RefundPaymentView.as_view(),name='ledger-payment-refund'), 
     re_path(r'checkout/checkout/payment-zero/', views.ZeroPaymentView.as_view(), name='ledger-payment-refund'),
     re_path(r'checkout/checkout/payment-no/',views.NoPaymentView.as_view(), name='ledger-payment-no'),
+    
     re_path(r'payments/', include(api_patterns)),
     re_path(r'payments/invoice/(?P<reference>\d+)',views.InvoiceDetailView.as_view(), name='invoice-detail'),
     re_path(r'payments/invoice-pdf/(?P<reference>\d+)',views.InvoicePDFView.as_view(), name='invoice-pdf'),
@@ -79,6 +80,7 @@ urlpatterns = [
     re_path(r'payments/error$',views.PaymentErrorView.as_view(), name='payments-error'),
     re_path(r'payments/oracle/failed-transactions$', views.FailedTransaction.as_view(), name='failed-transactions'),
     re_path(r'payments/oracle/payment-totals$', views.PaymentTotals.as_view(), name='payment-totals'),
-    re_path(r'payments/oracle/unpaid-invoices$', views.UnpaidInvoice.as_view(), name='unpaid-invoices')
+    re_path(r'payments/oracle/unpaid-invoices$', views.UnpaidInvoice.as_view(), name='unpaid-invoices'),
+    re_path(r'payments/payment-triage/(?P<merchant_reference>[\w]+)/$', views.PaymentTriage.as_view(), name='payment-triage')
     
 ]

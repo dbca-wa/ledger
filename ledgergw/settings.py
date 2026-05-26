@@ -171,4 +171,6 @@ CSRF_TRUSTED_ORIGINS = json.loads(str(CSRF_TRUSTED_ORIGINS_STRING))
 
 BPOINT_HPP_BASE_URL=decouple.config('BPOINT_HPP_BASE_URL', default='https://www.bpoint.com.au/rest/v5')
 BPOINT_WEBHOOK_URL=decouple.config('BPOINT_WEBHOOK_URL', default='https://ledger.dbca.wa.gov/bpoint-payment-success-webhook')
-BPOINT_REDIRECT_URL=decouple.config('BPOINT_REDIRECT_URL', default='https://ledger.dbca.wa.gov/payment-triage')
+BPOINT_REDIRECT_URL=decouple.config('BPOINT_REDIRECT_URL', default='https://ledger.dbca.wa.gov.au')
+
+# SESSION_COOKIE_NAME="ledger_sessionid"

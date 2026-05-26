@@ -25,7 +25,7 @@ class BasketAdmin(admin.ModelAdmin):
     list_display = ('id', 'owner', 'status', 'num_lines',
                     'contains_a_voucher', 'date_created', 'date_submitted',
                     'time_before_submit','booking_reference','organisation')
-    readonly_fields = ('owner', 'date_merged', 'date_submitted','notification_url', 'basket_token')
+    readonly_fields = ('owner', 'date_merged', 'date_submitted','notification_url', 'basket_token','success_return_url')
     inlines = [LineInline]
 
 

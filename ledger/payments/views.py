@@ -15,7 +15,9 @@ from ledger.payments.utils import systemid_check, update_payments, ledger_paymen
 from ledger.payments import utils as payments_utils
 from ledger.payments.bpoint.models import BpointTransaction
 from ledger.checkout.utils import calculate_excl_gst
-#
+from ledger.basket.models import Basket
+from django.http import HttpResponse, HttpResponseRedirect
+
 #from oscar.apps.order.models import Order
 from ledger.order.models import Order
 from ledger.payments.models import Invoice
@@ -33,6 +35,7 @@ from ledger.payments.emails import send_invoice_order_email
 
 from confy import env
 from datetime import datetime
+import threading
 #
 
 
@@ -496,6 +499,7 @@ class PaymentTotals(generic.TemplateView):
 class FailedTransaction(generic.TemplateView):
     template_name = 'dpaw_payments/failed_transaction.html'
 
+
     def get_context_data(self, **kwargs):
         ctx = super(FailedTransaction,self).get_context_data(**kwargs)
         if helpers.is_payment_admin(self.request.user) is True:
@@ -542,4 +546,56 @@ class UnpaidInvoice(generic.TemplateView):
 
         else:
             self.template_name = 'dpaw_payments/forbidden.html'
+        return ctx
+
+
+
+class PaymentTriage(generic.TemplateView):
+    template_name = 'dpaw_payments/payment-triage.html'
+
+
+    def get(self, request, merchant_reference, *args, **kwargs):
+        
+        basket = Basket.objects.filter(basket_token=merchant_reference)        
+        show = True
+        if basket.count() > 0:
+            system_id = self.request.GET.get('system_id','')
+            
+            if basket[0].status == 'Submitted' and basket[0].notification_completed is True:
+                print (basket[0].success_return_url)
+                return HttpResponseRedirect(basket[0].success_return_url)
+
+        else:
+            self.template_name = 'dpaw_payments/payment-triage-error.html'
+        
+
+        response =  render(request, self.template_name, {'basket': basket})
+        response.delete_cookie(
+                settings.SESSION_COOKIE_NAME, 
+                domain=settings.SESSION_COOKIE_DOMAIN,
+                path=settings.SESSION_COOKIE_PATH
+            )
+        if 'sessionid' in response.cookies:
+            del response.cookies['sessionid']
+
+        return response
+        
+
+
+    def get_context_data(self, merchant_reference, **kwargs):
+        ctx = super(PaymentTriage,self).get_context_data(**kwargs)
+
+        basket = Basket.objects.filter(basket_token=merchant_reference)        
+        show = True
+        if basket.count() > 0:
+            system_id = self.request.GET.get('system_id','')
+            
+            if basket[0].status == 'Submitted':
+                print (basket[0].success_return_url)
+                return HttpResponseRedirect("/")
+
+            ctx['ois_found'] = "no"
+
+        else:
+            self.template_name = 'dpaw_payments/payment-triage-error.html'
         return ctx
