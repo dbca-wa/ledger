@@ -104,6 +104,8 @@ class DocumentAdmin(admin.ModelAdmin):
 
 @admin.register(Address)
 class AddressAdmin(VersionAdmin):
+    raw_id_fields=('user','oscar_address',)
+
     pass
 
 @admin.register(Profile)
