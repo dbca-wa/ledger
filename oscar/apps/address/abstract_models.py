@@ -573,7 +573,7 @@ class AbstractUserAddress(AbstractShippingAddress):
         verbose_name = _("User address")
         verbose_name_plural = _("User addresses")
         ordering = ['-num_orders_as_shipping_address']
-        unique_together = ('user', 'hash')
+        # unique_together = ('user', 'hash')
 
     def validate_unique(self, exclude=None):
         super(AbstractAddress, self).validate_unique(exclude)

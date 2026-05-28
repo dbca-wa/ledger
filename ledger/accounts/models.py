@@ -262,11 +262,11 @@ class BaseAddress(models.Model):
 
 
 class Address(BaseAddress):
-    user = models.ForeignKey('EmailUser', related_name='profile_addresses',on_delete=models.CASCADE)
-    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses', on_delete=models.CASCADE)
+    user = models.ForeignKey('EmailUser', related_name='profile_addresses',on_delete=models.DO_NOTHING)
+    oscar_address = models.ForeignKey(UserAddress, related_name='profile_addresses', on_delete=models.DO_NOTHING)
     class Meta:
         verbose_name_plural = 'addresses'
-        unique_together = ('user','hash')
+        # unique_together = ('user','hash')
 
 
 # @python_2_unicode_compatible
@@ -331,10 +331,10 @@ class EmailUser(AbstractBaseUser, PermissionsMixin):
     organisation = models.CharField(max_length=300, null=True, blank=True,
                                     verbose_name="organisation", help_text='organisation, institution or company')
 
-    residential_address = models.ForeignKey(Address, null=True, blank=False, related_name='+', on_delete=models.CASCADE)
-    postal_address = models.ForeignKey(Address, null=True, blank=True, related_name='+', on_delete=models.CASCADE)
+    residential_address = models.ForeignKey(Address, null=True, blank=False, related_name='+', on_delete=models.SET_NULL)
+    postal_address = models.ForeignKey(Address, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
     postal_same_as_residential = models.BooleanField(default=False,null=True, blank=True)
-    billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+', on_delete=models.CASCADE)
+    billing_address = models.ForeignKey(Address, null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
     billing_same_as_residential = models.BooleanField(default=False,null=True, blank=True)
 
     identification = models.ForeignKey(Document, null=True, blank=True, on_delete=models.SET_NULL, related_name='identification_document')
