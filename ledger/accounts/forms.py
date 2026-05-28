@@ -206,7 +206,14 @@ class EmailUserForm(forms.ModelForm):
         self.helper.add_input(Submit('save', 'Save', css_class='btn-lg'))
         self.helper.add_input(Submit('cancel', 'Cancel', css_class='btn-lg btn-danger'))
 
-        person_id = self.initial['id']
+        person_id = None
+        if "id" in self.initial:
+            person_id = self.initial['id']
+        if person_id is None:
+            if "email" in self.initial:
+                print (self.initial['email'])
+                person_id = EmailUser.objects.get(email=self.initial['email'])
+        
         self.fields['email'].required = email_required
 
         # some form renderers use widget's is_required field to set required attribute for input element
