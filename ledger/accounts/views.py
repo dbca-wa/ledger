@@ -470,7 +470,7 @@ class AccountCreateBillingAddress(AccountCreateAddress):
 
 class AccountChangeAddress(LoginRequiredMixin, UpdateView):
     
-    form_class = app_forms.EmailUserAddressForm    
+    form_class = app_forms.EmailUserUpdateAddressForm    
     model = Address
 
     def get_initial(self):
