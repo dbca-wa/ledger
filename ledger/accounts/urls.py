@@ -22,6 +22,9 @@ urlpatterns = [
     url(r'accounts/', include(api_patterns)),
     url(r'account-management/create/', views.AccountCreate.as_view(), name='account_management_create'),  
     url(r'account-management/(?P<pk>\d+)/change/$', views.AccountChange.as_view(), name='account_management_change'),    
+    url(r'account-management/(?P<pk>\d+)/change/residential-address/$', views.AccountChangeResidentialAddress.as_view(), name='account_management_residential_address'),   
+    url(r'account-management/(?P<pk>\d+)/change/postal-address/$', views.AccountChange.as_view(), name='account_management_postal_address'),   
+    url(r'account-management/(?P<pk>\d+)/change-log/$', views.AccountChange.as_view(), name='account_management_change_log'),   
     url(r'account-management/', views.AccountManagement.as_view(), name='account_management')
     
     
