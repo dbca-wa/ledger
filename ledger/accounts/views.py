@@ -270,9 +270,7 @@ class AccountCreateAddress(LoginRequiredMixin, CreateView):
         account_id = self.kwargs['account_id']
         ctx['account_id'] = account_id
 
-        if helpers.is_account_admin(self.request.user) is True:
-            pass
-        else:
+        if not helpers.is_account_admin(self.request.user) is True:
             self.template_name = 'dpaw_payments/forbidden.html'
         return ctx
     
@@ -425,9 +423,7 @@ class AccountChangeAddress(LoginRequiredMixin, UpdateView):
         ctx['account_id'] = self.kwargs['account_id']
         ctx['address_id'] = self.kwargs['pk']
 
-        if helpers.is_account_admin(self.request.user) is True:
-            pass
-        else:
+        if not helpers.is_account_admin(self.request.user) is True:
             self.template_name = 'dpaw_payments/forbidden.html'
         return ctx
     

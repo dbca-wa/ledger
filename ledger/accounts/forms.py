@@ -329,7 +329,7 @@ class EmailUserCreateAddressForm(forms.ModelForm):
     
     class Meta:
         model = Address
-        fields = ['line1', 'locality', 'state', 'country', 'postcode']
+        fields = ['line1', 'line2', 'line3', 'locality', 'state', 'country', 'postcode']
 
     def __init__(self, *args, **kwargs):
         super(EmailUserCreateAddressForm, self).__init__(*args, **kwargs)
@@ -346,7 +346,7 @@ class EmailUserAddressForm(forms.ModelForm):
     
     class Meta:
         model = Address
-        fields = ['line1', 'locality', 'state', 'country', 'postcode']
+        fields = ['line1', 'line2', 'line3', 'locality', 'state', 'country', 'postcode']
 
     def __init__(self, *args, **kwargs):
         super(EmailUserAddressForm, self).__init__(*args, **kwargs)
