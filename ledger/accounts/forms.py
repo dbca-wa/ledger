@@ -325,6 +325,40 @@ class EmailUserForm(forms.ModelForm):
         return fax_number    
 
 
+class EmailUserCreateAddressForm(forms.ModelForm):
+    
+    class Meta:
+        model = Address
+        fields = ['line1', 'locality', 'state', 'country', 'postcode']
+
+    def __init__(self, *args, **kwargs):
+        super(EmailUserCreateAddressForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+
+        for f in self.fields:            
+            self.fields[f].widget.attrs['class'] = 'form-control'
+            self.fields[f].widget.attrs['label_class'] = 'form-control'
+
+        self.helper.add_input(Submit('save', 'Create', css_class='btn-lg'))
+        self.helper.add_input(Submit('cancel', 'Cancel', css_class='btn-lg btn-danger'))
+
+class EmailUserAddressForm(forms.ModelForm):
+    
+    class Meta:
+        model = Address
+        fields = ['line1', 'locality', 'state', 'country', 'postcode']
+
+    def __init__(self, *args, **kwargs):
+        super(EmailUserAddressForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+
+        for f in self.fields:            
+            self.fields[f].widget.attrs['class'] = 'form-control'
+            self.fields[f].widget.attrs['label_class'] = 'form-control'
+
+        self.helper.add_input(Submit('save', 'Update', css_class='btn-lg'))
+        self.helper.add_input(Submit('cancel', 'Cancel', css_class='btn-lg btn-danger'))
+
 class DocumentForm(forms.ModelForm):
     class Meta:
         model = Document
