@@ -26,6 +26,8 @@ urlpatterns = [
     url(r'account-management/(?P<account_id>\d+)/change/create-residential-address/$', views.AccountCreateResidentialAddress.as_view(), name='account_management_create_residential_address'),   
     url(r'account-management/(?P<account_id>\d+)/change/postal-address/(?P<pk>\d+)/$', views.AccountChangePostalAddress.as_view(), name='account_management_postal_address'),   
     url(r'account-management/(?P<account_id>\d+)/change/create-postal-address/$', views.AccountCreatePostalAddress.as_view(), name='account_management_create_postal_address'), 
+    url(r'account-management/(?P<account_id>\d+)/change/billing-address/(?P<pk>\d+)/$', views.AccountChangeBillingAddress.as_view(), name='account_management_billing_address'),   
+    url(r'account-management/(?P<account_id>\d+)/change/create-billing-address/$', views.AccountCreateBillingAddress.as_view(), name='account_management_create_billing_address'), 
     url(r'account-management/(?P<pk>\d+)/change-log/$', views.AccountChange.as_view(), name='account_management_change_log'),   
     url(r'account-management/', views.AccountManagement.as_view(), name='account_management')
     
