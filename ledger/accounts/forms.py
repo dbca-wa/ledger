@@ -324,6 +324,93 @@ class EmailUserForm(forms.ModelForm):
         fax_number = ledger_accounts_utils.remove_html_tags(fax_number)
         return fax_number    
 
+class EmailUserAddressForm(forms.ModelForm):
+    
+    class Meta:
+        model = Address
+        fields = ['line1', 'line2', 'line3', 'locality', 'state', 'country', 'postcode']
+
+    def clean_line1(self):
+        cleaned_data = self.clean()        
+        line1 = cleaned_data.get('line1')
+        if line1 is None:
+            line1 = ""
+        line1 = ledger_accounts_utils.remove_html_tags(line1)
+        return line1
+    
+    def clean_line2(self):
+        cleaned_data = self.clean()        
+        line2 = cleaned_data.get('line2')
+        if line2 is None:
+            line2 = ""
+        line2 = ledger_accounts_utils.remove_html_tags(line2)
+        return line2
+    
+    def clean_line3(self):
+        cleaned_data = self.clean()        
+        line3 = cleaned_data.get('line3')
+        if line3 is None:
+            line3 = ""
+        line3 = ledger_accounts_utils.remove_html_tags(line3)
+        return line3
+    
+    def clean_locality(self):
+        cleaned_data = self.clean()        
+        locality = cleaned_data.get('locality')
+        if locality is None:
+            locality = ""
+        locality = ledger_accounts_utils.remove_html_tags(locality)
+        return locality
+    
+    def clean_state(self):
+        cleaned_data = self.clean()        
+        state = cleaned_data.get('state')
+        if state is None:
+            state = ""
+        state = ledger_accounts_utils.remove_html_tags(state)
+        return state
+    
+    def clean_country(self):
+        cleaned_data = self.clean()        
+        country = cleaned_data.get('country')
+        if country is None:
+            country = ""
+        country = ledger_accounts_utils.remove_html_tags(country)
+        return country
+    
+    def clean_postcode(self):
+        cleaned_data = self.clean()        
+        postcode = cleaned_data.get('postcode')
+        if postcode is None:
+            postcode = ""
+        postcode = ledger_accounts_utils.remove_html_tags(postcode)
+        return postcode
+
+class EmailUserCreateAddressForm(EmailUserAddressForm):
+    
+    def __init__(self, *args, **kwargs):
+        super(EmailUserCreateAddressForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+
+        for f in self.fields:            
+            self.fields[f].widget.attrs['class'] = 'form-control'
+            self.fields[f].widget.attrs['label_class'] = 'form-control'
+
+        self.helper.add_input(Submit('save', 'Create', css_class='btn-lg'))
+        self.helper.add_input(Submit('cancel', 'Cancel', css_class='btn-lg btn-danger'))
+
+class EmailUserUpdateAddressForm(EmailUserAddressForm):
+    
+    def __init__(self, *args, **kwargs):
+        super(EmailUserUpdateAddressForm, self).__init__(*args, **kwargs)
+        self.helper = BaseFormHelper()
+
+        for f in self.fields:            
+            self.fields[f].widget.attrs['class'] = 'form-control'
+            self.fields[f].widget.attrs['label_class'] = 'form-control'
+
+        self.helper.add_input(Submit('save', 'Update', css_class='btn-lg'))
+        self.helper.add_input(Submit('cancel', 'Cancel', css_class='btn-lg btn-danger'))
 
 class DocumentForm(forms.ModelForm):
     class Meta:
