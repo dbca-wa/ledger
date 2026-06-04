@@ -260,6 +260,19 @@ class AccountChange(LoginRequiredMixin, UpdateView):
             return HttpResponseRedirect(self.get_absolute_account_url())
         
 
+class AccountChangelog(LoginRequiredMixin, TemplateView):
+    
+    template_name = 'ledger/accounts/account_changelog.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(AccountChangelog,self).get_context_data(**kwargs)
+        ctx['account_id'] = self.kwargs['pk']
+        
+        if not helpers.is_account_admin(self.request.user) is True:
+            self.template_name = 'dpaw_payments/forbidden.html'
+
+        return ctx
+
 class AccountCreateAddress(LoginRequiredMixin, CreateView):
 
     form_class = app_forms.EmailUserCreateAddressForm    
