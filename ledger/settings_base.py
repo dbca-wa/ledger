@@ -400,3 +400,4 @@ STORAGES = {
 
 # You might also need to explicitly set THUMBNAIL_STORAGE if it's not picking up 'default'
 THUMBNAIL_STORAGE = 'default' # Refers to the 'default' key in STORAGES
+

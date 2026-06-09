@@ -22,12 +22,12 @@ class Gateway(object):
             so that it cannot be processed bpoint
         '''
         print ("TRANSACTION - _transaction")
-        print (self.credentials.biller_code)
-        print (self.credentials.is_test)
-        print (self.credentials.currency)
-        print (self.credentials.merchant_number)
-        print (self.credentials.username)
-        print (self.credentials.password)
+        # print (self.credentials.biller_code)
+        # print (self.credentials.is_test)
+        # print (self.credentials.currency)
+        # print (self.credentials.merchant_number)
+        # print (self.credentials.username)
+        # print (self.credentials.password)
 
         req = None
         try:

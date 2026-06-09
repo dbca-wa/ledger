@@ -34,6 +34,8 @@
 {% endblock %}
 
 {% block payment_details %}
+
+
 <div class='container'>
     <div class='row' style="border: 1px solid #f3f3f3;">
         <div class="tab-content">
@@ -92,15 +94,21 @@
                                 <button type="button" id='pay-with-store-card' class="btn btn-primary pull-right btn-payment-large">{% trans "Pay" %}</button>
                             </div>
                         </form>
-
+            {% if payment_gateway_type == 'hpp_redirect' %}
+            <BR><BR>
+            <form id="new_card_form" method="post" action="/ledger-api/process-payment-hpp" oldaction="{% url 'checkout:preview' %}" class="form-stacked">
+                <input type="hidden" name="payment-csrfmiddlewaretoken" value="{{csrf_token}}">
+            <input type='submit' class="btn btn-primary btn-lg" name="proceed-to-pay-hpp" value="Proceed to Payment">
+            </form>
+            {% else %}
             <div id='card-wrapper' style='padding-top: 30px'> 
                     <form id="new_card_form" method="post" action="/ledger-api/process-payment" oldaction="{% url 'checkout:preview' %}" class="form-stacked">
                         <input type="hidden" name="iiaction" value="place_order">
-                <input type="hidden" name="payment-csrfmiddlewaretoken" value="{{csrf_token}}">
+                        <input type="hidden" name="payment-csrfmiddlewaretoken" value="{{csrf_token}}">
                         <div class="clearfix">
                             <img src="{% static 'payments/img/visa-mastercard-2021.png' %}">
                         </div>
-
+                        
                         {% include "partials/form_fields.html" with form=bankcard_form %}
                         {% if store_card %}
                         <div class="checkbox">
@@ -113,6 +121,7 @@
                         </div>
                     </form>
             </div>
+        {% endif %}
             </div>
                 </div>
 

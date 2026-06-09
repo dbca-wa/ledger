@@ -78,10 +78,10 @@ class UppercaseCharField(CharField):
 
     def contribute_to_class(self, cls, name, **kwargs):
         super(UppercaseCharField, self).contribute_to_class(
-            cls, name, **kwargs)
+            cls, name , **kwargs)
         setattr(cls, self.name, Creator(self))
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection):
         return self.to_python(value)
 
     def to_python(self, value):

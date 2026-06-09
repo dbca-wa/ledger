@@ -1594,8 +1594,6 @@ def set_primary_card(request,apikey):
             data = json.loads(request.POST.get('data', "{}"))
             payload = json.loads(request.POST.get('payload', "{}"))
             user_logged_in  = request.POST.get("user_logged_in", None)
-            print ("SAVE PRIMARY")
-            print (payload)
 
             try:                
                 eu = models.EmailUser.objects.get(id=user_logged_in)                
