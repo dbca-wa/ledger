@@ -1,0 +1,52 @@
+<ul class="nav nav-tabs">
+    <li class="nav-item">
+      <a id="account_details" class="nav-link" aria-current="page" href="/ledger/account-management/{{ account_id }}/change/">Account Details</a>
+    </li>
+    <li class="nav-item">
+        {% if object.residential_address_id %}
+        <a id="residential_address_details" class="nav-link" aria-current="page" href="/ledger/account-management/{{ account_id }}/change/residential-address/{{ object.residential_address_id }}/">Residential Address</a>
+        {% else %}
+        <a id="residential_address_details" class="nav-link" aria-current="page" href="/ledger/account-management/{{ account_id }}/change/create-residential-address/">Residential Address</a>
+        {% endif %}
+    </li>
+    <li class="nav-item">
+        {% if object.postal_address_id %}
+        <a id="postal_address_details" class="nav-link" aria-current="page" href="/ledger/account-management/{{ account_id }}/change/postal-address/{{ object.postal_address_id }}/">Postal Address</a>
+        {% else %}
+        <a id="postal_address_details" class="nav-link" aria-current="page" href="/ledger/account-management/{{ account_id }}/change/create-postal-address/">Postal Address</a>
+        {% endif %}
+    </li>
+    <li class="nav-item">
+        {% if object.billing_address_id %}
+        <a id="billing_address_details" class="nav-link" aria-current="page" href="/ledger/account-management/{{ account_id }}/change/billing-address/{{ object.billing_address_id }}/">Billing Address</a>
+        {% else %}
+        <a id="billing_address_details" class="nav-link" aria-current="page" href="/ledger/account-management/{{ account_id }}/change/create-billing-address/">Billing Address</a>
+        {% endif %}
+    </li>
+    <li class="nav-item">
+        <a id="change_log" class="nav-link" aria-current="page" href="/ledger/account-management/{{ account_id }}/change-log/">Change Log</a>
+    </li>
+</ul>
+
+<script>
+    
+window.addEventListener('DOMContentLoaded', function () {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    const lastPart = parts[parts.length - 1];
+    const secondLastPart = parts[parts.length - 2];
+
+    if (lastPart == "change") {
+        document.getElementById("account_details").className += " active";
+    } else if (lastPart == "create-residential-address" || secondLastPart == "residential-address") {
+        document.getElementById("residential_address_details").className += " active";
+    } else if (lastPart == "create-postal-address" || secondLastPart == "postal-address") {
+        document.getElementById("postal_address_details").className += " active";
+    } else if (lastPart == "create-billing-address" || secondLastPart == "billing-address") {
+        document.getElementById("billing_address_details").className += " active";
+    } else if (lastPart == "change-log") {
+        document.getElementById("change_log").className += " active";
+    }
+
+});
+
+</script>
