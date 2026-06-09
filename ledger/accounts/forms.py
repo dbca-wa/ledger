@@ -328,7 +328,7 @@ class EmailUserAddressForm(forms.ModelForm):
     
     class Meta:
         model = Address
-        fields = ['line1', 'line2', 'line3', 'locality', 'state', 'country', 'postcode']
+        fields = ['line1', 'line2', 'line3', 'locality', 'state', 'postcode', 'country']
 
     def clean_line1(self):
         cleaned_data = self.clean()        

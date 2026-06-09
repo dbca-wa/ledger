@@ -340,6 +340,7 @@ class AccountCreateResidentialAddress(AccountCreateAddress):
         if helpers.is_account_admin(self.request.user) is True:
             #validate and create
             self.object = form.save(commit=False)       
+            forms_data = form.cleaned_data
             account_id = self.kwargs['account_id']
             self.object.user_id = account_id    
 
@@ -352,8 +353,12 @@ class AccountCreateResidentialAddress(AccountCreateAddress):
             #change emailuser record to point to new record
             account.residential_address_id = self.object.pk
             account.save()
+            
             #change log
-            EmailUserChangeLog.objects.create(emailuser=account, change_key="residential_address", change_value=str(self.object.summary),change_by=self.request.user)            
+            for fd in forms_data:
+                if forms_data[fd]:
+                    EmailUserChangeLog.objects.create(emailuser=account, change_key="residential_"+fd, change_value=forms_data[fd],change_by=self.request.user)
+
             messages.success(self.request, "Succesfully created residential address {} for {}".format(self.object.summary, account.email))            
             return HttpResponseRedirect(self.get_absolute_address_url())
         else:            
@@ -400,7 +405,8 @@ class AccountCreatePostalAddress(AccountCreateAddress):
     def form_valid(self, form):
         if helpers.is_account_admin(self.request.user) is True:
             #validate and create
-            self.object = form.save(commit=False)       
+            self.object = form.save(commit=False)     
+            forms_data = form.cleaned_data  
             account_id = self.kwargs['account_id']
             self.object.user_id = account_id    
 
@@ -413,8 +419,12 @@ class AccountCreatePostalAddress(AccountCreateAddress):
             #change emailuser record to point to new record
             account.postal_address_id = self.object.pk
             account.save()
+            
             #change log
-            EmailUserChangeLog.objects.create(emailuser=account, change_key="postal_address", change_value=str(self.object.summary),change_by=self.request.user)            
+            for fd in forms_data:
+                if forms_data[fd]:
+                    EmailUserChangeLog.objects.create(emailuser=account, change_key="postal_"+fd, change_value=forms_data[fd],change_by=self.request.user)
+
             messages.success(self.request, "Succesfully created postal address {} for {}".format(self.object.summary, account.email))            
             return HttpResponseRedirect(self.get_absolute_address_url())
         else:            
@@ -461,7 +471,8 @@ class AccountCreateBillingAddress(AccountCreateAddress):
     def form_valid(self, form):
         if helpers.is_account_admin(self.request.user) is True:
             #validate and create
-            self.object = form.save(commit=False)       
+            self.object = form.save(commit=False)     
+            forms_data = form.cleaned_data  
             account_id = self.kwargs['account_id']
             self.object.user_id = account_id    
 
@@ -474,8 +485,12 @@ class AccountCreateBillingAddress(AccountCreateAddress):
             #change emailuser record to point to new record
             account.billing_address_id = self.object.pk
             account.save()
+
             #change log
-            EmailUserChangeLog.objects.create(emailuser=account, change_key="billing_address", change_value=str(self.object.summary),change_by=self.request.user)            
+            for fd in forms_data:
+                if forms_data[fd]:
+                    EmailUserChangeLog.objects.create(emailuser=account, change_key="billing_"+fd, change_value=forms_data[fd],change_by=self.request.user)
+
             messages.success(self.request, "Succesfully created billing address {} for {}".format(self.object.summary, account.email))            
             return HttpResponseRedirect(self.get_absolute_address_url())
         else:            
@@ -551,7 +566,14 @@ class AccountChangeResidentialAddress(AccountChangeAddress):
     def form_valid(self, form):
         if helpers.is_account_admin(self.request.user) is True:
             self.object = form.save(commit=False)
+            forms_data = form.cleaned_data
             account_id = self.kwargs['account_id']
+
+            addressvalue_map = {}
+            a = Address.objects.filter(id=self.object.id).values()
+            
+            for av in a[0].keys():
+                addressvalue_map[av] = a[0][av]  
 
             try:
                 account = EmailUser.objects.get(id=account_id)
@@ -559,7 +581,11 @@ class AccountChangeResidentialAddress(AccountChangeAddress):
                 return HttpResponseRedirect(self.get_absolute_management_url())
             
             self.object.save()
-            EmailUserChangeLog.objects.create(emailuser=account, change_key="residential_address", change_value=self.object.summary,change_by=self.request.user)
+
+            for fd in forms_data:
+                if addressvalue_map[fd] != forms_data[fd]:
+                    EmailUserChangeLog.objects.create(emailuser=account, change_key="residential_"+fd, change_value=forms_data[fd],change_by=self.request.user)
+
             messages.success(self.request, "Succesfully updated residential address {} for {}".format(self.object.summary, account.email))
             return HttpResponseRedirect(self.get_absolute_address_url())
         else:            
@@ -607,7 +633,13 @@ class AccountChangePostalAddress(AccountChangeAddress):
     def form_valid(self, form):
         if helpers.is_account_admin(self.request.user) is True:
             self.object = form.save(commit=False)
+            forms_data = form.cleaned_data
             account_id = self.kwargs['account_id']
+            addressvalue_map = {}
+            a = Address.objects.filter(id=self.object.id).values()
+            
+            for av in a[0].keys():
+                addressvalue_map[av] = a[0][av]  
 
             try:
                 account = EmailUser.objects.get(id=account_id)
@@ -615,7 +647,11 @@ class AccountChangePostalAddress(AccountChangeAddress):
                 return HttpResponseRedirect(self.get_absolute_management_url())
             
             self.object.save()
-            EmailUserChangeLog.objects.create(emailuser=account, change_key="postal_address", change_value=self.object.summary,change_by=self.request.user)
+
+            for fd in forms_data:
+                if addressvalue_map[fd] != forms_data[fd]:
+                    EmailUserChangeLog.objects.create(emailuser=account, change_key="postal_"+fd, change_value=forms_data[fd],change_by=self.request.user)
+
             messages.success(self.request, "Succesfully updated postal address {} for {}".format(self.object.summary, account.email))
             return HttpResponseRedirect(self.get_absolute_address_url())
         else:            
@@ -663,7 +699,13 @@ class AccountChangeBillingAddress(AccountChangeAddress):
     def form_valid(self, form):
         if helpers.is_account_admin(self.request.user) is True:
             self.object = form.save(commit=False)
+            forms_data = form.cleaned_data
             account_id = self.kwargs['account_id']
+            addressvalue_map = {}
+            a = Address.objects.filter(id=self.object.id).values()
+            
+            for av in a[0].keys():
+                addressvalue_map[av] = a[0][av]  
 
             try:
                 account = EmailUser.objects.get(id=account_id)
@@ -671,7 +713,11 @@ class AccountChangeBillingAddress(AccountChangeAddress):
                 return HttpResponseRedirect(self.get_absolute_management_url())
             
             self.object.save()
-            EmailUserChangeLog.objects.create(emailuser=account, change_key="billing_address", change_value=self.object.summary,change_by=self.request.user)
+
+            for fd in forms_data:
+                if addressvalue_map[fd] != forms_data[fd]:
+                    EmailUserChangeLog.objects.create(emailuser=account, change_key="billing_"+fd, change_value=forms_data[fd],change_by=self.request.user)
+            
             messages.success(self.request, "Succesfully updated billing address {} for {}".format(self.object.summary, account.email))
             return HttpResponseRedirect(self.get_absolute_address_url())
         else:            
