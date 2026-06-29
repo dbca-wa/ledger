@@ -26,6 +26,7 @@ RUN apt-get upgrade -y
 # RUN apt-get install --no-install-recommends -y python3.7 python3.7-dev python3.7-distutils
 # RUN ln -s /usr/bin/python3.7 /usr/bin/python && python3.7 -m pip install --upgrade pip==21.3.1
 RUN apt-get update
+RUN apt-get install --no-install-recommends -y curl
 RUN groupadd -g 5000 oim
 RUN useradd -g 5000 -u 5000 oim -s /bin/bash -d /app
 RUN usermod -a -G sudo oim
