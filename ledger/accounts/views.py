@@ -12,7 +12,7 @@ from django.views import generic
 from django.http import HttpResponse, HttpResponseRedirect
 from django import forms
 from .forms import FirstTimeForm
-from .models import EmailUser,EmailUserChangeLog,PrivateDocument
+from .models import EmailUser,EmailUserChangeLog,PrivateDocument, Address
 import json
 
 # Example views, most of them are just template rendering
@@ -158,10 +158,6 @@ class AccountCreate(LoginRequiredMixin, CreateView):
             return HttpResponseRedirect(self.get_absolute_account_url())
         else:            
             return HttpResponseRedirect(self.get_absolute_account_url())
-    
-
-
-
 
 class AccountChange(LoginRequiredMixin, UpdateView):
    
@@ -262,4 +258,421 @@ class AccountChange(LoginRequiredMixin, UpdateView):
             return HttpResponseRedirect(self.get_absolute_url())
         else:            
             return HttpResponseRedirect(self.get_absolute_account_url())
+        
+
+class AccountChangelog(LoginRequiredMixin, TemplateView):
     
+    template_name = 'ledger/accounts/account_changelog.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super(AccountChangelog,self).get_context_data(**kwargs)
+        ctx['account_id'] = self.kwargs['pk']
+        
+        if not helpers.is_account_admin(self.request.user) is True:
+            self.template_name = 'dpaw_payments/forbidden.html'
+
+        return ctx
+
+class AccountCreateAddress(LoginRequiredMixin, CreateView):
+
+    form_class = app_forms.EmailUserCreateAddressForm    
+    model = Address
+
+    def get_context_data(self, **kwargs):
+        ctx = super(AccountCreateAddress,self).get_context_data(**kwargs)
+        account_id = self.kwargs['account_id']
+        ctx['account_id'] = account_id
+
+        if not helpers.is_account_admin(self.request.user) is True:
+            self.template_name = 'dpaw_payments/forbidden.html'
+        return ctx
+    
+    def get_initial(self):
+        initial = super(AccountCreateAddress, self).get_initial()
+        return initial
+    
+    def get_absolute_url(self):       
+        account_id = self.kwargs['account_id']
+        return "/ledger/account-management/{}/change/".format(account_id)
+
+    def get_absolute_management_url(self):
+        return "/ledger/account-management/"
+
+class AccountCreateResidentialAddress(AccountCreateAddress):
+
+    template_name = 'ledger/accounts/account_change_residential_address.html'
+
+    def get_absolute_address_url(self):  
+        id = self.object.id      
+        account_id = self.object.user.id
+        return "/ledger/account-management/{}/change/residential-address/{}/".format(account_id, id)
+    
+    def get_absolute_existing_url(self, id, **kwargs):
+        account_id = self.kwargs['account_id']
+        return "/ledger/account-management/{}/change/residential-address/{}/".format(account_id, id)
+
+    def exists_test(self):
+        account_id = self.kwargs['account_id']
+        try:
+            account = EmailUser.objects.get(id=account_id)
+        except:
+            return self.get_absolute_management_url()
+
+        #if the account already has a residential address, redirect to the update page
+        if account.residential_address_id:
+            return self.get_absolute_existing_url(account.residential_address_id)
+
+    def get(self, request, *args, **kwargs):
+        test_result = self.exists_test()
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        return super(AccountCreateResidentialAddress, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        test_result = self.exists_test()
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        if request.POST.get('cancel'):            
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(AccountCreateResidentialAddress, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if helpers.is_account_admin(self.request.user) is True:
+            #validate and create
+            self.object = form.save(commit=False)       
+            account_id = self.kwargs['account_id']
+            self.object.user_id = account_id    
+
+            try:
+                account = EmailUser.objects.get(id=account_id)
+            except:
+                return HttpResponseRedirect(self.get_absolute_management_url())
+
+            self.object.save()
+            #change emailuser record to point to new record
+            account.residential_address_id = self.object.pk
+            account.save()
+            #change log
+            EmailUserChangeLog.objects.create(emailuser=account, change_key="residential_address", change_value=str(self.object.summary),change_by=self.request.user)            
+            messages.success(self.request, "Succesfully created residential address {} for {}".format(self.object.summary, account.email))            
+            return HttpResponseRedirect(self.get_absolute_address_url())
+        else:            
+            return HttpResponseRedirect(self.get_absolute_url())
+
+class AccountCreatePostalAddress(AccountCreateAddress):
+
+    template_name = 'ledger/accounts/account_change_postal_address.html'
+
+    def get_absolute_address_url(self):  
+        id = self.object.id      
+        account_id = self.object.user.id
+        return "/ledger/account-management/{}/change/postal-address/{}/".format(account_id, id)
+    
+    def get_absolute_existing_url(self, id, **kwargs):
+        account_id = self.kwargs['account_id']
+        return "/ledger/account-management/{}/change/postal-address/{}/".format(account_id, id)
+
+    def exists_test(self):
+        account_id = self.kwargs['account_id']
+        try:
+            account = EmailUser.objects.get(id=account_id)
+        except:
+            return self.get_absolute_management_url()
+
+        #if the account already has a postal address, redirect to the update page
+        if account.postal_address_id:
+            return self.get_absolute_existing_url(account.postal_address_id)
+
+    def get(self, request, *args, **kwargs):
+        test_result = self.exists_test()
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        return super(AccountCreatePostalAddress, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        test_result = self.exists_test()
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        if request.POST.get('cancel'):            
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(AccountCreatePostalAddress, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if helpers.is_account_admin(self.request.user) is True:
+            #validate and create
+            self.object = form.save(commit=False)       
+            account_id = self.kwargs['account_id']
+            self.object.user_id = account_id    
+
+            try:
+                account = EmailUser.objects.get(id=account_id)
+            except:
+                return HttpResponseRedirect(self.get_absolute_management_url())
+
+            self.object.save()
+            #change emailuser record to point to new record
+            account.postal_address_id = self.object.pk
+            account.save()
+            #change log
+            EmailUserChangeLog.objects.create(emailuser=account, change_key="postal_address", change_value=str(self.object.summary),change_by=self.request.user)            
+            messages.success(self.request, "Succesfully created postal address {} for {}".format(self.object.summary, account.email))            
+            return HttpResponseRedirect(self.get_absolute_address_url())
+        else:            
+            return HttpResponseRedirect(self.get_absolute_url())
+
+class AccountCreateBillingAddress(AccountCreateAddress):
+
+    template_name = 'ledger/accounts/account_change_billing_address.html'
+
+    def get_absolute_address_url(self):  
+        id = self.object.id      
+        account_id = self.object.user.id
+        return "/ledger/account-management/{}/change/billing-address/{}/".format(account_id, id)
+    
+    def get_absolute_existing_url(self, id, **kwargs):
+        account_id = self.kwargs['account_id']
+        return "/ledger/account-management/{}/change/billing-address/{}/".format(account_id, id)
+
+    def exists_test(self):
+        account_id = self.kwargs['account_id']
+        try:
+            account = EmailUser.objects.get(id=account_id)
+        except:
+            return self.get_absolute_management_url()
+
+        #if the account already has a billing address, redirect to the update page
+        if account.billing_address_id:
+            return self.get_absolute_existing_url(account.billing_address_id)
+
+    def get(self, request, *args, **kwargs):
+        test_result = self.exists_test()
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        return super(AccountCreateBillingAddress, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        test_result = self.exists_test()
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        if request.POST.get('cancel'):            
+            return HttpResponseRedirect(self.get_absolute_url())
+        return super(AccountCreateBillingAddress, self).post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if helpers.is_account_admin(self.request.user) is True:
+            #validate and create
+            self.object = form.save(commit=False)       
+            account_id = self.kwargs['account_id']
+            self.object.user_id = account_id    
+
+            try:
+                account = EmailUser.objects.get(id=account_id)
+            except:
+                return HttpResponseRedirect(self.get_absolute_management_url())
+
+            self.object.save()
+            #change emailuser record to point to new record
+            account.billing_address_id = self.object.pk
+            account.save()
+            #change log
+            EmailUserChangeLog.objects.create(emailuser=account, change_key="billing_address", change_value=str(self.object.summary),change_by=self.request.user)            
+            messages.success(self.request, "Succesfully created billing address {} for {}".format(self.object.summary, account.email))            
+            return HttpResponseRedirect(self.get_absolute_address_url())
+        else:            
+            return HttpResponseRedirect(self.get_absolute_url())
+
+class AccountChangeAddress(LoginRequiredMixin, UpdateView):
+    
+    form_class = app_forms.EmailUserUpdateAddressForm    
+    model = Address
+
+    def get_initial(self):
+        initial = super(AccountChangeAddress, self).get_initial()
+        address = self.get_object()
+        initial['id'] = address.id
+        return initial
+    
+    def get_context_data(self, **kwargs):
+        ctx = super(AccountChangeAddress,self).get_context_data(**kwargs)
+        ctx['account_id'] = self.kwargs['account_id']
+        ctx['address_id'] = self.kwargs['pk']
+
+        if not helpers.is_account_admin(self.request.user) is True:
+            self.template_name = 'dpaw_payments/forbidden.html'
+        return ctx
+    
+    def get_absolute_url(self):       
+        account_id = self.kwargs['account_id']
+        return "/ledger/account-management/{}/change/".format(account_id)
+    
+    def get_absolute_management_url(self):
+        return "/ledger/account-management/"
+
+
+class AccountChangeResidentialAddress(AccountChangeAddress):
+   
+    template_name = 'ledger/accounts/account_change_residential_address.html'
+    
+    def get_absolute_address_url(self):  
+        id = self.object.id      
+        account_id = self.object.user.id
+        return "/ledger/account-management/{}/change/residential-address/{}/".format(account_id, id)
+
+    def validate_account(self, **kwargs):
+        account_id = self.kwargs['account_id']
+        address_id = self.kwargs['pk']
+
+        try:
+            account = EmailUser.objects.get(id=account_id)
+        except:
+            return self.get_absolute_management_url()
+
+        if str(account.residential_address_id) != str(address_id):
+            return self.get_absolute_url()
+
+    def get(self, request, *args, **kwargs):
+        test_result = self.validate_account()
+
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        
+        return super(AccountChangeResidentialAddress, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        test_result = self.validate_account()
+
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        if request.POST.get('cancel'):            
+            return HttpResponseRedirect(self.get_absolute_url())
+
+        return super(AccountChangeResidentialAddress, self).post(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        if helpers.is_account_admin(self.request.user) is True:
+            self.object = form.save(commit=False)
+            account_id = self.kwargs['account_id']
+
+            try:
+                account = EmailUser.objects.get(id=account_id)
+            except:
+                return HttpResponseRedirect(self.get_absolute_management_url())
+            
+            self.object.save()
+            EmailUserChangeLog.objects.create(emailuser=account, change_key="residential_address", change_value=self.object.summary,change_by=self.request.user)
+            messages.success(self.request, "Succesfully updated residential address {} for {}".format(self.object.summary, account.email))
+            return HttpResponseRedirect(self.get_absolute_address_url())
+        else:            
+            return HttpResponseRedirect(self.get_absolute_address_url())
+        
+class AccountChangePostalAddress(AccountChangeAddress):
+   
+    template_name = 'ledger/accounts/account_change_postal_address.html'
+    
+    def get_absolute_address_url(self):  
+        id = self.object.id      
+        account_id = self.object.user.id
+        return "/ledger/account-management/{}/change/postal-address/{}/".format(account_id, id)
+
+    def validate_account(self, **kwargs):
+        account_id = self.kwargs['account_id']
+        address_id = self.kwargs['pk']
+
+        try:
+            account = EmailUser.objects.get(id=account_id)
+        except:
+            return self.get_absolute_management_url()
+
+        if str(account.postal_address_id) != str(address_id):
+            return self.get_absolute_url()
+
+    def get(self, request, *args, **kwargs):
+        test_result = self.validate_account()
+
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        
+        return super(AccountChangePostalAddress, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        test_result = self.validate_account()
+
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        if request.POST.get('cancel'):            
+            return HttpResponseRedirect(self.get_absolute_url())
+
+        return super(AccountChangePostalAddress, self).post(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        if helpers.is_account_admin(self.request.user) is True:
+            self.object = form.save(commit=False)
+            account_id = self.kwargs['account_id']
+
+            try:
+                account = EmailUser.objects.get(id=account_id)
+            except:
+                return HttpResponseRedirect(self.get_absolute_management_url())
+            
+            self.object.save()
+            EmailUserChangeLog.objects.create(emailuser=account, change_key="postal_address", change_value=self.object.summary,change_by=self.request.user)
+            messages.success(self.request, "Succesfully updated postal address {} for {}".format(self.object.summary, account.email))
+            return HttpResponseRedirect(self.get_absolute_address_url())
+        else:            
+            return HttpResponseRedirect(self.get_absolute_address_url())
+        
+class AccountChangeBillingAddress(AccountChangeAddress):
+   
+    template_name = 'ledger/accounts/account_change_billing_address.html'
+    
+    def get_absolute_address_url(self):  
+        id = self.object.id      
+        account_id = self.object.user.id
+        return "/ledger/account-management/{}/change/billing-address/{}/".format(account_id, id)
+
+    def validate_account(self, **kwargs):
+        account_id = self.kwargs['account_id']
+        address_id = self.kwargs['pk']
+
+        try:
+            account = EmailUser.objects.get(id=account_id)
+        except:
+            return self.get_absolute_management_url()
+
+        if str(account.billing_address_id) != str(address_id):
+            return self.get_absolute_url()
+
+    def get(self, request, *args, **kwargs):
+        test_result = self.validate_account()
+
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        
+        return super(AccountChangeBillingAddress, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        test_result = self.validate_account()
+
+        if test_result:
+            return HttpResponseRedirect(test_result)
+        if request.POST.get('cancel'):            
+            return HttpResponseRedirect(self.get_absolute_url())
+
+        return super(AccountChangeBillingAddress, self).post(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        if helpers.is_account_admin(self.request.user) is True:
+            self.object = form.save(commit=False)
+            account_id = self.kwargs['account_id']
+
+            try:
+                account = EmailUser.objects.get(id=account_id)
+            except:
+                return HttpResponseRedirect(self.get_absolute_management_url())
+            
+            self.object.save()
+            EmailUserChangeLog.objects.create(emailuser=account, change_key="billing_address", change_value=self.object.summary,change_by=self.request.user)
+            messages.success(self.request, "Succesfully updated billing address {} for {}".format(self.object.summary, account.email))
+            return HttpResponseRedirect(self.get_absolute_address_url())
+        else:            
+            return HttpResponseRedirect(self.get_absolute_address_url())

@@ -1,0 +1,29 @@
+{% extends "ledgergw/web/base_b5.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<BR>
+{% include "ledger/accounts/account_change_nav_tabs.html" %}    
+
+<div class="card">
+    <h2 class="card-header">
+        <div class='row'>
+            <div class='text-start col-6'> <h2>Account Residential Address</h2></div><div class='text-end col-6'> <div>
+        </div>
+    </h2>
+
+    <div class="card-body">
+        {% crispy form %}
+    </div>
+    
+</div>
+
+<style>
+label {
+    font-weight: bold;
+}
+</style>
+
+
+{% endblock %}
