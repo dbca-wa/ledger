@@ -13,7 +13,6 @@ api_patterns = [
 ]
 
 urlpatterns = [
-    # url(r'^$', views.home, name='home'),
     re_path(r'^done/$', views.done, name='done'),
     re_path(r'^validation-sent/$', views.validation_sent, name='validation_sent'),
     re_path(r'^login-retry/$', views.login_retry, name='login_retry'),
@@ -24,5 +23,13 @@ urlpatterns = [
     re_path(r'accounts/', include(api_patterns)),
     re_path(r'account-management/create/', views.AccountCreate.as_view(), name='account_management_create'),  
     re_path(r'account-management/(?P<pk>\d+)/change/$', views.AccountChange.as_view(), name='account_management_change'),    
+    re_path(r'account-management/(?P<pk>\d+)/change-log/$', views.AccountChangelog.as_view(), name='account_management_changelog'),   
+    re_path(r'account-management/(?P<account_id>\d+)/change/residential-address/(?P<pk>\d+)/$', views.AccountChangeResidentialAddress.as_view(), name='account_management_residential_address'),   
+    re_path(r'account-management/(?P<account_id>\d+)/change/create-residential-address/$', views.AccountCreateResidentialAddress.as_view(), name='account_management_create_residential_address'),   
+    re_path(r'account-management/(?P<account_id>\d+)/change/postal-address/(?P<pk>\d+)/$', views.AccountChangePostalAddress.as_view(), name='account_management_postal_address'),   
+    re_path(r'account-management/(?P<account_id>\d+)/change/create-postal-address/$', views.AccountCreatePostalAddress.as_view(), name='account_management_create_postal_address'), 
+    re_path(r'account-management/(?P<account_id>\d+)/change/billing-address/(?P<pk>\d+)/$', views.AccountChangeBillingAddress.as_view(), name='account_management_billing_address'),   
+    re_path(r'account-management/(?P<account_id>\d+)/change/create-billing-address/$', views.AccountCreateBillingAddress.as_view(), name='account_management_create_billing_address'), 
+    re_path(r'account-management/(?P<pk>\d+)/change-log/$', views.AccountChange.as_view(), name='account_management_change_log'),   
     re_path(r'account-management/', views.AccountManagement.as_view(), name='account_management')
 ]

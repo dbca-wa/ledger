@@ -1,11 +1,18 @@
-# Prepare the base environment.
-FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2510_base_python_node AS builder_base_ledgergw
+ARG IMAGE_TAG
+ARG IMAGE_NAME
+FROM ghcr.io/dbca-wa/docker-apps-dev:ubuntu_2604_base_python AS builder_base_ledgergw
+ARG IMAGE_TAG
+ARG IMAGE_NAME
+RUN echo "Building version: $IMAGE_TAG for $IMAGE_NAME"
+ENV CONTAINER_IMAGE_TAG=${IMAGE_TAG}
+ENV CONTAINER_IMAGE_NAME=${IMAGE_NAME}
 MAINTAINER asi@dbca.wa.gov.au
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Australia/Perth
 ENV PRODUCTION_EMAIL=True
 ENV SECRET_KEY="ThisisNotRealKey"
+ENV NODE_MAJOR=24
 
 # # Use Australian Mirrors
 # RUN sed 's/archive.ubuntu.com/au.archive.ubuntu.com/g' /etc/apt/sources.list > /etc/apt/sourcesau.list
@@ -25,6 +32,7 @@ RUN apt-get upgrade -y
 # RUN apt-get install --no-install-recommends -y python3.7 python3.7-dev python3.7-distutils
 # RUN ln -s /usr/bin/python3.7 /usr/bin/python && python3.7 -m pip install --upgrade pip==21.3.1
 RUN apt-get update
+RUN apt-get install --no-install-recommends -y curl
 RUN groupadd -g 5000 oim
 RUN useradd -g 5000 -u 5000 oim -s /bin/bash -d /app
 RUN usermod -a -G sudo oim
@@ -36,6 +44,14 @@ RUN chown -R oim.oim /app
 # RUN service cron start
 # RUN touch /var/log/cron.log
 # RUN service cron start
+
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
+    | tee /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y nodejs
+
 
 COPY timezone /etc/timezone
 ENV TZ=Australia/Perth
@@ -57,8 +73,9 @@ RUN chmod 755 /startup.sh
 FROM builder_base_ledgergw as python_libs_ledgergw
 WORKDIR /app
 USER oim
-RUN virtualenv /app/venv
-ENV PATH=/app/venv/bin:$PATH
+ENV VIRTUAL_ENV=/app/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH=$VIRTUAL_ENV/bin:$PATH
 COPY --chown=oim:oim requirements.txt ./
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
@@ -82,6 +99,9 @@ RUN touch /app/.env
 COPY --chown=oim:oim ledgergw ./ledgergw
 RUN chmod 755 /app/bin/*
 RUN mkdir -p /app/ledgergw/cache/ 
+
+
+
 RUN cd /app/ledgergw/static/common; npm install
 # RUN cd /app/ledgergw/static/common; npm run build
 RUN python manage_ledgergw.py collectstatic --noinput
