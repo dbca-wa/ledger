@@ -31,6 +31,7 @@ from ledger.payments.emails import send_refund_email
 from ledger.checkout.utils import calculate_excl_gst
 from ledger.payments.facade import invoice_facade
 from ledger.payments import helpers
+from ledger.payments.mixins import PaymentOfficerPermission
 from django.db.models import Q
 from django.utils import timezone
 
@@ -264,6 +265,7 @@ class BpointTransactionViewSet(viewsets.ModelViewSet):
     queryset = BpointTransaction.objects.all()
     serializer_class = BpointTransactionSerializer
     renderer_classes = (JSONRenderer,)
+    permission_classes = [PaymentOfficerPermission,]
 
     def create(self,request):
         pass
@@ -487,7 +489,8 @@ class CashViewSet(viewsets.ModelViewSet):
     '''
     queryset = CashTransaction.objects.all()
     serializer_class = CashSerializer
-
+    permission_classes = [PaymentOfficerPermission,]
+    
     def create(self,request,format=None):
         try:
             http_status = status.HTTP_200_OK
@@ -636,6 +639,7 @@ class InvoiceTransactionViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceTransactionSerializer
     lookup_field = 'reference'
+    permission_classes = [PaymentOfficerPermission,]
 
     # @detail_route(methods=['get'])
     @action(detail=True, methods=['GET'])

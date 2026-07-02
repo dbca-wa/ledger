@@ -1,5 +1,5 @@
 from django.core.exceptions import PermissionDenied
-
+from rest_framework.permissions import BasePermission
 from ledger.payments import helpers
 
 class InvoiceOwnerMixin(object):
@@ -17,3 +17,7 @@ class InvoiceOwnerMixin(object):
         if not self.check_owner(request.user):    
             raise PermissionDenied
         return super(InvoiceOwnerMixin, self).dispatch(request, *args, **kwargs)
+
+class PaymentOfficerPermission(BasePermission):
+    def has_permission(self, request, view):
+        return helpers.is_payment_admin(request.user)
