@@ -862,8 +862,14 @@ class ProcessPaymentHPPView(views.APIView):
                                         order  = ci.create_order_from_basket(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=basket.owner, status='Frozen')      
                                 crn_string = '{0}{1}'.format(systemid_check(ois.system_id),order.number)
                                 invoice_reference = getCRN(crn_string)     
-                                basket.notification_url = checkout_session.return_preload_url() + "?invoice="+invoice_reference
-                                basket.success_return_url = checkout_session.return_url() + "?invoice="+invoice_reference
+                                if "?" in checkout_session.return_preload_url():
+                                    basket.notification_url = checkout_session.return_preload_url() + "&invoice="+invoice_reference
+                                else:    
+                                    basket.notification_url = checkout_session.return_preload_url() + "?invoice="+invoice_reference
+                                if "?" in checkout_session.return_url():
+                                    basket.success_return_url = checkout_session.return_url() + "&invoice="+invoice_reference
+                                else:
+                                    basket.success_return_url = checkout_session.return_url() + "?invoice="+invoice_reference
                                 basket.save()                                                                  
 
                                 missing = [k for k,v in {
@@ -913,7 +919,7 @@ class ProcessPaymentHPPView(views.APIView):
                                         "currency": currency,
                                         "bypass3ds": False,
                                         "tokenisationMode": "Default",
-                                        "emailAddress": basket.owner.email,
+                                        # "emailAddress": basket.owner.email,
                                         "storeCard": True,
                                         "testMode": ois.bpoint_test,
                                         "tokenisationMode": "OptIn" # or None when not logged in
