@@ -1572,6 +1572,9 @@ class BpointWebhookSuccess(views.APIView):
             dvtoken = payload['data'].get('paymentMethod').get("token")
             settlement_date = payload['data'].get('settlementDate')
             is_test_txn = payload['data'].get('isTestTxn')
+            store_card = payload['data'].get('storeCard') 
+            card_expiry_month = payload['data'].get('paymentMethod').get("card").get("expiry").get("month")
+            card_expiry_year = payload['data'].get('paymentMethod').get("card").get("expiry").get("year")
             
 
             amount = payload['data'].get('amount')  
@@ -1642,7 +1645,20 @@ class BpointWebhookSuccess(views.APIView):
 
                         # Send notification to ledger system about payment completion
                         t = threading.Thread(target=payments_utils.send_payment_notifcation_completed_webhook, args=(basket,))                                            
-                        t.start()                        
+                        t.start()   
+
+                        # store card token                        
+                        if store_card is True:
+                            if dvtoken:
+                                if len(dvtoken) > 8:                                    
+                                    expiry_date = datetime.strptime("20"+card_expiry_year+"-"+card_expiry_month+"-"+"1", "%Y-%m-%d").date()
+                                    if basket.owner:
+                                        if BpointToken.objects.filter(DVToken=dvtoken).count() > 0:
+                                            pass
+                                        else:
+                                            token = BpointToken.objects.create(DVToken=dvtoken, masked_card='XXXX-XXXX-XXXX-XXXX', card_type=card_type_prefix, expiry_date=expiry_date, user=basket.owner,system_id=basket.system.replace("S","0"))                                            
+                                        
+
 
                     else:
                         print ("No basket token found")
