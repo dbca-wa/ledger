@@ -918,11 +918,11 @@ class ProcessPaymentHPPView(views.APIView):
                                         "merchantReference": basket.basket_token,
                                         "currency": currency,
                                         "bypass3ds": False,
-                                        "tokenisationMode": "Default",
+                                        # "tokenisationMode": "Default",
                                         # "emailAddress": basket.owner.email,
                                         "storeCard": True,
-                                        "testMode": ois.bpoint_test,
-                                        "tokenisationMode": "OptIn" # or None when not logged in
+                                        "testMode": ois.bpoint_test,                                    
+                                         "tokenisationMode": "OptIn" # or None when not logged in
                                         }
                                 resp = requests.put(attachtransdetailsurl, headers=headers, data=json.dumps(payload), timeout=30)
                                 
