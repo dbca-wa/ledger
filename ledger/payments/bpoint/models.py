@@ -328,7 +328,7 @@ class BpointToken(models.Model):
     system_id = models.CharField(max_length=10, blank=True, null=True) # unable to use forigenkey to OracleInterfaceSystem due module loop.
 
     class Meta:
-        unique_together = ('user', 'masked_card','expiry_date','card_type','system_id')
+        #unique_together = ('user', 'masked_card','expiry_date','card_type','system_id')
         db_table = 'payments_bpointtoken'
 
     @property

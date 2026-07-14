@@ -28,6 +28,7 @@ urlpatterns = [
     re_path(r'^ledgergw/remote/get-basket-total/(?P<apikey>.+)/', api.get_basket_total),
     re_path(r'^ledgergw/remote/get_order_info/(?P<apikey>.+)/', api.get_order_info),
     re_path(r'^ledgergw/remote/get_order_lines/(?P<apikey>.+)/', api.get_order_lines),
+    re_path(r'^ledgergw/remote/create_hpp_preauth_url/(?P<apikey>.+)/', api.create_hpp_preauth_url),
     re_path(r'^ledgergw/remote/delete-card-token/(?P<apikey>.+)/', api.delete_card_token),
     re_path(r'^ledgergw/remote/get-card-tokens/(?P<apikey>.+)/', api.get_card_tokens_for_user),
     re_path(r'^ledgergw/remote/check-user-primary-card/(?P<apikey>.+)/', api.get_primary_card_token_for_user),

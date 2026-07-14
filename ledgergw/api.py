@@ -45,11 +45,12 @@ import json
 import ipaddress
 import re
 import mimetypes
+import requests 
 
 from oscar.apps.checkout.mixins import OrderPlacementMixin
 from oscar.apps.shipping.methods import NoShippingRequired
 from oscar.apps.checkout.calculators import OrderTotalCalculator
-from ledger.checkout.utils import CheckoutSessionData
+from ledger.checkout.utils import CheckoutSessionData, create_basket_session_v2
 from ledger.payments.facade import invoice_facade
 from ledger.payments.utils import systemid_check, LinkedInvoiceCreate
 from ledger.payments import helpers
@@ -1477,7 +1478,195 @@ def get_primary_card_token_for_user(request,apikey):
  
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response
-             
+
+@csrf_exempt
+def create_hpp_preauth_url(request,apikey):
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    
+    basket =None
+    failed_refund = False
+    card_tokens = []
+    invoice_text = None
+
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            print ("C 10")
+            data = json.loads(request.POST.get('data', "{}"))
+            user_logged_in = request.POST.get('user_logged_in', None)
+            PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE = request.POST.get('PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE',None)
+            PAYMENT_INTERFACE_REDIRECT_URL = request.POST.get('PAYMENT_INTERFACE_REDIRECT_URL',None)
+            print ("C 11")
+            ois = payment_models.OracleInterfaceSystem.objects.filter(system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
+            print (ois)
+            payment_gateway_type = ois[0].payment_gateway_type
+            email_user_obj = models.EmailUser.objects.filter(id=int(user_logged_in))
+            system_id = ois[0].system_id
+            print ("C 12")
+            user = None
+            if email_user_obj.count() > 0:
+                user=email_user_obj[0]
+
+            if payment_gateway_type == 'hpp_redirect':
+                print ("C 12.1")
+                lines = []
+                lines.append({'ledger_description':str("Preauth Request"),"quantity":1, "price_excl_tax": Decimal('{:.2f}'.format(float('0.91'))),"price_incl_tax":Decimal('{:.2f}'.format(float('1.00'))),"oracle_code":str(settings.UNALLOCATED_ORACLE_CODE), 'line_status': 1})
+                print ("C 12.2")
+                basket_params = {
+                    'products': lines,
+                    'vouchers': [],
+                    'system': system_id,
+                    'custom_basket': True,
+                    'booking_reference': "USER-"+user_logged_in,
+                    'booking_reference_link': "USER-"+user_logged_in,
+                    'custom_basket': True,
+                    'tax_override': True,
+                    'line_status': True
+                }
+                print ("C 12.3")
+                # basket, basket_hash = create_basket_session(request, basket_params)
+                basket, basket_hash = utils.create_basket_session_v2(user_logged_in, basket_params)
+                basket_obj = basket_models.Basket.objects.get(id=basket.id)
+                print ("C 12.3.0")
+                print (PAYMENT_INTERFACE_REDIRECT_URL)
+                basket_obj.success_return_url = PAYMENT_INTERFACE_REDIRECT_URL
+                basket_obj.save()
+                print ("C 12.3.1")
+                if invoice_text is None:
+                    invoice_text='PreAuth via system'
+                print ("C 12.3.2")
+                ci = utils_ledger_payment_invoice.CreateInvoiceBasket()     
+                print ("C 12.4")                           
+                if system_id:
+                    ci.system = system_id
+                print ("C 12.5")
+                order  = ci.create_invoice_and_order(basket, total=None, shipping_method='No shipping required',shipping_charge=False, user=user, status='Submitted', invoice_text=invoice_text,)
+                new_invoice = Invoice.objects.get(order_number=order.number)
+                print ("C 12.6")
+                # update_payments(new_invoice.reference)
+
+                print ("C 13")
+                print (ois)
+                username = ois[0].bpoint_username
+                password = ois[0].bpoint_password
+                merchant = ois[0].bpoint_merchant_num
+                biller_code = ois[0].bpoint_biller_code  
+                currency = ois[0].bpoint_currency    
+                print (username)
+                missing = [k for k,v in {
+                    "BPOINT_USERNAME": username,
+                    "BPOINT_PASSWORD": password,
+                    "BPOINT_MERCHANT": merchant,
+                    "BPOINT_BILLER_CODE": biller_code,
+                }.items() if not v]
+                if missing:
+                    print(f"Missing required environment variables: {', '.join(missing)}", file=sys.stderr)
+                    sys.exit(2)
+    
+                print ("C 14")
+                # auth_header = self.build_basic_auth(username, merchant, password)
+                raw = f"{username}|{merchant}:{password}".encode("utf-8")
+                auth_header = "Basic " + base64.b64encode(raw).decode("ascii")
+
+                print ("C 14.1")
+                authkeyurl = settings.BPOINT_HPP_BASE_URL+"/txns/authkeys"
+                print ("C 14.2")
+                headers = {
+                    "Authorization": auth_header,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                }
+                print ("C 14.3")
+
+                payload = {}    
+                try:         
+                    resp = requests.post(authkeyurl, headers=headers, data=json.dumps(payload), timeout=30)
+                except Exception as e:
+                    print (e)
+                    
+                print ("C 15")
+                try:
+                    data = resp.json()
+                except Exception:
+                    data = {"raw": resp.text}
+
+                if not resp.ok:
+                    raise RuntimeError(
+                        f"Create Payment Request failed (HTTP {resp.status_code}): {data}"
+                    )
+                print ("C 16")
+                authkey = data.get('authkey')
+                print ("C 16.1")
+                ## Create transaction details
+                attachtransdetailsurl = settings.BPOINT_HPP_BASE_URL+"/txns/authkeys/{}/txn-details".format(authkey)
+                print ("C 16.2")
+                payload ={
+                        "action": "PreAuth",
+                        "type": "Internet",
+                        "subType": "Single",
+                        "amount": 100,
+                        "billerCode": biller_code,
+                        "crn1" : new_invoice.reference,
+                        "crn2": "",                                        
+                        "merchantReference": basket.basket_token,
+                        "currency": currency,
+                        "bypass3ds": False,
+                        "storeCard": True,
+                        "testMode": ois[0].bpoint_test,                                    
+                        "tokenisationMode": "All" # or None when not logged in
+                        }
+                print ("C 16.3")
+                resp = requests.put(attachtransdetailsurl, headers=headers, data=json.dumps(payload), timeout=30)
+                print ("C 17")
+                try:
+                    data = resp.json()
+                except Exception:
+                    data = {"raw": resp.text}
+
+                if not resp.ok:
+                    raise RuntimeError(
+                        f"Create Payment Request failed (HTTP {resp.status_code}): {data}"
+                    )
+                print ("C 18")
+                attach_hpp_config_url = settings.BPOINT_HPP_BASE_URL+"/txns/authkeys/{}/hpp-configuration-with-webhook".format(authkey)
+                payload ={
+                    "redirectionUrl": settings.BPOINT_REDIRECT_URL+"/ledger/payments/payment-triage/{}/".format(basket.basket_token),
+                    "tokeniseTxnCheckBoxDefaultValue": False,
+                    "hideCRN1": True,
+                    # "hideCRN2": False,
+                    # "hideCRN3": False,
+                    "hideBillerCode": True,
+                    # "returnBarLabel": "Go Back",
+                    # "returnBarUrl": "https://xxx.dbca.wa.gov.au/api/test",
+                    "webhook": {
+                        "url": settings.BPOINT_WEBHOOK_URL+"/ledger/payments/api/bpoint-webhook/payment-success/{}/".format(basket.basket_token),                                                                                
+                        "version": "5"
+                        } 
+                    }
+                resp = requests.put(attach_hpp_config_url, headers=headers, data=json.dumps(payload), timeout=30)
+                
+                try:
+                    data = resp.json()
+                except Exception:
+                    data = {"raw": resp.text}
+                print ("C 19")                            
+                if not resp.ok:
+                    raise RuntimeError(
+                        f"Create Payment Request failed (HTTP {resp.status_code}): {data}"
+                    )
+                #return Response({"hpp_redirect_url": data, "status": 200})                    
+                print ("C 20")   
+                print (data)
+
+            jsondata['hpp_redirect_url'] = data            
+            jsondata['payment_gateway_type'] = payment_gateway_type
+            jsondata['status'] = 200
+            jsondata['message'] = 'success'
+ 
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response
+
+
+
 @csrf_exempt
 def get_card_tokens_for_user(request,apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
@@ -1491,6 +1680,9 @@ def get_card_tokens_for_user(request,apikey):
             data = json.loads(request.POST.get('data', "{}"))
             user_logged_in = request.POST.get('user_logged_in', None)
             PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE = request.POST.get('PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE',None)
+            OracleInterfaceSystem = payment_models.OracleInterfaceSystem.objects.filter(system_id=PAYMENT_INTERFACE_SYSTEM_PROJECT_CODE)
+            
+            payment_gateway_type = OracleInterfaceSystem[0].payment_gateway_type
             email_user_obj = models.EmailUser.objects.filter(id=int(user_logged_in))
             user = None
             if email_user_obj.count() > 0:
@@ -1509,6 +1701,7 @@ def get_card_tokens_for_user(request,apikey):
 
             jsondata['card_tokens'] = card_tokens
             jsondata['primary_card'] = primary_card_id
+            jsondata['payment_gateway_type'] = payment_gateway_type
             jsondata['status'] = 200
             jsondata['message'] = 'success'
  

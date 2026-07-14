@@ -1581,7 +1581,7 @@ class BpointWebhookSuccess(views.APIView):
             amount_original = payload['data'].get('amountOriginal')  
         
             if response_text == "Approved":
-                if action == 'Payment':
+                if action == 'Payment' or action == 'PreAuth':
                     basket = Basket.objects.get(basket_token=merchant_reference)
                     if Basket.objects.filter(basket_token=merchant_reference).count() > 0:
                         bpoint_amount_nice1 = str(amount)[:-2]+'.'+str(amount)[-2:]
@@ -1647,17 +1647,16 @@ class BpointWebhookSuccess(views.APIView):
                         t = threading.Thread(target=payments_utils.send_payment_notifcation_completed_webhook, args=(basket,))                                            
                         t.start()   
 
-                        # store card token                        
-                        if store_card is True:
-                            if dvtoken:
-                                if len(dvtoken) > 8:                                    
-                                    expiry_date = datetime.strptime("20"+card_expiry_year+"-"+card_expiry_month+"-"+"1", "%Y-%m-%d").date()
-                                    if basket.owner:
-                                        if BpointToken.objects.filter(DVToken=dvtoken).count() > 0:
-                                            pass
-                                        else:
-                                            token = BpointToken.objects.create(DVToken=dvtoken, masked_card='XXXX-XXXX-XXXX-XXXX', card_type=card_type_prefix, expiry_date=expiry_date, user=basket.owner,system_id=basket.system.replace("S","0"))                                            
-                                        
+                        # store card token                                               
+                        if dvtoken:
+                            if len(dvtoken) > 8:                                    
+                                expiry_date = datetime.strptime("20"+card_expiry_year+"-"+card_expiry_month+"-"+"1", "%Y-%m-%d").date()
+                                if basket.owner:
+                                    if BpointToken.objects.filter(DVToken=dvtoken).count() > 0:
+                                        pass
+                                    else:
+                                        token = BpointToken.objects.create(DVToken=dvtoken, masked_card='XXXX-XXXX-XXXX-XXXX', card_type=card_type_prefix, expiry_date=expiry_date, user=basket.owner,system_id=basket.system.replace("S","0"))                                            
+                                    
 
 
                     else:

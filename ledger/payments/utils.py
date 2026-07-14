@@ -1195,8 +1195,19 @@ def get_oracle_interface_system_permissions(system_id, email):
 
 
 def send_payment_notifcation_completed_webhook(basket):
-    resp = requests.get(basket.notification_url, timeout=30)
-    print(f"Finished {basket.notification_url} with status {resp.status_code}")
-    if resp.status_code == 200:
-        basket.notification_completed = True
-        basket.save()
+    if basket.notification_url is not None and len(basket.notification_url) > 0:
+        resp = requests.get(basket.notification_url, timeout=30)
+        print(f"Finished {basket.notification_url} with status {resp.status_code}")
+        if resp.status_code == 200:
+            basket.notification_completed = True
+            basket.save()
+    else:
+        try:
+            print("No notification url to send")
+            print (basket)
+            basket.notification_completed = True
+            basket.save()
+            print (basket.notification_completed )
+            print (basket.id)
+        except Exception as e:
+            print(f"Error occurred while sending notification: {e}")
