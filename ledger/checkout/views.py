@@ -805,7 +805,7 @@ class ProcessPaymentHPPView(views.APIView):
                     basket = Basket.objects.get(
                         pk=basket_id
                     )                    
-                    if basket.status == Basket.OPEN or basket.status == Basket.FROZEN:
+                    if basket.status == Basket.OPEN or basket.status == Basket.FROZEN or basket.status == Basket.SAVED:
                         pass
                     else:
                         raise ValueError("Basket status is not valid")
