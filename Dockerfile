@@ -105,6 +105,7 @@ RUN mkdir -p /app/ledgergw/cache/
 RUN cd /app/ledgergw/static/common; npm install
 # RUN cd /app/ledgergw/static/common; npm run build
 RUN python manage_ledgergw.py collectstatic --noinput
+RUN python manage_ledgergw.py script_hash_indexes --skip-checks
 # RUN service rsyslog start
 USER root 
 # RUN  rm -rf /var/lib/{apt,dpkg,cache,log}/ /tmp/* /var/tmp/*
