@@ -189,8 +189,9 @@ class PaymentDetailsView(CorePaymentDetailsView):
 
         ctx['store_card'] = True
         user = None
+        logged_in_user = EmailUser.objects.get(id=int(self.checkout_session.get_user_logged_in()))
         # only load stored cards if the user is an admin or has legitimately logged in
-        if self.checkout_session.basket_owner() and self.checkout_session.get_user_logged_in() and is_payment_admin(int(self.checkout_session.get_user_logged_in())):
+        if self.checkout_session.basket_owner() and is_payment_admin(logged_in_user):
             user = EmailUser.objects.get(id=int(self.checkout_session.basket_owner()))
         #elif self.request.user.is_authenticated:
         #    user = self.request.user
