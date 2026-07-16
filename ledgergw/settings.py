@@ -21,7 +21,8 @@ INSTALLED_APPS += [
     'ledgergw',
     'webtemplate_dbca',
     'appmonitor_client',
-    'dbca_utils'
+    'dbca_utils',
+    'wagov_utils.components.sri_utils',
 ]
 
 MIDDLEWARE_CLASSES += [
@@ -114,6 +115,7 @@ DEV_STATIC_URL = env('DEV_STATIC_URL')
 ROTTNEST_ISLAND_URL = env('ROTTNEST_URL', [])
 DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATIC_ROOT=os.path.join(BASE_DIR, 'staticfiles_ledger')
 
 # Use git commit hash for purging cache in browser for deployment changes
 GIT_COMMIT_HASH = ''

@@ -118,3 +118,6 @@ disturbance/static/disturbance_vue/static/js/babel-polyfill.js
 
 private-media/
 temp/
+
+sri-manifest.json
+sri-files/*
