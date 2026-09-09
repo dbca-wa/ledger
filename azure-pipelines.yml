@@ -70,3 +70,23 @@ stages:
         docker push $(devImageName):ledger_dev_django5_$(tagDate)-$(shortSha)
       displayName: 'Push Dev Image'
               
+    # 7. Purge images
+    - script: |
+        docker system prune -af
+      displayName: 'Cleanup Docker space'   
+
+    # 8. Scan image
+    - bash: |
+        mkdir -p "$(Build.ArtifactStagingDirectory)"
+        chmod 777 "$(Build.ArtifactStagingDirectory)"
+        docker run --pull always --rm -e DOCKER_IMAGE="$(imageName):$(tagDate)-$(shortSha)" -v "$(Build.ArtifactStagingDirectory):/artifacts" ghcr.io/dbca-wa/docker-apps-dev:security_scan_tools_base_latest  bash -c '
+            /app/scan_image.sh
+    
+            cp /tmp/scans/vulnerabilities.csv /artifacts/
+            cp /tmp/scans/sbom.json /artifacts/
+        '
+      displayName: Run security scan
+     
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: security-scan
+      displayName: Publish scan results       
