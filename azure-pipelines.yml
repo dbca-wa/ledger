@@ -83,6 +83,7 @@ stages:
             /app/scan_image.sh
     
             cp /tmp/scans/vulnerabilities.csv /artifacts/
+            cp /tmp/scans/vulnerabilities.xlsx /artifacts/
             cp /tmp/scans/sbom.json /artifacts/
         '
       displayName: Run security scan
