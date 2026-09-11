@@ -42,7 +42,7 @@ var ledger_payments = {
                         
                         <tr><th>Invoice</th><td>${data.crn1}</td></tr>
                         <tr><th>Amount</th><td>${ledger_payments.formatMoney(data.amount)} ${data.currency}</td></tr>
-                        <tr><th>Processed Date</th><td>${data.processedDateTime}</td></tr>
+                        <tr><th>Processed Date</th><td>${data.processedDateTime.replace('T', ' ').replace(/\.\d+Z$/, '')}</td></tr>
                         <tr><th>Settlement Date</th><td>${data.settlementDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')}</td></tr>
                         <tr><th>Status</th><td>${data.responseText}</td></tr>
                 </tbody>
@@ -109,7 +109,7 @@ var ledger_payments = {
                                                         
                                                         "</td><td>" + 
                                                         //TODO on click open modal/popup that get data from Bpoint with api request
-                                                        "<button type='button' class='btn-link' data-bs-toggle='modal' data-bs-target='#BPointDetails' data-bpoint-id='"+data.data.bpoint[i].txnnumber+"'>View BPoint</button>" + 
+                                                        "<button type='button' class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#BPointDetails' data-bpoint-id='"+data.data.bpoint[i].txnnumber+"'>View BPoint</button>" + 
                                                         
                                                         "</td></tr>";
                                                         // console.log(data.data.bpoint[i]);
