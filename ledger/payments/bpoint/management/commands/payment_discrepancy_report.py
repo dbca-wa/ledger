@@ -29,6 +29,12 @@ class Command(BaseCommand):
             default='0',
             help='Minimum difference between payment totals for a discrepancy to occur.'
         )
+        parser.add_argument(
+            '--system_number',
+            type=str,
+            help='Specify System Interface Number to only send report to that System.'
+        )
+        
 
     def handle(self, *args, **options):
         logger.info('Running command {}'.format(__name__))
@@ -51,6 +57,9 @@ class Command(BaseCommand):
                 discrepancy_range = Decimal('0')
         except:
             discrepancy_range = Decimal('0')
+
+        if options.get('system_number'):
+            systems = systems.filter(system_id=options.get('system_number'))
 
         for system in systems:
             try:
@@ -85,6 +94,7 @@ class Command(BaseCommand):
                     row['oracle_receipt_total'] = str(discrepancy.oracle_receipt_total)
                     row['cash_total'] = str(discrepancy.cash_total)
                     row['bpay_total'] = str(discrepancy.bpay_total)
+                    row['total_diff'] = str(discrepancy.diff)
                     row['updated'] = discrepancy.updated.strftime('%d/%m/%Y %H:%M:%S')
 
                     discrepancies_formatted.append(row)

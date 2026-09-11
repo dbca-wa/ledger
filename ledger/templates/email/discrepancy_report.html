@@ -1,6 +1,20 @@
-{%  extends 'dpaw_payments/emails/base.html' %}
+<style>
+table {
+ border-top: 1px solid #000000;
+ border-left: 1px solid #000000;
+ border-right: 1px solid #000000;
+ border-bottom: 2px solid #000000;
+}
+td {
+padding:5px;
+border: 1px solid #000000;
+}
+th {
+    padding:5px;
+    border: 1px solid #000000;
+}
 
-{% block content %}
+</style>
 
 <h3>Payment Total Discrepancies found for System {{system.system_id}} {{system.system_name}}</h3>
 
@@ -15,6 +29,7 @@
             <th>Oracle Receipt Total</th>
             <th>Cash Total</th>
             <th>BPAY Total</th>
+            <th>Discrepancy Amount</th>
             <th>Updated</th>
         </tr>
     </thead>
@@ -29,10 +44,14 @@
             <td>{{discrepancy.oracle_receipt_total}}</td>
             <td>{{discrepancy.cash_total}}</td>
             <td>{{discrepancy.bpay_total}}</td>
+            <td>{{discrepancy.total_diff}}</td>
             <td>{{discrepancy.updated}}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-{% endblock %}
+<br><br>
+
+Kind Regards<br>
+Auto Generated<br>
