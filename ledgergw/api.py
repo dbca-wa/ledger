@@ -63,6 +63,9 @@ from ledger.payments import helpers
 #from oscar.core.loading import get_model
 #Bankcard = get_model('payment','Bankcard')
 
+import logging
+logger = logging.getLogger(__name__)
+
 @csrf_exempt
 def user_info_search(request, apikey):
     jsondata = {'status': 404, 'message': 'API Key Not Found'}
@@ -2723,14 +2726,17 @@ def send_save_payment_method_link(request,apikey):
                 email = request.POST.get('email', None)
                 system_url = request.POST.get('PAYMENT_INTERFACE_SYSTEM_URL', None)
                 system_id = request.POST.get('PAYMENT_INTERFACE_SYSTEM_ID', None)
+                logger.info(f"Request to send save payment method link to {email} for system {system_id} - {system_url}")
                 try:
                     system = payment_models.OracleInterfaceSystem.objects.get(id=system_id)
                 except:
+                    logger.error(f"Oracle interface system with provided PAYMENT_INTERFACE_SYSTEM_ID {system_id} does not exist.")
                     raise ValidationError(f"Oracle interface system with provided PAYMENT_INTERFACE_SYSTEM_ID {system_id} does not exist.")
                                     
                 try:
                     user = models.EmailUser.objects.filter(email__iexact=email.lower()).first()
                 except:
+                    logger.error("Email Address does not exist in the system.")
                     raise ValidationError("Email Address does not exist in the system.")
 
                 #NOTE: this may be a temporary solution to ensure sending emails is rate limited
@@ -2739,9 +2745,11 @@ def send_save_payment_method_link(request,apikey):
                     jsondata['status'] = 429
                     jsondata['message'] = f'Too many requests. Email can be sent again from {cache.get(cache_key).strftime("%d %B %Y %I:%M:%S %p")}.'
                     jsondata['data'] = {}  
+                    logger.error(jsondata['message'])
                     return HttpResponse(json.dumps(jsondata), content_type='application/json')
                 cache.set(cache_key, datetime.now()+timedelta(seconds=settings.SEND_EMAIL_RATE_LIMIT), timeout=settings.SEND_EMAIL_RATE_LIMIT)
                 # generate temporary auth token
+                logger.info(f"Setting auth token with email {email}")
                 token = signing.dumps(
                     {
                         "email": email,
@@ -2751,6 +2759,7 @@ def send_save_payment_method_link(request,apikey):
 
                 url = system_url + "/ledger-ui/temp-add-payment-method/?token=" + token
                 try:
+                    logger.info(f"Sending email with url {url}")
                     expiry_time = (datetime.now() + timedelta(seconds=settings.ADD_METHOD_TOKEN_EXPIRY_TIME)).strftime("%d %B %Y %I:%M:%S %p")
                     send_save_payment_method_link_email(email, url, user, system, expiry_time)
                 except Exception as e:
@@ -2786,15 +2795,17 @@ def send_payment_link(request,apikey):
                 system_url = request.POST.get('PAYMENT_INTERFACE_SYSTEM_URL', None)
                 system_id = request.POST.get('PAYMENT_INTERFACE_SYSTEM_ID', None)
                 basket_id = request.POST.get('basket_id', None)
-
+                logger.info(f"Request to send payment link to {email} for system {system_id} - {system_url}")
                 try:
                     system = payment_models.OracleInterfaceSystem.objects.get(id=system_id)
                 except:
+                    logger.error(f"Oracle interface system with provided PAYMENT_INTERFACE_SYSTEM_ID {system_id} does not exist.")
                     raise ValidationError(f"Oracle interface system with provided PAYMENT_INTERFACE_SYSTEM_ID {system_id} does not exist.")
                                     
                 try:
                     user = models.EmailUser.objects.filter(email__iexact=email.lower()).first()
                 except:
+                    logger.error("Email Address does not exist in the system.")
                     raise ValidationError("Email Address does not exist in the system.")
 
                 #NOTE: this may be a temporary solution to ensure sending emails is rate limited
@@ -2806,7 +2817,7 @@ def send_payment_link(request,apikey):
                     return HttpResponse(json.dumps(jsondata), content_type='application/json')
                 cache.set(cache_key, datetime.now()+timedelta(seconds=settings.SEND_EMAIL_RATE_LIMIT), timeout=settings.SEND_EMAIL_RATE_LIMIT)
 
-                if settings.SEND_DIRECT_BPOINT_LINK:
+                if settings.SEND_DIRECT_BPOINT_LINK: #NOTE this is set to False by default
                     try:
                         basket = basket_models.Basket.objects.get(id=int(basket_id))
                         order = order_models.Order.objects.get(basket=basket, user=user)
@@ -2846,6 +2857,18 @@ def send_payment_link(request,apikey):
                     except:
                         attachment = None
 
+                    logger.info("Setting auth token with values:\n" +
+                        "\nemail: " + str(email) +
+                        "\nbasket_id: " + str(basket_id) +
+                        "\nledger_id: " + str(user.id) +
+                        "\nsystem: " + str(checkout_session.system()) +
+                        "\nreturn_url: " + str(checkout_session.return_url()) +
+                        "\nreturn_preload_url: " + str(checkout_session.return_preload_url()) +
+                        "\ninvoice_text: " + str(checkout_session.get_invoice_text()) +
+                        "\nbasket_owner: " + str(checkout_session.basket_owner()) +
+                        "\nsession_type: " + str(checkout_session.get_session_type()) +
+                        "\nfuture_invoice: " + str(future_invoice) +
+                        "\ninvoice_reference: " + str(invoice_reference))
                     # generate temporary auth token
                     token = signing.dumps(
                         {
@@ -2864,9 +2887,10 @@ def send_payment_link(request,apikey):
                         salt="payment-token"
                     )  
 
-                    url = system_url + "/ledger-ui/temp-payment/?token=" + token
+                    url = system_url + "/ledger-api/create-token-session/?token=" + token
                     try:
                         expiry_time = (datetime.now() + timedelta(seconds=settings.PAYMENT_TOKEN_EXPIRY_TIME)).strftime("%d %B %Y %I:%M:%S %p")
+                        logger.info(f"Sending email with url {url}")
                         send_payment_link_email(email, url, user, system, expiry_time, attachment)
                     except Exception as e:
                         print(e)
