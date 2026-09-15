@@ -176,3 +176,8 @@ BPOINT_WEBHOOK_URL=decouple.config('BPOINT_WEBHOOK_URL', default='https://ledger
 BPOINT_REDIRECT_URL=decouple.config('BPOINT_REDIRECT_URL', default='https://ledger.dbca.wa.gov.au')
 
 # SESSION_COOKIE_NAME="ledger_sessionid"
+
+SEND_EMAIL_RATE_LIMIT = decouple.config('SEND_EMAIL_RATE_LIMIT', default=300)
+ADD_METHOD_TOKEN_EXPIRY_TIME = decouple.config('ADD_METHOD_TOKEN_EXPIRY_TIME', default=600)
+PAYMENT_TOKEN_EXPIRY_TIME = decouple.config('PAYMENT_TOKEN_EXPIRY_TIME', default=600)
+SEND_DIRECT_BPOINT_LINK = decouple.config('SEND_DIRECT_BPOINT_LINK', default=False)

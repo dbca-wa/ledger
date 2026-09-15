@@ -1,0 +1,57 @@
+<style>
+table {
+ border-top: 1px solid #000000;
+ border-left: 1px solid #000000;
+ border-right: 1px solid #000000;
+ border-bottom: 2px solid #000000;
+}
+td {
+padding:5px;
+border: 1px solid #000000;
+}
+th {
+    padding:5px;
+    border: 1px solid #000000;
+}
+
+</style>
+
+<h3>Payment Total Discrepancies found for System {{system.system_id}} {{system.system_name}}</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>System ID</th>
+            <th>Settlement Date</th>
+            <th>BPOINT Gateway Total</th>
+            <th>Ledger Bpoint Total</th>
+            <th>Oracle Parser Total</th>
+            <th>Oracle Receipt Total</th>
+            <th>Cash Total</th>
+            <th>BPAY Total</th>
+            <th>Discrepancy Amount</th>
+            <th>Updated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for discrepancy in discrepancies %}
+        <tr>
+            <td>{{discrepancy.oracle_system_id_code}}</td>
+            <td>{{discrepancy.settlement_date}}</td>
+            <td>{{discrepancy.bpoint_gateway_total}}</td>
+            <td>{{discrepancy.ledger_bpoint_total}}</td>
+            <td>{{discrepancy.oracle_parser_total}}</td>
+            <td>{{discrepancy.oracle_receipt_total}}</td>
+            <td>{{discrepancy.cash_total}}</td>
+            <td>{{discrepancy.bpay_total}}</td>
+            <td>{{discrepancy.total_diff}}</td>
+            <td>{{discrepancy.updated}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br><br>
+
+Kind Regards<br>
+Auto Generated<br>

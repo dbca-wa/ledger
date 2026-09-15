@@ -360,4 +360,62 @@ $("input[name='card']").change(function() {
         // }
     });
 });
+
+$("#send-email-link").on("click", function (e) {
+    console.log('send email link')
+    e.preventDefault();
+    const $sending = $('<span class="text-muted">Sending...</span>');
+    const $link = $(this);
+    $link.replaceWith($sending);
+    
+    var data = {'email': document.getElementById("basket_owner_email").value};
+
+    $.ajax({
+        type: "POST",
+        url: '/ledger-api/email-payment-method-link/',
+        data: data,
+        success: function(data, textStatus, jQxhr) {
+            if (data["status"] != 200) {
+              $sending.replaceWith('<span class="text-muted">'+data["message"]+'</span>');
+            }
+            $sending.replaceWith('<span class="text-muted">An email with a link to add payment method has been sent.</span>');
+        },
+        error: function( jqXhr, textStatus, errorThrown ) {
+            console.log( errorThrown );
+        },
+      });
+   
+  }
+)
+
+$("#send-payment-email-link").on("click", function (e) {
+    console.log('send payment email link')
+    e.preventDefault();
+    const $sending = $('<span class="text-muted">Sending...</span>');
+    const $link = $(this);
+    $link.replaceWith($sending);
+    
+    var data = {
+      'email': document.getElementById("basket_owner_email").value,
+      'basket_id': document.getElementById("basket_id").value
+    };
+
+    $.ajax({
+        type: "POST",
+        url: '/ledger-api/email-payment-link/',
+        data: data,
+        success: function(data, textStatus, jQxhr) {
+            if (data["status"] != 200) {
+              $sending.replaceWith('<span class="text-muted">'+data["message"]+'</span>');
+            }
+            $sending.replaceWith('<span class="text-muted">An email with a link to make the payment has been sent.</span>');
+        },
+        error: function( jqXhr, textStatus, errorThrown ) {
+            console.log( errorThrown );
+        },
+      });
+   
+  }
+)
+
 </script>

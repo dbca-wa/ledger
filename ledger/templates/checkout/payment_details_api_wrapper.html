@@ -100,6 +100,20 @@
                 <input type="hidden" name="payment-csrfmiddlewaretoken" value="{{csrf_token}}">
             <input type='submit' class="btn btn-primary btn-lg" name="proceed-to-pay-hpp" value="Proceed to Payment">
             </form>
+            {% if allow_email_save_payment_link %}
+            <br><br>
+            <input type="hidden" id="basket_id" value="{{basket.id}}">
+            <input type="hidden" id="basket_owner_email" value="{{basket_owner_email}}">
+            <div class="border border-primary rounded-1 p-3">
+            Send Payment link to {{basket_owner_email}}: <br>
+            <a href="#" id="send-payment-email-link">Send Payment Email</a><br>
+            <br><br>
+            Send Save Payment Method link to {{basket_owner_email}}: <br>
+            <a href="#" id="send-email-link">Send Add Payment Method Email</a><br>
+            <a href="">Reload Payment Screen</a>
+            </div>
+            {% endif %}
+            
             {% else %}
             <div id='card-wrapper' style='padding-top: 30px'> 
                     <form id="new_card_form" method="post" action="/ledger-api/process-payment" oldaction="{% url 'checkout:preview' %}" class="form-stacked">

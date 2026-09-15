@@ -6,6 +6,7 @@ from ledgergw import models as ledgergw_models
 from ledgergw import reports
 from ledger.api import models as ledgerapi_models
 from ledger.api import utils as ledgerapi_utils
+from ledgergw.utils import get_hpp_payment_link
 #from ledgergw import common
 from django.db.models import Q
 from ledger.checkout import utils
@@ -20,6 +21,7 @@ from ledger.basket import models as basket_models
 from ledger.order import models as order_models
 from django.core.files.base import ContentFile
 from django.utils.crypto import get_random_string
+from django.core import signing
 from ledger.payments.models import BpointToken
 from ledger.payments.bpoint.facade import Facade
 from rest_framework.response import Response
@@ -28,10 +30,11 @@ from rest_framework.renderers import JSONRenderer
 from decimal import Decimal
 from ledgergw.serialisers import ReportSerializer, SettlementReportSerializer, OracleSerializer,ItemisedSettlementReportSerializer
 from ledgergw import utils as ledgergw_utils
+from ledgergw.emails import send_save_payment_method_link_email, send_payment_link_email
 from django.http import HttpResponse
 from wsgiref.util import FileWrapper
 from django.core.exceptions import ValidationError
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.conf import settings
 from ledger.payment import forms as payment_forms
 from ledger.payments.bpoint.gateway import Gateway
@@ -46,6 +49,8 @@ import ipaddress
 import re
 import mimetypes
 import requests 
+from django.core.cache import cache
+from oscar.core.loading import get_class
 
 from oscar.apps.checkout.mixins import OrderPlacementMixin
 from oscar.apps.shipping.methods import NoShippingRequired
@@ -57,6 +62,9 @@ from ledger.payments import helpers
 
 #from oscar.core.loading import get_model
 #Bankcard = get_model('payment','Bankcard')
+
+import logging
+logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def user_info_search(request, apikey):
@@ -2703,3 +2711,315 @@ def check_oracle_code(request,apikey):
         pass
     response = HttpResponse(json.dumps(jsondata), content_type='application/json')
     return response   
+
+
+@csrf_exempt
+def send_save_payment_method_link(request,apikey):
+
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    data = json.loads(request.POST.get('data', "{}"))
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            try:
+                
+                # get submitted email and system url link to add card
+                email = request.POST.get('email', None)
+                system_url = request.POST.get('PAYMENT_INTERFACE_SYSTEM_URL', None)
+                system_id = request.POST.get('PAYMENT_INTERFACE_SYSTEM_ID', None)
+                logger.info(f"Request to send save payment method link to {email} for system {system_id} - {system_url}")
+                try:
+                    system = payment_models.OracleInterfaceSystem.objects.get(id=system_id)
+                except:
+                    logger.error(f"Oracle interface system with provided PAYMENT_INTERFACE_SYSTEM_ID {system_id} does not exist.")
+                    raise ValidationError(f"Oracle interface system with provided PAYMENT_INTERFACE_SYSTEM_ID {system_id} does not exist.")
+                                    
+                try:
+                    user = models.EmailUser.objects.filter(email__iexact=email.lower()).first()
+                except:
+                    logger.error("Email Address does not exist in the system.")
+                    raise ValidationError("Email Address does not exist in the system.")
+
+                #NOTE: this may be a temporary solution to ensure sending emails is rate limited
+                cache_key = f"add_payment_method_link:{email}"
+                if cache.get(cache_key):
+                    jsondata['status'] = 429
+                    jsondata['message'] = f'Too many requests. Email can be sent again from {cache.get(cache_key).strftime("%d %B %Y %I:%M:%S %p")}.'
+                    jsondata['data'] = {}  
+                    logger.error(jsondata['message'])
+                    return HttpResponse(json.dumps(jsondata), content_type='application/json')
+                cache.set(cache_key, datetime.now()+timedelta(seconds=settings.SEND_EMAIL_RATE_LIMIT), timeout=settings.SEND_EMAIL_RATE_LIMIT)
+                # generate temporary auth token
+                logger.info(f"Setting auth token with email {email}")
+                token = signing.dumps(
+                    {
+                        "email": email,
+                    },
+                    salt="add-payment-method-token"
+                )
+
+                url = system_url + "/ledger-ui/temp-add-payment-method/?token=" + token
+                try:
+                    logger.info(f"Sending email with url {url}")
+                    expiry_time = (datetime.now() + timedelta(seconds=settings.ADD_METHOD_TOKEN_EXPIRY_TIME)).strftime("%d %B %Y %I:%M:%S %p")
+                    send_save_payment_method_link_email(email, url, user, system, expiry_time)
+                except Exception as e:
+                    print(e)
+                    cache.delete(cache_key)
+                    raise ValidationError("Failed to send save payment method link email.")
+
+                jsondata['status'] = 200
+                jsondata['message'] = 'Success'
+            except Exception as e:
+                print(traceback.print_exc())
+                jsondata['status'] = 500
+                jsondata['message'] = 'Error: {}'.format(str(e))
+                jsondata['data'] = {}  
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response   
+
+@csrf_exempt
+def send_payment_link(request,apikey):
+
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    data = json.loads(request.POST.get('data', "{}"))
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            try:
+                
+                # get submitted email and system url link to add card
+                email = request.POST.get('email', None)
+                system_url = request.POST.get('PAYMENT_INTERFACE_SYSTEM_URL', None)
+                system_id = request.POST.get('PAYMENT_INTERFACE_SYSTEM_ID', None)
+                basket_id = request.POST.get('basket_id', None)
+                logger.info(f"Request to send payment link to {email} for system {system_id} - {system_url}")
+                try:
+                    system = payment_models.OracleInterfaceSystem.objects.get(id=system_id)
+                except:
+                    logger.error(f"Oracle interface system with provided PAYMENT_INTERFACE_SYSTEM_ID {system_id} does not exist.")
+                    raise ValidationError(f"Oracle interface system with provided PAYMENT_INTERFACE_SYSTEM_ID {system_id} does not exist.")
+                                    
+                try:
+                    user = models.EmailUser.objects.filter(email__iexact=email.lower()).first()
+                except:
+                    logger.error("Email Address does not exist in the system.")
+                    raise ValidationError("Email Address does not exist in the system.")
+
+                #NOTE: this may be a temporary solution to ensure sending emails is rate limited
+                cache_key = f"payment_link:{email}"
+                if cache.get(cache_key):
+                    jsondata['status'] = 429
+                    jsondata['message'] = f'Too many requests. Email can be sent again from {cache.get(cache_key).strftime("%d %B %Y %I:%M:%S %p")}.'
+                    jsondata['data'] = {}  
+                    return HttpResponse(json.dumps(jsondata), content_type='application/json')
+                cache.set(cache_key, datetime.now()+timedelta(seconds=settings.SEND_EMAIL_RATE_LIMIT), timeout=settings.SEND_EMAIL_RATE_LIMIT)
+
+                if settings.SEND_DIRECT_BPOINT_LINK: #NOTE this is set to False by default
+                    try:
+                        basket = basket_models.Basket.objects.get(id=int(basket_id))
+                        order = order_models.Order.objects.get(basket=basket, user=user)
+                        invoice = Invoice.objects.get(order_number=order.number)
+                        from ledger.payments.pdf import create_invoice_pdf_bytes
+                        invoice_pdf = create_invoice_pdf_bytes('invoice.pdf',invoice)
+                        attachment = ('invoice#{}.pdf'.format(invoice.reference), invoice_pdf, 'application/pdf')
+                    except:
+                        attachment = None
+                    url = get_hpp_payment_link(request, basket_id, system_url)
+                    send_payment_link_email(email, url, user, system, None, attachment)
+                    #instead of a token authenticated view of the payment details prior to payment, send a link to go directly to BPoint
+                else:
+                    CheckoutSessionData = get_class('checkout.utils', 'CheckoutSessionData')
+                    checkout_session = CheckoutSessionData(request)
+
+                    #NOTE here we provide session variables required for the recipient to re-create the same session on their end
+                    # we do not include any privileged or overriding values via this session, only those session variables required 
+                    #(mainly invoice details and the notification url)
+                    # we also override the return url to use a ledger api client interface to ensure the user does not need to be logged in
+
+                    # everything include here should be provided with the understanding that:
+                    #   the recipient will be able to read these values
+                    #   the recipient will not be able to change these values
+
+                    future_invoice = False
+                    invoice_reference = None
+                    try:
+                        basket = basket_models.Basket.objects.get(id=int(basket_id))
+                        order = order_models.Order.objects.get(basket=basket, user=user)
+                        invoice = Invoice.objects.get(order_number=order.number)
+                        from ledger.payments.pdf import create_invoice_pdf_bytes
+                        invoice_pdf = create_invoice_pdf_bytes('invoice.pdf',invoice)
+                        invoice_reference = invoice.reference
+                        future_invoice = True
+                        attachment = ('invoice#{}.pdf'.format(invoice.reference), invoice_pdf, 'application/pdf')
+                    except:
+                        attachment = None
+
+                    logger.info("Setting auth token with values:\n" +
+                        "\nemail: " + str(email) +
+                        "\nbasket_id: " + str(basket_id) +
+                        "\nledger_id: " + str(user.id) +
+                        "\nsystem: " + str(checkout_session.system()) +
+                        "\nreturn_url: " + str(checkout_session.return_url()) +
+                        "\nreturn_preload_url: " + str(checkout_session.return_preload_url()) +
+                        "\ninvoice_text: " + str(checkout_session.get_invoice_text()) +
+                        "\nbasket_owner: " + str(checkout_session.basket_owner()) +
+                        "\nsession_type: " + str(checkout_session.get_session_type()) +
+                        "\nfuture_invoice: " + str(future_invoice) +
+                        "\ninvoice_reference: " + str(invoice_reference))
+                    # generate temporary auth token
+                    token = signing.dumps(
+                        {
+                            "email": email,
+                            "basket_id": basket_id,
+                            "ledger_id": user.id,
+                            "system": checkout_session.system(),
+                            "return_url": checkout_session.return_url(),
+                            "return_preload_url": checkout_session.return_preload_url(),
+                            "invoice_text": checkout_session.get_invoice_text(),
+                            "basket_owner": checkout_session.basket_owner(),
+                            "session_type": checkout_session.get_session_type(),
+                            "future_invoice": future_invoice,
+                            "invoice_reference": invoice_reference,
+                        },
+                        salt="payment-token"
+                    )  
+
+                    url = system_url + "/ledger-api/create-token-session/?token=" + token
+                    try:
+                        expiry_time = (datetime.now() + timedelta(seconds=settings.PAYMENT_TOKEN_EXPIRY_TIME)).strftime("%d %B %Y %I:%M:%S %p")
+                        logger.info(f"Sending email with url {url}")
+                        send_payment_link_email(email, url, user, system, expiry_time, attachment)
+                    except Exception as e:
+                        print(e)
+                        cache.delete(cache_key)
+                        raise ValidationError("Failed to send payment link email.")
+
+                jsondata['status'] = 200
+                jsondata['message'] = 'Success'
+            except Exception as e:
+                print(traceback.print_exc())
+                jsondata['status'] = 500
+                jsondata['message'] = 'Error: {}'.format(str(e))
+                jsondata['data'] = {}  
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response   
+
+def validate_save_payment_method_link_token(request, apikey):
+
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    data = json.loads(request.POST.get('data', "{}"))
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            try:
+                token = request.GET.get("token", None)
+                try:
+                    data = signing.loads(
+                        token,
+                        salt="add-payment-method-token",
+                        max_age=settings.ADD_METHOD_TOKEN_EXPIRY_TIME,
+                    )
+
+                    email = data["email"]
+
+                    user = models.EmailUser.objects.filter(email__iexact=email.lower()).first()
+
+                    if user:
+                        jsondata['data'] = {
+                            'email': email,
+                            'ledger_id': user.id,
+                        }  
+                        jsondata['message'] = "Token valid for email user account."
+                        jsondata['status'] = 200
+                    else:
+                        user = None
+                        print("Invalid token")
+                        jsondata['status'] = 400
+                        jsondata['message'] = 'User account for email provided by token does not exist in the system'
+                        jsondata['data'] = {}  
+
+                except:
+                    print("Invalid token")
+                    jsondata['status'] = 400
+                    jsondata['message'] = 'Invalid or expired token'
+                    jsondata['data'] = {}  
+            except Exception as e:
+                print(traceback.print_exc())
+                jsondata['status'] = 500
+                jsondata['message'] = 'Error: {}'.format(str(e))
+                jsondata['data'] = {}
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+    
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response  
+
+def validate_payment_link_token(request, apikey):
+
+    jsondata = {'status': 404, 'message': 'API Key Not Found'}
+    data = json.loads(request.POST.get('data', "{}"))
+    if ledgerapi_models.API.objects.filter(api_key=apikey,active=1).count():
+        if ledgerapi_utils.api_allow(ledgerapi_utils.get_client_ip(request),apikey) is True:
+            try:
+                token = request.GET.get("token", None)
+                try:
+                    data = signing.loads(
+                        token,
+                        salt="payment-token",
+                        max_age=settings.PAYMENT_TOKEN_EXPIRY_TIME,
+                    )
+
+                    email = data["email"]
+                    basket_id = data["basket_id"]
+
+                    basket_hash = BasketMiddleware(None).get_basket_hash(basket_id)
+                    
+                    user = models.EmailUser.objects.filter(email__iexact=email.lower()).first()
+
+                    if user:
+                        jsondata['data'] = {
+                            'basket_id': basket_id,
+                            'ledger_id': user.id,
+                            'system': data['system'] if 'system' in data else None,
+                            'return_url': data['return_url'] if 'return_url' in data else None,
+                            'return_preload_url': data['return_preload_url'] if 'return_preload_url' in data else None,
+                            'invoice_text': data['invoice_text'] if 'invoice_text' in data else None,
+                            'basket_owner': data['basket_owner'] if 'basket_owner' in data else None,
+                            'session_type': data['session_type'] if 'session_type' in data else None,
+                            'basket_hash': basket_hash,
+                            "future_invoice": data['future_invoice'] if 'future_invoice' in data else None,
+                            "invoice_reference": data['invoice_reference'] if 'invoice_reference' in data else None,
+                        }  
+                        jsondata['message'] = "Token valid for email user account."
+                        jsondata['status'] = 200
+                    else:
+                        user = None
+                        print("Invalid token")
+                        jsondata['status'] = 400
+                        jsondata['message'] = 'User account for email provided by token does not exist in the system'
+                        jsondata['data'] = {}
+                except:
+                    print("Invalid token")
+                    jsondata['status'] = 400
+                    jsondata['message'] = 'Invalid or expired token'
+                    jsondata['data'] = {}  
+            except Exception as e:
+                print(traceback.print_exc())
+                jsondata['status'] = 500
+                jsondata['message'] = 'Error: {}'.format(str(e))
+                jsondata['data'] = {}
+
+        else:
+            jsondata['status'] = 403
+            jsondata['message'] = 'Access Forbidden'
+
+    response = HttpResponse(json.dumps(jsondata), content_type='application/json')
+    return response  

@@ -21,7 +21,8 @@ from ledger.payments.api import (
                 PaymentTotals,
                 UnpaidInvoices,
                 CancelInvoice,
-                BpointWebhookSuccess
+                BpointWebhookSuccess,
+                GetBPointDetails,
                 )
 
 from ledger.payments.bpay.dashboard.app import application as bpay
@@ -55,6 +56,7 @@ api_patterns = [
     re_path(r'api/report-allocated$', ReportCreateAllocatedView.as_view(),name='ledger-report-allocated'),
     re_path(r'api/report$', ReportCreateView.as_view(),name='ledger-report'),
     re_path(r'api/bpoint-webhook/payment-success/(?P<merchant_reference>[\w]+)/$', BpointWebhookSuccess.as_view(),name='bpoint-webhook-payment-success'),
+    re_path(r'api/get-bpoint-details/(?P<txn_number>[\w]+)/$', GetBPointDetails.as_view(),name='get-bpoint-details'),
     re_path(r'api/', include(router.urls)),
 ]
 

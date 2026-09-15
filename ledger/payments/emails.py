@@ -1,5 +1,7 @@
 from ledger.emails.emails import EmailBase, EmailBase2
 import django
+from django.template.loader import get_template
+from django.template import Context
 
 ledger_email = 'no-reply@dbca.wa.gov.au'
 
@@ -64,3 +66,23 @@ def send_refund_email(invoice,refund_type,amount,card_ending=None):
             'card_ending': card_ending
         }
         email_obj.send([email], from_address=ledger_email, context=context) 
+
+def send_discrepency_report(system, discrepancies, emails):
+    """
+    Send table of payment total records with discrepancies to relevant system report recipients
+    """
+    email_obj = TemplateEmailBase2()
+    email_obj.subject = 'Payment discrepancies for system {} {}'.format(system.system_id, system.system_name)
+    email_obj.html_template = 'email/base_email-oim.html'
+    email_obj.txt_template = 'email/base_email-oim.txt'
+    template = 'email/discrepancy_report.html'
+
+    pcontext = {
+            'system': system,
+            'discrepancies': discrepancies,
+    }
+
+    context = {
+        'body': get_template(template).render(pcontext)
+    }
+    email_obj.send(emails, from_address=ledger_email, context=context) 

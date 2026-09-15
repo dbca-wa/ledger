@@ -22,6 +22,60 @@ var ledger_payments = {
                 },
 
         },
+        formatMoney: function (cents) {
+                return `$${(cents / 100).toFixed(2)}`;
+        },
+        buildBPointHtml: function (data) {
+                return `
+                <table cellspacing="0" width="100%" id="money-booking" class="hover table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="bookings-table_info">
+                <tbody>
+                        <tr><th>Transaction Number</th><td>${data.txnNumber}</td></tr>
+                        <tr><th>Card Number</th><td>${data.paymentMethod?.card?.number ?? ""}</td></tr>
+                        <tr><th>Expiry Date</th><td>${data.paymentMethod?.card?.expiry?.month ?? ""}/${data.paymentMethod?.card?.expiry?.year ?? ""}</td></tr>
+                        <tr><th>Card Scheme</th><td>${data.paymentMethod?.card?.scheme ?? ""}</td></tr>
+                        <tr><th>Card Type</th><td>${data.paymentMethod?.card?.type ?? ""}</td></tr>
+                        
+                        <tr><th>Transaction Type</th><td>${data.action}</td></tr>
+                        <tr><th>Channel</th><td>${data.type}</td></tr>
+                        <tr><th>Payment Frequency</th><td>${data.subType}</td></tr>
+                        <tr><th>Source</th><td>${data.source}</td></tr>
+                        
+                        <tr><th>Invoice</th><td>${data.crn1}</td></tr>
+                        <tr><th>Amount</th><td>${ledger_payments.formatMoney(data.amount)} ${data.currency}</td></tr>
+                        <tr><th>Processed Date</th><td>${data.processedDateTime.replace('T', ' ').replace(/\.\d+Z$/, '')}</td></tr>
+                        <tr><th>Settlement Date</th><td>${data.settlementDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')}</td></tr>
+                        <tr><th>Status</th><td>${data.responseText}</td></tr>
+                </tbody>
+                </table>
+                `;
+        },
+        load_bpoint_details: function () {
+                const button = event.relatedTarget;
+                const bpointId = button.getAttribute("data-bpoint-id");
+
+                $.ajax({
+                        url: "/ledger/payments/api/get-bpoint-details/"+bpointId,
+                        method: "GET",
+                        contentType: "application/json",
+                        success: function (res) {
+                                if (res.message == "success") {
+                                        document.getElementById('bPointDetailsBody').innerHTML = ledger_payments.buildBPointHtml(res.data);
+                                } else {
+                                        document.getElementById('bPointDetailsBody').innerHTML = res.message;
+                                }
+                        },
+                        error: function (xhr) {
+                                let message = "Failed to load BPoint details.";
+                                if (xhr.responseJSON?.message) {
+                                        message = xhr.responseJSON.message;
+                                }
+                                document.getElementById('bPointDetailsBody').innerHTML = `<div class="alert alert-danger">${message}</div>`
+                        }
+                })
+        },
+        clear_bpoint_details: function () {
+                document.getElementById('bPointDetailsBody').innerHTML = "Loading...";
+        },
         load_payment_info: function () {
                 console.log("load_payment_info")
                 data = {}
@@ -51,7 +105,13 @@ var ledger_payments = {
 
                                                 for (let i = 0; i < data.data.bpoint.length; i++) {
 
-                                                        bpointdata += "<tr><td>" + data.data.bpoint[i].txnnumber + "</td><td><A href='/ledger/payments/invoice-pdf/" + data.data.bpoint[i].crn1 + "' target='_pdf_invoice_" + data.data.bpoint[i].crn1 + "'>" + data.data.bpoint[i].crn1 + "</a></td><td>" + data.data.bpoint[i].action + "</td><td>$" + data.data.bpoint[i].amount + "</td><td>" + data.data.bpoint[i].processed + "</td><td>" + data.data.bpoint[i].settlement_date + "</td><td>" + data.data.bpoint[i].last_digits + "</td></tr>";
+                                                        bpointdata += "<tr><td>" + data.data.bpoint[i].txnnumber + "</td><td><A href='/ledger/payments/invoice-pdf/" + data.data.bpoint[i].crn1 + "' target='_pdf_invoice_" + data.data.bpoint[i].crn1 + "'>" + data.data.bpoint[i].crn1 + "</a></td><td>" + data.data.bpoint[i].action + "</td><td>$" + data.data.bpoint[i].amount + "</td><td>" + data.data.bpoint[i].processed + "</td><td>" + data.data.bpoint[i].settlement_date + 
+                                                        
+                                                        "</td><td>" + 
+                                                        //TODO on click open modal/popup that get data from Bpoint with api request
+                                                        "<button type='button' class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#BPointDetails' data-bpoint-id='"+data.data.bpoint[i].txnnumber+"'>View BPoint</button>" + 
+                                                        
+                                                        "</td></tr>";
                                                         // console.log(data.data.bpoint[i]);
                                                 }
 
@@ -93,6 +153,14 @@ var ledger_payments = {
                                         take_payment.var.booking_reference = data.data.booking_reference;
                                         take_payment.var.booking_reference_linked = data.data.booking_reference_linked;
                                         take_payment.re_init();
+
+                                        const bpointDetailsModal = document.getElementById("BPointDetails")
+                                        bpointDetailsModal.addEventListener('shown.bs.modal', async function (event) {
+                                                ledger_payments.load_bpoint_details();
+                                        })
+                                        bpointDetailsModal.addEventListener('hide.bs.modal', async function (event) {
+                                                ledger_payments.clear_bpoint_details();
+                                        })
 
                                         if (data.data.invoice_group_checks_total > 1) {
                                                 $('#oracle-payments-data-error-message').html("<B>Error</B> Linked invoice grouping issues.  Please fix before making any monetary changes or payment refunds.");
@@ -393,7 +461,7 @@ var ledger_payments = {
         init: function () {
                 
                 setTimeout("ledger_payments.load_payment_info();", 400);
-
+                
         }
 }
 

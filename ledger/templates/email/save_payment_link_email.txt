@@ -1,0 +1,21 @@
+{%  extends 'email/base_email.txt' %}
+
+{% block greetings %}
+        {% if user.first_name == "" or user.last_name == "" or user.first_name == None or user.last_name == None %}
+        Dear Sir/Madam,
+        {% else %}
+        Dear {{user.first_name}} {{user.last_name}}
+        {% endif %}
+{% endblock %}
+
+{% block content %}
+You have been invited to enter Payment Method details for the {{system.system_name}} system.
+
+To enter your Payment Method details please click the link ({{link}}) here and follow the presented instructions.
+
+Details entered via the provided link can be used by authorised payment administrators to pay fees on your behalf for the {{system.system_name}} system.
+{% endblock %}
+
+{% block reply_statement %}
+Please do not reply directly to this email.
+{% endblock %}

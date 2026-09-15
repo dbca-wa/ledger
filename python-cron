@@ -30,3 +30,6 @@
 
 # Send Debtor Report
 01 0 * * * python manage_ledgergw.py unpaid_invoice_report >> /app/logs/unpaid_invoice_report.log
+
+#Discrepancy Reports
+0 8 * * 3 python manage_ledgergw.py payment_discrepancy_report >> /app/logs/payment_discrepancy_report.log

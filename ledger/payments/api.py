@@ -1,9 +1,12 @@
 import json
+import base64
+import requests
 from django.db import transaction
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.core.exceptions import ValidationError
+from django.contrib.auth.mixins import UserPassesTestMixin
 # from django.core.urlresolvers import reverse
 from django.urls import reverse
 from wsgiref.util import FileWrapper
@@ -1672,4 +1675,43 @@ class BpointWebhookSuccess(views.APIView):
         return HttpResponse(json.dumps({'status': 200, 'message': 'success'}), content_type='application/json')  
 
  
+class GetBPointDetails(views.APIView):
+    renderer_classes = (JSONRenderer,)
+    permission_classes = [PaymentAdminPermission]
+
+    def build_basic_auth(self: object, username: str, merchant: str, password: str) -> str:
+            raw = f"{username}|{merchant}:{password}".encode("utf-8")
+            return "Basic " + base64.b64encode(raw).decode("ascii")
+
+    def get(self, request, txn_number):
+
+        try:
+            transaction = BpointTransaction.objects.get(txn_number=txn_number)
+            invoice = Invoice.objects.get(reference=transaction.crn1)
+            ois = OracleInterfaceSystem.objects.get(system_id=invoice.system)
+        except Exception as e:
+            print(e)
+            return HttpResponse(json.dumps({'status': 500, 'message': 'Error retreiving BPoint details, invalid Transaction Number'}), content_type='application/json', status=500)  
+
+        username = ois.bpoint_username
+        password = ois.bpoint_password
+        merchant = ois.bpoint_merchant_num
+
+        auth_header = self.build_basic_auth(username, merchant, password)
+        headers = {
+            "Authorization": auth_header,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        get_txn_url = settings.BPOINT_HPP_BASE_URL+"/txns/{}".format(txn_number)
+        resp = requests.get(get_txn_url, headers=headers, timeout=30)
+
+        try:
+            data = resp.json()
+        except Exception:
+            data = {"raw": resp.text}
+
+        if not resp.ok:
+            return HttpResponse(json.dumps({'status': 500, 'message': 'Error retrieving BPoint details, BPoint get transaction retrieval failed.'}), content_type='application/json', status=500)  
         
+        return HttpResponse(json.dumps({'status': 200, 'message': 'success', 'data': data}), content_type='application/json')

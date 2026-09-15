@@ -29,6 +29,15 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
             margin-top: 30px;
           }
       }
+
+    .btn-link {
+      background: none;
+      border: none;
+      padding: 0;
+      color: blue;
+      text-decoration: underline;
+      cursor: pointer;
+    }
 </style>
 
 
@@ -116,6 +125,22 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
             </span>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="BPointDetails" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      
+      <div class="modal-header">
+        <h5 class="modal-title">BPoint Details <span style="font-size: 12px; font-weight: normal;">These details are requested directly from BPoint and are not stored in Ledger.</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body" id="bPointDetailsBody">
+          Loading...
       </div>
     </div>
   </div>
@@ -590,7 +615,7 @@ Oracle Payments - Department of Biodiversity, Conservation and Attractions
       <th scope="col">Amount</th>
       <th scope="col">Processed</th>
       <th scope="col">Settlement Date</th>
-      <th scope="col">Card Last Digits</th>
+      <th scope="col">Action</th>
     </tr>
   </thead>
   <tbody id='bpoint_tbody'>

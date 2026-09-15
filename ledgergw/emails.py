@@ -6,7 +6,7 @@ from ledger.payments.models import Invoice
 from ledgergw import settings 
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 
-from ledger.emails.emails import EmailBase
+from ledger.emails.emails import EmailBase, EmailBase2
 from django.template.loader import render_to_string, get_template
 from confy import env
 from django.template import Context
@@ -22,6 +22,12 @@ default_campground_email = settings.CAMPGROUNDS_EMAIL
 default_rottnest_email = settings.ROTTNEST_EMAIL
 
 class TemplateEmailBase(EmailBase):
+    subject = ''
+    html_template = 'ledgergw/email/base_email.html'
+    # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
+    txt_template = 'ledgergw/email/base_email.txt'
+
+class TemplateEmailBase2(EmailBase2):
     subject = ''
     html_template = 'ledgergw/email/base_email.html'
     # txt_template can be None, in this case a 'tag-stripped' version of the html will be sent. (see send)
@@ -125,4 +131,35 @@ def email_log(line):
      f.write(str(dt.strftime('%Y-%m-%d %H:%M:%S'))+': '+line+"\r\n")
      f.close()  
 
+def send_save_payment_method_link_email(email, link, user, system, expiry_time):
 
+    email_obj = TemplateEmailBase2()
+    email_obj.subject = f'Invitation to save Payment Method for the {system.system_name}.'
+    email_obj.html_template = 'email/save_payment_link_email.html'
+    email_obj.txt_template = 'email/save_payment_link_email.txt'
+
+    context = {
+        'link': link,
+        'user': user,
+        'system': system,
+        'expiry_time': expiry_time,
+    }
+    email_obj.send([email], from_address=default_from_email, context=context) 
+
+def send_payment_link_email(email, link, user, system, expiry_time, invoice_attachment=None):
+
+    email_obj = TemplateEmailBase2()
+    email_obj.subject = f'Payment request from {system.system_name}.'
+    email_obj.html_template = 'email/payment_link_email.html'
+    email_obj.txt_template = 'email/payment_link_email.txt'
+
+    context = {
+        'link': link,
+        'user': user,
+        'system': system,
+        'expiry_time': expiry_time,
+    }
+    attachments = []
+    if invoice_attachment:
+        attachments.append(invoice_attachment)
+    email_obj.send([email], from_address=default_from_email, context=context, attachments=attachments) 
