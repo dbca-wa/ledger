@@ -117,6 +117,13 @@ DEPT_DOMAINS = env('DEPT_DOMAINS', ['dpaw.wa.gov.au', 'dbca.wa.gov.au'])
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_ROOT=os.path.join(BASE_DIR, 'staticfiles_ledger')
 
+GDAL_LIBRARY_PATH = os.environ.get(
+    "GDAL_LIBRARY_PATH",
+)
+GEOS_LIBRARY_PATH = os.environ.get(
+    "GEOS_LIBRARY_PATH",
+)
+
 # Use git commit hash for purging cache in browser for deployment changes
 GIT_COMMIT_HASH = ''
 GIT_COMMIT_DATE = ''
