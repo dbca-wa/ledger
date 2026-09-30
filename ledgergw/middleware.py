@@ -59,7 +59,7 @@ class BookingTimerMiddleware(object):
 
 class CacheControlMiddleware(object):
     def process_response(self, request, response):
-        if request.path[:5] == '/api/' or request.path == '/':
+        if request.path[:5] == '/api/' or request.path == '/' or request.path == '/ledger/payments/':
             response['Cache-Control'] = 'private, no-store'
         elif request.path[:8] == '/static/':
             response['Cache-Control'] = 'public, max-age=86400'
