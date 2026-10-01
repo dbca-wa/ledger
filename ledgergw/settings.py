@@ -26,7 +26,7 @@ INSTALLED_APPS += [
 ]
 
 MIDDLEWARE_CLASSES += [
-       # 'ledgergw.middleware.CacheControlMiddleware',
+        'ledgergw.middleware.CacheControlMiddleware',
         'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
