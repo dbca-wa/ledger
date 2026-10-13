@@ -57,13 +57,32 @@ class BookingTimerMiddleware(object):
             return HttpResponseRedirect(reverse('public_make_booking'))
         return
 
+# class CacheControlMiddleware(object):
+#     def process_response(self, request, response):
+#         if request.path[:5] == '/api/' or request.path == '/' or request.path[:17] == '/ledger/payments/':
+#             response['Cache-Control'] = 'private, no-store'
+#         elif request.path[:8] == '/static/':
+#             response['Cache-Control'] = 'public, max-age=86400'
+#         else:
+#             response['Cache-Control'] = 'private, no-store'
+#         return response
+
 class CacheControlMiddleware(object):
-    def process_response(self, request, response):
-        if request.path[:5] == '/api/' or request.path == '/':
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if (
+            request.path.startswith('/api/')
+            or request.path == '/'
+            or request.path.startswith('/ledger/payments/')
+        ):
             response['Cache-Control'] = 'private, no-store'
-        elif request.path[:8] == '/static/':
+        elif request.path.startswith('/static/'):
             response['Cache-Control'] = 'public, max-age=86400'
         else:
             response['Cache-Control'] = 'private, no-store'
-        return response
 
+        return response

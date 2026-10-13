@@ -575,7 +575,7 @@ class PaymentTriage(generic.TemplateView):
         basket = Basket.objects.filter(basket_token=merchant_reference)        
         show = True
         if basket.count() > 0:
-            system_id = self.request.GET.get('system_id','')
+            # system_id = self.request.GET.get('system_id','')
             
             if basket[0].status == 'Submitted' and basket[0].notification_completed is True:
                 print (basket[0].success_return_url)
@@ -604,7 +604,7 @@ class PaymentTriage(generic.TemplateView):
         basket = Basket.objects.filter(basket_token=merchant_reference)        
         show = True
         if basket.count() > 0:
-            system_id = self.request.GET.get('system_id','')
+            # system_id = self.request.GET.get('system_id','')
             
             if basket[0].status == 'Submitted':
                 print (basket[0].success_return_url)
