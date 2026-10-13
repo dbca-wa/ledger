@@ -67,7 +67,7 @@ class BookingTimerMiddleware(object):
 #             response['Cache-Control'] = 'private, no-store'
 #         return response
 
-class CacheControlMiddleware:
+class CacheControlMiddleware(object):
     def __init__(self, get_response):
         self.get_response = get_response
 
