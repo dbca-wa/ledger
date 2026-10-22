@@ -77,7 +77,19 @@ class OrderPlacementMixin(CoreOrderPlacementMixin):
         if return_preload_url:
             try:
                 basket = BasketMiddleware(None).get_basket(self.request)
-                basket.notification_url = '{}?invoice={}'.format(return_preload_url, invoice.reference)
+
+                if "?" in return_preload_url:
+                    basket.notification_url = return_preload_url + "&invoice="+invoice.reference
+                else:    
+                    basket.notification_url = return_preload_url + "?invoice="+invoice.reference
+
+                if "?" in return_url:
+                    return_url = return_url + "&invoice="+invoice.reference
+                else:
+                    return_url = return_url + "?invoice="+invoice.reference
+
+                basket.success_return_url = return_url
+
                 basket.save()
                 resp = requests.get('{}?invoice={}'.format(return_preload_url, invoice.reference),
                                 cookies=self.request.COOKIES,
